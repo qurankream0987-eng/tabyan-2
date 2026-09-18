@@ -1,0 +1,74 @@
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# compiled output
+dist
+tmp
+out-tsc
+*.tsbuildinfo
+.expo
+.expo-shared
+.metro
+build
+coverage
+logs
+*.log
+
+# local environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.mobileprovision
+*.cer
+
+# generated native directories
+artifacts/mobile/ios/
+artifacts/mobile/android/
+
+# recovery and transport artifacts
+attached_assets/
+recovery/
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
+# dependencies
+node_modules
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
+.DS_Store
+Thumbs.db
+
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+
+# Replit
+.cache/
+.local/

@@ -1,0 +1,44 @@
+# Memory Index
+
+- [Tabyan project study](tabyan-uploaded-project.md) — user uploaded a full "Tabyan" app export as 10 zips; deep read-only study and restoration are complete.
+- [Tabyan backend state](tabyan-backend-state.md) — rebuild lib/tabyan-trpc with `tsc --build --force` after router edits; storage routes use custom bearer auth; admin APIs need real psql-seeded sessions (dev tokens fail audit FK); 23505 hides in e.cause.
+- [Tabyan design decisions](tabyan-design-decisions.md) — IBM Plex Arabic UI font; 3 placement attempts; tilawah/tajweed age-free; light text ALL burgundy, dark text WHITE w/ gold accents (supersedes gold-text); quran↔aqeedah gate + next-level-only promotion; sharia split: mandatory aqeedah_quran (5) vs optional aqeedah (4) + fiqh/seerah 1 each, DB-driven sharia_subjects.
+- [Tabyan CSS cascade traps](tabyan-css-cascade.md) — unlayered global rules (svg color, bg-gold flip, !important card borders) silently beat Tailwind classes; check them before assuming a class is dead.
+- [Tabyan student registration flow](tabyan-student-registration-otp.md) — phone OTP removed from sign-up (checkPhone routes login vs register, OTP kept for login/teacher); optional server-verified email; biometric opt-in only, never auto.
+- [Tabyan auth security architecture](tabyan-auth-security.md) — server-enforced 8-char bcrypt passwords; atomic OTP attempts + advisory-lock rate limits; remember-me = token TTL only; WebAuthn biometrics fully server-verified with env-allowlisted origins.
+- [Tabyan Google OAuth architecture](tabyan-google-oauth.md) — students-only, no silent login/create; HMAC tickets with jti consumed atomically inside the caller's transaction; linking by google_id then verified email only; GOOGLE_CLIENT_ID must match VITE_GOOGLE_CLIENT_ID.
+- [Tabyan worldwide phone validation](tabyan-phone-worldwide.md) — global E.164 accepted server-side; client national max = min(14, 15 − dial.length) or sign-up breaks; Kuwait default.
+- [Tabyan mushaf reader](tabyan-mushaf-reader.md) — QCF v2 vector fonts (per-page woff2 + line_v2) via scripts/download+verify; never images; LS keys tabyan.mushaf.* frozen; fonts LRU ±3.
+- [Tabyan inline recitation](tabyan-inline-recitation.md) — Phase 1A.2: recitation runs inside MushafReader; opacity hides words (never display:none); DB status type must include "cancelled".
+- [Recitation contract separation](tabyan-recitation-contract-separation.md) — GENERAL is open-ended with local display range only; EDUCATIONAL is server-assigned or fail-closed.
+- [Cross-page recitation continuity](tabyan-cross-page-recitation.md) — preload alone is insufficient: append next-page canonical words to the same matcher before boundary evidence gates navigation.
+- [Tabyan mushaf M2 spike](tabyan-mushaf-m2-spike.md) — RN Text/View أمين (0.3–0.95% مقابل DOM بنفس TTF)؛ الفرق الباقي TTF↔WOFF2 hinting؛ فخ المحاذاة دون-بكسلية؛ QCF بلا U+0020 — سياسة مسافة + اختبار جهاز = بوابتا M3.
+- [Tabyan admin panel restoration rules](tabyan-admin-shell-scope.md) — admin CSS scoped under .admin-shell; phases need explicit user approval; protected logic list never touched.
+- [Tabyan mobile foundation](tabyan-mobile-foundation.md) — mobile shares AppRouter via tsconfig paths→dist (not node_modules); 401 must be caught per-operation in Query/MutationCache (batch hides it); session restore distinguishes dead token vs network loss; RTL = forceRTL + reload-once flag.
+- [Expo web e2e via direct domain](expo-web-e2e-domain.md) — test/screenshot Expo web via $REPLIT_EXPO_DEV_DOMAIN, never the /mobile/ proxy path (root-absolute bundle URLs 404 there).
+- [Replit iOS simulator TLS](replit-ios-simulator-tls.md) — invalid-certificate errors for the Expo dev domain are simulator/proxy trust failures, separate from Expo Launch publishing.
+- [Expo web session persistence](expo-web-session-reload.md) — FIXED: lib/token-storage.ts (web→AsyncStorage, native→SecureStore); session survives reload/deep links; all session storage changes go through that layer only.
+- [Alert.alert broken on Expo web](expo-web-confirm-helper.md) — multi-button Alert.alert is a silent no-op on web; use lib/confirm.ts confirmAr (window.confirm on web).
+- [Production cleanup safety](tabyan-production-data-cleanup.md) — audit Production read-only first; seed/fixture accounts can overlap real users and onboarding is not server-persisted.
+- [Mobile build port collision](mobile-build-port-collision.md) — Expo static build needs Metro 8081 free when mockup-sandbox is running.
+- [Deployment build parity traps](deployment-build-parity.md) — deploy installs fresh from lockfile: overrides can break bundled toolchains, esbuild never bundles asset binaries (copy to dist), Metro global cache masks cold-build failures.
+- [Private review media](tabyan-private-review-media.md) — proxy Range playback can fail for private MP4; authenticated short-video Blob playback is the reliable review path.
+- [Live-session deployment](tabyan-live-session-deployment.md) — WebSocket signaling and diagnostic sessions are process-local; use VM affinity or shared state, not autoscale, for reliable calls.
+- [OpenAI Realtime transcription preflight](openai-realtime-transcription-preflight.md) — WebSocket uses a Realtime model while transcription model is configured in-session; preflight quota before mic tests.
+- [Speechmatics Realtime preflight](speechmatics-realtime-preflight.md) — ready means RecognitionStarted, not socket open; current StartRecognition rejects end-of-utterance trigger in transcription_config.
+- [NVIDIA hosted Arabic ASR gate](nvidia-hosted-arabic-asr-gate.md) — current Hosted Nemotron Function ID rejects the multilingual Arabic config; keep OpenAI until NVIDIA provides a selectable multilingual endpoint.
+- [Quran-specific ASR options](quran-specific-asr-options.md) — no ready public hosted Quran ASR API found; Tarteel weights are Apache-2.0, while Whisper Quran v1 is noncommercial.
+- [App Store QCF archive limit](tabyan-app-store-qcf-archive.md) — Launch succeeds when the 172 MB native QCF bundle is detached; final release needs supported runtime asset delivery.
+- [Stage 5 screen parity](stage5-screen-parity.md) — compare behavior/API sources, distinguish query states from mutation forms, and expose intentional platform gaps as PARTIAL.
+- [Mobile Stage 8 gates](mobile-stage8-gates.md) — camera/location/compass/audio need hardware proof; never simulate Push delivery without a provider and token contract.
+- [Replit exit constraints](tabyan-replit-exit.md) — Railway needs a portable storage adapter, and EAS must reuse the correct existing project/team before any external Build 6.
+- [Expo SDK 54 Replit preview](expo-sdk54-replit-preview.md) — default Metro config; Node 24 HMR root-URL crash; avoid Link-asChild style arrays on web.
+- [Expo native prebuild validation](expo-prebuild-validation.md) — validate managed config plugins on a temporary copy with dependencies mounted; prebuild mutates native directories.
+- [Expo Go Replit proxy](expo-go-replit-proxy.md) — inject the public Replit Expo domain while Metro binds locally, then rescan the QR after restart.
+- [EAS project linking in pnpm](eas-pnpm-project-link.md) — verify existing Project IDs through Expo; direct EAS CLI config can fail in this pnpm monorepo before mutation.
+- [Tabyan App Store preflight](tabyan-preflight-tool.md) — physical-size gate and QCF/identity checks must pass independently before Launch.
+- [Tabyan logo asset recoloring](tabyan-logo-recoloring.md) — preserve source dimensions and alpha when recoloring logos; generative edits may redraw or resize them.
+- [Tabyan Mobile design tokens](tabyan-mobile-design-tokens.md) — Metro needs a byte-identical local token copy; workspace-relative JSON imports fail during Expo export.
+- [Tabyan Native WebRTC compatibility](tabyan-native-webrtc.md) — Expo SDK 54 needs react-native-webrtc 124 plus config plugin 13; real observer testing requires a development build, not Expo Go.
+- [Arabic input normalization](arabic-input-normalization.md) — Mobile and backend must share Unicode digit/phone/name normalization; never apply it to passwords or usernames.
+- [Tabyan Web test runner](tabyan-web-test-runner.md) — local Vitest symlink can fail before discovery; distinguish dependency-link issues from application test failures.

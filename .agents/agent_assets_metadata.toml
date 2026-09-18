@@ -1,0 +1,102 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "yhAAmvGvEuFZOZsIrBolm"
+uri = "file://generated/tabyan-qr.png"
+type = "image"
+title = "رمز QR لمنصة تبيان"
+description = "امسح الرمز بكاميرا هاتفك لفتح نسخة المعاينة الحالية من المشروع."
+logical_id = "57e3a4dd-41e1-460e-9930-6be5cf959d3e"
+
+[[outputs]]
+id = "S_GxmBeVuJ0R_pz5vtmSf"
+uri = "file://artifacts/tabyan/public/tabyan-preview-qr.png"
+type = "image"
+title = "رمز QR لمعاينة تطبيق تبيان"
+description = "امسح الرمز بكاميرا الهاتف لفتح نسخة المعاينة الحالية لتطبيق تبيان."
+logical_id = "a5a89bfc-43ff-449e-abf9-b1b4ea893e56"
+
+[[outputs]]
+id = "mwBbL52ZgrJQ1-dxo6Et7"
+uri = "file://docs/task-17-validation-report.md"
+type = "text"
+title = "تقرير التحقق — المهمة ١٧"
+description = "المصحف + التسجيل الدولي + اعتماد المعلم + الإشعارات الجماعية: تتبع المتطلبات ونتائج الفحوص"
+logical_id = "28505f7a-2789-462d-8b0a-d06989d10dac"
+
+[[outputs]]
+id = "bHsNGdV0qVe8cDN6VHFRY"
+uri = "file://docs/task-18-validation-report.md"
+type = "text"
+title = "تقرير التحقق — المهمة ١٨"
+description = "إعادة تنظيم الدروس الشرعية: تتبع المتطلبات ونتائج الفحوص"
+logical_id = "a2637334-7dfe-4ffd-be29-17f99f60121b"
+
+[[outputs]]
+id = "Kvx7mOl6X05VoqDFnne8v"
+uri = "file://artifacts/mobile/mushaf-spike/screenshots/spike-p300.png"
+type = "image"
+title = "سبايك RN — صفحة 300 (TTF)"
+description = "تصيير صفحة المصحف 300 عبر React Native Text/View بخط QCF TTF المحوَّل — المصيّر الجديد في السبايك المعزول."
+logical_id = "a194b17d-5271-466a-b255-31fdb37b29c2"
+
+[[outputs]]
+id = "BnLn6k2BbXJa5OUpE2I7z"
+uri = "file://artifacts/mobile/mushaf-spike/screenshots/golden-p300.png"
+type = "image"
+title = "المرجع الذهبي — صفحة 300 (WOFF2)"
+description = "نفس الصفحة من مصيّر الويب الأصلي (MushafPage) بخط WOFF2 — مرجع المقارنة."
+logical_id = "53c20950-c1e7-4780-a6dd-08b749c54d70"
+
+[[outputs]]
+id = "LHLwYkBGmuoTSDSvCCaNB"
+uri = "file://artifacts/mobile/mushaf-spike/screenshots/diff-p300.png"
+type = "image"
+title = "خريطة الفرق — صفحة 300"
+description = "البكسلات المختلفة (أحمر) تتركز على حواف الـglyphs فقط: فرق antialiasing/hinting بين ثنائيتي TTF وWOFF2، بلا انزياح وبلا glyphs خاطئة."
+logical_id = "1024e8a9-a6ac-4731-83f6-537f2d30ef8b"
+
+[[outputs]]
+id = "qKNWm0bg2KG-oLHc0UA2I"
+uri = "file://screenshots/admin-popup-centered.jpg"
+type = "image"
+title = "نافذة لوحة الإشراف بعد الإصلاح"
+description = "لقطة فعلية من لوحة الإشراف التجريبية توضح أن النافذة المنبثقة أصبحت في منتصف الشاشة وظاهرة بالكامل فوق جدول المستخدمين."
+logical_id = "3f98003c-5a5d-422e-8248-833af8ffb80a"
+
+[[outputs]]
+id = "Y_AGfasPc6assn22rGha9"
+uri = "file://screenshots/admin-windows-final.jpg"
+type = "image"
+title = "لوحة الإشراف — التحقق النهائي من النوافذ"
+description = "لقطة فعلية من لوحة الإشراف بعد ضبط طبقات النوافذ والقوائم داخل حدود الشاشة. التنبيه العائم ظاهر في موضعه الأصلي كما طلبت."
+logical_id = "39f43faa-b281-4342-97e8-512baa9d0dbf"
+
+[[outputs]]
+id = "-kpGq0WeIvWXOz6NOmTU8"
+uri = "file://attached_assets/tabyan-preview-qr.png"
+type = "image"
+title = "باركود معاينة تبيان"
+description = "QR Code يفتح نسخة المعاينة الحالية من تبيان عبر https://Tibyanquran.replit.app"
+logical_id = "af3c269b-4028-4193-9047-8b6eb89edca7"
+content_hash = "sha256:b963105c7bbcaaa3fda940eeff90693612bc75afb817d8f0e97c7ff81012b7a3"
+size = 359
+mtime_ms = 1788617224618
+storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:a29fc560-42f6-4856-9497-d2f2860cbc29/af3c269b-4028-4193-9047-8b6eb89edca7/b8d9fae8-bec7-481a-9c01-f66f2799378d"
+storage_version_token = "1788617232687151"
+content_type = "image/png"
+
+[[outputs]]
+id = "Y9UZ3ABfYNWWv0qMGP3Q7"
+uri = "file://docs/TABYAN_PLACEMENT_VIDEO_FORENSIC_FINAL.md"
+type = "text"
+title = "Updated Tabyan controlled A/B forensic report"
+description = "Updated with the temporary H.264/AAC fast-start diagnostic copy, server-side A/B GET/Range evidence, and scoped safe request logging; iPhone playback remains untested."
+logical_id = "c81d8c97-41f9-4557-814e-9e9a3eaa1ab7"
+content_hash = "sha256:9d957b606ccf86d48bb7bfb92ef032c1b4e8b22954b13768259d718524da5874"
+size = 17664
+mtime_ms = 1789562598975
+storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:a29fc560-42f6-4856-9497-d2f2860cbc29/c81d8c97-41f9-4557-814e-9e9a3eaa1ab7/541937ed-fa88-432b-ab4b-7d1a83d55bfc"
+storage_version_token = "1789562626304832"
+content_type = "text/markdown"

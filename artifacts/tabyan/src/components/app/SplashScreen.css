@@ -1,0 +1,236 @@
+/* ═══════════════════════════════════════════════════════════
+   Splash Screen — مطابق للـ HTML المرجعي 100%
+═══════════════════════════════════════════════════════════ */
+
+.splash-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #4C091B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* هالة توهج خلف اللوغو */
+.splash-halo {
+  position: absolute;
+  width: 560px;
+  height: 560px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212,175,55,.14), rgba(212,175,55,.04) 45%, transparent 70%);
+  filter: blur(10px);
+  animation: splashHaloPulse 4.5s ease-in-out infinite;
+}
+@keyframes splashHaloPulse {
+  0%, 100% { transform: scale(1); opacity: .8; }
+  50%       { transform: scale(1.12); opacity: 1; }
+}
+
+/* الغطاء الكامل للـ Splash */
+.splash-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity .8s ease, transform .8s ease;
+}
+.splash-inner.hide-all {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+/* اللوغو */
+.splash-logo-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 46px;
+}
+.splash-logo-wrapper img {
+  width: 360px;
+  max-width: 84vw;
+  height: auto;
+  opacity: 0;
+  filter: blur(14px) drop-shadow(0 0 0 rgba(212,175,55,0));
+  transform: scale(.82);
+  animation:
+    splashLogoIn 1.4s cubic-bezier(.22,1,.36,1) .2s forwards,
+    splashLogoFloat 5s ease-in-out 1.8s infinite;
+}
+@keyframes splashLogoIn {
+  to {
+    opacity: 1;
+    filter: blur(0) drop-shadow(0 6px 24px rgba(212,175,55,.35));
+    transform: scale(1);
+  }
+}
+@keyframes splashLogoFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-9px) scale(1); }
+}
+
+/* وميض ذهبي يعبر اللوغو */
+.splash-shine {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.splash-shine::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  left: -60%;
+  width: 40%;
+  height: 180%;
+  background: linear-gradient(105deg, transparent, rgba(255,240,200,.55), transparent);
+  animation: splashShinePass 3.2s ease-in-out 1.6s infinite;
+}
+@keyframes splashShinePass {
+  from { transform: translateX(0); opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  to   { transform: translateX(500%); opacity: 0; }
+}
+
+/* منطقة النصوص */
+.splash-text-stage {
+  position: relative;
+  width: 100%;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.splash-text-item {
+  position: absolute;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(24px) scale(.96);
+  filter: blur(10px);
+  transition: all .7s cubic-bezier(.22,1,.36,1);
+  padding: 0 24px;
+  text-align: center;
+  direction: rtl;
+  unicode-bidi: plaintext;
+  white-space: normal;
+}
+.splash-text-item.active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+.splash-text-item.exit {
+  opacity: 0;
+  transform: translateY(-24px) scale(.96);
+  filter: blur(10px);
+}
+
+.splash-verse-prefix {
+  font-size: 1.05rem;
+  color: #E6D5B8;
+  margin-bottom: 14px;
+  font-weight: 400;
+  letter-spacing: .5px;
+  font-family: 'Tajawal', 'IBM Plex Sans Arabic', sans-serif;
+}
+.splash-verse-text {
+  font-family: 'Amiri', 'Amiri Quran', serif;
+  font-size: clamp(1.4rem, 4.5vw, 1.9rem);
+  color: #D4AF37;
+  font-weight: 700;
+  line-height: 1.7;
+  direction: rtl;
+  unicode-bidi: plaintext;
+  text-align: center;
+  max-width: calc(100vw - 32px);
+}
+
+.splash-text-home {
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  color: #F5EFE0;
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+.splash-text-home span {
+  background: linear-gradient(90deg, #F1D27A, #D4AF37, #B8860B);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+.splash-text-home::after {
+  content: "";
+  display: block;
+  margin: 16px auto 0;
+  width: 120px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #D4AF37, transparent);
+  border-radius: 2px;
+}
+
+/* نقاط التقدم */
+.splash-dots {
+  position: absolute;
+  bottom: 96px;
+  display: flex;
+  gap: 10px;
+  z-index: 2;
+}
+.splash-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(230,213,184,.25);
+  transition: all .4s ease;
+}
+.splash-dot.on {
+  background: #D4AF37;
+  box-shadow: 0 0 10px rgba(212,175,55,.8);
+  transform: scale(1.25);
+}
+
+/* شريط التحميل */
+.splash-loader {
+  position: absolute;
+  bottom: 56px;
+  width: 140px;
+  height: 2px;
+  border-radius: 4px;
+  background: rgba(255,255,255,.12);
+  overflow: hidden;
+  z-index: 2;
+}
+.splash-loader::after {
+  content: "";
+  display: block;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, #D4AF37, transparent);
+  animation: splashLoad 1.6s ease-in-out infinite;
+}
+@keyframes splashLoad {
+  from { transform: translateX(-120%); }
+  to   { transform: translateX(380%); }
+}
+
+/* تاغلاين */
+.splash-tagline {
+  position: absolute;
+  bottom: 22px;
+  font-size: .75rem;
+  color: rgba(230,213,184,.45);
+  letter-spacing: 2px;
+  font-weight: 300;
+  z-index: 2;
+  font-family: 'Tajawal', 'IBM Plex Sans Arabic', sans-serif;
+}

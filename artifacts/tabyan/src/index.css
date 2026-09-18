@@ -1,0 +1,1742 @@
+/* خط الواجهة الموحد: IBM Plex Sans Arabic لكامل التطبيق — Amiri Quran للنص القرآني فقط */
+@import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ── Token mapping ────────────────────────────────────────────────── */
+@theme inline {
+  --color-background:           var(--background);
+  --color-foreground:           var(--foreground);
+  --color-card:                 var(--card);
+  --color-card-foreground:      var(--card-foreground);
+  --color-primary:              var(--primary);
+  --color-primary-foreground:   var(--primary-foreground);
+  --color-secondary:            var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:                var(--muted);
+  --color-muted-foreground:     var(--muted-foreground);
+  --color-accent:               var(--accent);
+  --color-accent-foreground:    var(--accent-foreground);
+  --color-border:               var(--border);
+  --color-input:                var(--input);
+  --color-ring:                 var(--ring);
+  --color-destructive:          var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-popover:              var(--popover);
+  --color-popover-foreground:   var(--popover-foreground);
+
+  /* ── Brand colors as real Tailwind colors ──
+     بدون هذا التسجيل كانت كل الفئات المركّبة (bg-burgundy/10، dark:bg-gold،
+     dark:text-gold، from-burgundy، border-gold/25…) فئات ميتة لا تُولَّد إطلاقاً.
+     القيم تشير إلى متغيرات طبقة العلامة حتى تبقى مصدراً واحداً للحقيقة. */
+  --color-burgundy:          var(--burgundy);
+  --color-burgundy-light:    var(--burgundy-light);
+  --color-maroon:            var(--maroon);
+  --color-maroon-deep:       var(--maroon-deep);
+  --color-gold:              var(--gold);
+  --color-gold-light:        var(--gold-light);
+  --color-gold-dark:         var(--gold-dark);
+  --color-gold-soft:         var(--gold-soft);
+  --color-cream:             var(--cream);
+  --color-night:             var(--night);
+  --color-night-surface:     var(--night-surface);
+  --color-success:           var(--success);
+  --color-success-foreground: var(--success-foreground);
+
+  --color-sidebar:                      var(--sidebar);
+  --color-sidebar-foreground:           var(--sidebar-foreground);
+  --color-sidebar-border:               var(--sidebar-border);
+  --color-sidebar-primary:              var(--sidebar-primary);
+  --color-sidebar-primary-foreground:   var(--sidebar-primary-foreground);
+  --color-sidebar-accent:               var(--sidebar-accent);
+  --color-sidebar-accent-foreground:    var(--sidebar-accent-foreground);
+  --color-sidebar-ring:                 var(--sidebar-ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 8px);
+
+  /* Typeface stack */
+  --font-sans:         var(--tby-font-interface);
+  --font-arabic:       var(--tby-font-interface);
+  --font-tajawal:      var(--tby-font-interface);
+  --font-ruqaa:        var(--tby-font-interface);
+  --font-display:      var(--tby-font-interface);
+  --font-amiri:        var(--tby-font-interface);
+  --font-quran:        var(--tby-font-quran);
+  --font-scheherazade: var(--tby-font-interface);
+  --font-cairo:        var(--tby-font-interface);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LIGHT MODE — كريمي دافئ راقٍ
+═══════════════════════════════════════════════════════════ */
+:root {
+  /* ── Brand layer (source of truth for brand colors) ── */
+  --maroon:        var(--tby-brand-maroon);   /* خمري رسمي */
+  --maroon-deep:   var(--tby-brand-maroon-deep);   /* خمري أعمق */
+  --burgundy:      var(--tby-brand-burgundy);   /* خمري الأزرار والعناوين */
+  --burgundy-light:var(--tby-brand-burgundy-light);
+  --gold:          var(--tby-brand-gold);
+  --gold-light:    var(--tby-brand-gold-light);
+  --gold-dark:     var(--tby-brand-gold-dark);
+  --gold-soft:     var(--tby-brand-gold-soft);   /* نص ثانوي دافئ */
+  --cream:         var(--tby-brand-cream);   /* كريمي */
+  --night:         var(--tby-brand-night);   /* ليلي عميق — نص داكن على الذهبي */
+  --night-surface: var(--tby-light-night-surface);   /* سطح «أبيض نهاراً / خمري داكن ليلاً» */
+
+  /* متغيرات القلب الليلي للفئات اليدوية (text-burgundy / bg-burgundy / …)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     النمط المعتمد لألوان النص في الوضعين:
+
+       ✅  text-burgundy                    ← صحيح: يقلب ذهبياً ليلاً تلقائياً
+       ❌  text-burgundy dark:text-gold     ← مكرر: dark:text-gold زائدة تماماً
+
+     سبب الاستغناء: --burgundy-text يساوي #800020 نهاراً و #D4AF37 ليلاً،
+     لذا تطبّق text-burgundy لوني الوضعين معاً دون الحاجة لأي فئة dark:*.
+
+     الاستثناء المشروع الوحيد:
+       ✅  text-gold-dark dark:text-gold    ← مقصود: gold-dark أفتح ليلاً من نهاره
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  --burgundy-bg:     var(--tby-light-burgundy-background);
+  --burgundy-text:   var(--tby-light-burgundy-text);
+  --burgundy-border: var(--tby-light-burgundy-border);
+  --gold-dark-text:  var(--tby-light-gold-dark-text);
+
+  /* لوحة رسومات SVG: خمري وذهبي فقط */
+  --svg-maroon:    #800020;
+  --svg-gold:      #D4AF37;
+  --svg-primary:   #800020;
+  --svg-accent:    #D4AF37;
+  --svg-burgundy-deep: #4C091B;
+  --svg-burgundy-main: #800020;
+  --svg-burgundy-mid: #A02040;
+  --svg-gold-deep: #B8860B;
+  --svg-gold-main: #D4AF37;
+  --svg-gold-light: #F1D27A;
+  --svg-gold-soft: #F6ECD4;
+  --svg-accent-light: #E2CDA4;
+
+  /* ── Unified glass system ── */
+  --glass-bg:      rgba(255,252,245,0.90);
+  --glass-border:  rgba(128,0,32,0.11);
+  --glass-blur:    18px;
+  --glass-inset:   inset 0 1px 0 rgba(255,255,255,0.95);
+
+  /* Backgrounds — بيج فاتح ناعم أفتح قليلاً (ليس أبيض صرفاً) */
+  --background:    var(--tby-light-background);
+  --bg-muted:      #F2EDE2;
+  --foreground:    var(--tby-light-foreground);
+  --card:          var(--tby-light-card);
+  --card-foreground: var(--tby-light-card-foreground);
+  --card-border:   rgba(128, 0, 32, 0.10);
+
+  /* Popovers */
+  --popover:         #FFFDF8;
+  --popover-foreground: #800020;
+  --popover-border:  rgba(128, 0, 32, 0.10);
+
+  /* Brand */
+  --primary:           var(--tby-light-primary);
+  --primary-foreground: var(--tby-light-primary-foreground);
+  --primary-border:    #641830;
+
+  /* Secondary */
+  --secondary:           var(--tby-light-secondary);
+  --secondary-foreground: var(--tby-light-secondary-foreground);
+  --secondary-border:    #EDE6DA;
+
+  /* Muted */
+  --muted:           var(--tby-light-muted);
+  --muted-foreground: var(--tby-light-muted-foreground);
+  --muted-border:    #EDE6DA;
+
+  /* Accent — ذهبي */
+  --accent:           var(--tby-light-accent);
+  --accent-foreground: var(--tby-light-accent-foreground);
+  --accent-border:    #C09E2C;
+
+  /* Status */
+  --destructive:           var(--tby-light-destructive);
+  --destructive-foreground: var(--tby-light-destructive-foreground);
+  --destructive-border:    #C53030;
+  --success:               var(--tby-light-success);
+  --success-foreground:    var(--tby-light-success-foreground);
+
+  /* Inputs & Ring */
+  --border: var(--tby-light-border);
+  --input:  var(--tby-light-input);
+  --ring:   var(--tby-light-primary);
+
+  /* Radius — 20px كبسولي احترافي */
+  --radius: var(--tby-radius-base);
+
+  /* Sidebar */
+  --sidebar:                    #FFFFFF;
+  --sidebar-foreground:         #800020;
+  --sidebar-border:             rgba(128, 0, 32, 0.12);
+  --sidebar-primary:            #800020;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent:             #F3F0EC;
+  --sidebar-accent-foreground:  #800020;
+  --sidebar-ring:               #800020;
+
+  /* Charts */
+  --chart-1: #800020;
+  --chart-2: #D4AF37;
+  --chart-3: #38A169;
+  --chart-4: #3B82F6;
+  --chart-5: #F59E0B;
+
+  /* Interaction overlays */
+  --button-outline:  rgba(0,0,0,0.06);
+  --badge-outline:   rgba(0,0,0,0.05);
+  --elevate-1:       rgba(0,0,0,0.025);
+  --elevate-2:       rgba(0,0,0,0.06);
+  --opaque-button-border-intensity: -8;
+
+  /* Premium shadow system */
+  --shadow-2xs: 0 1px 2px 0   rgba(26,11,13,0.04);
+  --shadow-xs:  0 1px 3px 0   rgba(26,11,13,0.06);
+  --shadow-sm:  0 1px 2px -1px rgba(26,11,13,0.08), 0 1px 4px 0 rgba(26,11,13,0.05);
+  --shadow:     0 4px 6px -1px rgba(26,11,13,0.08), 0 2px 4px -2px rgba(26,11,13,0.05);
+  --shadow-md:  0 10px 15px -3px rgba(26,11,13,0.08), 0 4px 6px -4px rgba(26,11,13,0.04);
+  --shadow-lg:  0 20px 25px -5px rgba(26,11,13,0.10), 0 8px 10px -6px rgba(26,11,13,0.04);
+  --shadow-xl:  0 25px 50px -12px rgba(26,11,13,0.18);
+  --shadow-2xl: 0 35px 60px -15px rgba(26,11,13,0.22);
+
+  /* Brand shadows */
+  --shadow-bubble:      0 6px 20px -4px rgba(128,0,32,0.18), 0 2px 6px -2px rgba(128,0,32,0.10), inset 0 1px 0 rgba(255,255,255,0.85);
+  --shadow-bubble-gold: 0 6px 20px -4px rgba(212,175,55,0.28), 0 2px 6px -2px rgba(212,175,55,0.14), inset 0 1px 0 rgba(255,255,255,0.55);
+  --shadow-card:        0 8px 28px -6px rgba(128,0,32,0.16), 0 2px 8px -2px rgba(128,0,32,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
+  --shadow-card-hover:  0 14px 40px -8px rgba(128,0,32,0.24), 0 4px 14px -4px rgba(128,0,32,0.12);
+}
+
+.reader-control {
+  min-height: 2rem;
+  min-width: 2rem;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  color: var(--foreground);
+  padding: 0.25rem 0.5rem;
+  font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DARK MODE — خمري عميق فاخر (مستوحى من شاشة البداية)
+═══════════════════════════════════════════════════════════ */
+.dark {
+  /* ── Unified glass system — dark ── */
+  --glass-bg:      rgba(66,18,31,0.84);
+  --glass-border:  rgba(212,175,55,0.15);
+  --glass-blur:    18px;
+  --glass-inset:   inset 0 1px 0 rgba(212,175,55,0.08);
+
+  /* قلب متغيرات العلامة ليلاً — النص الذهبي، الأسطح الخمرية المهدّأة */
+  --night-surface: var(--tby-dark-night-surface);
+  --burgundy-bg:     var(--tby-dark-burgundy-background);
+  --burgundy-text:   var(--tby-dark-burgundy-text);
+  --burgundy-border: var(--tby-dark-burgundy-border);
+  --gold-dark-text:  var(--tby-dark-gold-dark-text);
+
+  /* لوحة رسومات SVG تبقى خمريّة وذهبيّة في الوضع الداكن */
+  --svg-maroon:    #800020;
+  --svg-gold:      #D4AF37;
+  --svg-primary:   #D4AF37;
+  --svg-accent:    #800020;
+  --svg-burgundy-deep: #360512;
+  --svg-burgundy-main: #D4AF37;
+  --svg-burgundy-mid: #800020;
+  --svg-gold-deep: #B8860B;
+  --svg-gold-main: #D4AF37;
+  --svg-gold-light: #F2DC92;
+  --svg-gold-soft: #F6ECD4;
+  --svg-accent-light: #800020;
+
+  /* Backgrounds — نفس خلفية شاشة البداية (#4C091B) */
+  --background:    var(--tby-dark-background);
+  --bg-muted:      #42121F;
+  --foreground:    var(--tby-dark-foreground);
+  --card:          var(--tby-dark-card);
+  --card-foreground: var(--tby-dark-card-foreground);
+  --card-border:   rgba(212, 175, 55, 0.14);
+
+  /* Popovers */
+  --popover:         #240910;
+  --popover-foreground: #FAF6EF;
+  --popover-border:  rgba(212, 175, 55, 0.14);
+
+  /* Brand — الذهبي يصبح الأساسي ليلاً */
+  --primary:           var(--tby-dark-primary);
+  --primary-foreground: var(--tby-dark-primary-foreground);
+  --primary-border:    #E0BC42;
+
+  /* Secondary */
+  --secondary:           var(--tby-dark-secondary);
+  --secondary-foreground: var(--tby-dark-secondary-foreground);
+  --secondary-border:    #5A1C2E;
+
+  /* Muted */
+  --muted:           var(--tby-dark-muted);
+  --muted-foreground: var(--tby-dark-muted-foreground);
+  --muted-border:    #5A1C2E;
+
+  /* Accent */
+  --accent:           var(--tby-dark-accent);
+  --accent-foreground: var(--tby-dark-accent-foreground);
+  --accent-border:    #E0BC42;
+
+  /* Status */
+  --destructive:           var(--tby-dark-destructive);
+  --destructive-foreground: var(--tby-dark-destructive-foreground);
+  --destructive-border:    #F56565;
+  --success:               var(--tby-dark-success);
+  --success-foreground:    var(--tby-dark-success-foreground);
+
+  /* Inputs & Ring */
+  --border: var(--tby-dark-border);
+  --input:  var(--tby-dark-input);
+  --ring:   var(--tby-dark-primary);
+
+  /* Sidebar */
+  --sidebar:                    #2E0D15;
+  --sidebar-foreground:         #FAF6EF;
+  --sidebar-border:             rgba(212, 175, 55, 0.14);
+  --sidebar-primary:            #D4AF37;
+  --sidebar-primary-foreground: #2B0D12;
+  --sidebar-accent:             #42121F;
+  --sidebar-accent-foreground:  #FAF6EF;
+  --sidebar-ring:               #D4AF37;
+
+  /* Charts */
+  --chart-1: #D4AF37;
+  --chart-2: #E8C85A;
+  --chart-3: #68D391;
+  --chart-4: #63B3ED;
+  --chart-5: #FBD38D;
+
+  /* Interaction overlays */
+  --button-outline:  rgba(255,255,255,0.10);
+  --badge-outline:   rgba(255,255,255,0.06);
+  --elevate-1:       rgba(255,255,255,0.04);
+  --elevate-2:       rgba(255,255,255,0.09);
+  --opaque-button-border-intensity: 9;
+
+  /* Premium dark shadows */
+  --shadow-2xs: 0 1px 2px 0   rgba(0,0,0,0.55);
+  --shadow-xs:  0 1px 3px 0   rgba(0,0,0,0.60);
+  --shadow-sm:  0 1px 2px -1px rgba(0,0,0,0.70), 0 1px 4px 0 rgba(0,0,0,0.55);
+  --shadow:     0 4px 6px -1px rgba(0,0,0,0.70), 0 2px 4px -2px rgba(0,0,0,0.60);
+  --shadow-md:  0 10px 15px -3px rgba(0,0,0,0.72), 0 4px 6px -4px rgba(0,0,0,0.60);
+  --shadow-lg:  0 20px 25px -5px rgba(0,0,0,0.80), 0 8px 10px -6px rgba(0,0,0,0.70);
+  --shadow-xl:  0 25px 50px -12px rgba(0,0,0,0.90);
+  --shadow-2xl: 0 35px 60px -15px rgba(0,0,0,0.98);
+
+  /* Brand shadows — dark */
+  --shadow-bubble:      0 6px 20px -4px rgba(0,0,0,0.65), 0 2px 6px -2px rgba(0,0,0,0.45), inset 0 1px 0 rgba(212,175,55,0.18);
+  --shadow-bubble-gold: 0 6px 20px -4px rgba(212,175,55,0.45), 0 2px 6px -2px rgba(212,175,55,0.22), inset 0 1px 0 rgba(212,175,55,0.28);
+  --shadow-card:        0 8px 28px -6px rgba(0,0,0,0.65), 0 2px 8px -2px rgba(0,0,0,0.45), inset 0 1px 0 rgba(212,175,55,0.12);
+  --shadow-card-hover:  0 14px 40px -8px rgba(0,0,0,0.80), 0 0 30px -8px rgba(212,175,55,0.40);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BASE STYLES
+═══════════════════════════════════════════════════════════ */
+@layer base {
+  *, *::before, *::after { @apply border-border box-border; }
+
+  html {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    direction: rtl;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply text-foreground antialiased;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 1.65;
+    letter-spacing: 0.01em;
+
+    /* خلفية موحدة بيج فاتح — بلا تدرجات ولا زخارف */
+    background-color: var(--background);
+  }
+
+  .dark body {
+    /* خلفية داكنة موحدة مطابقة لشاشة البداية — بلا تدرجات ولا زخارف */
+    background-color: var(--background);
+  }
+
+  #root {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── حركات الخلفية الإسلامية التفاعلية ────────────────────────────────── */
+
+  @keyframes islamicSparkle {
+    0%, 100% { opacity: 0;    transform: scale(0.25); }
+    40%, 60% { opacity: 0.85; transform: scale(1);    }
+  }
+
+  @keyframes islamicLightFlow {
+    0%   { opacity: 0.6; transform: translate(0,    0   ) scale(1);    }
+    50%  { opacity: 1;   transform: translate(-3%, -2%  ) scale(1.06); }
+    100% { opacity: 0.6; transform: translate( 3%,  2%  ) scale(1);    }
+  }
+
+  @keyframes islamicCornerGlow {
+    0%, 100% { opacity: 0.35; transform: scale(1);    }
+    50%      { opacity: 0.70; transform: scale(1.10); }
+  }
+
+  @keyframes islamicFloat {
+    0%, 100% { transform: translateY(0px)   rotate(0deg)  scale(1);   }
+    50%      { transform: translateY(-10px) rotate(12deg) scale(1.18); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [style*="islamicSparkle"],
+    [style*="islamicLightFlow"],
+    [style*="islamicCornerGlow"],
+    [style*="islamicFloat"] {
+      animation: none !important;
+    }
+  }
+
+  /* Typography hierarchy */
+  h1 {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+  }
+  h2, h3 {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  h4, h5, h6 {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  p {
+    line-height: 1.72;
+  }
+
+  /* Scrollbar — خمري ناعم */
+  ::-webkit-scrollbar          { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track    { background: transparent; }
+  ::-webkit-scrollbar-thumb    { background: rgba(128,0,32,0.35); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(128,0,32,0.60); }
+  .dark ::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.30); }
+  .dark ::-webkit-scrollbar-thumb:hover { background: rgba(212,175,55,0.55); }
+
+  /* Focus ring — accessible + branded */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  button:focus-visible, a:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+
+  /* Selection */
+  ::selection {
+    background: rgba(128,0,32,0.18);
+    color: #800020;
+  }
+  .dark ::selection {
+    background: rgba(212,175,55,0.22);
+    color: #D4AF37;
+  }
+
+  input[type='search']::-webkit-search-cancel-button { @apply hidden; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   COMPONENT LAYER
+═══════════════════════════════════════════════════════════ */
+@layer components {
+
+  /* ── Glass Card ─────────────────────────────────────────── */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur)) saturate(190%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(190%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-sm), var(--glass-inset);
+  }
+  .dark .glass {
+    backdrop-filter: blur(var(--glass-blur)) saturate(170%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(170%);
+    box-shadow: var(--shadow-md), var(--glass-inset);
+  }
+
+  /* ── Bubbly button base ─────────────────────────────────── */
+  /* STEP 7: button min-height 44px (mobile accessibility standard) */
+  .btn-bubble {
+    position: relative;
+    overflow: hidden;
+    border-radius: 9999px;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.015em;
+    min-height: 44px;
+    cursor: pointer;
+    user-select: none;
+    transition:
+      transform 0.18s cubic-bezier(0.34,1.56,0.64,1),
+      box-shadow 0.18s ease,
+      filter 0.14s ease,
+      opacity 0.14s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Top-gloss sheen */
+  .btn-bubble::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(175deg, rgba(255,255,255,0.26) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .btn-bubble:hover  { transform: translateY(-2px) scale(1.018); }
+  .btn-bubble:active { transform: scale(0.94); transition-duration: 0.09s; }
+  .btn-bubble:focus-visible { outline: 2.5px solid var(--ring); outline-offset: 3px; }
+  .btn-bubble:disabled { opacity: 0.52; pointer-events: none; }
+
+  /* ── Primary bubble — خمري/ذهبي ────────────────────────── */
+  .btn-primary-bubble {
+    background: linear-gradient(158deg, #A02040 0%, #800020 52%, #6B0018 100%);
+    color: #fff;
+    box-shadow: var(--shadow-bubble);
+  }
+  .dark .btn-primary-bubble {
+    background: linear-gradient(158deg, #EBCb5C 0%, #D4AF37 52%, #B8962A 100%);
+    color: #2B0D12;
+    box-shadow: var(--shadow-bubble-gold);
+  }
+  .btn-primary-bubble:hover { filter: brightness(1.10); }
+  .dark .btn-primary-bubble:hover { filter: brightness(1.07); }
+
+  /* ── Secondary bubble ───────────────────────────────────── */
+  .btn-secondary-bubble {
+    background: rgba(128,0,32,0.07);
+    color: #800020;
+    border: 1.5px solid rgba(128,0,32,0.22);
+    box-shadow: 0 3px 12px -2px rgba(128,0,32,0.10), inset 0 1px 0 rgba(255,255,255,0.75);
+  }
+  .dark .btn-secondary-bubble {
+    background: rgba(212,175,55,0.09);
+    color: #D4AF37;
+    border: 1.5px solid rgba(212,175,55,0.28);
+    box-shadow: 0 3px 12px -2px rgba(212,175,55,0.12), inset 0 1px 0 rgba(212,175,55,0.10);
+  }
+  .btn-secondary-bubble:hover { filter: brightness(1.05); }
+
+  /* ── Bubbly card ────────────────────────────────────────── */
+  .card-bubble {
+    border-radius: 22px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px) saturate(175%);
+    -webkit-backdrop-filter: blur(16px) saturate(175%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-card), var(--glass-inset);
+    transition:
+      transform 0.26s cubic-bezier(0.34,1.56,0.64,1),
+      box-shadow 0.26s ease,
+      border-color 0.26s ease;
+  }
+  .dark .card-bubble {
+    backdrop-filter: blur(16px) saturate(155%);
+    -webkit-backdrop-filter: blur(16px) saturate(155%);
+    box-shadow: var(--shadow-card), var(--glass-inset);
+  }
+  .card-bubble:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card-hover);
+    border-color: rgba(128,0,32,0.24);
+  }
+  .dark .card-bubble:hover {
+    box-shadow: var(--shadow-card-hover);
+    border-color: rgba(212,175,55,0.38);
+  }
+  .card-bubble:active {
+    transform: scale(0.985);
+    transition-duration: 0.10s;
+  }
+
+  /* ── Gold ring for avatars ──────────────────────────────── */
+  .gold-ring {
+    box-shadow: 0 0 0 2.5px #D4AF37, 0 4px 16px -3px rgba(212,175,55,0.50);
+  }
+
+  /* ── Recording pulsing banner ───────────────────────────── */
+  .recording-banner {
+    animation: pulse-recording 1.5s ease-in-out infinite;
+    background: rgba(220,20,60,0.14);
+    border: 1px solid rgba(220,20,60,0.38);
+  }
+
+  /* ── Logo filter helpers ────────────────────────────────── */
+  .logo-light {
+    filter: sepia(1) hue-rotate(-50deg) saturate(6) brightness(0.52)
+            drop-shadow(0 4px 16px rgba(128,0,32,0.28));
+  }
+  .logo-dark {
+    /* لمعان ذهبي خفيف جداً — فاخر وهادئ بدون مبالغة */
+    filter: brightness(1.06) drop-shadow(0 3px 16px rgba(212,175,55,0.32));
+  }
+
+  /* ── Icon bubble (icon container) ──────────────────────── */
+  /* STEP 7: card icons 32–40px */
+  .icon-bubble {
+    border-radius: 1rem;
+    width: 2.5rem;   /* 40px */
+    height: 2.5rem;  /* 40px */
+    background: linear-gradient(145deg, rgba(212,175,55,0.18), rgba(212,175,55,0.07));
+    border: 1px solid rgba(212,175,55,0.18);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 8px -2px rgba(212,175,55,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+  }
+  .dark .icon-bubble {
+    background: linear-gradient(145deg, rgba(212,175,55,0.16), rgba(212,175,55,0.06));
+    border: 1px solid rgba(212,175,55,0.16);
+    box-shadow: inset 0 1px 0 rgba(212,175,55,0.10), 0 2px 8px -2px rgba(0,0,0,0.45);
+  }
+  .icon-bubble:hover {
+    background: linear-gradient(145deg, rgba(212,175,55,0.28), rgba(212,175,55,0.14));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 3px 12px -2px rgba(212,175,55,0.28);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITY LAYER
+═══════════════════════════════════════════════════════════ */
+@layer utilities {
+
+  /* ── Spring press ───────────────────────────────────────── */
+  .btn-press {
+    transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-press:active { transform: scale(0.97); transition-duration: 0.09s; }
+
+  /* ── Stagger entrance ───────────────────────────────────── */
+  @keyframes stagger-in {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .stagger-in { animation: stagger-in 0.52s cubic-bezier(0.22,1,0.36,1) both; }
+
+  /* ── Page slide in ──────────────────────────────────────── */
+  @keyframes page-enter {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .page-enter { animation: page-enter 0.42s cubic-bezier(0.22,1,0.36,1) both; }
+
+  /* ── Mushaf page-turn animations — smooth, subtle, GPU-friendly ── */
+  /* RTL Mushaf: swipe RIGHT→LEFT = NEXT (page slides in from the left),
+     swipe LEFT→RIGHT = PREV (slides in from the right). No heavy 3D. */
+  @keyframes mushaf-turn-from-left {
+    from { opacity: 0.35; transform: translate3d(-26px, 0, 0); }
+    to   { opacity: 1;    transform: translate3d(0, 0, 0); }
+  }
+  @keyframes mushaf-turn-from-right {
+    from { opacity: 0.35; transform: translate3d(26px, 0, 0); }
+    to   { opacity: 1;    transform: translate3d(0, 0, 0); }
+  }
+  .mushaf-turn-next { animation: mushaf-turn-from-left  0.30s cubic-bezier(0.22,1,0.36,1) both; }
+  .mushaf-turn-prev { animation: mushaf-turn-from-right 0.30s cubic-bezier(0.22,1,0.36,1) both; }
+
+  /* ═══ Mushaf full-screen reader ═══════════════════════════ */
+  /* Dedicated reading environment: the page dominates, controls fade. */
+  .mushaf-reader-root {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    /* خلفية ورقية ثابتة في الوضعين — المصحف مستقل عن الثيم، فلا يظهر حوله إطار أو «بطاقة» */
+    background: #F7F2E4;
+    overflow: hidden;
+    direction: rtl;
+  }
+
+  /* Reading area: page centered, fills the viewport */
+  .mushaf-page-area {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .mushaf-page-frame {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* بلا برواز إطلاقاً — لا حد ولا ظل ولا زوايا حول صفحة المصحف */
+    border: 0;
+    box-shadow: none;
+    border-radius: 0;
+    background: transparent;
+  }
+  .mushaf-page-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+    will-change: transform;
+    transform-origin: center center;
+    /* نص المصحف أسود دائماً داخل الصورة — ممنوع أي فلتر أو صبغة من الثيم */
+    filter: none;
+    border: 0;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  /* Loading skeleton */
+  .mushaf-skeleton {
+    position: absolute;
+    inset: 8%;
+    border-radius: 12px;
+    background: linear-gradient(100deg,
+      rgba(128,0,32,0.05) 30%, rgba(212,175,55,0.10) 50%, rgba(128,0,32,0.05) 70%);
+    background-size: 200% 100%;
+    animation: mushaf-shimmer 1.4s ease-in-out infinite;
+  }
+  .dark .mushaf-skeleton {
+    background: linear-gradient(100deg,
+      rgba(212,175,55,0.06) 30%, rgba(212,175,55,0.14) 50%, rgba(212,175,55,0.06) 70%);
+    background-size: 200% 100%;
+  }
+  @keyframes mushaf-shimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+  }
+
+  /* Error state */
+  .mushaf-error {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+    padding: 24px;
+  }
+  .mushaf-error-icon {
+    width: 60px; height: 60px;
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(212,175,55,0.12);
+    color: #B8860B;
+  }
+  .dark .mushaf-error-icon { background: rgba(212,175,55,0.10); color: #D4AF37; }
+  .mushaf-error-title {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 1.15rem; font-weight: 700;
+    color: #B8860B;
+  }
+  .dark .mushaf-error-title { color: #D4AF37; }
+  .mushaf-error-body {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 0.8rem;
+    color: #B8860B;
+    opacity: 0.85;
+    max-width: 260px;
+  }
+  .mushaf-retry-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    border-radius: 999px;
+    background: rgba(212,175,55,0.16); color: #B8860B;
+    padding: 9px 22px;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 0.85rem; font-weight: 700;
+  }
+  .dark .mushaf-retry-btn { background: rgba(212,175,55,0.14); color: #D4AF37; }
+
+  /* ── Fading control bars ── */
+  .mushaf-bar {
+    position: absolute;
+    left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+    z-index: 10;
+  }
+  .mushaf-bar--visible { opacity: 1; pointer-events: auto; }
+  .mushaf-bar-top {
+    top: 0;
+    justify-content: space-between;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+    background: linear-gradient(to bottom, color-mix(in srgb, #F7F2E4 88%, transparent), transparent);
+    transform: translateY(-6px);
+  }
+  .mushaf-bar-top.mushaf-bar--visible { transform: translateY(0); }
+  .mushaf-bar-bottom {
+    bottom: 0;
+    justify-content: center;
+    gap: 18px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(to top, color-mix(in srgb, #F7F2E4 88%, transparent), transparent);
+    transform: translateY(6px);
+  }
+  .mushaf-bar-bottom.mushaf-bar--visible { transform: translateY(0); }
+
+  /* نصوص واجهة المصحف ذهبية في الوضعين — ذهبي معمّق نهاراً للقراءة فوق الورق، ذهبي ساطع ليلاً */
+  .mushaf-bar-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 0.85rem; font-weight: 600;
+    color: #B8860B;
+    transition: opacity 0.2s ease;
+  }
+  .dark .mushaf-bar-btn { color: #D4AF37; }
+  .mushaf-bar-btn:hover { opacity: 0.7; }
+
+  .mushaf-bar-actions { display: flex; align-items: center; gap: 8px; }
+  .mushaf-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 0.72rem;
+    color: #B8860B;
+    background: rgba(212,175,55,0.10);
+    padding: 6px 12px;
+    border-radius: 999px;
+    transition: opacity 0.2s ease;
+  }
+  .dark .mushaf-pill { background: rgba(212,175,55,0.08); }
+  .mushaf-pill:hover { opacity: 0.75; }
+
+  /* Prev/next arrows */
+  .mushaf-nav-btn {
+    width: 38px; height: 38px;
+    border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    color: #B8860B;
+    background: rgba(212,175,55,0.10);
+    transition: opacity 0.2s ease, transform 0.15s ease;
+  }
+  .dark .mushaf-nav-btn { color: #D4AF37; background: rgba(212,175,55,0.08); }
+  .mushaf-nav-btn:disabled { opacity: 0.25; }
+  .mushaf-nav-btn:not(:disabled):hover { transform: scale(1.06); }
+
+  /* ── Gold page number — elegant, subtle ── */
+  /* رقم الصفحة — ذهبي كامل في الوضعين (معمّق نهاراً للقراءة فوق الورق) */
+  .mushaf-page-num {
+    display: inline-flex; align-items: baseline; gap: 6px;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    direction: rtl;
+    transition: opacity 0.2s ease;
+    padding: 4px 10px;
+    color: #B8860B;
+  }
+  .dark .mushaf-page-num { color: #D4AF37; }
+  .mushaf-page-num:hover { opacity: 0.75; }
+  .mushaf-page-num-current {
+    font-size: 1.15rem; font-weight: 700;
+    color: #B8860B;
+    letter-spacing: 0.02em;
+  }
+  .dark .mushaf-page-num-current { color: #D4AF37; }
+  .mushaf-page-num-sep,
+  .mushaf-page-num-total {
+    font-size: 0.78rem;
+    color: #B8860B;
+    opacity: 0.75;
+  }
+  .dark .mushaf-page-num-sep,
+  .dark .mushaf-page-num-total { color: #D4AF37; }
+
+  /* ── Page-jump dialog ── */
+  .mushaf-jump-overlay {
+    position: fixed; inset: 0; z-index: 90;
+    background: rgba(30, 8, 14, 0.45);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    animation: mushaf-fade-in 0.18s ease both;
+  }
+  @keyframes mushaf-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .mushaf-jump-dialog {
+    width: 100%; max-width: 300px;
+    background: var(--card);
+    border: 1px solid rgba(212,175,55,0.30);
+    border-radius: 20px;
+    padding: 20px;
+    display: flex; flex-direction: column; gap: 12px;
+    direction: rtl;
+    animation: spring-pop 0.28s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .mushaf-jump-title {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 0.95rem; font-weight: 700;
+    color: #B8860B;
+    text-align: center;
+  }
+  .dark .mushaf-jump-title { color: #D4AF37; }
+  .mushaf-jump-form { display: flex; gap: 8px; }
+  .mushaf-jump-input {
+    flex: 1; min-width: 0;
+    border-radius: 12px;
+    background: rgba(212,175,55,0.08);
+    border: 1px solid transparent;
+    padding: 10px 14px;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 0.9rem;
+    color: #B8860B;
+    outline: none;
+    text-align: center;
+    transition: border-color 0.2s ease;
+  }
+  .dark .mushaf-jump-input { background: rgba(212,175,55,0.07); color: #D4AF37; }
+  .mushaf-jump-input::placeholder { color: rgba(184,134,11,0.55); opacity: 1; }
+  .mushaf-jump-input:focus { border-color: rgba(212,175,55,0.5); }
+  .mushaf-jump-submit {
+    border-radius: 12px;
+    background: rgba(212,175,55,0.16); color: #B8860B;
+    padding: 10px 18px;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 0.85rem; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .dark .mushaf-jump-submit { background: rgba(212,175,55,0.14); color: #D4AF37; }
+  .mushaf-jump-cancel {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 0.78rem;
+    color: #B8860B;
+    transition: color 0.2s ease;
+  }
+  .dark .mushaf-jump-cancel { color: #D4AF37; }
+  .mushaf-jump-cancel:hover { color: var(--foreground); }
+
+  /* ── Fade up (alias) ────────────────────────────────────── */
+  .fade-up { animation: stagger-in 0.52s cubic-bezier(0.22,1,0.36,1) both; }
+
+  /* ── Spring pop ─────────────────────────────────────────── */
+  @keyframes spring-pop {
+    0%   { transform: scale(0.68); opacity: 0; }
+    60%  { transform: scale(1.10); }
+    100% { transform: scale(1);   opacity: 1; }
+  }
+  .spring-pop { animation: spring-pop 0.42s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+  /* ── Recording pulse ────────────────────────────────────── */
+  @keyframes pulse-recording {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.52; }
+  }
+
+  /* ── Spin ───────────────────────────────────────────────── */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* ── Float (generic, used elsewhere) ────────────────────── */
+  @keyframes float {
+    0%, 100% { transform: translateY(0)   rotate(0deg); }
+    33%       { transform: translateY(-9px) rotate(0.4deg); }
+    66%       { transform: translateY(-4px) rotate(-0.4deg); }
+  }
+  .float { animation: float 4.5s ease-in-out infinite; }
+
+  /* ── Legacy aliases (kept for any remaining refs) ────────── */
+  @keyframes logo-sweep {
+    0%        { left: -45%; }
+    45%, 100% { left: 115%; }
+  }
+  /* ── Shimmer ────────────────────────────────────────────── */
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+  }
+  .shimmer {
+    background: linear-gradient(90deg, transparent 20%, rgba(255,255,255,0.18) 50%, transparent 80%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s infinite;
+  }
+  .dark .shimmer {
+    background: linear-gradient(90deg, transparent 20%, rgba(212,175,55,0.10) 50%, transparent 80%);
+    background-size: 200% 100%;
+  }
+
+  /* ── Gold shimmer pulse (for CTA buttons) ───────────────── */
+  @keyframes cta-shine {
+    0%, 100% { box-shadow: var(--shadow-bubble); }
+    50%       { box-shadow: var(--shadow-bubble), 0 0 22px 2px rgba(212,175,55,0.22); }
+  }
+  .cta-shine { animation: cta-shine 3s ease-in-out infinite; }
+
+  /* ── Font helpers ───────────────────────────────────────── */
+  .font-readex     { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+  .font-cairo      { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+  .font-tajawal    { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+  /* Aref Ruqaa — للعناصر الشعارية فقط (Branding) — ممنوع للواجهة */
+  .font-ruqaa      { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+  .font-display    { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+  /* font-amiri: كانت تُستخدم لعناوين الواجهة — المواصفة: IBM Plex Sans Arabic للواجهة كاملة.
+     النص القرآني الحقيقي يستخدم .font-quran (Amiri Quran) */
+  .font-amiri      { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+  .font-quran      { font-family: 'Amiri Quran', 'Amiri', serif; }
+  .font-scheherazade { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+
+  /* ── Colour tokens ──────────────────────────────────────── */
+  .text-maroon     { color: var(--maroon); }
+  .bg-maroon       { background-color: var(--maroon); }
+  .bg-maroon-deep  { background-color: var(--maroon-deep); }
+  .text-cream      { color: var(--cream); }
+  .bg-cream        { background-color: var(--cream); }
+  .text-gold-soft  { color: var(--gold-soft); }
+  /* الفئات اليدوية التالية تعتمد متغيرات القلب الليلي (--burgundy-text / --burgundy-bg / …)
+     حتى لا تتعارض مع الفئات المولَّدة من @theme (مثل dark:bg-gold على عنصر bg-burgundy):
+     المتغير يقلب قيمة الفئة العادية، بينما تبقى variants المولّدة قادرة على التغلّب. */
+  .text-burgundy   { color: var(--burgundy-text); }
+  .bg-burgundy     { background-color: var(--burgundy-bg); }
+  .bg-burgundy-light { background-color: var(--burgundy-light); }
+  .border-burgundy { border-color: var(--burgundy-border); }
+  .text-night         { color: var(--night); }
+  .text-gold          { color: var(--gold); }
+  .text-gold-dark     { color: var(--gold-dark-text); }
+  .bg-gold            { background-color: var(--gold); }
+  .border-gold        { border-color: var(--gold); }
+  /* night surface — for dark mode inputs, modals */
+  .bg-night           { background-color: var(--night); }
+  .bg-night-surface   { background-color: var(--night-surface); }
+
+  /* ── Shadow utilities ───────────────────────────────────── */
+  .shadow-gold {
+    box-shadow: 0 0 0 2px #D4AF37, 0 4px 16px -3px rgba(212,175,55,0.50);
+  }
+  .shadow-card       { box-shadow: var(--shadow-card); }
+  .shadow-card-hover { box-shadow: var(--shadow-card-hover); }
+  .shadow-bubble     { box-shadow: var(--shadow-bubble); }
+
+  /* ── Elevate system ─────────────────────────────────────── */
+  .hover-elevate:not(.no-default-hover-elevate),
+  .active-elevate:not(.no-default-active-elevate) {
+    position: relative; z-index: 0;
+  }
+  .hover-elevate:not(.no-default-hover-elevate)::after,
+  .active-elevate:not(.no-default-active-elevate)::after {
+    content: ''; pointer-events: none;
+    position: absolute; inset: 0;
+    border-radius: inherit; z-index: 999;
+  }
+  .hover-elevate:hover:not(.no-default-hover-elevate)::after  { background-color: var(--elevate-1); }
+  .active-elevate:active:not(.no-default-active-elevate)::after { background-color: var(--elevate-1); }
+
+  /* ── Skeleton loading ───────────────────────────────────── */
+  @keyframes skeleton-wave {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, rgba(128,0,32,0.06) 25%, rgba(128,0,32,0.12) 50%, rgba(128,0,32,0.06) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-wave 1.6s infinite;
+    border-radius: var(--radius);
+  }
+  .dark .skeleton {
+    background: linear-gradient(90deg, rgba(212,175,55,0.05) 25%, rgba(212,175,55,0.10) 50%, rgba(212,175,55,0.05) 75%);
+    background-size: 200% 100%;
+  }
+
+  /* ── No-select for interactive elements ─────────────────── */
+  .no-select { user-select: none; -webkit-user-select: none; }
+
+  /* Hide search cancel button */
+  input[type='search']::-webkit-search-cancel-button { @apply hidden; }
+
+  /* ══════════════════════════════════════════════════════════
+     MOBILE OPTIMIZATION — 320–430px
+  ══════════════════════════════════════════════════════════ */
+
+  /* 320px — الشاشات الصغيرة جداً */
+  @media (max-width: 320px) {
+    html, body { font-size: 12.5px; }
+    h1 { font-size: 1.3rem; }
+    h2 { font-size: 1.1rem; }
+    .card-bubble { border-radius: 22px; padding: 0.75rem; }
+    .btn-bubble  { padding-inline: 1rem; padding-block: 0.55rem; font-size: 0.8rem; }
+    .icon-bubble { width: 2.25rem; height: 2.25rem; border-radius: 0.75rem; }
+  }
+
+  /* 360px */
+  @media (max-width: 360px) {
+    html, body { font-size: 13px; }
+    h1 { font-size: clamp(1.25rem, 5.5vw, 1.6rem); }
+    h2 { font-size: clamp(1.05rem, 4.5vw, 1.3rem); }
+  }
+
+  /* 390px */
+  @media (max-width: 390px) {
+    html, body { font-size: 13.5px; letter-spacing: 0.005em; }
+    h1 { font-size: clamp(1.35rem, 5vw, 1.75rem); }
+    h2 { font-size: clamp(1.1rem, 4vw, 1.4rem); }
+    .mobile-nav-label { font-size: 8.5px !important; }
+    .mobile-nav-icon  { width: 20px !important; height: 20px !important; }
+    .card-bubble { border-radius: 22px; }
+  }
+
+  /* 430px — كل الموبايل */
+  @media (max-width: 430px) {
+    html, body { font-size: 14px; }
+
+    /* Header */
+    .mobile-header-compact { height: 3.25rem !important; }
+
+    /* Cards */
+    .card-bubble { border-radius: 18px; }
+
+    /* Buttons — أصغر height وفونت */
+    .btn-bubble {
+      font-size: 0.85rem;
+      padding-block: 0.6rem;
+    }
+
+    /* الأزرار الأساسية */
+    .btn-primary-bubble,
+    .btn-secondary-bubble {
+      padding-inline: 1.25rem;
+      padding-block: 0.65rem;
+      font-size: 0.85rem;
+    }
+
+    /* العناوين */
+    h1 { font-size: clamp(1.4rem, 5vw, 1.9rem); }
+    h2 { font-size: clamp(1.15rem, 4vw, 1.5rem); }
+    h3 { font-size: clamp(1rem, 3.5vw, 1.25rem); }
+
+    /* Padding داخلي للبطاقات */
+    .mobile-p-compact { padding: 0.875rem !important; }
+
+    /* Icon bubble */
+    .icon-bubble { width: 2.5rem; height: 2.5rem; }
+
+    /* Bottom nav */
+    .mobile-nav-label { font-size: 9px !important; }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   قواعد Dark Mode الدلالية — النص العادي يتبع Tokens الثيم،
+   والذهبي يُستخدم فقط كـ accent / selected / primary.
+   (قلب text-burgundy/bg-burgundy/border-burgundy/text-gold-dark
+    يتم الآن عبر متغيرات --burgundy-text / --burgundy-bg / … في .dark)
+═══════════════════════════════════════════════════════════════ */
+
+/* نهاري: النص الذهبي للأزرار الخمرية فقط — لا نلوّن النصوص العادية ذهبياً */
+:where(html:not(.dark)) [class~="bg-burgundy"].text-white,
+:where(html:not(.dark)) [class~="bg-burgundy"] .text-white,
+:where(html:not(.dark)) .btn-primary-bubble {
+  color: #F2DC92;
+}
+/* ليلي: النص على الأزرار الذهبية يبقى داكناً حفاظاً على التباين */
+.dark .text-white[class*="dark:text-night"] { color: #2B0D12; }
+::placeholder { color: #8F4A5B; opacity: 0.75; }
+.dark ::placeholder { color: #BFA05F; opacity: 0.75; }
+
+/* لا نفرض لوناً واحداً على كل شجرة DOM في Dark Mode؛
+   text-foreground وtext-muted-foreground وtext-card-foreground
+   يجب أن تحتفظ بتدرجها الدلالي من Tokens الثيم. */
+
+/* عنوان الترحيب — خمري فاخر نهاراً، ذهبي ليلاً */
+.hero-greeting {
+  background: linear-gradient(135deg, #A02040 0%, #800020 45%, #9C2B47 80%, #B04A5F 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.dark .hero-greeting {
+  background: linear-gradient(135deg, #F2DC92 0%, #D4AF37 50%, #E9CE77 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* موحّد حدود البطاقات — خمري رقيق نهاراً، ذهبي رقيق ليلاً */
+.card-bubble, .shadow-card { position: relative; }
+.glass, .card-bubble, .shadow-card, [data-slot="card"] {
+  border-color: rgba(128, 0, 32, 0.18) !important;
+}
+.dark .glass, .dark .card-bubble, .dark .shadow-card, .dark [data-slot="card"] {
+  border-color: rgba(212, 175, 55, 0.28) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   نظام ألوان الأيقونات الموحّد — نهاري خمري، ليلي ذهبي
+    رسومات SectionIcon متدرجة التعبئة وتلتزم بلوحة الخمري والذهبي.
+   الأيقونات داخل الأسطح والشارات الملوّنة ترث لون سطحها حفاظاً على الوضوح.
+═══════════════════════════════════════════════════════════ */
+svg { color: var(--svg-primary); }
+.student-bottom-nav svg {
+  /* لا تجعل القاعدة العامة للأيقونات كل عناصر الشريط ذهبية فوق الخلفية الذهبية النشطة */
+  color: inherit;
+}
+.dark .student-bottom-nav svg {
+  color: var(--gold);
+  filter: none;
+}
+[class*="bg-burgundy"] svg, [class*="bg-maroon"] svg, [class*="bg-gold"] svg,
+[class*="bg-green"] svg, [class*="bg-emerald"] svg, [class*="bg-teal"] svg,
+[class*="bg-red"] svg, [class*="bg-destructive"] svg, [class*="bg-blue"] svg,
+[class*="bg-amber"] svg, [class*="bg-orange"] svg, [class*="bg-yellow"] svg,
+.btn-primary-bubble svg, .btn-secondary-bubble svg, .recording-banner svg,
+/* حاوية مسجد صفحة المواقيت: خمريّة في الوضعين والأيقونة ذهبية دائماً —
+   ترث لون الحاوية (gold) وتتفوق على قاعدة svg العامة أعلاه */
+.mushaf-prayer-icon-shell svg {
+  color: inherit;
+}
+/* SVG artwork palette — remap existing fills/strokes only; geometry stays untouched. */
+.section-icon :is([fill="#4C091B"], [fill="#5E1424"], [fill="#5E4128"], [fill="#5D4229"], [fill="#183328"], [fill="#6B4A2E"], [fill="#77552F"],
+  [stroke="#4C091B"], [stroke="#5E1424"], [stroke="#5E4128"], [stroke="#5D4229"], [stroke="#183328"], [stroke="#6B4A2E"], [stroke="#77552F"],
+  [stop-color="#4C091B"], [stop-color="#5E1424"], [stop-color="#5E4128"], [stop-color="#5D4229"], [stop-color="#183328"], [stop-color="#6B4A2E"], [stop-color="#77552F"]) {
+  fill: var(--svg-burgundy-deep);
+  stroke: var(--svg-burgundy-deep);
+  stop-color: var(--svg-burgundy-deep);
+}
+
+.section-icon :is([fill="#33604F"], [fill="#1F4435"], [fill="#2F5D49"], [fill="#2F5B41"], [fill="#3E6B4F"], [fill="#3E6B4C"], [fill="#4C7A5B"], [fill="#3E7A5E"],
+  [fill="#24513F"], [fill="#8A6540"], [fill="#8A6844"], [fill="#A87F52"], [fill="#8F6B42"], [fill="#7C6F38"],
+  [stroke="#33604F"], [stroke="#1F4435"], [stroke="#2F5D49"], [stroke="#2F5B41"], [stroke="#3E6B4F"], [stroke="#3E6B4C"], [stroke="#4C7A5B"], [stroke="#3E7A5E"],
+  [stroke="#24513F"], [stroke="#8A6540"], [stroke="#8A6844"], [stroke="#A87F52"], [stroke="#8F6B42"], [stroke="#7C6F38"],
+  [stop-color="#33604F"], [stop-color="#1F4435"], [stop-color="#2F5D49"], [stop-color="#2F5B41"], [stop-color="#3E6B4F"], [stop-color="#3E6B4C"], [stop-color="#4C7A5B"], [stop-color="#3E7A5E"],
+  [stop-color="#24513F"], [stop-color="#8A6540"], [stop-color="#8A6844"], [stop-color="#A87F52"], [stop-color="#8F6B42"], [stop-color="#7C6F38"]) {
+  fill: var(--svg-burgundy-main);
+  stroke: var(--svg-burgundy-main);
+  stop-color: var(--svg-burgundy-main);
+}
+
+.section-icon :is([fill="#7FA98A"], [fill="#7FA997"], [fill="#5E8F6E"], [fill="#6E9A6B"], [fill="#8BAF7D"], [fill="#95BC9B"], [fill="#86B28C"], [fill="#D9BE8E"], [fill="#B39456"], [fill="#E2CDA4"],
+  [stroke="#7FA98A"], [stroke="#7FA997"], [stroke="#5E8F6E"], [stroke="#6E9A6B"], [stroke="#8BAF7D"], [stroke="#95BC9B"], [stroke="#86B28C"], [stroke="#D9BE8E"], [stroke="#B39456"], [stroke="#E2CDA4"],
+  [stop-color="#7FA98A"], [stop-color="#7FA997"], [stop-color="#5E8F6E"], [stop-color="#6E9A6B"], [stop-color="#8BAF7D"], [stop-color="#95BC9B"], [stop-color="#86B28C"], [stop-color="#D9BE8E"], [stop-color="#B39456"], [stop-color="#E2CDA4"]) {
+  fill: var(--svg-accent-light);
+  stroke: var(--svg-accent-light);
+  stop-color: var(--svg-accent-light);
+}
+
+.section-icon :is([fill="#A02040"], [fill="#9A2A44"], [fill="#B84360"], [fill="#8C2B22"], [fill="#C94435"], [fill="#E98A5F"], [fill="#7A2E2E"],
+  [stroke="#A02040"], [stroke="#9A2A44"], [stroke="#B84360"], [stroke="#8C2B22"], [stroke="#C94435"], [stroke="#E98A5F"], [stroke="#7A2E2E"],
+  [stop-color="#A02040"], [stop-color="#9A2A44"], [stop-color="#B84360"], [stop-color="#8C2B22"], [stop-color="#C94435"], [stop-color="#E98A5F"], [stop-color="#7A2E2E"]) {
+  fill: var(--svg-burgundy-mid);
+  stroke: var(--svg-burgundy-mid);
+  stop-color: var(--svg-burgundy-mid);
+}
+
+.section-icon :is([fill="#B8860B"], [fill="#A87B2C"], [fill="#A87F22"], [fill="#96701D"], [fill="#C1913A"], [fill="#A39451"], [fill="#CBA13C"], [fill="#D9B44A"], [fill="#B98F2D"],
+  [stroke="#B8860B"], [stroke="#A87B2C"], [stroke="#A87F22"], [stroke="#96701D"], [stroke="#C1913A"], [stroke="#A39451"], [stroke="#CBA13C"], [stroke="#D9B44A"], [stroke="#B98F2D"],
+  [stop-color="#B8860B"], [stop-color="#A87B2C"], [stop-color="#A87F22"], [stop-color="#96701D"], [stop-color="#C1913A"], [stop-color="#A39451"], [stop-color="#CBA13C"], [stop-color="#D9B44A"], [stop-color="#B98F2D"]) {
+  fill: var(--svg-gold-deep);
+  stroke: var(--svg-gold-deep);
+  stop-color: var(--svg-gold-deep);
+}
+
+.section-icon :is([fill="#EFD288"], [fill="#E0BA62"], [fill="#E9CF8F"], [fill="#F1D27A"], [fill="#F2DC92"], [fill="#F2E3B3"], [fill="#F4E8CF"], [fill="#F6ECD4"], [fill="#F6D9C4"], [fill="#FFF8E6"],
+  [stroke="#EFD288"], [stroke="#E0BA62"], [stroke="#E9CF8F"], [stroke="#F1D27A"], [stroke="#F2DC92"], [stroke="#F2E3B3"], [stroke="#F4E8CF"], [stroke="#F6ECD4"], [stroke="#F6D9C4"], [stroke="#FFF8E6"],
+  [stop-color="#EFD288"], [stop-color="#E0BA62"], [stop-color="#E9CF8F"], [stop-color="#F1D27A"], [stop-color="#F2DC92"], [stop-color="#F2E3B3"], [stop-color="#F4E8CF"], [stop-color="#F6ECD4"], [stop-color="#F6D9C4"], [stop-color="#FFF8E6"]) {
+  fill: var(--svg-gold-light);
+  stroke: var(--svg-gold-light);
+  stop-color: var(--svg-gold-light);
+}
+
+/* الوضع النهاري: النصوص العادية خمريّة، مع إبقاء ألوان الحالة والتنبيهات صريحة. */
+:where(html:not(.dark)) .text-foreground,
+:where(html:not(.dark)) .text-card-foreground,
+:where(html:not(.dark)) .text-secondary-foreground,
+:where(html:not(.dark)) .text-popover-foreground,
+:where(html:not(.dark)) .text-muted-foreground {
+  color: #800020 !important;
+}
+:where(html:not(.dark)) [class~="bg-burgundy"] > :not(svg),
+:where(html:not(.dark)) .btn-primary-bubble > :not(svg) {
+  color: #F2DC92 !important;
+}
+:where(html:not(.dark)) [class~="bg-gold"],
+:where(html:not(.dark)) [class*="bg-gold/"] {
+  color: #800020;
+}
+
+/* استثناء مقصود: شارة «آية اليوم» نصها ذهبي في الوضعين — تُعرض على بطاقة خمرية داكنة
+   فالتباين محفوظ. تُعرَّف بعد القاعدة العامة أعلاه لتغلبها في الوضع النهاري. */
+:where(html:not(.dark)) .verse-day-chip { color: #D4AF37; }
+
+/* أيقونات بطاقة «موعد الحلقة القادمة» — بيضاء دائماً في الوضعين (تتفوق على قاعدة .dark الذهبية) */
+.session-card-icon,
+.dark .session-card-icon { color: #FFFFFF !important; }
+
+/* بطاقات «جدولي»: حد واضح ومتسق لكل بطاقة، دون تغيير القياس أو الظل. */
+.teacher-schedule-card {
+  border: 1px solid rgba(128, 0, 32, 0.24) !important;
+}
+.dark .teacher-schedule-card {
+  border-color: rgba(212, 175, 55, 0.34) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   طبقة ألوان قسم المصحف — نفس Tokens العامة بلا ألوان Light ثابتة
+═══════════════════════════════════════════════════════════════ */
+/* القارئ يستخدم لون الورق دائماً — الصفحة تمتزج مع الخلفية بلا فراغ ملون */
+.mushaf-reader-shell {
+  background: #fdfaf1;
+  color: var(--foreground);
+}
+.dark .mushaf-reader-shell {
+  background: #fdfaf1; /* المصحف يُقرأ على ورق فاتح دائماً */
+}
+
+/* شريط التحكم — شبه شفاف بلا حدود (الـ pill و الـ top-bar كلاهما يرثان) */
+.mushaf-control-bar {
+  background: color-mix(in srgb, var(--popover) 88%, transparent);
+  color: var(--popover-foreground);
+  /* بلا border — الشريط يطفو فوق الصفحة */
+}
+
+/* رأس المصحف: تدرج شفاف من أعلى الصفحة يختفي للأسفل */
+.mushaf-top-bar {
+  background: linear-gradient(
+    to bottom,
+    rgba(253, 250, 241, 0.96) 0%,
+    rgba(253, 250, 241, 0.82) 55%,
+    rgba(253, 250, 241, 0) 100%
+  );
+  /* أيقونات الرأس: حبر داكن دائماً — مقروء فوق الورق الكريمي */
+  color: #3d1f10;
+}
+.dark .mushaf-top-bar {
+  background: linear-gradient(
+    to bottom,
+    rgba(253, 250, 241, 0.96) 0%,
+    rgba(253, 250, 241, 0.82) 55%,
+    rgba(253, 250, 241, 0) 100%
+  );
+  color: #3d1f10;
+}
+/* أزرار الرأس — حبر خفيف افتراضياً، داكن عند التحويم */
+.mushaf-top-bar button {
+  color: rgba(61, 31, 16, 0.60);
+}
+.mushaf-top-bar button:hover {
+  color: rgba(61, 31, 16, 0.95);
+}
+/* نص اسم السورة والجزء */
+.mushaf-top-bar .mushaf-top-surah {
+  color: #3d1f10;
+}
+.mushaf-top-bar .mushaf-top-meta {
+  color: rgba(61, 31, 16, 0.55);
+}
+
+.mushaf-control-button {
+  color: inherit;
+}
+
+.mushaf-control-button:hover,
+.mushaf-control-page:hover {
+  background: var(--elevate-2);
+}
+
+.mushaf-control-button:active,
+.mushaf-control-page:active {
+  background: var(--elevate-2);
+}
+
+.mushaf-control-button:disabled {
+  color: var(--muted-foreground);
+}
+
+.mushaf-jump-modal {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--card-border);
+}
+
+.mushaf-prayer-surface {
+  color: var(--foreground);
+}
+
+.mushaf-prayer-panel {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary) 6%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 6%, transparent) 100%
+  );
+  border: 1px solid var(--card-border);
+}
+
+.mushaf-prayer-panel-arch {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary) 8%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 12%, transparent) 100%
+  );
+}
+
+.mushaf-prayer-brand-button {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--maroon-deep) 100%);
+  color: var(--primary-foreground);
+}
+/* ليلاً: الزر يبقى خمرياً والنص ذهبي (لا ينقلب ذهبي الخلفية مع --primary) */
+.dark .mushaf-prayer-brand-button {
+  background: linear-gradient(135deg, var(--maroon) 0%, var(--maroon-deep) 100%);
+  color: var(--gold);
+}
+
+.mushaf-prayer-icon-shell {
+  background: var(--maroon);
+  color: var(--gold);
+}
+
+/* نهاراً: سطح فاتح بلمسة ذهبية؛ ليلاً: التدرج الخمري الفاخر */
+.mushaf-prayer-hero {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 12%, var(--card)) 0%,
+    color-mix(in srgb, var(--primary) 7%, var(--card)) 100%
+  );
+  border: 1px solid var(--card-border);
+}
+.dark .mushaf-prayer-hero {
+  background: linear-gradient(135deg, var(--maroon) 0%, var(--maroon-deep) 100%);
+  border-color: rgba(212, 175, 55, 0.22);
+}
+
+/* عداد الوقت: خمري نهاراً (على السطح الفاتح) / ذهبي ليلاً (على الخمري) */
+.mushaf-prayer-hero-countdown {
+  color: var(--burgundy);
+  text-shadow: 0 2px 16px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.dark .mushaf-prayer-hero-countdown {
+  color: var(--gold);
+  text-shadow: 0 2px 16px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.mushaf-prayer-hero-divider {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.mushaf-prayer-card {
+  background: color-mix(in srgb, var(--card) 78%, transparent);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(10px);
+}
+
+.mushaf-prayer-card-next {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 18%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 8%, transparent) 100%
+  );
+  border: 1.5px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.mushaf-prayer-icon-next {
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.mushaf-prayer-icon-default {
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
+}
+
+.mushaf-prayer-glow {
+  background: radial-gradient(
+    circle at 50% 0%,
+    color-mix(in srgb, var(--accent) 30%, transparent) 0%,
+    transparent 70%
+  );
+}
+
+.mushaf-prayer-indicator {
+  background: var(--accent);
+}
+
+/* حقول المواعيد في إنشاء جدول الإدارة لا تتزاحم على الهاتف. */
+@media (max-width: 639px) {
+  .admin-slot-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: end;
+  }
+  .admin-slot-row > button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   قارئ المصحف — انتقال انزلاقي عند قلب الصفحة (مصحف عربي RTL):
+   الصفحة التالية تدخل من اليمين، والسابقة من اليسار.
+   تُحترم prefers-reduced-motion فلا حركة لمن يطلب تقليلها.
+═══════════════════════════════════════════════════════════ */
+@keyframes mushaf-enter-next {
+  from { opacity: 0; transform: translateX(48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes mushaf-enter-prev {
+  from { opacity: 0; transform: translateX(-48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.mushaf-enter-next { animation: mushaf-enter-next 200ms ease-out; }
+.mushaf-enter-prev { animation: mushaf-enter-prev 200ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .mushaf-enter-next, .mushaf-enter-prev { animation: none !important; }
+}
+
+/* SVG تشغيل التسجيلات في لوحة المعلم: أبيض في الوضع النهاري فقط. */
+.teacher-recording-play-icon {
+  color: #FFFFFF !important;
+}
+.dark .teacher-recording-play-icon {
+  color: #D4AF37 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   إجبار الأرقام الغربية (0-9) في كامل التطبيق
+   النهج: font-variant-numeric + unicode-range override على مستوى النظام.
+   التعزيز الأساسي يأتي من lang="ar-u-nu-latn" في index.html.
+═══════════════════════════════════════════════════════════ */
+
+/* إخفاء أي رمز من نطاق الأرقام العربية-الهندية عبر خط بديل شفاف */
+@font-face {
+  font-family: "LatinNumerals";
+  src: local("Arial");
+  unicode-range: U+0660-0669, U+06F0-06F9;
+}
+
+/* تطبيق الخط البديل على كل العناصر لإزاحة الأرقام العربية */
+*, *::before, *::after {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* ضمان إضافي: إخفاء الأحرف العربية-الهندية نفسها عبر font-family override */
+:root {
+  --font-numerals-override: "LatinNumerals";
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Admin Shell — Design Foundation (المرحلة الأولى)
+   كل القواعد محصورة داخل .admin-shell — لا تؤثر على أي جزء خارج لوحة الإشراف.
+   المصادر اللونية: --sidebar-* و --burgundy-text و --gold (Tokens موجودة).
+═══════════════════════════════════════════════════════════ */
+
+/* ── جذر لوحة الإشراف ── */
+.admin-shell {
+  --admin-sidebar-w: 16rem;
+  --admin-radius: 1rem;
+  --admin-radius-sm: 0.75rem;
+}
+
+/* ── الشريط الجانبي ── */
+.admin-shell .admin-sidebar {
+  background-color: var(--sidebar);
+  color: var(--sidebar-foreground);
+  border-inline-end: 1px solid var(--sidebar-border);
+  box-shadow: var(--shadow-lg);
+}
+
+.admin-shell .admin-sidebar-header {
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.admin-shell .admin-sidebar-brand-title {
+  font-family: var(--font-amiri);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--burgundy-text);
+}
+
+.admin-shell .admin-sidebar-brand-sub {
+  font-family: var(--font-readex);
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+
+.admin-shell .admin-sidebar-demo-badge {
+  margin-top: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--gold) 50%, transparent);
+  background-color: color-mix(in srgb, var(--gold) 12%, transparent);
+  padding-inline: 0.5rem;
+  padding-block: 0.125rem;
+  font-family: var(--font-readex);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--burgundy-text);
+}
+
+/* ── عناصر التنقل ── */
+.admin-shell .admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: var(--admin-radius);
+  padding-inline: 0.75rem;
+  padding-block: 0.625rem;
+  font-family: var(--font-readex);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sidebar-foreground);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.admin-shell .admin-nav-item:hover {
+  background-color: color-mix(in srgb, var(--burgundy) 6%, transparent);
+}
+
+.dark .admin-shell .admin-nav-item:hover {
+  background-color: color-mix(in srgb, var(--gold) 8%, transparent);
+}
+
+.admin-shell .admin-nav-item--active,
+.admin-shell .admin-nav-item--active:hover {
+  background-color: var(--burgundy);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-bubble);
+}
+
+.dark .admin-shell .admin-nav-item--active,
+.dark .admin-shell .admin-nav-item--active:hover {
+  background-color: var(--gold);
+  color: var(--night);
+}
+
+.admin-shell .admin-nav-icon {
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.admin-shell .admin-nav-item--active .admin-nav-icon {
+  opacity: 0.9;
+}
+
+/* الأيقونات داخل الشريط ترث لون الرابط — نهاري خمري / ليلي ذهبي، والنشط داكن على ذهبي */
+.admin-shell .admin-nav-item svg {
+  color: inherit;
+}
+
+.admin-shell .admin-nav-dot {
+  height: 0.375rem;
+  width: 0.375rem;
+  border-radius: 9999px;
+  background-color: color-mix(in srgb, var(--gold) 70%, transparent);
+}
+
+.dark .admin-shell .admin-nav-dot {
+  background-color: color-mix(in srgb, var(--night) 50%, transparent);
+}
+
+/* ── Footer الشريط الجانبي ── */
+.admin-shell .admin-sidebar-footer {
+  border-top: 1px solid var(--sidebar-border);
+}
+
+.admin-shell .admin-user-badge {
+  border-radius: var(--admin-radius);
+  padding-inline: 0.75rem;
+  padding-block: 0.5rem;
+  background-color: color-mix(in srgb, var(--success) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+}
+
+.admin-shell .admin-user-badge-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background-color: var(--success);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--success) 60%, transparent);
+}
+
+.admin-shell .admin-user-badge-name {
+  font-family: var(--font-readex);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.admin-shell .admin-logout-btn {
+  border-radius: var(--admin-radius);
+  padding-inline: 0.75rem;
+  padding-block: 0.625rem;
+  font-family: var(--font-readex);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--destructive);
+  transition: background-color 0.2s ease;
+}
+
+.admin-shell .admin-logout-btn:hover {
+  background-color: color-mix(in srgb, var(--destructive) 8%, transparent);
+}
+
+.admin-shell .admin-logout-btn svg {
+  color: inherit;
+}
+
+/* ── الشريط العلوي للجوال ── */
+.admin-shell .admin-mobile-header {
+  background-color: color-mix(in srgb, var(--card) 95%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-shell .admin-mobile-menu-btn {
+  color: var(--burgundy-text);
+}
+
+.admin-shell .admin-mobile-menu-btn:hover {
+  background-color: var(--muted);
+}
+
+.admin-shell .admin-mobile-brand {
+  font-family: var(--font-amiri);
+  font-weight: 700;
+  color: var(--burgundy-text);
+}
+
+/* ── منطقة المحتوى ── */
+.admin-shell .admin-main {
+  /* مسافة الصفحة: عنوان → محتوى، وبين الأقسام */
+}

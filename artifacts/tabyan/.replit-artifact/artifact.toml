@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "تبيان — منصة قرآنية"
+description = "منصة قرآنية عربية مجانية لتعليم القرآن الكريم والتجويد والعلوم الشرعية، بثلاثة أدوار: طالب، معلم، ومسؤول. تشمل حجز الحصص، تسجيلات الجلسات، اختبار تحديد المستوى، مكتبة رقمية، نظام فتاوى، ومنهج شرعي (عقيدة وفقه وسيرة)."
+version = "1.0.0"
+id = "artifacts/tabyan"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25124
+
+[services.development]
+run = "pnpm --filter @workspace/tabyan run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/tabyan", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/tabyan/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25124"
+BASE_PATH = "/"

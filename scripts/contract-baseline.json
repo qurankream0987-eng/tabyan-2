@@ -1,0 +1,556 @@
+{
+  "schemaVersion": 1,
+  "api": {
+    "namespaces": {
+      "admin": [
+        "accountResetPassword",
+        "accountSetActive",
+        "accountTerminateSessions",
+        "accountsList",
+        "activeAdmins",
+        "analyticsOverview",
+        "assessmentCreate",
+        "assessmentQuestionsAdd",
+        "assessmentUpdate",
+        "assessmentsList",
+        "attemptsList",
+        "auditLogsList",
+        "bookingCancel",
+        "bookingsList",
+        "createSupervisor",
+        "createTeacher",
+        "fatwaAssign",
+        "fatwaInbox",
+        "fatwaRejectQuestion",
+        "fatwaReviewAnswer",
+        "fatwaUpdateCategory",
+        "forceLogout",
+        "kpis",
+        "kycList",
+        "kycReview",
+        "levelCreate",
+        "levelDelete",
+        "levelSwap",
+        "levelThresholds",
+        "levelUpdate",
+        "levelsList",
+        "libraryCreate",
+        "libraryDelete",
+        "libraryList",
+        "librarySetStatus",
+        "libraryUpdate",
+        "muftiAssign",
+        "muftiUnassign",
+        "muftisList",
+        "muftisStats",
+        "notificationCreate",
+        "notificationLog",
+        "notificationToggleRecurring",
+        "notificationsLog",
+        "notificationsRecurring",
+        "notificationsTemplates",
+        "placementList",
+        "placementReview",
+        "promotionReview",
+        "promotionsList",
+        "qiraatList",
+        "qiraatReview",
+        "questionAdd",
+        "questionsBankList",
+        "scheduleBookingToggle",
+        "scheduleCreate",
+        "scheduleDelete",
+        "scheduleToggle",
+        "schedulesList",
+        "sessionRoom",
+        "sessionsList",
+        "sessionsMonitoring",
+        "settingsChangeMasterPassword",
+        "settingsGet",
+        "settingsUpdate",
+        "studentFile",
+        "teacherSoftDelete",
+        "teachersList",
+        "userBan",
+        "userDelete",
+        "userMessage",
+        "userWarn",
+        "usersList"
+      ],
+      "auth": [
+        "adminLogin",
+        "checkPhone",
+        "completeProfile",
+        "deleteAccount",
+        "googleCompleteLogin",
+        "googleLogin",
+        "logout",
+        "me",
+        "passwordLogin",
+        "studentPasswordLogin",
+        "webauthnLoginOptions",
+        "webauthnLoginVerify",
+        "webauthnRegisterOptions",
+        "webauthnRegisterVerify"
+      ],
+      "dailyVerse": [
+        "clear",
+        "preview",
+        "recent",
+        "set",
+        "today"
+      ],
+      "fatwa": [
+        "ask",
+        "detail",
+        "followup",
+        "myFatwas",
+        "publicDetail",
+        "publicList",
+        "rate"
+      ],
+      "library": [
+        "browse",
+        "detail",
+        "myLibrary",
+        "toggleBookmark",
+        "toggleDownload"
+      ],
+      "notifications": [
+        "byId",
+        "clearRead",
+        "getSettings",
+        "list",
+        "markAllRead",
+        "markRead",
+        "remove",
+        "togglePin",
+        "unreadCount",
+        "updateSettings"
+      ],
+      "recitation": [
+        "cancel",
+        "end",
+        "getAyahs",
+        "myHistory",
+        "pause",
+        "resume",
+        "start",
+        "status",
+        "studentSessions",
+        "todayAssignment"
+      ],
+      "sharia": [
+        "adminDeleteContent",
+        "adminDeleteQuestion",
+        "adminDeleteSubject",
+        "adminListContent",
+        "adminListQuestions",
+        "adminListSubjects",
+        "adminReorderLevels",
+        "adminUpsertContent",
+        "adminUpsertQuestion",
+        "adminUpsertSubject",
+        "certificate",
+        "content",
+        "exam",
+        "levelContent",
+        "subjects",
+        "submitExam",
+        "summary",
+        "toggleBookmark",
+        "updateContentProgress"
+      ],
+      "student": [
+        "bookSession",
+        "dashboard",
+        "levels",
+        "markAllRead",
+        "markRead",
+        "myIjazat",
+        "myNotifications",
+        "myRecordings",
+        "mySessions",
+        "paths",
+        "placementStatus",
+        "progress",
+        "recitationEligibility",
+        "requestScheduleChange",
+        "sessionRoom",
+        "settings",
+        "submitPlacement",
+        "submitPromotion",
+        "submitQiraatCertificate",
+        "teachers",
+        "updateSettings"
+      ],
+      "teacher": [
+        "addCertificate",
+        "answerFatwa",
+        "broadcastAudiences",
+        "broadcastHistory",
+        "dashboard",
+        "endSession",
+        "evaluate",
+        "fatwaInbox",
+        "kycStatus",
+        "myCertificates",
+        "myRecordings",
+        "myStudents",
+        "pendingEvaluations",
+        "removeCertificate",
+        "requestPromotion",
+        "respondChangeRequest",
+        "schedule",
+        "sendBroadcast",
+        "sendMessage",
+        "sessionRoom",
+        "settings",
+        "startAssessment",
+        "startSession",
+        "studentDetail",
+        "submitKyc",
+        "updateProfile",
+        "updateSettings"
+      ]
+    },
+    "procedureCount": 191
+  },
+  "databaseTables": [
+    {
+      "symbol": "adminLoginAttempts",
+      "table": "admin_login_attempts"
+    },
+    {
+      "symbol": "adminNotificationsSent",
+      "table": "admin_notifications_sent"
+    },
+    {
+      "symbol": "adminSessions",
+      "table": "admin_sessions"
+    },
+    {
+      "symbol": "assessmentAttempts",
+      "table": "assessment_attempts"
+    },
+    {
+      "symbol": "assessmentQuestions",
+      "table": "assessment_questions"
+    },
+    {
+      "symbol": "assessments",
+      "table": "assessments"
+    },
+    {
+      "symbol": "auditLogs",
+      "table": "audit_logs"
+    },
+    {
+      "symbol": "authTokens",
+      "table": "auth_tokens"
+    },
+    {
+      "symbol": "bookAssignments",
+      "table": "book_assignments"
+    },
+    {
+      "symbol": "bookmarks",
+      "table": "bookmarks"
+    },
+    {
+      "symbol": "books",
+      "table": "books"
+    },
+    {
+      "symbol": "dailyVerses",
+      "table": "daily_verses"
+    },
+    {
+      "symbol": "downloads",
+      "table": "downloads"
+    },
+    {
+      "symbol": "emailOtpCodes",
+      "table": "email_otp_codes"
+    },
+    {
+      "symbol": "evaluations",
+      "table": "evaluations"
+    },
+    {
+      "symbol": "fatwaAnswers",
+      "table": "fatwa_answers"
+    },
+    {
+      "symbol": "fatwaQuestions",
+      "table": "fatwa_questions"
+    },
+    {
+      "symbol": "fatwaRatings",
+      "table": "fatwa_ratings"
+    },
+    {
+      "symbol": "fatwaViews",
+      "table": "fatwa_views"
+    },
+    {
+      "symbol": "levels",
+      "table": "levels"
+    },
+    {
+      "symbol": "muftiAssignments",
+      "table": "mufti_assignments"
+    },
+    {
+      "symbol": "notifications",
+      "table": "notifications"
+    },
+    {
+      "symbol": "notificationSettings",
+      "table": "notification_settings"
+    },
+    {
+      "symbol": "otpCodes",
+      "table": "otp_codes"
+    },
+    {
+      "symbol": "promotionRequests",
+      "table": "promotion_requests"
+    },
+    {
+      "symbol": "qiraatCertificates",
+      "table": "qiraat_certificates"
+    },
+    {
+      "symbol": "recitationSessions",
+      "table": "recitation_sessions"
+    },
+    {
+      "symbol": "recordings",
+      "table": "recordings"
+    },
+    {
+      "symbol": "scheduleChangeRequests",
+      "table": "schedule_change_requests"
+    },
+    {
+      "symbol": "securityEvents",
+      "table": "security_events"
+    },
+    {
+      "symbol": "sessionParticipants",
+      "table": "session_participants"
+    },
+    {
+      "symbol": "sessions",
+      "table": "sessions"
+    },
+    {
+      "symbol": "shariaContent",
+      "table": "sharia_content"
+    },
+    {
+      "symbol": "shariaContentProgress",
+      "table": "sharia_content_progress"
+    },
+    {
+      "symbol": "shariaExamAttempts",
+      "table": "sharia_exam_attempts"
+    },
+    {
+      "symbol": "shariaExamQuestions",
+      "table": "sharia_exam_questions"
+    },
+    {
+      "symbol": "shariaSubjects",
+      "table": "sharia_subjects"
+    },
+    {
+      "symbol": "studentPasswordLoginAttempts",
+      "table": "student_password_login_attempts"
+    },
+    {
+      "symbol": "studentProgress",
+      "table": "student_progress"
+    },
+    {
+      "symbol": "students",
+      "table": "students"
+    },
+    {
+      "symbol": "studentSettings",
+      "table": "student_settings"
+    },
+    {
+      "symbol": "systemSettings",
+      "table": "system_settings"
+    },
+    {
+      "symbol": "teacherBroadcasts",
+      "table": "teacher_broadcasts"
+    },
+    {
+      "symbol": "teacherCertificates",
+      "table": "teacher_certificates"
+    },
+    {
+      "symbol": "teacherMessages",
+      "table": "teacher_messages"
+    },
+    {
+      "symbol": "teachers",
+      "table": "teachers"
+    },
+    {
+      "symbol": "teacherSettings",
+      "table": "teacher_settings"
+    },
+    {
+      "symbol": "users",
+      "table": "users"
+    },
+    {
+      "symbol": "webauthnChallenges",
+      "table": "webauthn_challenges"
+    },
+    {
+      "symbol": "webauthnCredentials",
+      "table": "webauthn_credentials"
+    },
+    {
+      "symbol": "weeklySchedules",
+      "table": "weekly_schedules"
+    }
+  ],
+  "webRoutes": [
+    "*",
+    "/",
+    "/admin",
+    "/admin/session/:id",
+    "/student",
+    "/student/session/:id",
+    "/teacher",
+    "/teacher/onboarding",
+    "/teacher/session/:id",
+    "account",
+    "accounts",
+    "analytics",
+    "assessments",
+    "audit-log",
+    "booking",
+    "broadcast",
+    "evaluate/:sessionId",
+    "evaluations",
+    "fatwa",
+    "fatwa/:id",
+    "fatwas",
+    "fatwas",
+    "fatwas",
+    "help",
+    "home",
+    "ijazat",
+    "inbox",
+    "inbox/:id",
+    "inbox/settings",
+    "levels",
+    "levels/:pathId",
+    "library",
+    "library",
+    "library/book/:id",
+    "library/book/:id/read",
+    "muftis",
+    "mushaf-fahd",
+    "notifications",
+    "notifications",
+    "notifications",
+    "notifications/:id",
+    "notifications/:id",
+    "notifications/settings",
+    "notifications/settings",
+    "path",
+    "pending",
+    "placement",
+    "prayer-times",
+    "progress",
+    "promotions",
+    "qibla",
+    "qiraat",
+    "quran",
+    "recitation/connectivity-gate",
+    "recitation/history",
+    "recordings",
+    "recordings",
+    "schedule",
+    "schedule",
+    "schedules",
+    "sessions-monitoring",
+    "settings",
+    "settings",
+    "sharia",
+    "sharia",
+    "sharia/:subject",
+    "sharia/certificate/:levelId",
+    "sharia/content/:contentId",
+    "sharia/level/:levelId",
+    "students",
+    "students-review",
+    "students/:id",
+    "teachers-review",
+    "tilawah",
+    "users"
+  ],
+  "mobileRoutes": [
+    "(auth)/_layout.tsx",
+    "(auth)/login.tsx",
+    "(auth)/register.tsx",
+    "(auth)/welcome.tsx",
+    "(tabs)/_layout.tsx",
+    "(tabs)/account.tsx",
+    "(tabs)/halaqat.tsx",
+    "(tabs)/index.tsx",
+    "(tabs)/mushaf.tsx",
+    "(tabs)/notifications.tsx",
+    "(tabs)/teacher-schedule.tsx",
+    "(tabs)/teacher-students.tsx",
+    "+not-found.tsx",
+    "_layout.tsx",
+    "booking.tsx",
+    "fatwa-ask.tsx",
+    "fatwa-detail.tsx",
+    "fatwa-public.tsx",
+    "fatwas.tsx",
+    "help.tsx",
+    "ijazat.tsx",
+    "index.tsx",
+    "levels.tsx",
+    "library.tsx",
+    "notification-settings.tsx",
+    "notification/[id].tsx",
+    "paths.tsx",
+    "placement.tsx",
+    "prayer-times.tsx",
+    "qibla.tsx",
+    "recordings.tsx",
+    "sharia-certificate.tsx",
+    "sharia-content.tsx",
+    "sharia-exam.tsx",
+    "sharia-level.tsx",
+    "sharia.tsx",
+    "teacher-broadcast.tsx",
+    "teacher-evaluate.tsx",
+    "teacher-evaluations.tsx",
+    "teacher-fatwas.tsx",
+    "teacher-onboarding.tsx",
+    "teacher-recordings.tsx",
+    "teacher-session.tsx",
+    "teacher-student.tsx"
+  ],
+  "clientContractAnchors": {
+    "webImportsAppRouter": true,
+    "mobileImportsAppRouter": true,
+    "webUsesTrpcEndpoint": true,
+    "mobileUsesTrpcEndpoint": true,
+    "webUsesSuperjson": true,
+    "mobileUsesSuperjson": true
+  }
+}

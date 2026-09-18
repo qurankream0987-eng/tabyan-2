@@ -1,0 +1,232 @@
+{
+  "pathOrder": [
+    "quran",
+    "tajweed_correction",
+    "qiraat",
+    "tajweed",
+    "sharia"
+  ],
+  "paths": {
+    "quran": {
+      "label": "مسار القرآن الكريم",
+      "homeLabel": "القرآن الكريم",
+      "description": "الحفظ والمراجعة عبر 5 مستويات — من الغرس إلى الوارثون",
+      "homeDescription": "حفظ ومراجعة وتلاوة"
+    },
+    "tajweed_correction": {
+      "label": "تصحيح التلاوة",
+      "homeLabel": "تصحيح التلاوة",
+      "description": "تصحيح النطق والمخارج مع معلم",
+      "homeDescription": "تصحيح النطق والمخارج"
+    },
+    "qiraat": {
+      "label": "مسار القراءات",
+      "homeLabel": "القراءات",
+      "description": "القراءات القرآنية — يتطلب شهادة إجازة معتمدة",
+      "homeDescription": "القراءات القرآنية المعتمدة"
+    },
+    "tajweed": {
+      "label": "مسار التجويد",
+      "homeLabel": "دروس التجويد",
+      "description": "أحكام التجويد النظرية والتطبيقية عبر 3 مستويات",
+      "homeDescription": "أحكام وقواعد التلاوة"
+    },
+    "sharia": {
+      "label": "الدروس الشرعية",
+      "homeLabel": "الدروس الشرعية",
+      "description": "العقيدة — الفقه — السيرة النبوية",
+      "homeDescription": "عقيدة وفقه وسيرة نبوية"
+    }
+  },
+  "learningFeatureOrder": [
+    "quran",
+    "tajweed",
+    "sharia"
+  ],
+  "sessionTypeToLearningFeature": {
+    "quran_hifz": "quran",
+    "quran_review": "quran",
+    "qiraat": "quran",
+    "tajweed_correction": "tajweed",
+    "tajweed_level": "tajweed",
+    "sharia_fiqh": "sharia",
+    "sharia_aqeedah": "sharia",
+    "sharia_seerah": "sharia"
+  },
+  "levelPathToLearningFeature": {
+    "quran": "quran",
+    "qiraat": "quran",
+    "tajweed_correction": "tajweed",
+    "tajweed": "tajweed",
+    "sharia": "sharia"
+  },
+  "features": {
+    "home": {
+      "label": "الرئيسية",
+      "order": 10,
+      "supportedRoles": ["student", "teacher"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "schedule": {
+      "label": "جدولي",
+      "order": 25,
+      "supportedRoles": ["student", "teacher"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "recordings": {
+      "label": "حلقاتي",
+      "order": 27,
+      "supportedRoles": ["student", "teacher"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "teacher_students": {
+      "label": "طلابي",
+      "order": 28,
+      "supportedRoles": ["teacher"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "teacher_schedule": {
+      "label": "جدولي",
+      "order": 29,
+      "supportedRoles": ["teacher"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "quran": {
+      "label": "القرآن الكريم",
+      "order": 20,
+      "supportedRoles": ["student", "teacher"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "halaqat": {
+      "label": "الحلقات",
+      "order": 30,
+      "supportedRoles": ["student"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "notifications": {
+      "label": "الإشعارات",
+      "order": 40,
+      "supportedRoles": ["student", "teacher"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "account": {
+      "label": "حسابي",
+      "order": 50,
+      "supportedRoles": ["student", "teacher"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "library": {
+      "label": "المكتبة",
+      "order": 60,
+      "supportedRoles": ["student", "teacher"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "fatwa": {
+      "label": "الفتاوى",
+      "order": 70,
+      "supportedRoles": ["student", "teacher"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "islamic_lessons": {
+      "label": "الدروس الشرعية",
+      "order": 80,
+      "supportedRoles": ["student"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "quran_tracks": {
+      "label": "مسارات القرآن",
+      "order": 90,
+      "supportedRoles": ["student"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "levels": {
+      "label": "المستويات",
+      "order": 100,
+      "supportedRoles": ["student"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "mushaf": {
+      "label": "المصحف",
+      "order": 110,
+      "supportedRoles": ["student", "teacher"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current"
+    },
+    "recitation": {
+      "label": "التسميع",
+      "order": 120,
+      "supportedRoles": ["student"],
+      "webAvailability": true,
+      "mobileAvailability": false,
+      "releaseVisibility": "blocked_until_native_reader"
+    },
+    "placement": {
+      "label": "اختبار القبول",
+      "order": 130,
+      "supportedRoles": ["student", "teacher"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current",
+      "capabilities": ["camera", "microphone", "video_upload"]
+    },
+    "prayer_times": {
+      "label": "مواقيت الصلاة",
+      "order": 140,
+      "supportedRoles": ["student", "teacher"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current",
+      "capabilities": ["location"]
+    },
+    "qibla": {
+      "label": "القبلة",
+      "order": 150,
+      "supportedRoles": ["student", "teacher"],
+      "webAvailability": true,
+      "mobileAvailability": true,
+      "releaseVisibility": "current",
+      "capabilities": ["location", "heading"]
+    }
+  },
+  "navigation": {
+    "webStudentBottomNav": ["home", "schedule", "recordings", "library", "fatwa", "mushaf", "account"],
+    "mobileStudentBottomNav": ["home", "halaqat", "notifications", "account"],
+    "mobileTeacherBottomNav": ["home", "teacher_students", "teacher_schedule", "notifications", "account"],
+    "intentionalOrderExceptions": [
+      "Web splits schedule and recordings into separate tabs; Mobile combines upcoming and past sessions in the Halaqat tab.",
+      "Web exposes library and fatwa in its bottom bar; Mobile keeps their real Native routes outside the four-item student tab bar.",
+      "Mobile keeps notifications in its student tab bar and top bar; Web exposes notifications outside the student bottom bar.",
+      "Mushaf and recitation remain hidden on Mobile until the native reader gate passes.",
+      "Mobile teacher-only tabs are role-gated and have no student Web bottom-navigation equivalent."
+    ]
+  }
+}

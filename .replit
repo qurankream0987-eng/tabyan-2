@@ -1,0 +1,76 @@
+modules = ["nodejs-24", "python-base-3.13", "postgresql-16"]
+
+[deployment]
+router = "application"
+deploymentTarget = "autoscale"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "tabyan-check-colors"
+
+[[workflows.workflow]]
+name = "tabyan-check-colors"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd artifacts/tabyan && node scripts/check-colors.mjs --ci"
+
+[workflows.workflow.metadata]
+isValidation = true
+
+[agent]
+stack = "PNPM_WORKSPACE"
+expertMode = true
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000
+
+[nix]
+channel = "stable-25_05"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-58df0ee3-6dde-4522-a8e4-d9f4c49777f6"
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 8081
+externalPort = 80
+
+[[ports]]
+localPort = 18115
+externalPort = 3001
+
+[[ports]]
+localPort = 25124
+externalPort = 3000
+
+[userenv]
+
+[userenv.development]
+TABYAN_AI_ENABLED = "true"
+TABYAN_AI_LIVE_TRACKING_ENABLED = "true"
+TABYAN_AI_TRANSCRIPTION_ENABLED = "true"
+TABYAN_AI_ASR_PROVIDER = "openai"
+
+[userenv.production]
+TABYAN_AI_ASR_PROVIDER = "openai"
+TABYAN_AI_ENABLED = "true"
+TABYAN_AI_LIVE_TRACKING_ENABLED = "true"
+TABYAN_AI_TRANSCRIPTION_ENABLED = "true"

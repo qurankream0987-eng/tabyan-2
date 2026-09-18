@@ -1,0 +1,18 @@
+# The format of this file is identical to `.dockerignore`.
+# It is used to reduce the size of deployed images to make the process of publishing faster.
+
+# Tooling and dependency caches are recreated during build.
+.local
+.cache
+
+# Git metadata and local installs are not runtime inputs.
+.git
+node_modules
+
+# Uploaded transport/recovery files are not runtime assets.
+attached_assets/
+recovery/
+*.zip
+*.tar
+*.tar.gz
+*.tgz

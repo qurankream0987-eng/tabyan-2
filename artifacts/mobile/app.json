@@ -1,0 +1,78 @@
+{
+  "expo": {
+    "name": "تبيان",
+    "slug": "mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "tabyan",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAF7F0"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.replit.tbyan",
+      "buildNumber": "6",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "يحتاج تبيان إلى الكاميرا لتسجيل اختبار القبول.",
+        "NSMicrophoneUsageDescription": "يحتاج تبيان إلى الميكروفون لتسجيل تلاوتك في اختبار القبول.",
+        "NSLocationWhenInUseUsageDescription": "يستخدم تبيان موقعك لعرض مواقيت الصلاة واتجاه القبلة."
+      }
+    },
+    "android": {
+      "package": "com.tabyan.app",
+      "versionCode": 1,
+      "permissions": [
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "يحتاج تبيان إلى الكاميرا لتسجيل اختبار القبول.",
+          "microphonePermission": "يحتاج تبيان إلى الميكروفون لتسجيل تلاوتك في اختبار القبول."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "يستخدم تبيان موقعك لعرض مواقيت الصلاة واتجاه القبلة."
+        }
+      ],
+      [
+        "react-native-audio-api",
+        {
+          "iosMicrophonePermission": "يحتاج تبيان إلى الميكروفون لتصحيح تلاوتك مباشرة."
+        }
+      ],
+      "@config-plugins/react-native-webrtc",
+      "expo-secure-store"
+    ],
+    "extra": {
+      "productionDomain": "tibyanquran.com",
+      "privacyUrl": "https://tibyanquran.com/privacy",
+      "supportUrl": "https://tibyanquran.com/support",
+      "eas": {
+        "projectId": "bcac43ba-905a-4b13-a834-b36051da4da6"
+      }
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
