@@ -98,7 +98,7 @@ export default function Settings() {
 }
 
 const styles = StyleSheet.create({
-  heading: { fontFamily: "IBMPlexSansArabic_700Bold", textAlign: "right" },
+  heading: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right", marginBottom: 4 },
   dangerHeading: { fontFamily: "IBMPlexSansArabic_700Bold", textAlign: "right", fontSize: 16 },
   muted: { fontFamily: "IBMPlexSansArabic_400Regular", textAlign: "right", lineHeight: 22, marginTop: 10 },
   preference: { flexDirection: "row-reverse", alignItems: "center", gap: 10, paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth },

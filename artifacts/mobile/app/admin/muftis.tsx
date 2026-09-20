@@ -99,7 +99,7 @@ export default function Muftis() {
             onPress={() => setCats(selectedCats.includes(key) ? selectedCats.filter((x) => x !== key) : [...selectedCats, key])}
             style={[styles.chip, { backgroundColor: selectedCats.includes(key) ? colors.primary : colors.input, opacity: assign.isPending ? 0.5 : 1 }]}
           >
-            <Text style={{ color: selectedCats.includes(key) ? colors.primaryText : colors.text }}>{label}</Text>
+            <Text style={{ color: selectedCats.includes(key) ? colors.primaryText : colors.text, fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 12 }}>{label}</Text>
           </Pressable>
         ))}
       </View>
@@ -140,10 +140,10 @@ export default function Muftis() {
 
 const styles = StyleSheet.create({
   heading: { textAlign: "right", fontSize: 17, fontFamily: "IBMPlexSansArabic_700Bold" },
-  muted: { textAlign: "right", fontSize: 12, marginVertical: 5 },
+  muted: { textAlign: "right", fontSize: 12, marginVertical: 5, fontFamily: "IBMPlexSansArabic_400Regular" },
   category: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 5, marginVertical: 8 },
   chip: { paddingHorizontal: 10, paddingVertical: 7, borderRadius: 14 },
-  feedback: { textAlign: "right", marginBottom: 8 },
+  feedback: { textAlign: "right", marginBottom: 8, fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 12 },
   statRow: { flexDirection: "row-reverse", justifyContent: "space-between", paddingVertical: 7 },
   statValue: { fontFamily: "Amiri_700Bold", fontSize: 20 },
 });

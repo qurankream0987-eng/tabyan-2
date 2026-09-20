@@ -66,6 +66,6 @@ const styles = StyleSheet.create({
   evaluated: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 11 },
   mediaHint: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 10 },
   backdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "#00000066" },
-  modal: { maxHeight: "82%", borderTopLeftRadius: 26, borderTopRightRadius: 26, borderWidth: 1, padding: 18 },
+  modal: { maxHeight: "82%", borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, padding: 18 },
   modalTitle: { fontFamily: "Amiri_700Bold", fontSize: 20, textAlign: "right", marginBottom: 12 },
 });

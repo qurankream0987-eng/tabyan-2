@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   filters: { gap: 4, marginBottom: 8 },
   tab: { paddingHorizontal: 10, paddingVertical: 8, borderRadius: 14 },
   title: { textAlign: "right", fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 15 },
-  muted: { textAlign: "right", fontSize: 12, marginTop: 5 },
+  muted: { textAlign: "right", fontSize: 12, marginTop: 5, fontFamily: "IBMPlexSansArabic_400Regular" },
   actions: { gap: 7, marginTop: 10 },
-  feedback: { textAlign: "right", marginBottom: 8 },
+  feedback: { textAlign: "right", marginBottom: 8, fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 12 },
 });

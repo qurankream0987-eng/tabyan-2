@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   question: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 14, lineHeight: 24, textAlign: "right", marginTop: 7 },
   detail: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right", marginTop: 6 },
   backdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "#00000066" },
-  modal: { maxHeight: "90%", borderTopLeftRadius: 26, borderTopRightRadius: 26, borderWidth: 1, padding: 18 },
+  modal: { maxHeight: "90%", borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, padding: 18 },
   questionBox: { borderRadius: 16, padding: 13, marginBottom: 12 },
   sectionLabel: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, textAlign: "right", marginBottom: 7 },
   answerInput: { minHeight: 160, borderWidth: 1, borderRadius: 14, padding: 12, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13 },

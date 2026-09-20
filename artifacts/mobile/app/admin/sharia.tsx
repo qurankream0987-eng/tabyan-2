@@ -74,5 +74,5 @@ const styles = StyleSheet.create({
   status: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 11 },
   actions: { flexDirection: "row-reverse", gap: 7, marginTop: 10 },
   reorder: { gap: 5 },
-  feedback: { textAlign: "right", marginBottom: 8 },
+  feedback: { textAlign: "right", marginBottom: 8, fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 12 },
 });

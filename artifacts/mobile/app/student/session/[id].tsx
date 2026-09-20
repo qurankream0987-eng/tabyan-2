@@ -1,10 +1,10 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useAuth } from "../../../lib/auth";
 import { resolveLibraryAsset } from "../../../lib/library-media";
 import { trpc } from "../../../lib/trpc";
 import { LibraryMediaPlayer } from "../../../components/library-media-player";
-import { StudentScreen, LoadingState, ErrorState, EmptyState, Card } from "../_screen";
+import { StudentScreen, LoadingState, ErrorState, EmptyState, Card, Badge } from "../_screen";
 import { useTheme } from "../../../lib/theme";
 import StudentSessionCall from "../../../components/student-session-call";
 
@@ -24,11 +24,16 @@ export default function Session() {
   return (
     <StudentScreen title="تفاصيل الحلقة">
       <Card>
-        <Text style={{ color: colors.text, textAlign: "right" }}>{String(d.typeLabel ?? d.sessionType)}</Text>
-        <Text style={{ color: colors.muted, textAlign: "right", marginTop: 8 }}>{String(d.scheduledAt)}</Text>
-        <Text style={{ color: colors.muted, textAlign: "right", marginTop: 8 }}>{d.status === "cancelled" ? "ملغاة" : String(d.status)}</Text>
-        {d.teacherName ? <Text style={{ color: colors.muted, textAlign: "right", marginTop: 8 }}>المعلم: {String(d.teacherName)}</Text> : null}
-        <Text style={{ color: colors.muted, textAlign: "right", marginTop: 12 }}>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.text }]}>{String(d.typeLabel ?? d.sessionType)}</Text>
+          <Badge
+            label={d.status === "cancelled" ? "ملغاة" : d.status === "completed" ? "مكتملة" : d.status === "in_progress" ? "جارية" : "قادمة"}
+            tone={d.status === "completed" ? "success" : d.status === "cancelled" ? "danger" : "gold"}
+          />
+        </View>
+        <Text style={[styles.meta, { color: colors.muted }]}>{String(d.scheduledAt)}</Text>
+        {d.teacherName ? <Text style={[styles.meta, { color: colors.muted }]}>المعلم: {String(d.teacherName)}</Text> : null}
+        <Text style={[styles.note, { color: colors.muted }]}>
           {d.status === "in_progress" ? "هذه الحلقة جارية. يمكنك الدخول بعد السماح بالكاميرا والميكروفون." : "يعرض هذا القسم تفاصيل الموعد والتسجيلات السابقة. سيظهر الدخول الحي عند بدء الحلقة."}
         </Text>
       </Card>
@@ -44,3 +49,10 @@ export default function Session() {
     </StudentScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  title: { flex: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right" },
+  meta: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12.5, textAlign: "right", marginTop: 8 },
+  note: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 20, textAlign: "right", marginTop: 12 },
+});

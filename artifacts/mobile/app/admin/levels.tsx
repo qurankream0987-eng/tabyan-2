@@ -86,5 +86,5 @@ const styles = StyleSheet.create({
   name: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right" },
   muted: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "right", marginVertical: 4 },
   actions: { gap: 7 },
-  feedback: { textAlign: "right", marginBottom: 8 },
+  feedback: { textAlign: "right", marginBottom: 8, fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 12 },
 });

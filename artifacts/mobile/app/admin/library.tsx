@@ -86,4 +86,4 @@ export default function Library() {
   );
 }
 
-const styles = StyleSheet.create({ title: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right" }, muted: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "right", marginVertical: 4 }, actions: { gap: 7, marginTop: 8 }, feedback: { textAlign: "right", marginBottom: 8 } });
+const styles = StyleSheet.create({ title: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right" }, muted: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "right", marginVertical: 4 }, actions: { gap: 7, marginTop: 8 }, feedback: { textAlign: "right", marginBottom: 8, fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 12 } });

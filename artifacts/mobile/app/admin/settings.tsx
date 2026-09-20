@@ -23,4 +23,4 @@ export default function Settings() {
     <Card><Text style={[styles.title, { color: colors.text }]}>الجلسة</Text><Button label="تسجيل الخروج" variant="danger" icon="log-out-outline" onPress={() => void signOut().then(() => router.replace("/"))} /></Card>
   </AdminFrame>;
 }
-const styles = StyleSheet.create({ title: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 17, textAlign: "right", marginBottom: 10 }, feedback: { fontFamily: "IBMPlexSansArabic_600SemiBold", textAlign: "right", marginBottom: 8 }, verse: { textAlign: "right", lineHeight: 26, marginBottom: 10 }, preview: { textAlign: "right", lineHeight: 26, marginBottom: 10 }, actions: { gap: 8 } });
+const styles = StyleSheet.create({ title: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 17, textAlign: "right", marginBottom: 10 }, feedback: { fontFamily: "IBMPlexSansArabic_600SemiBold", textAlign: "right", marginBottom: 8 }, verse: { textAlign: "right", lineHeight: 26, marginBottom: 10, fontFamily: "Amiri_400Regular", fontSize: 15 }, preview: { textAlign: "right", lineHeight: 26, marginBottom: 10, fontFamily: "Amiri_400Regular", fontSize: 15 }, actions: { gap: 8 } });

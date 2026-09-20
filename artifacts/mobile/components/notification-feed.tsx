@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   joinButton: { minHeight: 38, marginTop: 9, alignSelf: "flex-end", paddingHorizontal: 14 },
   cardActions: { flexDirection: "row-reverse", gap: 15, justifyContent: "flex-start", marginTop: 9, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: `${palette.gold}33` },
   modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "#00000066" },
-  modal: { maxHeight: "85%", borderTopLeftRadius: 26, borderTopRightRadius: 26, borderWidth: 1, padding: 18, gap: 12 },
+  modal: { maxHeight: "85%", borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, padding: 18, gap: 12 },
   modalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   modalTitle: { fontFamily: "Amiri_700Bold", fontSize: 20 },
   reset: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 12 },

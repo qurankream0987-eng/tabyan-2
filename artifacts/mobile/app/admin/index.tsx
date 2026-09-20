@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AdminFrame, adminRoutes } from "./_common";
-import { ErrorState, FeatureTile, Card, Icon, LoadingState } from "../../components/ui";
+import { ErrorState, FeatureTile, Card, Icon, LoadingState, SectionTitle } from "../../components/ui";
 import { useTheme, palette } from "../../lib/theme";
 import { trpc } from "../../lib/trpc";
 
@@ -108,6 +108,7 @@ export default function AdminHome() {
       </Card>
 
       {/* مسارات الإدارة */}
+      <SectionTitle title="مسارات الإدارة" />
       <View>{adminRoutes.map(([path, title, icon]) => <FeatureTile key={path} title={title} icon={icon} onPress={() => router.push(`/admin/${path}` as any)} />)}</View>
     </AdminFrame>
   );
