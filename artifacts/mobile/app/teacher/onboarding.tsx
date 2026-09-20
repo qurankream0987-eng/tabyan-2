@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
 import * as DocumentPicker from "expo-document-picker";
-import { VideoView, useVideoPlayer } from "expo-video";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Badge, Button, Card, EmptyState, ErrorState, Icon, LoadingState } from "../../components/ui";
+import { LocalVideoPreview } from "../../components/library-media-player";
 import { TeacherScreen } from "./_components";
 import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
@@ -13,7 +13,6 @@ import { useTheme, palette } from "../../lib/theme";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 
 const NativeCameraView = CameraView as unknown as React.ComponentType<any>;
-const NativeVideoView = VideoView as unknown as React.ComponentType<any>;
 
 const QUESTIONS = [
   "ما مؤهلك العلمي في القرآن وعلومه؟",
@@ -30,11 +29,6 @@ const QUESTIONS = [
 
 type Certificate = { id: string; filePath: string; title: string | null; createdAt: string | Date | null };
 type KycData = { kycStatus: "awaiting_assessment" | "in_progress" | "pending" | "approved" | "rejected"; notes: string | null; isMufti: boolean; isVolunteer: boolean };
-
-function VideoPreview({ uri }: { uri: string }) {
-  const player = useVideoPlayer(uri, (instance) => { instance.loop = false; });
-  return <NativeVideoView player={player} style={styles.preview} nativeControls contentFit="contain" />;
-}
 
 export default function Onboarding() {
   const router = useRouter();
@@ -195,7 +189,7 @@ export default function Onboarding() {
         <Text style={[styles.sectionTitle, { color: colors.primary }]}>١. الفيديو التعريفي</Text>
         <Text style={[styles.body, { color: colors.muted }]}>سجّل فيديو مدته من 30 إلى 60 ثانية أو اختر فيديو موجودًا من جهازك.</Text>
         {hasRecordingPermission && !localVideoUri ? <NativeCameraView ref={cameraRef} facing="front" mode="video" style={styles.camera} /> : null}
-        {localVideoUri ? <VideoPreview uri={localVideoUri} /> : null}
+        {localVideoUri ? <LocalVideoPreview uri={localVideoUri} style={styles.preview} /> : null}
         <View style={styles.actions}>
           <Button label={recording ? "إيقاف التسجيل" : "تسجيل فيديو"} icon={recording ? "stop-circle-outline" : "videocam-outline"} disabled={uploading} onPress={recording ? () => cameraRef.current?.stopRecording() : recordVideo} />
           <Button label="اختيار فيديو" icon="folder-open-outline" variant="secondary" disabled={uploading || recording} onPress={() => void chooseVideo()} />

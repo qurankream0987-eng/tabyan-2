@@ -50,6 +50,16 @@ function formatTime(value: number) {
   return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+/**
+ * Minimal local-file preview player for a just-recorded, not-yet-uploaded
+ * video (placement/KYC self-review). No auth resolution needed — the URI is
+ * the device's own local recording, never a private object reference.
+ */
+export function LocalVideoPreview({ uri, style }: { uri: string; style?: object }) {
+  const player = useVideoPlayer(uri, (instance) => { instance.loop = false; });
+  return <NativeVideoView player={player} style={style ?? styles.videoView} nativeControls contentFit="contain" />;
+}
+
 export function LibraryMediaPlayer({
   source,
   contentType,

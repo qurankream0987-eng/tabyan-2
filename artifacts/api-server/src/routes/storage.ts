@@ -73,7 +73,7 @@ const uploadBodySchema = z.object({
   purpose: z.enum(["live_session_recording", "book_pdf", "placement_video", "qiraat_certificate"]).optional(),
 });
 const directDiagnosticSchema = z.object({
-  objectPath: z.string().regex(/^\/objects\/[\w\-./]+$/),
+  objectPath: z.string().regex(/^\/objects\/(?!.*\.\.)[\w\-./]+$/),
   diagnosticId: z.string().regex(/^[A-Za-z0-9_-]{8,80}$/),
 });
 const sessionRecordingFinalizeSchema = z.object({
@@ -326,7 +326,7 @@ router.post("/storage/uploads/finalize", async (req: Request, res: Response) => 
     return;
   }
   const parsed = z.object({
-    objectPath: z.string().regex(/^\/objects\/[\w\-./]+$/),
+    objectPath: z.string().regex(/^\/objects\/(?!.*\.\.)[\w\-./]+$/),
     purpose: z.enum(["live_session_recording", "book_pdf", "placement_video", "qiraat_certificate"]).optional(),
   }).safeParse(req.body);
   if (!parsed.success) {

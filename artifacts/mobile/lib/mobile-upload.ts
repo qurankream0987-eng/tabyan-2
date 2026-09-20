@@ -53,7 +53,7 @@ async function requestUploadUrl(
     throw new Error(body?.error || "تعذر تجهيز رفع الفيديو.");
   }
   const payload = await response.json() as { uploadURL?: string; objectPath?: string };
-  if (!payload.uploadURL || !/^\/objects\/[\w\-./]+$/.test(payload.objectPath ?? "")) {
+  if (!payload.uploadURL || !/^\/objects\/(?!.*\.\.)[\w\-./]+$/.test(payload.objectPath ?? "")) {
     throw new Error("استجاب الخادم بمسار تخزين غير صالح.");
   }
   return { uploadURL: payload.uploadURL, objectPath: payload.objectPath! };

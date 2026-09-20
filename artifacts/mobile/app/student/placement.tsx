@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
-import { VideoView, useVideoPlayer } from "expo-video";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StudentScreen, LoadingState, ErrorState, Card } from "./_screen";
 import { Button, Icon } from "../../components/ui";
 import SectionIcon from "../../components/section-icon";
+import { LocalVideoPreview } from "../../components/library-media-player";
 import { useTheme, palette } from "../../lib/theme";
 import { useAuth } from "../../lib/auth";
 import { uploadNativeVideo } from "../../lib/mobile-upload";
@@ -14,7 +14,6 @@ import { trpc } from "../../lib/trpc";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 
 const NativeCameraView = CameraView as unknown as React.ComponentType<any>;
-const NativeVideoView = VideoView as unknown as React.ComponentType<any>;
 
 // ── مطابق لصفحة اختبار القبول في الموقع (Placement.tsx) ─────────────────────
 const MAX_ATTEMPTS = 3;
@@ -320,7 +319,7 @@ export default function Placement() {
       <Card>
         {hasRecordingPermission ? (
           <>
-            {videoUri ? <RecordedVideoPreview uri={videoUri} style={styles.preview} /> : <NativeCameraView ref={cameraRef} style={styles.camera} facing="front" mode="video" />}
+            {videoUri ? <LocalVideoPreview uri={videoUri} style={styles.preview} /> : <NativeCameraView ref={cameraRef} style={styles.camera} facing="front" mode="video" />}
             <Button
               label={videoUri ? "إعادة تسجيل الاختبار" : recording ? "إيقاف التسجيل" : "بدء تسجيل الاختبار"}
               icon={videoUri ? "refresh-outline" : recording ? "stop-circle-outline" : "videocam-outline"}
@@ -399,10 +398,6 @@ export default function Placement() {
   );
 }
 
-function RecordedVideoPreview({ uri, style }: { uri: string; style: object }) {
-  const player = useVideoPlayer(uri, (instance) => { instance.loop = false; });
-  return <NativeVideoView player={player} style={style} nativeControls contentFit="contain" />;
-}
 
 function TimelineStep({
   icon,

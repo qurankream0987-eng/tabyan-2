@@ -13,9 +13,9 @@ import {
 } from "@workspace/db";
 
 const SESSION_TYPE_LABELS: Record<string, string> = {
-  quran_hifz: "Ø­ÙØ¸ Ù‚Ø±Ø¢Ù†", quran_review: "Ù…Ø±Ø§Ø¬Ø¹Ø© Ù‚Ø±Ø¢Ù†", qiraat: "Ù‚Ø±Ø§Ø¡Ø§Øª",
-  tajweed_correction: "ØªØµØ­ÙŠØ­ ØªÙ„Ø§ÙˆØ©", tajweed_level: "ØªØ¬ÙˆÙŠØ¯",
-  sharia_fiqh: "ÙÙ‚Ù‡", sharia_aqeedah: "Ø¹Ù‚ÙŠØ¯Ø©", sharia_seerah: "Ø³ÙŠØ±Ø©",
+  quran_hifz: "حفظ قرآن", quran_review: "مراجعة قرآن", qiraat: "قراءات",
+  tajweed_correction: "تصحيح تلاوة", tajweed_level: "تجويد",
+  sharia_fiqh: "فقه", sharia_aqeedah: "عقيدة", sharia_seerah: "سيرة",
 };
 
 /**
@@ -45,7 +45,13 @@ export const teacherRouter = createRouter({
     }),
 
   submitKyc: teacherProcedure
-    .input(z.object({ videoUrl: z.string().min(1), answers: z.array(z.object({ q: z.string(), a: z.string() })).length(10) }))
+    .input(z.object({
+      // نفس قيد مسار كائن التخزين الخاص في student.submitPlacement — يرفض
+      // مسار جهاز محلي (file://) أو أي نص عشوائي بدل مسار /objects/ الذي
+      // يعيده finalize، فلا يُحفَظ مسار غير قابل للتشغيل لدى مراجعة المشرف.
+      videoUrl: z.string().regex(/^\/objects\/(?!.*\.\.)[\w\-./]+$/, "مسار الفيديو غير صالح"),
+      answers: z.array(z.object({ q: z.string(), a: z.string() })).length(10),
+    }))
     .mutation(async ({ ctx, input }) => {
       const [teacher] = await db.select({ kycStatus: teachers.kycStatus })
         .from(teachers).where(eq(teachers.userId, ctx.user.id)).limit(1);
@@ -179,7 +185,7 @@ export const teacherRouter = createRouter({
         studentName: users.fullName, levelId: sessions.levelId,
       }).from(sessions).innerJoin(users, eq(sessions.studentId, users.id))
         .where(eq(sessions.id, input.id)).limit(1);
-      if (!s || s.teacherId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND", message: "Ø§Ù„Ø¬Ù„Ø³Ø© ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯Ø©" });
+      if (!s || s.teacherId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND", message: "الجلسة غير موجودة" });
       return {
         ...s,
         typeLabel: SESSION_TYPE_LABELS[s.sessionType],
@@ -226,8 +232,8 @@ export const teacherRouter = createRouter({
       }
       if (s.studentId) {
         await db.insert(notifications).values({
-          id: crypto.randomUUID(), userId: s.studentId, title: "ØªÙ‚ÙŠÙŠÙ…Ùƒ Ø¬Ø§Ù‡Ø² ðŸ“Š",
-          body: `Ù‚ÙŠÙ‘Ù…Ùƒ Ù…Ø¹Ù„Ù…Ùƒ Ø¨Ø¯Ø±Ø¬Ø© ${total}/100`, type: "result",
+          id: crypto.randomUUID(), userId: s.studentId, title: "تقييمك جاهز 📊",
+          body: `قيّمك معلمك بدرجة ${total}/100`, type: "result",
           ...(input.audioNotesUrl
             ? { attachments: [{ name: "\u0645\u0644\u0627\u062d\u0638\u0629 \u0635\u0648\u062a\u064a\u0629 \u0645\u0646 \u0627\u0644\u0645\u0639\u0644\u0645", kind: "audio", url: input.audioNotesUrl }] }
             : {}),
@@ -328,7 +334,7 @@ export const teacherRouter = createRouter({
       if (input.audioUrl) attachments.push({ name: "\u0631\u0633\u0627\u0644\u0629 \u0635\u0648\u062a\u064a\u0629", kind: "audio", url: input.audioUrl });
       if (input.fileUrl) attachments.push({ name: "\u0645\u0631\u0641\u0642 \u0645\u0646 \u0627\u0644\u0645\u0639\u0644\u0645", kind: "pdf", url: input.fileUrl });
       await db.insert(notifications).values({
-        id: crypto.randomUUID(), userId: input.studentId, title: `Ø±Ø³Ø§Ù„Ø© Ù…Ù† ${ctx.user.fullName} âœ‰ï¸`,
+        id: crypto.randomUUID(), userId: input.studentId, title: `رسالة من ${ctx.user.fullName} ✉️`,
         body: input.messageText.slice(0, 100), type: "general",
         ...(attachments.length ? { attachments } : {}),
       });
@@ -377,7 +383,7 @@ export const teacherRouter = createRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const [t] = await db.select().from(teachers).where(eq(teachers.userId, ctx.user.id)).limit(1);
-      if (!t?.isMufti) throw new TRPCError({ code: "FORBIDDEN", message: "Ù„Ù… ØªÙØ¹ÙŠÙŽÙ‘Ù† Ù…ÙØªÙŠØ§Ù‹" });
+      if (!t?.isMufti) throw new TRPCError({ code: "FORBIDDEN", message: "لم تُعيَّن مفتياً" });
       const [q] = await db.select().from(fatwaQuestions).where(eq(fatwaQuestions.id, input.questionId)).limit(1);
       if (!q || q.muftiId !== ctx.user.id) throw new TRPCError({ code: "NOT_FOUND" });
       await db.insert(fatwaAnswers).values({
@@ -394,7 +400,7 @@ export const teacherRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       await assertTeacherStudentLink(ctx.user.id, input.studentId);
       const [st] = await db.select().from(students).where(eq(students.userId, input.studentId)).limit(1);
-      if (!st) throw new TRPCError({ code: "NOT_FOUND", message: "Ø§Ù„Ø·Ø§Ù„Ø¨ ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯" });
+      if (!st) throw new TRPCError({ code: "NOT_FOUND", message: "الطالب غير موجود" });
 
       const currentLevelId = st.currentLevelId;
       let nextLevel = null;
@@ -407,12 +413,12 @@ export const teacherRouter = createRouter({
           nextLevel = next ?? null;
         }
       }
-      if (!nextLevel) throw new TRPCError({ code: "BAD_REQUEST", message: "Ø§Ù„Ø·Ø§Ù„Ø¨ ÙÙŠ Ø¢Ø®Ø± Ù…Ø³ØªÙˆÙ‰ Ø£Ùˆ Ù„Ù… ÙŠÙØ­Ø¯ÙŽÙ‘Ø¯ Ù…Ø³ØªÙˆØ§Ù‡ Ø¨Ø¹Ø¯" });
+      if (!nextLevel) throw new TRPCError({ code: "BAD_REQUEST", message: "الطالب في آخر مستوى أو لم يُحدَّد مستواه بعد" });
 
       const existing = await db.select().from(promotionRequests)
         .where(and(eq(promotionRequests.studentId, input.studentId), eq(promotionRequests.status, "pending")))
         .limit(1);
-      if (existing.length) throw new TRPCError({ code: "CONFLICT", message: "ÙŠÙˆØ¬Ø¯ Ø·Ù„Ø¨ ØªØ±Ù‚ÙŠØ© Ù…Ø¹Ù„Ù‘Ù‚ Ù„Ù‡Ø°Ø§ Ø§Ù„Ø·Ø§Ù„Ø¨" });
+      if (existing.length) throw new TRPCError({ code: "CONFLICT", message: "يوجد طلب ترقية معلّق لهذا الطالب" });
 
       await db.insert(promotionRequests).values({
         id: crypto.randomUUID(), studentId: input.studentId,

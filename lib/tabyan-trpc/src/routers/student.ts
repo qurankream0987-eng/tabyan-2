@@ -154,7 +154,7 @@ export const studentRouter = createRouter({
 
   submitPlacement: studentProcedure
     .input(z.object({
-      videoUrl: z.string().regex(/^\/objects\/[\w\-./]+$/, "مسار الفيديو غير صالح"),
+      videoUrl: z.string().regex(/^\/objects\/(?!.*\.\.)[\w\-./]+$/, "مسار الفيديو غير صالح"),
       pathType: z.enum(["quran", "tajweed_correction"]).default("quran"),
       // يطابق نطاق التسجيل الفعلي في تطبيق الجوال (٤٥–٣٠٠ ثانية) — كان الحد الأقصى هنا ١٢٠
       // فيرفض الخادم أي تسجيل أطول رغم أن الواجهة تسمح به وتعرضه للمستخدم.
