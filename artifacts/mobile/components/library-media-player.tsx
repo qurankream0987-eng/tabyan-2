@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { VideoPlayerStatus, VideoView, useVideoPlayer, type VideoSource } from "expo-video";
 import { Button, Card, EmptyState, ErrorState, Icon } from "./ui";
 import { useTheme } from "../lib/theme";
 import { userFacingErrorMessage } from "../lib/user-facing-error";
 import { useAuth } from "../lib/auth";
-import { resolveLibraryPlayableSource } from "../lib/library-media";
+import { resolveLibraryPlayableSource, type LibraryPlayableSource } from "../lib/library-media";
+import { downloadPrivateMediaToCache, removeCachedPrivateMedia } from "../lib/private-media-cache";
 
 const NativeVideoView = VideoView as unknown as React.ComponentType<any>;
 
@@ -50,6 +51,29 @@ function formatTime(value: number) {
   return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+/** Extracts a YouTube video ID without embedding a WebView in the native app. */
+export function youtubeVideoId(value: string): string | null {
+  try {
+    const url = new URL(value);
+    const host = url.hostname.replace(/^www\.|^m\./, "");
+    if (host === "youtu.be") {
+      const id = url.pathname.slice(1).split("/")[0];
+      return /^[\w-]{11}$/.test(id) ? id : null;
+    }
+    if (host === "youtube.com" || host === "youtube-nocookie.com") {
+      if (url.pathname === "/watch") {
+        const id = url.searchParams.get("v") ?? "";
+        return /^[\w-]{11}$/.test(id) ? id : null;
+      }
+      const match = url.pathname.match(/^\/(shorts|embed|live)\/([\w-]{11})/);
+      return match?.[2] ?? null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Minimal local-file preview player for a just-recorded, not-yet-uploaded
  * video (placement/KYC self-review). No auth resolution needed — the URI is
@@ -75,8 +99,68 @@ export function LibraryMediaPlayer({
 }) {
   const { colors } = useTheme();
   const { token } = useAuth();
+  const youtubeId = contentType === "video" ? youtubeVideoId(source) : null;
   const resolvedSource = resolveLibraryPlayableSource(source, token);
   const [retryKey, setRetryKey] = useState(0);
+  const [cachedSource, setCachedSource] = useState<LibraryPlayableSource | null>(null);
+  const [recovering, setRecovering] = useState(false);
+  const fallbackAttempted = useRef(false);
+  const cachedUri = useRef<string | null>(null);
+  const sourceGeneration = useRef(0);
+  const sourceUri = resolvedSource?.uri ?? "";
+  const authorization = resolvedSource?.headers?.Authorization;
+
+  useEffect(() => {
+    sourceGeneration.current += 1;
+    fallbackAttempted.current = false;
+    setCachedSource(null);
+    setRecovering(false);
+    const previous = cachedUri.current;
+    cachedUri.current = null;
+    void removeCachedPrivateMedia(previous);
+    return () => {
+      const current = cachedUri.current;
+      cachedUri.current = null;
+      void removeCachedPrivateMedia(current);
+    };
+  }, [sourceUri]);
+
+  const recoverPrivateVideo = useCallback(async () => {
+    if (
+      Platform.OS === "web"
+      || contentType !== "video"
+      || !sourceUri
+      || !authorization
+      || fallbackAttempted.current
+    ) return;
+
+    fallbackAttempted.current = true;
+    setRecovering(true);
+    const generation = sourceGeneration.current;
+    try {
+      const uri = await downloadPrivateMediaToCache(sourceUri, { Authorization: authorization });
+      if (generation !== sourceGeneration.current) {
+        await removeCachedPrivateMedia(uri);
+        return;
+      }
+      cachedUri.current = uri;
+      setCachedSource({ uri });
+    } catch {
+      // Keep the original player error visible. Retry permits one fresh cache attempt.
+    } finally {
+      if (generation === sourceGeneration.current) setRecovering(false);
+    }
+  }, [authorization, contentType, sourceUri]);
+
+  const retry = useCallback(() => {
+    fallbackAttempted.current = false;
+    setRecovering(false);
+    setRetryKey((value) => value + 1);
+  }, []);
+
+  if (youtubeId) {
+    return <YouTubeExternalPlayer videoId={youtubeId} />;
+  }
 
   // Keep invalid data away from useVideoPlayer. In particular, an object key
   // must never be displayed or handed to the native player as a raw path.
@@ -91,10 +175,12 @@ export function LibraryMediaPlayer({
 
   return (
     <PlayableMedia
-      key={`${resolvedSource.uri}:${retryKey}`}
-      source={resolvedSource}
+      key={`${cachedSource?.uri ?? resolvedSource.uri}:${retryKey}`}
+      source={cachedSource ?? resolvedSource}
       contentType={contentType}
-      onRetry={() => setRetryKey((value) => value + 1)}
+      onRetry={retry}
+      onPlaybackError={recoverPrivateVideo}
+      recovering={recovering}
       onDiagnosticEvent={onDiagnosticEvent}
       onTimeUpdate={onTimeUpdate}
       initialPositionSeconds={initialPositionSeconds}
@@ -102,10 +188,45 @@ export function LibraryMediaPlayer({
   );
 }
 
+function YouTubeExternalPlayer({ videoId }: { videoId: string }) {
+  const { colors } = useTheme();
+  const [opening, setOpening] = useState(false);
+  const [error, setError] = useState("");
+  const url = `https://www.youtube.com/watch?v=${videoId}`;
+
+  const open = async () => {
+    setOpening(true);
+    setError("");
+    try {
+      if (!(await Linking.canOpenURL(url))) throw new Error("unsupported YouTube URL");
+      await Linking.openURL(url);
+    } catch {
+      setError("تعذر فتح فيديو YouTube. تحقق من الاتصال وحاول مرة أخرى.");
+    } finally {
+      setOpening(false);
+    }
+  };
+
+  return (
+    <Card style={styles.card}>
+      <Text style={[styles.heading, { color: colors.text }]}>مشغل الفيديو</Text>
+      <View style={[styles.externalVideo, { backgroundColor: colors.background, borderColor: colors.border }]}>
+        <Icon name="logo-youtube" size={42} color={colors.danger} />
+        <Text style={[styles.externalTitle, { color: colors.text }]}>فيديو YouTube</Text>
+        <Text style={[styles.externalHint, { color: colors.muted }]}>يفتح في تطبيق YouTube أو المتصفح دون استخدام WebView.</Text>
+      </View>
+      {error ? <Text style={[styles.externalError, { color: colors.danger }]}>{error}</Text> : null}
+      <Button label={opening ? "جارٍ الفتح…" : error ? "إعادة المحاولة" : "فتح الفيديو"} icon="open-outline" loading={opening} disabled={opening} onPress={() => void open()} />
+    </Card>
+  );
+}
+
 function PlayableMedia({
   source,
   contentType,
   onRetry,
+  onPlaybackError,
+  recovering,
   onDiagnosticEvent,
   onTimeUpdate,
   initialPositionSeconds,
@@ -113,6 +234,8 @@ function PlayableMedia({
   source: VideoSource;
   contentType: "audio" | "video";
   onRetry: () => void;
+  onPlaybackError: () => void;
+  recovering: boolean;
   onDiagnosticEvent?: (event: LibraryMediaDiagnosticEvent) => void;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
   initialPositionSeconds: number;
@@ -145,6 +268,7 @@ function PlayableMedia({
       if (nextStatus === "error") {
         setError(userFacingErrorMessage(playerError, "تعذر تشغيل هذا الملف الإعلامي."));
         setPlaying(false);
+        onPlaybackError();
         return;
       }
       if (nextStatus === "readyToPlay") {
@@ -161,7 +285,7 @@ function PlayableMedia({
       playingSubscription.remove();
       try { player.pause(); } catch { /* player may already be released */ }
     };
-  }, [onDiagnosticEvent, onTimeUpdate, player]);
+  }, [onDiagnosticEvent, onPlaybackError, onTimeUpdate, player]);
 
   const togglePlayback = () => {
     if (player.playing) {
@@ -176,7 +300,12 @@ function PlayableMedia({
   return (
     <Card style={styles.card}>
       <Text style={[styles.heading, { color: colors.text }]}>{contentType === "audio" ? "مشغل الصوت" : "مشغل الفيديو"}</Text>
-      {error ? (
+      {recovering ? (
+        <View style={styles.recovery}>
+          <ActivityIndicator color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.muted }]}>جارٍ تجهيز الفيديو للتشغيل الآمن…</Text>
+        </View>
+      ) : error ? (
         <ErrorState message={error} onRetry={onRetry} />
       ) : (
         <>
@@ -222,8 +351,13 @@ const styles = StyleSheet.create({
   audioView: { width: "100%", height: 104 },
   loading: { position: "absolute", alignSelf: "center", top: "45%", alignItems: "center", gap: 6 },
   loadingText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11 },
+  recovery: { minHeight: 180, alignItems: "center", justifyContent: "center", gap: 10 },
   controls: { flexDirection: "row-reverse", alignItems: "center", gap: 9, marginTop: 10, flexWrap: "wrap" },
   playButton: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
   time: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11 },
   hint: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 10, flex: 1, textAlign: "right" },
+  externalVideo: { minHeight: 180, borderRadius: 16, borderWidth: 1, alignItems: "center", justifyContent: "center", gap: 8, padding: 18 },
+  externalTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 15, textAlign: "center" },
+  externalHint: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, lineHeight: 19, textAlign: "center" },
+  externalError: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, lineHeight: 18, textAlign: "right", marginTop: 8 },
 });

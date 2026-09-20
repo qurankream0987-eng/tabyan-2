@@ -115,8 +115,8 @@ export default function Accounts() {
   function submitCreate() {
     const normalizedName = normalizePersonName(fullName);
     const normalized = normalizeUsername(username);
-    if (!isValidPersonName(normalizedName)) {
-      setFormError("أدخل الاسم الكامل بالعربية أو الإنجليزية (3-50 حرفاً)");
+    if (!isValidPersonName(normalizedName, 1, 100)) {
+      setFormError("اكتب حرفاً واحداً على الأقل بالعربية أو الإنجليزية");
       return;
     }
     if (!isValidUsername(normalized)) {
@@ -201,8 +201,9 @@ export default function Accounts() {
           </View>
            <Text style={[styles.label, { color: colors.text }]}>الاسم الكامل (عربي أو إنجليزي)</Text>
            <TextInput value={fullName} onChangeText={(value) => { setFullName(value); setFormError(null); }} placeholder="محمد أحمد العجمي" placeholderTextColor={colors.muted} autoCapitalize="words" textAlign="right" style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]} />
-           <Text style={[styles.label, { color: colors.text }]}>اسم المستخدم (فريد — عربي أو إنجليزي)</Text>
+            <Text style={[styles.label, { color: colors.text }]}>اسم دخول {kind === "teacher" ? "المعلم" : "المشرف"} (فريد — عربي أو إنجليزي، بلا مسافات)</Text>
            <TextInput value={username} onChangeText={(value) => { setUsername(value); setFormError(null); }} placeholder="محمد_العجمي" placeholderTextColor={colors.muted} autoCapitalize="none" textAlign="right" style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]} />
+            <Text style={[styles.muted, { color: colors.muted }]}>مثال مقبول: {kind === "teacher" ? "معلم_١ أو محمد_العجمي" : "مشرف_١ أو محمد_العجمي"} — لا تستخدم مسافة داخل اسم المستخدم.</Text>
            <Text style={[styles.label, { color: colors.text }]}>كلمة المرور</Text>
            <TextInput value={password} onChangeText={setPassword} placeholder="أدخل كلمة المرور" placeholderTextColor={colors.muted} secureTextEntry textAlign="left" style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]} />
            <Text style={[styles.label, { color: colors.text }]}>تأكيد كلمة السر</Text>
