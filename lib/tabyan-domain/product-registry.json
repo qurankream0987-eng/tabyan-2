@@ -219,14 +219,12 @@
   },
   "navigation": {
     "webStudentBottomNav": ["home", "schedule", "recordings", "library", "fatwa", "mushaf", "account"],
-    "mobileStudentBottomNav": ["home", "halaqat", "notifications", "account"],
-    "mobileTeacherBottomNav": ["home", "teacher_students", "teacher_schedule", "notifications", "account"],
+    "mobileStudentBottomNav": ["home", "schedule", "recordings", "library", "fatwa", "account"],
+    "mobileTeacherBottomNav": [],
     "intentionalOrderExceptions": [
-      "Web splits schedule and recordings into separate tabs; Mobile combines upcoming and past sessions in the Halaqat tab.",
-      "Web exposes library and fatwa in its bottom bar; Mobile keeps their real Native routes outside the four-item student tab bar.",
-      "Mobile keeps notifications in its student tab bar and top bar; Web exposes notifications outside the student bottom bar.",
-      "Mushaf and recitation remain hidden on Mobile until the native reader gate passes.",
-      "Mobile teacher-only tabs are role-gated and have no student Web bottom-navigation equivalent."
+      "Mobile mirrors Web's student bottom bar exactly except Mushaf, which stays out of the tab bar until the native reader/QCF asset gate passes.",
+      "Mobile surfaces notifications via a shared header bell icon reachable from every role, not a bottom tab; Web also keeps notifications outside its student bottom bar.",
+      "Mobile teacher navigation uses a role-gated dashboard tile list (see app/teacher/index.tsx), not a bottom tab bar; the role gate lives once in the teacher route layout rather than per screen."
     ]
   }
 }
