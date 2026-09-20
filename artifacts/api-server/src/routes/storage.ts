@@ -188,22 +188,22 @@ function directDiagnosticUser(req: Request, objectPath: string): { id: string; r
 router.post("/storage/uploads/request-url", async (req: Request, res: Response) => {
   const user = await resolveUser(req);
   if (!user) {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "غير مصرح بالدخول" });
     return;
   }
   const parsed = uploadBodySchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: "Missing or invalid required fields" });
+    res.status(400).json({ error: "الحقول المطلوبة ناقصة أو غير صحيحة" });
     return;
   }
   try {
     if (parsed.data.purpose === "live_session_recording" && user.role !== "teacher") {
-      res.status(403).json({ error: "Only teachers may prepare a live session recording" });
+      res.status(403).json({ error: "المعلمون فقط يمكنهم تجهيز تسجيل الحلقة المباشرة" });
       return;
     }
     if (parsed.data.purpose === "placement_video") {
       if (user.role !== "student") {
-        res.status(403).json({ error: "Only students may prepare a placement video" });
+        res.status(403).json({ error: "الطلاب فقط يمكنهم تجهيز فيديو اختبار القبول" });
         return;
       }
       if (!/\.mp4$/i.test(parsed.data.name) || parsed.data.contentType !== "video/mp4") {
@@ -213,7 +213,7 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
     }
     if (parsed.data.purpose === "qiraat_certificate") {
       if (user.role !== "student") {
-        res.status(403).json({ error: "Only students may prepare a qiraat certificate" });
+        res.status(403).json({ error: "الطلاب فقط يمكنهم تجهيز شهادة القراءات" });
         return;
       }
       if (!/\.pdf$/i.test(parsed.data.name) || parsed.data.contentType !== "application/pdf") {
@@ -239,7 +239,7 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
     res.json({ uploadURL, objectPath });
   } catch (error) {
     req.log.error({ err: error }, "Error generating upload URL");
-    res.status(500).json({ error: "Failed to generate upload URL" });
+    res.status(500).json({ error: "تعذر تجهيز رابط الرفع" });
   }
 });
 
@@ -322,7 +322,7 @@ async function hasValidPdfStructure(
 router.post("/storage/uploads/finalize", async (req: Request, res: Response) => {
   const user = await resolveUser(req);
   if (!user) {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "غير مصرح بالدخول" });
     return;
   }
   const parsed = z.object({
@@ -330,7 +330,7 @@ router.post("/storage/uploads/finalize", async (req: Request, res: Response) => 
     purpose: z.enum(["live_session_recording", "book_pdf", "placement_video", "qiraat_certificate"]).optional(),
   }).safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: "Missing or invalid objectPath" });
+    res.status(400).json({ error: "مسار الملف ناقص أو غير صحيح" });
     return;
   }
   try {
@@ -338,7 +338,7 @@ router.post("/storage/uploads/finalize", async (req: Request, res: Response) => 
     const objectFile = await objectStorageService.getObjectEntityFile(parsed.data.objectPath);
     const existingPolicy = await getObjectAclPolicy(objectFile);
     if (existingPolicy && existingPolicy.owner !== user.id) {
-      res.status(403).json({ error: "Forbidden" });
+      res.status(403).json({ error: "غير مسموح بهذا الإجراء" });
       return;
     }
     let structureOk: boolean | null;
@@ -372,7 +372,7 @@ router.post("/storage/uploads/finalize", async (req: Request, res: Response) => 
     res.json({ ok: true, objectPath: normalized });
   } catch (error) {
     req.log.error({ err: error }, "Error finalizing upload ACL");
-    res.status(500).json({ error: "Failed to finalize upload" });
+    res.status(500).json({ error: "تعذر تأكيد اكتمال الرفع" });
   }
 });
 
@@ -384,16 +384,16 @@ router.post("/storage/uploads/finalize", async (req: Request, res: Response) => 
 router.post("/storage/live-session-recordings/finalize", async (req: Request, res: Response) => {
   const user = await resolveUser(req);
   if (!user) {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "غير مصرح بالدخول" });
     return;
   }
   if (process.env.LIVE_SESSION_RECORDING_ENABLED !== "true") {
-    res.status(404).json({ error: "Live session recording is disabled" });
+    res.status(404).json({ error: "تسجيل الحلقات المباشرة غير مفعّل حالياً" });
     return;
   }
   const parsed = sessionRecordingFinalizeSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: "Invalid recording metadata" });
+    res.status(400).json({ error: "بيانات التسجيل غير صالحة" });
     return;
   }
 
@@ -404,11 +404,11 @@ router.post("/storage/live-session-recordings/finalize", async (req: Request, re
       status: sessions.status,
     }).from(sessions).where(eq(sessions.id, parsed.data.sessionId)).limit(1);
     if (!session || session.teacherId !== user.id || !session.studentId) {
-      res.status(403).json({ error: "Forbidden" });
+      res.status(403).json({ error: "غير مسموح بهذا الإجراء" });
       return;
     }
     if (!["in_progress", "completed"].includes(session.status)) {
-      res.status(409).json({ error: "The session is not eligible for recording" });
+      res.status(409).json({ error: "هذه الحلقة غير مؤهلة للتسجيل" });
       return;
     }
 
@@ -416,20 +416,20 @@ router.post("/storage/live-session-recordings/finalize", async (req: Request, re
       .where(and(eq(recordings.sessionId, parsed.data.sessionId), eq(recordings.status, "ready"), eq(recordings.isDeleted, false)))
       .limit(1);
     if (existing) {
-      res.status(409).json({ error: "A finalized recording already exists for this session" });
+      res.status(409).json({ error: "يوجد تسجيل مكتمل لهذه الحلقة مسبقاً" });
       return;
     }
 
     const objectFile = await objectStorageService.getObjectEntityFile(parsed.data.objectPath);
     const policy = await getObjectAclPolicy(objectFile);
     if (!policy || policy.visibility !== "private" || policy.owner !== user.id) {
-      res.status(403).json({ error: "Recording object is not finalized for this teacher" });
+      res.status(403).json({ error: "ملف التسجيل غير مؤكَّد لهذا المعلم" });
       return;
     }
     const [metadata] = await objectFile.getMetadata();
     const bytes = Number(metadata.size ?? 0);
     if (!Number.isFinite(bytes) || bytes <= 0 || !String(metadata.contentType ?? "").startsWith("video/")) {
-      res.status(422).json({ error: "Recording file is not a valid finalized video" });
+      res.status(422).json({ error: "ملف التسجيل ليس فيديو صالحاً مكتملاً" });
       return;
     }
 
@@ -459,15 +459,15 @@ router.post("/storage/live-session-recordings/finalize", async (req: Request, re
     const pgCode = (error as { cause?: { code?: string }; code?: string }).cause?.code
       ?? (error as { code?: string }).code;
     if (pgCode === "23505") {
-      res.status(409).json({ error: "A finalized recording already exists for this session" });
+      res.status(409).json({ error: "يوجد تسجيل مكتمل لهذه الحلقة مسبقاً" });
       return;
     }
     if (error instanceof ObjectNotFoundError) {
-      res.status(404).json({ error: "Recording object not found" });
+      res.status(404).json({ error: "ملف التسجيل غير موجود" });
       return;
     }
     req.log.error({ err: error, sessionId: parsed.data.sessionId }, "Error finalizing live session recording");
-    res.status(500).json({ error: "Failed to link the live session recording" });
+    res.status(500).json({ error: "تعذر ربط تسجيل الحلقة المباشرة" });
   }
 });
 
@@ -481,7 +481,7 @@ router.post("/storage/live-session-recordings/finalize", async (req: Request, re
 router.get("/storage/books/:id/download", async (req: Request, res: Response) => {
   const user = await resolveUser(req);
   if (!user || user.role !== "student") {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "غير مصرح بالدخول" });
     return;
   }
   const rawBookId = req.params.id;
@@ -564,18 +564,18 @@ router.get("/storage/books/:id/download", async (req: Request, res: Response) =>
 router.post("/storage/diagnostic-session", async (req: Request, res: Response) => {
   const user = await resolveUser(req);
   if (!user) {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "غير مصرح بالدخول" });
     return;
   }
   const parsed = directDiagnosticSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: "Invalid diagnostic request" });
+    res.status(400).json({ error: "طلب تشخيص غير صالح" });
     return;
   }
   try {
     pruneDiagnosticSessions();
     if (mediaDiagnosticSessions.size >= MAX_DIAGNOSTIC_SESSIONS) {
-      res.status(429).json({ error: "Too many active diagnostics" });
+      res.status(429).json({ error: "عدد كبير من عمليات التشخيص النشطة" });
       return;
     }
     const objectFile = await objectStorageService.getObjectEntityFile(parsed.data.objectPath);
@@ -586,13 +586,13 @@ router.post("/storage/diagnostic-session", async (req: Request, res: Response) =
         requestedPermission: ObjectPermission.READ,
       });
       if (!allowed) {
-        res.status(403).json({ error: "Forbidden" });
+        res.status(403).json({ error: "غير مسموح بهذا الإجراء" });
         return;
       }
     }
     const existing = mediaDiagnosticSessions.get(parsed.data.diagnosticId);
     if (existing && (existing.userId !== user.id || existing.objectPath !== parsed.data.objectPath)) {
-      res.status(409).json({ error: "Diagnostic ID already in use" });
+      res.status(409).json({ error: "معرّف التشخيص مستخدم بالفعل" });
       return;
     }
     mediaDiagnosticSessions.set(parsed.data.diagnosticId, {
@@ -603,11 +603,11 @@ router.post("/storage/diagnostic-session", async (req: Request, res: Response) =
     res.json({ ok: true });
   } catch (error) {
     if (error instanceof ObjectNotFoundError) {
-      res.status(404).json({ error: "Object not found" });
+      res.status(404).json({ error: "الملف غير موجود" });
       return;
     }
     req.log.error({ err: error }, "Error registering media diagnostic");
-    res.status(500).json({ error: "Failed to register diagnostic" });
+    res.status(500).json({ error: "تعذر تسجيل التشخيص" });
   }
 });
 
@@ -619,22 +619,22 @@ router.post("/storage/diagnostic-session", async (req: Request, res: Response) =
 router.post("/storage/diagnostic-direct", async (req: Request, res: Response) => {
   const user = await resolveUser(req);
   if (!user) {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "غير مصرح بالدخول" });
     return;
   }
   const parsed = directDiagnosticSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: "Invalid diagnostic request" });
+    res.status(400).json({ error: "طلب تشخيص غير صالح" });
     return;
   }
   try {
     pruneDiagnosticSessions();
     if (!mediaDiagnosticSession(parsed.data.diagnosticId, user.id, parsed.data.objectPath)) {
-      res.status(409).json({ error: "Diagnostic session expired" });
+      res.status(409).json({ error: "انتهت صلاحية جلسة التشخيص" });
       return;
     }
     if (directDiagnosticSessions.size >= MAX_DIAGNOSTIC_SESSIONS) {
-      res.status(429).json({ error: "Too many active diagnostics" });
+      res.status(429).json({ error: "عدد كبير من عمليات التشخيص النشطة" });
       return;
     }
     const objectFile = await objectStorageService.getObjectEntityFile(parsed.data.objectPath);
@@ -645,7 +645,7 @@ router.post("/storage/diagnostic-direct", async (req: Request, res: Response) =>
         requestedPermission: ObjectPermission.READ,
       });
       if (!allowed) {
-        res.status(403).json({ error: "Forbidden" });
+        res.status(403).json({ error: "غير مسموح بهذا الإجراء" });
         return;
       }
     }
@@ -670,11 +670,11 @@ router.post("/storage/diagnostic-direct", async (req: Request, res: Response) =>
     res.json({ url: `/api/storage/diagnostic-direct/${id}` });
   } catch (error) {
     if (error instanceof ObjectNotFoundError) {
-      res.status(404).json({ error: "Object not found" });
+      res.status(404).json({ error: "الملف غير موجود" });
       return;
     }
     req.log.error({ err: error }, "Error creating media diagnostic page");
-    res.status(500).json({ error: "Failed to create diagnostic page" });
+    res.status(500).json({ error: "تعذر إنشاء صفحة التشخيص" });
   }
 });
 
@@ -708,7 +708,7 @@ router.get("/storage/public-objects/*filePath", async (req: Request, res: Respon
     const filePath = Array.isArray(raw) ? raw.join("/") : raw;
     const file = await objectStorageService.searchPublicObject(filePath);
     if (!file) {
-      res.status(404).json({ error: "File not found" });
+      res.status(404).json({ error: "الملف غير موجود" });
       return;
     }
     const response = await objectStorageService.downloadObject(file);
@@ -721,7 +721,7 @@ router.get("/storage/public-objects/*filePath", async (req: Request, res: Respon
     }
   } catch (error) {
     req.log.error({ err: error }, "Error serving public object");
-    res.status(500).json({ error: "Failed to serve public object" });
+    res.status(500).json({ error: "تعذر تقديم الملف العام" });
   }
 });
 
@@ -781,7 +781,7 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
   if (!user) {
     if (!knownDiagnosticObject(traceId, objectPath) && !controlledObjectLabel) traceId = null;
     writeTrace(401, "authorization-failed");
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "غير مصرح بالدخول" });
     return;
   }
   if (!controlledObjectLabel && !mediaDiagnosticSession(traceId, user.id, objectPath)) traceId = null;
@@ -798,7 +798,7 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
       });
       if (!allowed && !(await canReadSessionRecording(user.id, objectPath))) {
         writeTrace(403, "acl-forbidden");
-        res.status(403).json({ error: "Forbidden" });
+        res.status(403).json({ error: "غير مسموح بهذا الإجراء" });
         return;
       }
     }
@@ -816,7 +816,7 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
           const suffixLength = Number(match[2]);
           if (suffixLength <= 0) {
             writeTrace(416, "range-not-satisfiable", { totalObjectSize: totalSize });
-            res.status(416).setHeader("Content-Range", `bytes */${totalSize}`).json({ error: "Range Not Satisfiable" });
+            res.status(416).setHeader("Content-Range", `bytes */${totalSize}`).json({ error: "نطاق البيانات المطلوب غير صالح" });
             return;
           }
           const start = Math.max(totalSize - suffixLength, 0);
@@ -826,7 +826,7 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
           const end = match[2] ? Math.min(Number(match[2]), totalSize - 1) : totalSize - 1;
           if (start >= totalSize || end < start) {
             writeTrace(416, "range-not-satisfiable", { totalObjectSize: totalSize });
-            res.status(416).setHeader("Content-Range", `bytes */${totalSize}`).json({ error: "Range Not Satisfiable" });
+            res.status(416).setHeader("Content-Range", `bytes */${totalSize}`).json({ error: "نطاق البيانات المطلوب غير صالح" });
             return;
           }
           range = { start, end, total: totalSize };
@@ -946,12 +946,12 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
   } catch (error) {
     if (error instanceof ObjectNotFoundError) {
       writeTrace(404, "object-not-found");
-      res.status(404).json({ error: "Object not found" });
+      res.status(404).json({ error: "الملف غير موجود" });
       return;
     }
     writeTrace(500, "storage-error");
     req.log.error({ err: error }, "Error serving object");
-    res.status(500).json({ error: "Failed to serve object" });
+    res.status(500).json({ error: "تعذر تقديم الملف" });
   }
 });
 
