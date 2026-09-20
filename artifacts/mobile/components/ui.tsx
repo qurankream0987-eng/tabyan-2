@@ -106,15 +106,11 @@ export function Header({ title, subtitle, back = false, right, menu }: { title: 
 }
 
 export function Card({ children, style, accent = false }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; accent?: boolean }) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
+  // بلا ظل — التمايز عن الخلفية يأتي من الحد واللون فقط، اتساقاً مع هوية هادئة خالية من التكلف.
   return <View style={[styles.card, {
     backgroundColor: colors.card,
     borderColor: accent ? `${palette.gold}88` : colors.border,
-    shadowColor: isDark ? "#000000" : "#1A0B0D",
-    shadowOpacity: isDark ? 0.65 : 0.08,
-    shadowRadius: isDark ? 14 : 10,
-    shadowOffset: { width: 0, height: isDark ? 6 : 3 },
-    elevation: isDark ? 5 : 3,
   }, style]}>{children}</View>;
 }
 
@@ -195,7 +191,7 @@ const styles = StyleSheet.create({
   headerTitle: { flex: 1, alignItems: "center" },
   headerText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 18, textAlign: "center" },
   headerSubtitle: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, marginTop: 1, textAlign: "center" },
-  iconButton: { width: 40, height: 40, borderRadius: 14, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  iconButton: { width: 40, height: 40, borderRadius: 16, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   notificationBadge: { position: "absolute", top: 1, left: 1, minWidth: 17, height: 17, paddingHorizontal: 3, borderRadius: 9, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#FFF" },
   notificationBadgeText: { color: "#FFF", fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 9, lineHeight: 12, textAlign: "center" },
   card: { borderRadius: 22, borderWidth: 1, padding: 16, marginBottom: 12, overflow: "hidden" },

@@ -311,6 +311,9 @@ importers:
       '@trpc/react-query':
         specifier: ^11.8.1
         version: 11.18.0(@tanstack/react-query@5.101.4(react@19.1.0))(@trpc/client@11.18.0(@trpc/server@11.18.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.18.0(typescript@5.9.3))(react@19.1.0)(typescript@5.9.3)
+      '@workspace/design-tokens':
+        specifier: workspace:*
+        version: link:../../lib/design-tokens
       '@workspace/tabyan-trpc':
         specifier: workspace:*
         version: link:../../lib/tabyan-trpc
@@ -866,6 +869,8 @@ importers:
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
+
+  lib/design-tokens: {}
 
   lib/tabyan-trpc:
     dependencies:

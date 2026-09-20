@@ -6,10 +6,14 @@ import { Button, Icon } from "../../../components/ui";
 import SectionIcon, { type SectionIconName } from "../../../components/section-icon";
 import { useAuth } from "../../../lib/auth";
 import { trpc } from "../../../lib/trpc";
-import { useTheme, palette } from "../../../lib/theme";
+import { useTheme, palette, type LearningCategory } from "../../../lib/theme";
 
 type PathKey = "quran" | "tajweed_correction" | "qiraat" | "tajweed" | "sharia";
 const VALID_PATHS: PathKey[] = ["quran", "tajweed_correction", "qiraat", "tajweed", "sharia"];
+// هوية المسار البصرية — تصحيح التلاوة يتبع لون التجويد لقربه منه
+const PATH_CATEGORY: Record<PathKey, LearningCategory> = {
+  quran: "quran", tajweed: "tajweed", tajweed_correction: "tajweed", qiraat: "qiraat", sharia: "sharia",
+};
 
 const PATH_META: Record<PathKey, { name: string; desc: string; icon: string }> = {
   quran: { name: "القرآن الكريم", desc: "حفظ ومراجعة وتلاوة", icon: "book-outline" },
@@ -144,7 +148,8 @@ function Bullet() {
 }
 
 function LevelCard({ level: l, path, onBook }: { level: LevelRow; path: PathKey; onBook: (href: string) => void }) {
-  const { colors } = useTheme();
+  const { colors, categories } = useTheme();
+  const accent = categories[PATH_CATEGORY[path]];
   const [open, setOpen] = useState(false);
   const quran = QURAN_DETAILS[l.name];
   const tajweed = TAJWEED_LESSONS[l.name];
@@ -174,13 +179,13 @@ function LevelCard({ level: l, path, onBook }: { level: LevelRow; path: PathKey;
         onPress={() => onBook(`/student/booking?levelId=${l.id}&path=${path}`)}
         style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1 }]}
       >
-        <Card style={styles.levelCard}>{header}</Card>
+        <Card style={[styles.levelCard, { borderStartWidth: 3, borderStartColor: accent }]}>{header}</Card>
       </Pressable>
     );
   }
 
   return (
-    <Card style={styles.levelCard}>
+    <Card style={[styles.levelCard, { borderStartWidth: 3, borderStartColor: accent }]}>
       <Pressable accessibilityRole="button" onPress={() => setOpen((o) => !o)} style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1 }]}>
         {header}
       </Pressable>
@@ -248,14 +253,14 @@ function LevelCard({ level: l, path, onBook }: { level: LevelRow; path: PathKey;
 }
 
 function ShariaView({ levels, onBook }: { levels: LevelRow[]; onBook: (l: LevelRow) => void }) {
-  const { colors } = useTheme();
+  const { colors, categories } = useTheme();
   return (
     <View style={styles.list}>
       {SHARIA_SUBJECTS.map((subj) => {
         const subjLevels = levels.filter((l) => l.nameEn === subj.key);
         if (!subjLevels.length) return null;
         return (
-          <Card key={subj.key}>
+          <Card key={subj.key} style={{ borderStartWidth: 3, borderStartColor: categories.sharia }}>
             <View style={styles.shariaHead}>
               <View style={[styles.levelIconBubble, { backgroundColor: `${palette.gold}1f` }]}>
                 <SectionIcon name={subj.icon} size={28} />

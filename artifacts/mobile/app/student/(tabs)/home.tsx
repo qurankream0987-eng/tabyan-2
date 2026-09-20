@@ -28,7 +28,7 @@ const SESSION_TYPE_TO_PATH: Record<string, LearningPathKey> = {
 
 export default function StudentHome() {
   const { token, name } = useAuth();
-  const { colors } = useTheme();
+  const { colors, categories } = useTheme();
   const router = useRouter();
   const dashboard = trpc.student.dashboard.useQuery(undefined, { enabled: !!token, retry: 1, retryDelay: 800 });
   const verse = trpc.dailyVerse.today.useQuery(undefined, { staleTime: 30 * 60_000, retry: 1 });
@@ -102,20 +102,23 @@ export default function StudentHome() {
         );
       })}
 
-      {/* 4. بطاقات المسارات غير المسجّلة */}
-      {LEARNING_PATHS.filter((p) => !enrolledPaths.includes(p.path)).map((p) => (
-        <Pressable key={p.to} accessibilityRole="button" accessibilityLabel={p.title} onPress={() => router.push(p.to as never)} style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1 }]}>
-          <Card style={styles.pathCard}>
-            <View style={[styles.pathIcon, { backgroundColor: `${colors.primary}14` }]}>
-              <SectionIcon name={p.icon} size={38} />
-            </View>
-            <Text style={[styles.pathTitle, { color: palette.goldDark }]}>{p.title}</Text>
-            <View style={[styles.pathArrow, { backgroundColor: `${colors.primary}14` }]}>
-              <Text style={[styles.pathArrowText, { color: colors.primary }]}>‹</Text>
-            </View>
-          </Card>
-        </Pressable>
-      ))}
+      {/* 4. بطاقات المسارات غير المسجّلة — حد جانبي بلون هوية المسار */}
+      {LEARNING_PATHS.filter((p) => !enrolledPaths.includes(p.path)).map((p) => {
+        const tint = categories[p.path];
+        return (
+          <Pressable key={p.to} accessibilityRole="button" accessibilityLabel={p.title} onPress={() => router.push(p.to as never)} style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1 }]}>
+            <Card style={[styles.pathCard, { borderStartWidth: 3, borderStartColor: tint }]}>
+              <View style={[styles.pathIcon, { backgroundColor: `${tint}17` }]}>
+                <SectionIcon name={p.icon} size={38} />
+              </View>
+              <Text style={[styles.pathTitle, { color: palette.goldDark }]}>{p.title}</Text>
+              <View style={[styles.pathArrow, { backgroundColor: `${colors.primary}14` }]}>
+                <Text style={[styles.pathArrowText, { color: colors.primary }]}>‹</Text>
+              </View>
+            </Card>
+          </Pressable>
+        );
+      })}
 
       {/* 5. تذكير اختبار تحديد المستوى */}
       {placementStatus && placementStatus !== "approved" ? (
@@ -157,7 +160,7 @@ const styles = StyleSheet.create({
   dutyMeta: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12.5, color: palette.gold, textAlign: "right" },
   dutyBtn: { borderRadius: 999, paddingVertical: 11, alignItems: "center", marginTop: 4 },
   dutyBtnText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13.5 },
-  pathCard: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 24 },
+  pathCard: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
   pathIcon: { width: 44, height: 44, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   pathTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 15.5, flex: 1, textAlign: "right" },
   pathArrow: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },

@@ -56,7 +56,10 @@ const webAdapter = fs.readFileSync(path.join(root, "artifacts/tabyan/src/lib/des
 const webEntry = fs.readFileSync(path.join(root, "artifacts/tabyan/src/main.tsx"), "utf8");
 const webCss = fs.readFileSync(path.join(root, "artifacts/tabyan/src/index.css"), "utf8");
 
-if (!mobileAdapter.includes("lib/design-tokens/tokens.json")) {
+// Metro (unlike Vite) can't resolve a raw relative import that escapes the
+// mobile package outside node_modules — the shared tokens are wired in via
+// the @workspace/design-tokens workspace package instead of the plain path.
+if (!mobileAdapter.includes("lib/design-tokens/tokens.json") && !mobileAdapter.includes("@workspace/design-tokens")) {
   errors.push("Mobile adapter is not connected to the shared token source");
 }
 if (!webAdapter.includes("lib/design-tokens/tokens.json")) {

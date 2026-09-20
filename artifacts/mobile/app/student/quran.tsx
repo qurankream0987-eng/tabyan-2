@@ -18,7 +18,7 @@ function menuBadge(qiraat: QiraatPath): { label: string; locked: boolean } {
 
 export default function Quran() {
   const { token } = useAuth();
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, categories } = useTheme();
   const router = useRouter();
   const paths = trpc.student.paths.useQuery(undefined, { enabled: !!token });
 
@@ -45,7 +45,11 @@ export default function Quran() {
           onPress={() => router.push(s.href as never)}
           style={({ pressed }) => [styles.pressable, { opacity: pressed ? 0.88 : 1 }]}
         >
-          <Card style={[styles.card, s.icon === "qiraat" ? styles.qiraatCard : undefined]}>
+          <Card style={[
+            styles.card,
+            s.icon === "qiraat" ? styles.qiraatCard : undefined,
+            { borderStartWidth: 3, borderStartColor: s.icon === "qiraat" ? categories.qiraat : categories.quran },
+          ]}>
             <View style={[
               styles.iconBubble,
               s.icon === "qiraat" ? styles.qiraatIconBubble : undefined,
@@ -93,7 +97,7 @@ export default function Quran() {
 const styles = StyleSheet.create({
   pressable: { marginBottom: 2 },
   card: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14 },
-  qiraatCard: { borderRadius: 28, padding: 12, marginBottom: 14 },
+  qiraatCard: { padding: 12, marginBottom: 14 },
   iconBubble: { width: 48, height: 48, borderRadius: 17, alignItems: "center", justifyContent: "center" },
   qiraatIconBubble: { width: 44, height: 44, borderRadius: 16 },
   body: { flex: 1, minWidth: 0 },

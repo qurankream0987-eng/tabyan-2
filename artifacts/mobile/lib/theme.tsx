@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Appearance, useColorScheme } from "react-native";
 import { storage } from "./storage";
-import designTokens from "./design-tokens.json";
+import designTokens from "../constants/colors";
 
 export const palette = {
   burgundy: "#800020",
@@ -32,6 +32,18 @@ export type ThemeColors = {
   disabled: string;
   overlay: string;
 };
+
+/** هوية بصرية ثابتة لكل مسار تعليمي — قرآن أخضر، تجويد أزرق، شرعي بنفسجي، قراءات بني.
+ *  تُستخدم كلمسة تمييز خفيفة (حد جانبي/أيقونة) لا كخلفية كاملة، حفاظاً على الهوية الذهبية/الخمرية العامة. */
+export type LearningCategory = "quran" | "tajweed" | "sharia" | "qiraat";
+export type CategoryColors = Record<LearningCategory, string>;
+
+const categoriesLight: CategoryColors = designTokens.categories.light;
+const categoriesDark: CategoryColors = designTokens.categories.dark;
+
+/** مقياس التباعد والانحناء الموحّد — استخدمها بدل أرقام حرة جديدة. */
+export const spacing = designTokens.spacing;
+export const radius = designTokens.radius;
 
 const glassLight = "rgba(255,252,245,0.90)";
 const glassDark = "rgba(66,18,31,0.84)";
@@ -73,6 +85,7 @@ const dark: ThemeColors = {
 type ThemeContextValue = {
   mode: ThemeMode;
   colors: ThemeColors;
+  categories: CategoryColors;
   isDark: boolean;
   toggleTheme: () => void;
 };
@@ -92,6 +105,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({
     mode,
     colors: mode === "dark" ? dark : light,
+    categories: mode === "dark" ? categoriesDark : categoriesLight,
     isDark: mode === "dark",
     toggleTheme: () => {
       const next = mode === "dark" ? "light" : "dark";

@@ -17,7 +17,7 @@ type Subject = { key?: string; id?: string | number; name?: string; title?: stri
 export default function Sharia() {
   const { token } = useAuth();
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, categories } = useTheme();
   const subjects = trpc.sharia.subjects.useQuery(undefined, { enabled: !!token });
   const summary = trpc.sharia.summary.useQuery(undefined, { enabled: !!token });
   const rows = (Array.isArray(subjects.data) ? subjects.data : []) as Subject[];
@@ -69,7 +69,7 @@ export default function Sharia() {
                   onPress={() => router.push(`/student/sharia/${key}` as never)}
                   style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1 })}
                 >
-                  <Card style={styles.subjectCard}>
+                  <Card style={[styles.subjectCard, { borderStartWidth: 3, borderStartColor: categories.sharia }]}>
                     <View style={[styles.iconBubble, { backgroundColor: `${palette.gold}1f` }]}>
                       <SectionIcon name={icon} size={32} />
                     </View>
