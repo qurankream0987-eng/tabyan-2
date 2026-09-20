@@ -1,4 +1,13 @@
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+type VideoAttachmentPurpose = "student_placement_video" | "teacher_kyc_video";
+type UploadPurpose = "live_session_recording" | "book_pdf" | VideoAttachmentPurpose;
+
+export type VideoUploadResult = {
+  playableObjectPath: string;
+  videoProof: string;
+  purpose: VideoAttachmentPurpose;
+  durationSeconds: number;
+};
 
 /**
  * Real two-step upload: request a presigned URL from our API server,
@@ -12,6 +21,25 @@ export async function uploadFile(
   onProgress?: (pct: number) => void,
   purpose?: "live_session_recording" | "book_pdf",
 ): Promise<string> {
+  const result = await uploadFileWithResult(file, name, onProgress, purpose);
+  return result.playableObjectPath;
+}
+
+export async function uploadVideoFile(
+  file: Blob,
+  name: string,
+  onProgress: ((pct: number) => void) | undefined,
+  purpose: VideoAttachmentPurpose,
+): Promise<VideoUploadResult> {
+  return uploadFileWithResult(file, name, onProgress, purpose) as Promise<VideoUploadResult>;
+}
+
+async function uploadFileWithResult(
+  file: Blob,
+  name: string,
+  onProgress: ((pct: number) => void) | undefined,
+  purpose?: UploadPurpose,
+): Promise<VideoUploadResult | { playableObjectPath: string }> {
   const token = localStorage.getItem("tabyan_token");
   const res = await fetch(`${BASE}/api/storage/uploads/request-url`, {
     method: "POST",
@@ -27,7 +55,11 @@ export async function uploadFile(
     }),
   });
   if (!res.ok) throw new Error("تعذر تجهيز الرفع — تأكد من تسجيل الدخول");
-  const { uploadURL, objectPath } = (await res.json()) as { uploadURL: string; objectPath: string };
+  const { uploadURL, objectPath, uploadProof } = (await res.json()) as {
+    uploadURL: string;
+    objectPath: string;
+    uploadProof?: string;
+  };
 
   await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -48,7 +80,7 @@ export async function uploadFile(
       "Content-Type": "application/json",
       ...(token ? { Authorization: "Bearer " + token } : {}),
     },
-    body: JSON.stringify({ objectPath, ...(purpose ? { purpose } : {}) }),
+    body: JSON.stringify({ objectPath, ...(purpose ? { purpose } : {}), ...(uploadProof ? { uploadProof } : {}) }),
   });
   if (!fin.ok) {
     // الخادم قد يرفض الملف لأنه ليس فيديو صالحاً — نُظهر رسالته الواضحة للمستخدم
@@ -56,7 +88,25 @@ export async function uploadFile(
     throw new Error(body?.error || "تعذر تأمين الملف بعد الرفع");
   }
 
-  return objectPath;
+  const result = await fin.json() as {
+    playableObjectPath?: string;
+    videoProof?: string;
+    purpose?: VideoAttachmentPurpose;
+    durationSeconds?: number;
+  };
+  if (!result.playableObjectPath) throw new Error("استجاب الخادم دون مسار فيديو قابل للتشغيل");
+  if (purpose === "student_placement_video" || purpose === "teacher_kyc_video") {
+    if (!result.videoProof || result.purpose !== purpose || typeof result.durationSeconds !== "number") {
+      throw new Error("استجاب الخادم دون إثبات فيديو مكتمل");
+    }
+    return {
+      playableObjectPath: result.playableObjectPath,
+      videoProof: result.videoProof,
+      purpose,
+      durationSeconds: result.durationSeconds,
+    };
+  }
+  return { playableObjectPath: result.playableObjectPath };
 }
 
 /**

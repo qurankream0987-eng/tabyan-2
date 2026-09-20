@@ -61,6 +61,9 @@ import { teacherRouter } from "./teacher";
 import { adminRouter } from "./admin";
 import { users, students, teachers } from "@workspace/db";
 import type { TrpcContext } from "../context";
+import { createFinalizedVideoAttachmentProof } from "../lib/video-attachment";
+
+process.env.SESSION_SECRET ??= "video-path-consistency-test-secret-32-bytes";
 
 const STUDENT_ID = "student-1";
 const TEACHER_ID = "teacher-1";
@@ -89,6 +92,20 @@ const INVALID_VIDEO_URLS = [
   "",
 ];
 const VALID_OBJECT_PATH = "/objects/uploads/e2e-test-video.mp4";
+const studentVideoProof = createFinalizedVideoAttachmentProof({
+  userId: STUDENT_ID,
+  role: "student",
+  purpose: "student_placement_video",
+  objectPath: VALID_OBJECT_PATH,
+  durationSeconds: 60,
+});
+const teacherVideoProof = createFinalizedVideoAttachmentProof({
+  userId: TEACHER_ID,
+  role: "teacher",
+  purpose: "teacher_kyc_video",
+  objectPath: VALID_OBJECT_PATH,
+  durationSeconds: 60,
+});
 
 describe("student.submitPlacement — يرفض أي مرجع غير مسار كائن خاص صالح", () => {
   beforeEach(() => {
@@ -107,7 +124,7 @@ describe("student.submitPlacement — يرفض أي مرجع غير مسار ك�
     // notifyAdmins: لا يوجد مشرفون نشطون → لا إشعارات، ولا حاجة لمزيد من المزاعم
     selectResults.push([]);
     const caller = studentRouter.createCaller(studentCtx);
-    await caller.submitPlacement({ videoUrl: VALID_OBJECT_PATH, pathType: "quran" });
+    await caller.submitPlacement({ videoUrl: VALID_OBJECT_PATH, videoProof: studentVideoProof, pathType: "quran" });
 
     const placementUpdate = updated.find((u) => u.table === students);
     expect(placementUpdate?.values.placementTestVideoUrl).toBe(VALID_OBJECT_PATH);
@@ -127,6 +144,35 @@ describe("student.submitPlacement — يرفض أي مرجع غير مسار ك�
     const list = await adminCaller.placementList();
     expect(list).toHaveLength(1);
     expect(list[0].videoUrl).toBe(VALID_OBJECT_PATH);
+  });
+
+  it("يرفض proof لمسار آخر أو مدة Placement خارج 45–300 قبل لمس قاعدة البيانات", async () => {
+    const caller = studentRouter.createCaller(studentCtx);
+    const mismatchedPathProof = createFinalizedVideoAttachmentProof({
+      userId: STUDENT_ID,
+      role: "student",
+      purpose: "student_placement_video",
+      objectPath: "/objects/uploads/another-video.mp4",
+      durationSeconds: 60,
+    });
+    await expect(caller.submitPlacement({
+      videoUrl: VALID_OBJECT_PATH,
+      videoProof: mismatchedPathProof,
+      pathType: "quran",
+    })).rejects.toThrow();
+    const shortProof = createFinalizedVideoAttachmentProof({
+      userId: STUDENT_ID,
+      role: "student",
+      purpose: "student_placement_video",
+      objectPath: VALID_OBJECT_PATH,
+      durationSeconds: 44,
+    });
+    await expect(caller.submitPlacement({
+      videoUrl: VALID_OBJECT_PATH,
+      videoProof: shortProof,
+      pathType: "quran",
+    })).rejects.toThrow();
+    expect(updated).toHaveLength(0);
   });
 });
 
@@ -149,7 +195,7 @@ describe("teacher.submitKyc — يرفض أي مرجع غير مسار كائن 
     selectResults.push([{ kycStatus: "in_progress" }]);
     const answers = Array.from({ length: 10 }, (_, i) => ({ q: `س${i}`, a: `ج${i}` }));
     const caller = teacherRouter.createCaller(teacherCtx);
-    await caller.submitKyc({ videoUrl: VALID_OBJECT_PATH, answers });
+    await caller.submitKyc({ videoUrl: VALID_OBJECT_PATH, videoProof: teacherVideoProof, answers });
 
     const kycUpdate = updated.find((u) => u.table === teachers);
     expect(kycUpdate?.values.kycVideoUrl).toBe(VALID_OBJECT_PATH);
@@ -173,6 +219,17 @@ describe("teacher.submitKyc — يرفض أي مرجع غير مسار كائن 
     const list = await adminCaller.kycList();
     expect(list).toHaveLength(1);
     expect(list[0].videoUrl).toBe(VALID_OBJECT_PATH);
+  });
+
+  it("يرفض proof الخاص بالطالب عند إرسال KYC للمعلم", async () => {
+    const answers = Array.from({ length: 10 }, (_, i) => ({ q: `س${i}`, a: `ج${i}` }));
+    const caller = teacherRouter.createCaller(teacherCtx);
+    await expect(caller.submitKyc({
+      videoUrl: VALID_OBJECT_PATH,
+      videoProof: studentVideoProof,
+      answers,
+    })).rejects.toThrow();
+    expect(updated).toHaveLength(0);
   });
 });
 

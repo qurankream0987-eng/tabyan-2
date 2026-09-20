@@ -4,11 +4,18 @@ import { apiOrigin } from "./trpc";
 import { storage } from "./storage";
 
 type UploadProgress = (percentage: number) => void;
+type VideoAttachmentPurpose = "student_placement_video" | "teacher_kyc_video";
 type UploadOptions = {
   name: string;
   contentType: string;
-  purpose?: "live_session_recording" | "book_pdf" | "placement_video" | "qiraat_certificate";
+  purpose?: "live_session_recording" | "book_pdf" | "qiraat_certificate" | VideoAttachmentPurpose;
   onProgress?: UploadProgress;
+};
+export type VideoUploadResult = {
+  playableObjectPath: string;
+  videoProof: string;
+  purpose: VideoAttachmentPurpose;
+  durationSeconds: number;
 };
 const NETWORK_TIMEOUT_MS = 30_000;
 const UPLOAD_TIMEOUT_MS = 5 * 60_000;
@@ -37,7 +44,7 @@ async function requestUploadUrl(
   size: number,
   contentType: string,
   purpose?: UploadOptions["purpose"],
-): Promise<{ uploadURL: string; objectPath: string }> {
+): Promise<{ uploadURL: string; objectPath: string; uploadProof?: string }> {
   const response = await fetchWithTimeout(`${apiOrigin()}/api/storage/uploads/request-url`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(await authorizedHeaders()) },
@@ -52,23 +59,46 @@ async function requestUploadUrl(
     const body = await response.json().catch(() => null) as { error?: string } | null;
     throw new Error(body?.error || "تعذر تجهيز رفع الفيديو.");
   }
-  const payload = await response.json() as { uploadURL?: string; objectPath?: string };
+  const payload = await response.json() as { uploadURL?: string; objectPath?: string; uploadProof?: string };
   if (!payload.uploadURL || !/^\/objects\/(?!.*\.\.)[\w\-./]+$/.test(payload.objectPath ?? "")) {
     throw new Error("استجاب الخادم بمسار تخزين غير صالح.");
   }
-  return { uploadURL: payload.uploadURL, objectPath: payload.objectPath! };
+  return { uploadURL: payload.uploadURL, objectPath: payload.objectPath!, uploadProof: payload.uploadProof };
 }
 
-async function finalizeUpload(objectPath: string, purpose?: UploadOptions["purpose"]): Promise<void> {
+async function finalizeUpload(
+  objectPath: string,
+  purpose: UploadOptions["purpose"] | undefined,
+  uploadProof?: string,
+): Promise<VideoUploadResult | { playableObjectPath: string }> {
   const response = await fetchWithTimeout(`${apiOrigin()}/api/storage/uploads/finalize`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(await authorizedHeaders()) },
-    body: JSON.stringify({ objectPath, ...(purpose ? { purpose } : {}) }),
+    body: JSON.stringify({ objectPath, ...(purpose ? { purpose } : {}), ...(uploadProof ? { uploadProof } : {}) }),
   }, "انتهت مهلة التحقق من الملف. تحقق من الاتصال وحاول مرة أخرى.");
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { error?: string } | null;
     throw new Error(body?.error || "تعذر التحقق من الفيديو بعد رفعه.");
   }
+  const payload = await response.json() as {
+    playableObjectPath?: string;
+    videoProof?: string;
+    purpose?: VideoAttachmentPurpose;
+    durationSeconds?: number;
+  };
+  if (!payload.playableObjectPath) throw new Error("استجاب الخادم دون مسار فيديو قابل للتشغيل.");
+  if (purpose === "student_placement_video" || purpose === "teacher_kyc_video") {
+    if (!payload.videoProof || payload.purpose !== purpose || typeof payload.durationSeconds !== "number") {
+      throw new Error("استجاب الخادم دون إثبات فيديو مكتمل.");
+    }
+    return {
+      playableObjectPath: payload.playableObjectPath,
+      videoProof: payload.videoProof,
+      purpose,
+      durationSeconds: payload.durationSeconds,
+    };
+  }
+  return { playableObjectPath: payload.playableObjectPath };
 }
 
 /**
@@ -78,16 +108,31 @@ async function finalizeUpload(objectPath: string, purpose?: UploadOptions["purpo
 export async function uploadNativeVideo(
   uri: string,
   onProgress?: UploadProgress,
-): Promise<string> {
-  return uploadNativeFile(uri, {
-    name: `placement-${Date.now()}.mp4`,
-    contentType: "video/mp4",
-    purpose: "placement_video",
+  options?: { name?: string; contentType?: string; purpose?: VideoAttachmentPurpose },
+): Promise<VideoUploadResult> {
+  return uploadNativeVideoWithOptions(uri, {
+    name: options?.name ?? `placement-${Date.now()}.mp4`,
+    contentType: options?.contentType ?? "video/mp4",
+    purpose: options?.purpose ?? "student_placement_video",
     onProgress,
   });
 }
 
+async function uploadNativeVideoWithOptions(uri: string, options: UploadOptions): Promise<VideoUploadResult> {
+  const result = await uploadNativeFileWithResult(uri, options);
+  if (!("videoProof" in result)) throw new Error("لم يُثبت الخادم فيديو الاعتماد.");
+  return result;
+}
+
 export async function uploadNativeFile(uri: string, options: UploadOptions): Promise<string> {
+  const result = await uploadNativeFileWithResult(uri, options);
+  return result.playableObjectPath;
+}
+
+async function uploadNativeFileWithResult(
+  uri: string,
+  options: UploadOptions,
+): Promise<VideoUploadResult | { playableObjectPath: string }> {
   const file = new File(uri);
   const info = file.info();
   const size = info.size ?? 0;
@@ -99,7 +144,7 @@ export async function uploadNativeFile(uri: string, options: UploadOptions): Pro
   }
 
   const { name, contentType, purpose, onProgress } = options;
-  const { uploadURL, objectPath } = await requestUploadUrl(name, size, contentType, purpose);
+  const { uploadURL, objectPath, uploadProof } = await requestUploadUrl(name, size, contentType, purpose);
   onProgress?.(0);
   const task = LegacyFileSystem.createUploadTask(
     uploadURL,
@@ -129,9 +174,9 @@ export async function uploadNativeFile(uri: string, options: UploadOptions): Pro
       throw new Error("فشل رفع الملف إلى التخزين. تحقق من الاتصال وحاول مرة أخرى.");
     }
     onProgress?.(92);
-    await finalizeUpload(objectPath, purpose);
+    const finalized = await finalizeUpload(objectPath, purpose, uploadProof);
     onProgress?.(100);
-    return objectPath;
+    return finalized;
   } finally {
     if (timeout) clearTimeout(timeout);
   }

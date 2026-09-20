@@ -72,13 +72,22 @@ function whichFfprobe(): boolean {
  * يرمي FfprobeUnavailableError إذا غاب الثنائي — لا يصنّفه كفيديو غير صالح.
  */
 export function probeVideoFile(filePath: string): Promise<boolean> {
+  return probeVideoFileDetails(filePath).then((result) => result.valid);
+}
+
+export type VideoProbeResult = {
+  valid: boolean;
+  durationSeconds: number | null;
+};
+
+export function probeVideoFileDetails(filePath: string): Promise<VideoProbeResult> {
   return new Promise((resolve, reject) => {
     execFile(
       FFPROBE_PATH,
       [
         "-v", "error",
         "-count_packets",
-        "-show_entries", "stream=codec_type,nb_read_packets:format=format_name",
+        "-show_entries", "stream=codec_type,nb_read_packets,duration:format=format_name,duration",
         "-of", "json",
         filePath,
       ],
@@ -88,20 +97,31 @@ export function probeVideoFile(filePath: string): Promise<boolean> {
           reject(new FfprobeUnavailableError());
           return;
         }
-        if (error) { resolve(false); return; }
-        if (stderr.trim().length > 0) { resolve(false); return; }
+        if (error) { resolve({ valid: false, durationSeconds: null }); return; }
+        if (stderr.trim().length > 0) { resolve({ valid: false, durationSeconds: null }); return; }
         try {
           const parsed = JSON.parse(stdout) as {
-            format?: { format_name?: string };
-            streams?: { codec_type?: string; nb_read_packets?: string }[];
+            format?: { format_name?: string; duration?: string };
+            streams?: { codec_type?: string; nb_read_packets?: string; duration?: string }[];
           };
           // حاوية معروفة فقط — ffprobe قد يخمّن ملفاً نصياً كـ rawvideo
           const format = parsed.format?.format_name ?? "";
-          if (!/^(mov,mp4,m4a,3gp,3g2,mj2|matroska,webm)$/.test(format)) { resolve(false); return; }
+          if (!/^(mov,mp4,m4a,3gp,3g2,mj2|matroska,webm)$/.test(format)) {
+            resolve({ valid: false, durationSeconds: null });
+            return;
+          }
           const video = (parsed.streams ?? []).find((s) => s.codec_type === "video");
-          resolve(!!video && Number(video.nb_read_packets ?? 0) > 0);
+          const rawDuration = video?.duration ?? parsed.format?.duration;
+          const durationSeconds = rawDuration == null ? NaN : Number(rawDuration);
+          resolve({
+            valid: !!video
+              && Number(video.nb_read_packets ?? 0) > 0
+              && Number.isFinite(durationSeconds)
+              && durationSeconds > 0,
+            durationSeconds: Number.isFinite(durationSeconds) && durationSeconds > 0 ? durationSeconds : null,
+          });
         } catch {
-          resolve(false);
+          resolve({ valid: false, durationSeconds: null });
         }
       },
     );

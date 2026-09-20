@@ -9,10 +9,18 @@ import { z } from "zod";
 import { and, eq, gt } from "drizzle-orm";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, authTokens, books, downloads, levels, notifications, recordings, sessions, students, users } from "@workspace/db";
+import {
+  createFinalizedVideoAttachmentProof,
+  createIssuedVideoAttachmentProof,
+  verifyVideoAttachmentProof,
+  videoAttachmentPurposeSchema,
+  videoProofDurationIsPlacementSafe,
+  type VideoAttachmentPurpose,
+} from "@workspace/tabyan-trpc";
 
 import { canAccessObject, getObjectAclPolicy, ObjectPermission } from "../lib/objectAcl";
 import { ObjectNotFoundError, ObjectStorageService } from "../lib/objectStorage";
-import { FfprobeUnavailableError, probeVideoFile, validateMp4Structure, validateWebmStructure } from "../lib/videoStructure";
+import { FfprobeUnavailableError, probeVideoFileDetails, validateMp4Structure, validateWebmStructure } from "../lib/videoStructure";
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
@@ -70,7 +78,13 @@ const uploadBodySchema = z.object({
   name: z.string().min(1).max(300),
   size: z.number().int().positive().max(500 * 1024 * 1024),
   contentType: z.string().min(1).max(100),
-  purpose: z.enum(["live_session_recording", "book_pdf", "placement_video", "qiraat_certificate"]).optional(),
+  purpose: z.enum([
+    "live_session_recording",
+    "book_pdf",
+    "qiraat_certificate",
+    "student_placement_video",
+    "teacher_kyc_video",
+  ]).optional(),
 });
 const directDiagnosticSchema = z.object({
   objectPath: z.string().regex(/^\/objects\/(?!.*\.\.)[\w\-./]+$/),
@@ -102,6 +116,18 @@ async function canReadSessionRecording(userId: string, objectPath: string): Prom
     studentId: recordings.studentId,
   }).from(recordings).where(eq(recordings.id, rows[0].id)).limit(1);
   return recording?.teacherId === userId || recording?.studentId === userId;
+}
+
+function isVideoAttachmentPurpose(value: unknown): value is VideoAttachmentPurpose {
+  return videoAttachmentPurposeSchema.safeParse(value).success;
+}
+
+function isSupportedVideoUpload(name: string, contentType: string): boolean {
+  return (
+    (contentType === "video/mp4" && /\.mp4$/i.test(name))
+    || (contentType === "video/webm" && /\.webm$/i.test(name))
+    || (contentType === "video/quicktime" && /\.mov$/i.test(name))
+  );
 }
 
 /**
@@ -201,13 +227,14 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
       res.status(403).json({ error: "المعلمون فقط يمكنهم تجهيز تسجيل الحلقة المباشرة" });
       return;
     }
-    if (parsed.data.purpose === "placement_video") {
-      if (user.role !== "student") {
-        res.status(403).json({ error: "الطلاب فقط يمكنهم تجهيز فيديو اختبار القبول" });
+    if (isVideoAttachmentPurpose(parsed.data.purpose)) {
+      const expectedRole = parsed.data.purpose === "student_placement_video" ? "student" : "teacher";
+      if (user.role !== expectedRole) {
+        res.status(403).json({ error: expectedRole === "student" ? "الطلاب فقط يمكنهم تجهيز فيديو اختبار القبول" : "المعلمون فقط يمكنهم تجهيز فيديو الاعتماد" });
         return;
       }
-      if (!/\.mp4$/i.test(parsed.data.name) || parsed.data.contentType !== "video/mp4") {
-        res.status(422).json({ error: "فيديو اختبار القبول يجب أن يكون MP4 صالحاً" });
+      if (!isSupportedVideoUpload(parsed.data.name, parsed.data.contentType)) {
+        res.status(422).json({ error: "فيديو الاعتماد يجب أن يكون MP4 أو WebM صالحاً" });
         return;
       }
     }
@@ -236,7 +263,15 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
           : "default",
     );
     const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
-    res.json({ uploadURL, objectPath });
+    const uploadProof = isVideoAttachmentPurpose(parsed.data.purpose)
+      ? createIssuedVideoAttachmentProof({
+        userId: user.id,
+        role: parsed.data.purpose === "student_placement_video" ? "student" : "teacher",
+        purpose: parsed.data.purpose,
+        objectPath,
+      })
+      : undefined;
+    res.json({ uploadURL, objectPath, ...(uploadProof ? { uploadProof } : {}) });
   } catch (error) {
     req.log.error({ err: error }, "Error generating upload URL");
     res.status(500).json({ error: "تعذر تجهيز رابط الرفع" });
@@ -251,11 +286,11 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
  */
 async function hasValidVideoStructure(
   objectFile: Awaited<ReturnType<ObjectStorageService["getObjectEntityFile"]>>,
-): Promise<boolean | null> {
+): Promise<{ valid: boolean; durationSeconds: number | null } | null> {
   const [metadata] = await objectFile.getMetadata();
   const size = Number(metadata.size ?? 0);
   const contentType = String(metadata.contentType ?? "");
-  if (size <= 0) return contentType.startsWith("video/") ? false : null;
+  if (size <= 0) return contentType.startsWith("video/") ? { valid: false, durationSeconds: null } : null;
 
   const readRange = async (start: number, end: number): Promise<Buffer> => {
     const response = await objectStorageService.downloadObject(objectFile, 0, { start, end, total: size });
@@ -277,7 +312,7 @@ async function hasValidVideoStructure(
       : looksWebm
         ? validateWebmStructure(head, tail, size)
         : false; // مُعلن كفيديو بلا توقيع معروف — مرفوض (لا تجاوز بتغيير النوع)
-    if (!structureOk) return false;
+    if (!structureOk) return { valid: false, durationSeconds: null };
 
     // الطبقة الثانية (الموثوقة): ffprobe يقرأ كل حزم الملف — يكشف أي بتر
     // في الوسط أو الذيل بما فيه mdat/Cluster غير معلوم الحجم.
@@ -285,10 +320,11 @@ async function hasValidVideoStructure(
     const tempPath = join(tmpdir(), `tabyan-probe-${randomUUID()}`);
     try {
       const full = await objectStorageService.downloadObject(objectFile, 0);
-      if (!full.body) return false;
+      if (!full.body) return { valid: false, durationSeconds: null };
       const out = createWriteStream(tempPath);
       await pipeline(Readable.fromWeb(full.body as ReadableStream<Uint8Array>), out);
-      return await probeVideoFile(tempPath);
+      const result = await probeVideoFileDetails(tempPath);
+      return result;
     } finally {
       await unlink(tempPath).catch(() => {});
     }
@@ -327,13 +363,39 @@ router.post("/storage/uploads/finalize", async (req: Request, res: Response) => 
   }
   const parsed = z.object({
     objectPath: z.string().regex(/^\/objects\/(?!.*\.\.)[\w\-./]+$/),
-    purpose: z.enum(["live_session_recording", "book_pdf", "placement_video", "qiraat_certificate"]).optional(),
+    purpose: z.enum([
+      "live_session_recording",
+      "book_pdf",
+      "qiraat_certificate",
+      "student_placement_video",
+      "teacher_kyc_video",
+    ]).optional(),
+    uploadProof: z.string().min(1).max(8192).optional(),
   }).safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "مسار الملف ناقص أو غير صحيح" });
     return;
   }
   try {
+    const videoPurpose = isVideoAttachmentPurpose(parsed.data.purpose) ? parsed.data.purpose : null;
+    let issuedProof: ReturnType<typeof verifyVideoAttachmentProof> = null;
+    if (videoPurpose) {
+      if (user.role !== (videoPurpose === "student_placement_video" ? "student" : "teacher") || !parsed.data.uploadProof) {
+        res.status(403).json({ error: "إثبات رفع الفيديو غير صالح لهذا الحساب" });
+        return;
+      }
+      issuedProof = verifyVideoAttachmentProof(parsed.data.uploadProof, {
+        userId: user.id,
+        role: videoPurpose === "student_placement_video" ? "student" : "teacher",
+        purpose: videoPurpose,
+        objectPath: parsed.data.objectPath,
+        state: "issued",
+      });
+      if (!issuedProof) {
+        res.status(403).json({ error: "انتهت صلاحية إثبات رفع الفيديو أو لا يطابق الملف" });
+        return;
+      }
+    }
     // منع سرقة الملكية: ملف سبق تأمينه لمالك آخر لا يجوز إعادة تعيينه
     const objectFile = await objectStorageService.getObjectEntityFile(parsed.data.objectPath);
     const existingPolicy = await getObjectAclPolicy(objectFile);
@@ -341,10 +403,10 @@ router.post("/storage/uploads/finalize", async (req: Request, res: Response) => 
       res.status(403).json({ error: "غير مسموح بهذا الإجراء" });
       return;
     }
-    let structureOk: boolean | null;
+    let videoValidation: { valid: boolean; durationSeconds: number | null } | null;
     try {
-      structureOk = parsed.data.purpose === "book_pdf" || parsed.data.purpose === "qiraat_certificate"
-        ? await hasValidPdfStructure(objectFile)
+      videoValidation = parsed.data.purpose === "book_pdf" || parsed.data.purpose === "qiraat_certificate"
+        ? (await hasValidPdfStructure(objectFile) ? null : { valid: false, durationSeconds: null })
         : await hasValidVideoStructure(objectFile);
     } catch (error) {
       // غياب أداة الفحص خطأ بنية تحتية في النشر — 500 مسجّل، لا 422 على المستخدم
@@ -355,21 +417,60 @@ router.post("/storage/uploads/finalize", async (req: Request, res: Response) => 
       }
       throw error;
     }
-    if (structureOk === false && parsed.data.purpose === "book_pdf") {
+    if (
+      videoValidation?.valid === false
+      && (parsed.data.purpose === "book_pdf" || parsed.data.purpose === "qiraat_certificate")
+    ) {
       req.log.warn({ objectPath: parsed.data.objectPath, userId: user.id }, "Rejected upload: invalid PDF structure");
       res.status(422).json({ error: "الملف المرفوع ليس PDF صالحاً أو تجاوز الحجم المسموح" });
       return;
     }
-    if (structureOk === false) {
+    if (videoValidation?.valid === false) {
       req.log.warn({ objectPath: parsed.data.objectPath, userId: user.id }, "Rejected upload: invalid video structure");
       res.status(422).json({ error: "الملف المرفوع ليس فيديو صالحاً — يبدو أنه مقطوع أو تالف. أعد التسجيل من جديد." });
       return;
+    }
+    if (videoPurpose) {
+      const measuredDuration = videoValidation?.durationSeconds;
+      if (!videoValidation?.valid || measuredDuration == null) {
+        res.status(422).json({ error: "تعذر قياس مدة الفيديو أو التحقق من صلاحيته" });
+        return;
+      }
+      if (videoPurpose === "student_placement_video" && !videoProofDurationIsPlacementSafe(measuredDuration)) {
+        res.status(422).json({ error: "مدة فيديو اختبار القبول يجب أن تكون بين 45 و300 ثانية" });
+        return;
+      }
+      if (!issuedProof) {
+        res.status(403).json({ error: "إثبات رفع الفيديو غير صالح" });
+        return;
+      }
     }
     const normalized = await objectStorageService.trySetObjectEntityAclPolicy(parsed.data.objectPath, {
       owner: user.id,
       visibility: "private",
     });
-    res.json({ ok: true, objectPath: normalized });
+    const durationSeconds = videoPurpose ? videoValidation?.durationSeconds ?? null : null;
+    const videoProof = videoPurpose && durationSeconds != null
+      ? createFinalizedVideoAttachmentProof({
+        userId: user.id,
+        role: videoPurpose === "student_placement_video" ? "student" : "teacher",
+        purpose: videoPurpose,
+        objectPath: normalized,
+        durationSeconds,
+        issuedAt: issuedProof?.issuedAt,
+        nonce: issuedProof?.nonce,
+      })
+      : undefined;
+    res.json({
+      ok: true,
+      objectPath: normalized,
+      playableObjectPath: normalized,
+      ...(videoPurpose ? {
+        purpose: videoPurpose,
+        durationSeconds,
+        videoProof,
+      } : {}),
+    });
   } catch (error) {
     req.log.error({ err: error }, "Error finalizing upload ACL");
     res.status(500).json({ error: "تعذر تأكيد اكتمال الرفع" });

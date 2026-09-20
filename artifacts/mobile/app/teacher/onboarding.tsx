@@ -8,7 +8,7 @@ import { LocalVideoPreview } from "../../components/library-media-player";
 import { TeacherScreen } from "./_components";
 import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
-import { uploadNativeFile } from "../../lib/mobile-upload";
+import { uploadNativeFile, uploadNativeVideo } from "../../lib/mobile-upload";
 import { useTheme, palette } from "../../lib/theme";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 
@@ -41,6 +41,7 @@ export default function Onboarding() {
   const [recording, setRecording] = useState(false);
   const [localVideoUri, setLocalVideoUri] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState("");
+  const [videoProof, setVideoProof] = useState("");
   const [videoName, setVideoName] = useState("");
   const [answers, setAnswers] = useState<string[]>(Array(10).fill(""));
   const [uploading, setUploading] = useState(false);
@@ -61,6 +62,7 @@ export default function Onboarding() {
   const submitKyc = trpc.teacher.submitKyc.useMutation({
     onSuccess: async () => {
       setVideoUrl("");
+      setVideoProof("");
       setLocalVideoUri(null);
       setVideoName("");
       setAnswers(Array(10).fill(""));
@@ -90,12 +92,18 @@ export default function Onboarding() {
     setUploadProgress(0);
     setError("");
     try {
-      const path = await uploadNativeFile(uri, { name, contentType, onProgress: setUploadProgress });
       if (kind === "video") {
+        const uploaded = await uploadNativeVideo(uri, setUploadProgress, {
+          name,
+          contentType,
+          purpose: "teacher_kyc_video",
+        });
         setLocalVideoUri(uri);
         setVideoName(name);
-        setVideoUrl(path);
+        setVideoUrl(uploaded.playableObjectPath);
+        setVideoProof(uploaded.videoProof);
       } else {
+        const path = await uploadNativeFile(uri, { name, contentType, onProgress: setUploadProgress });
         await addCertificate.mutateAsync({ filePath: path, title: name.slice(0, 200) });
       }
     } catch (cause) {
@@ -156,12 +164,12 @@ export default function Onboarding() {
 
   const submit = () => {
     const allAnswered = answers.every((answer) => answer.trim().length >= 3);
-    if (!videoUrl || !allAnswered || submitKyc.isPending) {
+    if (!videoUrl || !videoProof || !allAnswered || submitKyc.isPending) {
       setError("أرفق فيديو وأجب عن الأسئلة العشرة بإجابات لا تقل عن 3 أحرف.");
       return;
     }
     setError("");
-    submitKyc.mutate({ videoUrl, answers: QUESTIONS.map((q, index) => ({ q, a: answers[index].trim() })) });
+    submitKyc.mutate({ videoUrl, videoProof, answers: QUESTIONS.map((q, index) => ({ q, a: answers[index].trim() })) });
   };
 
   const loading = kyc.isLoading;

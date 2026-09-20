@@ -9,6 +9,7 @@ import {
   students, teachers, users, weeklySchedules,
 } from "@workspace/db";
 import { curriculumBookVisible } from "./library";
+import { verifyVideoAttachmentProof, videoProofDurationIsPlacementSafe } from "../lib/video-attachment";
 
 /** اسم كتاب تحفة الأطفال — مرجع ثابت للربط بينه وبين تسجيل الطالب التلقائي عند اختياره في اختبار القبول */
 const TUHFA_BOOK_TITLE = "تحفة الأطفال";
@@ -155,15 +156,23 @@ export const studentRouter = createRouter({
   submitPlacement: studentProcedure
     .input(z.object({
       videoUrl: z.string().regex(/^\/objects\/(?!.*\.\.)[\w\-./]+$/, "مسار الفيديو غير صالح"),
+      videoProof: z.string().min(1).max(8192),
       pathType: z.enum(["quran", "tajweed_correction"]).default("quran"),
-      // يطابق نطاق التسجيل الفعلي في تطبيق الجوال (٤٥–٣٠٠ ثانية) — كان الحد الأقصى هنا ١٢٠
-      // فيرفض الخادم أي تسجيل أطول رغم أن الواجهة تسمح به وتعرضه للمستخدم.
-      durationSeconds: z.number().int().min(1).max(300).optional(),
       // اختيار الطالب دراسة تحفة الأطفال أثناء اختبار القبول (المستويات 1-4 فقط) — لا يؤثر على منطق الاختبار أو نتيجته
       studyTuhfa: z.boolean().optional(),
       levelId: z.number().int().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      const verifiedVideo = verifyVideoAttachmentProof(input.videoProof, {
+        userId: ctx.user.id,
+        role: "student",
+        purpose: "student_placement_video",
+        objectPath: input.videoUrl,
+        state: "finalized",
+      });
+      if (!verifiedVideo || verifiedVideo.durationSeconds == null || !videoProofDurationIsPlacementSafe(verifiedVideo.durationSeconds)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "يجب إرسال فيديو اختبار قبول تم رفعه والتحقق منه فعلياً" });
+      }
       // المستوى المشمول هو أول أربعة مستويات مرتبة داخل مسار القرآن فقط.
       // لا نعتمد على رقم ID ولا على قاعدة "كل ما ليس الأخير".
       let tuhfaEligible = false;
@@ -189,7 +198,7 @@ export const studentRouter = createRouter({
       const pathLabel = input.pathType === "tajweed_correction" ? "تصحيح التلاوة" : "حفظ ومراجعة القرآن";
       await notifyAdmins(
         "📹 اختبار قبول جديد بانتظار المراجعة",
-        `الطالب ${ctx.user.fullName} أرسل فيديو اختبار القبول (المسار: ${pathLabel}${input.durationSeconds ? ` — المدة: ${input.durationSeconds} ثانية` : ""}). راجعه من لوحة الإدارة.`,
+        `الطالب ${ctx.user.fullName} أرسل فيديو اختبار القبول (المسار: ${pathLabel} — المدة: ${Math.ceil(verifiedVideo.durationSeconds)} ثانية). راجعه من لوحة الإدارة.`,
         "result",
       );
       // مزامنة التعيين التلقائي مع الاختيار النهائي:

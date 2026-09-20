@@ -7,7 +7,7 @@ import Icon from "@/components/Icon";
 import VideoRecorder from "@/components/VideoRecorder";
 import { useToast } from "@/hooks/useToast";
 import { authStore } from "@/lib/auth";
-import { uploadFile, objectUrl } from "@/lib/upload";
+import { uploadFile, uploadVideoFile, objectUrl } from "@/lib/upload";
 import { DEMO_KYC } from "@/lib/demo/teacher";
 
 const QUESTIONS = [
@@ -124,6 +124,7 @@ export default function TeacherOnboarding() {
   const kycLoading = !DEMO && kycQ.isLoading;
   const utils = trpc.useUtils();
   const [videoUrl, setVideoUrl] = useState("");
+  const [videoProof, setVideoProof] = useState("");
   const [videoName, setVideoName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [pct, setPct] = useState(0);
@@ -138,6 +139,7 @@ export default function TeacherOnboarding() {
     onSuccess: async () => {
       await utils.teacher.kycStatus.invalidate();
       setVideoUrl("");
+      setVideoProof("");
       setVideoName("");
       setAnswers(Array(10).fill(""));
       toast("أُرسل طلب القبول — سيراجعه المشرف خلال 24 ساعة", "success");
@@ -153,8 +155,9 @@ export default function TeacherOnboarding() {
     setVideoMethod("upload");
     setUploading(true); setPct(0);
     try {
-      const path = await uploadFile(file, file.name, setPct);
-      setVideoUrl(path);
+      const uploaded = await uploadVideoFile(file, file.name, setPct, "teacher_kyc_video");
+      setVideoUrl(uploaded.playableObjectPath);
+      setVideoProof(uploaded.videoProof);
       setVideoName(file.name);
       toast("تم رفع الفيديو", "success");
     } catch (err) {
@@ -169,8 +172,9 @@ export default function TeacherOnboarding() {
     setUploading(true); setPct(0);
     try {
       const extension = blob.type.includes("mp4") ? "mp4" : "webm";
-      const path = await uploadFile(blob, `teacher-intro-${Date.now()}.${extension}`, setPct);
-      setVideoUrl(path);
+      const uploaded = await uploadVideoFile(blob, `teacher-intro-${Date.now()}.${extension}`, setPct, "teacher_kyc_video");
+      setVideoUrl(uploaded.playableObjectPath);
+      setVideoProof(uploaded.videoProof);
       setVideoName("فيديو مصوّر من داخل التطبيق");
       setVideoMethod("upload");
       toast("تم رفع الفيديو المصوّر", "success");
@@ -401,10 +405,10 @@ export default function TeacherOnboarding() {
             </div>
           ))}
         </div>
-        <PrimaryButton className="w-full mt-4" disabled={!videoUrl || uploading || !allAnswered || submit.isPending}
+        <PrimaryButton className="w-full mt-4" disabled={!videoUrl || !videoProof || uploading || !allAnswered || submit.isPending}
           onClick={() => {
             if (DEMO) { toast("وضع العرض التجريبي — هذا الإجراء يتطلب تشغيل الخادم", "info"); return; }
-            submit.mutate({ videoUrl, answers: QUESTIONS.map((q, i) => ({ q, a: answers[i].trim() })) });
+            submit.mutate({ videoUrl, videoProof, answers: QUESTIONS.map((q, i) => ({ q, a: answers[i].trim() })) });
           }}>
           {submit.isPending ? "جارٍ الإرسال…" : (
             <span className="inline-flex items-center gap-2"><Icon name="send" size={16} />إرسال طلب القبول</span>

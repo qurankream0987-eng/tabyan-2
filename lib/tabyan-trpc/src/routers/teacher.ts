@@ -5,6 +5,7 @@ import { TRPCError } from "@trpc/server";
 import { createRouter, teacherProcedure, approvedTeacherProcedure } from "../middleware";
 import { db } from "@workspace/db";
 import { isValidPersonName, normalizePersonName } from "../lib/input-normalization";
+import { verifyVideoAttachmentProof } from "../lib/video-attachment";
 import {
   evaluations, fatwaAnswers, fatwaQuestions, levels, notifications, promotionRequests,
   recordings, scheduleChangeRequests, sessions, studentProgress, students,
@@ -50,9 +51,20 @@ export const teacherRouter = createRouter({
       // مسار جهاز محلي (file://) أو أي نص عشوائي بدل مسار /objects/ الذي
       // يعيده finalize، فلا يُحفَظ مسار غير قابل للتشغيل لدى مراجعة المشرف.
       videoUrl: z.string().regex(/^\/objects\/(?!.*\.\.)[\w\-./]+$/, "مسار الفيديو غير صالح"),
+      videoProof: z.string().min(1).max(8192),
       answers: z.array(z.object({ q: z.string(), a: z.string() })).length(10),
     }))
     .mutation(async ({ ctx, input }) => {
+      const verifiedVideo = verifyVideoAttachmentProof(input.videoProof, {
+        userId: ctx.user.id,
+        role: "teacher",
+        purpose: "teacher_kyc_video",
+        objectPath: input.videoUrl,
+        state: "finalized",
+      });
+      if (!verifiedVideo || verifiedVideo.durationSeconds == null || verifiedVideo.durationSeconds <= 0) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "يجب إرسال فيديو اعتماد تم رفعه والتحقق منه فعلياً" });
+      }
       const [teacher] = await db.select({ kycStatus: teachers.kycStatus })
         .from(teachers).where(eq(teachers.userId, ctx.user.id)).limit(1);
       if (!teacher || !["in_progress", "rejected"].includes(teacher.kycStatus)) {

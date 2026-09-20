@@ -5,7 +5,7 @@ import GlassCard from "@/components/GlassCard";
 import PrimaryButton from "@/components/PrimaryButton";
 import Icon from "@/components/Icon";
 import VideoRecorder from "@/components/VideoRecorder";
-import { uploadFile } from "@/lib/upload";
+import { uploadVideoFile } from "@/lib/upload";
 import { useToast } from "@/hooks/useToast";
 import { authStore } from "@/lib/auth";
 import { DEMO_PLACEMENT_STATUS, DEMO_LEVELS_BY_PATH } from "@/lib/demo/student-core";
@@ -154,11 +154,16 @@ export default function Placement() {
     try {
       setUploading(true);
       const ext = recorded.blob.type.includes("mp4") ? "mp4" : "webm";
-      const objectPath = await uploadFile(recorded.blob, `placement-${Date.now()}.${ext}`, setProgress);
+      const uploaded = await uploadVideoFile(
+        recorded.blob,
+        `placement-${Date.now()}.${ext}`,
+        setProgress,
+        "student_placement_video",
+      );
       submit.mutate({
-        videoUrl: objectPath,
+        videoUrl: uploaded.playableObjectPath,
+        videoProof: uploaded.videoProof,
         pathType: isTilawah ? "tajweed_correction" : "quran",
-        durationSeconds: recorded.duration,
         studyTuhfa: showTuhfaChoice ? studyTuhfa === true : undefined,
         levelId: !isTilawah && matchedLevel ? matchedLevel.id : undefined,
       });

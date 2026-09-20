@@ -155,10 +155,10 @@ export default function Placement() {
     setError(null);
     setSent(false);
     try {
-      const objectPath = await uploadNativeVideo(videoUri, setUploadProgress);
+      const uploaded = await uploadNativeVideo(videoUri, setUploadProgress);
       await submit.mutateAsync({
-        videoUrl: objectPath,
-        durationSeconds: durationSeconds || undefined,
+        videoUrl: uploaded.playableObjectPath,
+        videoProof: uploaded.videoProof,
         pathType,
         studyTuhfa: showTuhfaChoice ? studyTuhfa === true : undefined,
         levelId: !isTilawah ? levelIdParam : undefined,

@@ -6,3 +6,4 @@ export * from "./router";
 export * from "./context";
 export * from "./lib/input-normalization";
 export * from "./lib/password-validation";
+export * from "./lib/video-attachment";

@@ -2,6 +2,7 @@
 
 - [Tabyan project study](tabyan-uploaded-project.md) — user uploaded a full "Tabyan" app export as 10 zips; deep read-only study and restoration are complete.
 - [Tabyan backend state](tabyan-backend-state.md) — rebuild lib/tabyan-trpc with `tsc --build --force` after router edits; storage routes use custom bearer auth; admin APIs need real psql-seeded sessions (dev tokens fail audit FK); 23505 hides in e.cause.
+- [Tabyan video attachment proof](tabyan-video-attachment-proof.md) — Placement/KYC proofs bind user, role, purpose, path, and ffprobe duration across request, finalize, and submit.
 - [Tabyan design decisions](tabyan-design-decisions.md) — IBM Plex Arabic UI font; 3 placement attempts; tilawah/tajweed age-free; light text ALL burgundy, dark text WHITE w/ gold accents (supersedes gold-text); quran↔aqeedah gate + next-level-only promotion; sharia split: mandatory aqeedah_quran (5) vs optional aqeedah (4) + fiqh/seerah 1 each, DB-driven sharia_subjects.
 - [Tabyan CSS cascade traps](tabyan-css-cascade.md) — unlayered global rules (svg color, bg-gold flip, !important card borders) silently beat Tailwind classes; check them before assuming a class is dead.
 - [Tabyan student registration flow](tabyan-student-registration-otp.md) — phone OTP removed from sign-up (checkPhone routes login vs register, OTP kept for login/teacher); optional server-verified email; biometric opt-in only, never auto.
