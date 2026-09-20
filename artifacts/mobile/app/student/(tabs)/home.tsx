@@ -18,7 +18,6 @@ const LEARNING_PATHS: PathCard[] = [
   { path: "sharia", to: "/student/sharia", icon: "sharia", title: "الدروس الشرعية" },
 ];
 
-const PATH_LABEL: Record<string, string> = { quran: "القرآن الكريم", tajweed: "دروس التجويد", sharia: "الدروس الشرعية" };
 // مطابق لـ productRegistry.sessionTypeToLearningFeature (lib/tabyan-domain/product-registry.json)
 const SESSION_TYPE_TO_PATH: Record<string, LearningPathKey> = {
   quran_hifz: "quran", quran_review: "quran", qiraat: "quran",

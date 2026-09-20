@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Badge, Button, Card, Icon } from "../../components/ui";
+import { Badge, Button, Card } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
 import { useTheme, palette } from "../../lib/theme";

@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { PanResponder, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Button, Card } from "../../../components/ui";
 import { trpc } from "../../../lib/trpc";

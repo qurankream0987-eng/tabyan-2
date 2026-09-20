@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { Image, Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { Badge, Card, EmptyState, ErrorState, Icon, LoadingState, Screen, SectionTitle } from "../../../components/ui";
+import { Badge, Card, EmptyState, ErrorState, Icon, LoadingState, Screen } from "../../../components/ui";
 import { useAuth } from "../../../lib/auth";
 import { trpc } from "../../../lib/trpc";
 import { useTheme } from "../../../lib/theme";

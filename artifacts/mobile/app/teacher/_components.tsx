@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text } from "react-native";
 import { Card, EmptyState, ErrorState, Header, LoadingState, Screen } from "../../components/ui";
 import { palette, useTheme } from "../../lib/theme";
 

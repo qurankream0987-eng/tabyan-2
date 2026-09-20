@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Card, EmptyState, ErrorState, LoadingState, StudentScreen } from "./_screen";
 import SectionIcon, { type SectionIconName } from "../../components/section-icon";

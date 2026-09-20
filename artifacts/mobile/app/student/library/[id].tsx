@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { Linking, StyleSheet, Text, View } from "react-native";
 import { Badge, Button, Card, EmptyState, ErrorState, Icon, LoadingState } from "../../../components/ui";
 import { LibraryMediaPlayer } from "../../../components/library-media-player";
 import { useAuth } from "../../../lib/auth";
@@ -29,16 +29,6 @@ type Book = {
   isDownloaded?: boolean;
   isAssigned?: boolean;
 };
-
-function Action({ label, icon, onPress }: { label: string; icon: string; onPress: () => void }) {
-  const { colors } = useTheme();
-  return (
-    <Pressable onPress={onPress} style={[styles.action, { backgroundColor: colors.input }]}>
-      <Icon name={icon} size={17} color={colors.primary} />
-      <Text style={[styles.actionText, { color: colors.text }]}>{label}</Text>
-    </Pressable>
-  );
-}
 
 export default function Book() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -143,7 +133,5 @@ const styles = StyleSheet.create({
   metaText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11 },
   actions: { gap: 8, marginTop: 20 },
   primaryAction: { width: "100%" },
-  action: { minHeight: 42, borderRadius: 999, paddingHorizontal: 14, flexDirection: "row-reverse", alignItems: "center", gap: 6 },
-  actionText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 12 },
   error: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 20, textAlign: "right", marginTop: 10 },
 });

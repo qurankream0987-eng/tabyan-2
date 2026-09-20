@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Badge, Button, Card, EmptyState } from "../../components/ui";
 import { trpc } from "../../lib/trpc";
-import { useTheme, palette } from "../../lib/theme";
+import { useTheme } from "../../lib/theme";
 import { TeacherScreen } from "./_components";
 
 // فلاتر المدة مطابقة للموقع (TeacherSchedule): اليوم، غداً، الأسبوع، الشهر

@@ -108,7 +108,6 @@ function resolveInternalUrl(url: string, base: RolePrefix) {
 
 function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
   const { colors } = useTheme();
-  const [actionError, setActionError] = useState<string | null>(null);
   return (
     <View style={styles.infoRow}>
       <View style={[styles.infoIcon, { backgroundColor: `${palette.burgundy}0D` }]}><Icon name={icon} size={15} color={palette.burgundy} /></View>

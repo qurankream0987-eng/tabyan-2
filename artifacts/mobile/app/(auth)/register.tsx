@@ -36,8 +36,6 @@ const GRADES: Record<SchoolStage, string[]> = {
   high: ["الصف العاشر", "الصف الحادي عشر", "الصف الثاني عشر"],
 };
 
-const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-
 function calcAge(value: string) {
   const date = new Date(`${value}T00:00:00`);
   if (!value || Number.isNaN(date.getTime())) return null;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { Button, Card, EmptyState, ErrorState, LoadingState } from "../../components/ui";
+import { Button, Card, EmptyState, LoadingState } from "../../components/ui";
 import { trpc } from "../../lib/trpc";
 import { TeacherScreen } from "./_components";
 import { useTheme } from "../../lib/theme";

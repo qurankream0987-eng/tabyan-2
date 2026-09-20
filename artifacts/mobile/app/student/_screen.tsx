@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text } from "react-native";
-import { Card, EmptyState, ErrorState, Header, LoadingState, Screen, SectionTitle } from "../../components/ui";
+import { Card, Header, Screen } from "../../components/ui";
 import { useTheme } from "../../lib/theme";
 
 export function StudentScreen({ title, subtitle, right, children }: { title: string; subtitle?: string; right?: React.ReactNode; children: React.ReactNode }) {

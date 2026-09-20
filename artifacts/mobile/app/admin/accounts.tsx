@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminFrame, AdminSelect } from "./_common";
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState } from "../../components/ui";
 import { trpc } from "../../lib/trpc";
-import { useTheme, palette } from "../../lib/theme";
+import { useTheme } from "../../lib/theme";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 import { confirmAr } from "../../lib/confirm";
 import { isNonWhitespacePassword } from "../../../../lib/tabyan-trpc/src/lib/password-validation";

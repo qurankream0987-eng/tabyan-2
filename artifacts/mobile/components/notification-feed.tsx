@@ -169,7 +169,7 @@ export function NotificationFeed({ listPath, settingsPath }: { listPath: string;
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>{label}</Text>
               </View>
               {rows.map((notification) => {
-                const [type, typeLabel, typeIcon] = typeMeta(notification.type);
+                const [, typeLabel, typeIcon] = typeMeta(notification.type);
                 const joinUrl = notification.type === "session_reminder" ? meetingUrl(notification.payload) : undefined;
                 return (
                   <Card key={notification.id} style={[styles.card, !notification.isRead && { borderColor: `${palette.gold}99`, borderWidth: 1.5 }, notification.priority === "high" && !notification.isRead && { borderRightWidth: 4, borderRightColor: palette.gold }]}>

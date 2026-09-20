@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Badge, Button, Card, ErrorState, FeatureTile, LoadingState, Screen, SectionTitle } from "../../../components/ui";
+import { Button, Card, ErrorState, FeatureTile, LoadingState, Screen, SectionTitle } from "../../../components/ui";
 import { useAuth } from "../../../lib/auth";
 import { trpc } from "../../../lib/trpc";
 import { useTheme } from "../../../lib/theme";
