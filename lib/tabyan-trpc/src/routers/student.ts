@@ -156,7 +156,9 @@ export const studentRouter = createRouter({
     .input(z.object({
       videoUrl: z.string().regex(/^\/objects\/[\w\-./]+$/, "مسار الفيديو غير صالح"),
       pathType: z.enum(["quran", "tajweed_correction"]).default("quran"),
-      durationSeconds: z.number().int().min(1).max(120).optional(),
+      // يطابق نطاق التسجيل الفعلي في تطبيق الجوال (٤٥–٣٠٠ ثانية) — كان الحد الأقصى هنا ١٢٠
+      // فيرفض الخادم أي تسجيل أطول رغم أن الواجهة تسمح به وتعرضه للمستخدم.
+      durationSeconds: z.number().int().min(1).max(300).optional(),
       // اختيار الطالب دراسة تحفة الأطفال أثناء اختبار القبول (المستويات 1-4 فقط) — لا يؤثر على منطق الاختبار أو نتيجته
       studyTuhfa: z.boolean().optional(),
       levelId: z.number().int().optional(),
