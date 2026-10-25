@@ -21,6 +21,25 @@ cd apps/api && NODE_ENV=development node ./build.mjs && PORT=8080 NODE_ENV=devel
 cd apps/web && MSYS_NO_PATHCONV=1 PORT=5173 BASE_PATH=/ LOCAL_API_TARGET=http://localhost:8080 npx vite --config vite.config.ts --host localhost
 ```
 
+## Mobile app on the Android emulator
+
+```bash
+# Native build (only needed again after adding a native library). x86_64 is the emulator ABI.
+cd apps/mobile/android && ./gradlew.bat app:assembleDebug -PreactNativeDevServerPort=8082 -PreactNativeArchitectures=x86_64
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+
+# Metro on :8082 (8081 is often taken by other projects); the app reaches the API via 10.0.2.2
+cd apps/mobile && EXPO_PUBLIC_DOMAIN=http://10.0.2.2:8080 npx expo start --dev-client --port 8082
+
+# Route the emulator's localhost to this machine (Metro + file storage), then open the app on Metro
+adb reverse tcp:8082 tcp:8082 && adb reverse tcp:9000 tcp:9000
+adb shell am start -a android.intent.action.VIEW -d "tabyan://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8082" com.tabyan.app
+```
+
+Mobile tests: `cd apps/mobile && npx vitest run tests` — four files use `node:test`
+(`ios-splash-lifecycle`, `native-recitation`, `native-recitation-closure`,
+`native-welcome-layout`); run those with `npx tsx --test <file>`.
+
 Stop the database: `.local-pg/bin/pg_ctl.exe -D .local-pg/data stop`
 
 Tests: `npm test --workspace @workspace/tabyan` (the API and tRPC suites also need

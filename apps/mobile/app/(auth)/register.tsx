@@ -19,8 +19,8 @@ import { Button, Card, Header, Screen } from "../../components/ui";
 import { useTheme, palette } from "../../lib/theme";
 import { trpc } from "../../lib/trpc";
 import { useAuth } from "../../lib/auth";
-import { COUNTRIES, normalizeNationalPhoneInput, toE164, validatePhoneNumber } from "../../lib/countries";
-import { normalizeDigits } from "../../../../packages/trpc/src/lib/input-normalization";
+import { COUNTRIES, normalizeNationalPhoneInput, toE164, validatePhoneNumber } from "@workspace/tabyan-domain/countries";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 import { userFacingErrorDetails } from "../../lib/user-facing-error";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {

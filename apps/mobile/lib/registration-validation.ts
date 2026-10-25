@@ -22,8 +22,8 @@ const COUNTRY_PHONE_RULES: Record<string, { minLength: number; maxLength: number
 };
 
 const COUNTRY_DIALS = Object.keys(COUNTRY_PHONE_RULES).sort((a, b) => b.length - a.length);
-import { normalizePhoneInput } from "../../../packages/trpc/src/lib/input-normalization";
-import { isNonWhitespacePassword } from "../../../packages/trpc/src/lib/password-validation";
+import { normalizePhoneInput } from "@workspace/tabyan-domain/input-normalization";
+import { isNonWhitespacePassword } from "@workspace/tabyan-domain/password-validation";
 
 export function normalizeRegistrationPhone(value: string): string {
   return normalizePhoneInput(value);

@@ -5,7 +5,7 @@ import { AdminSheet, FormError, HeaderAction, ListSkeleton, SheetFooter, useAdmi
 import { Button, Card, EmptyState, ErrorState, LoadingState } from "../../components/ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
-import { normalizeDigits } from "../../../../packages/trpc/src/lib/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 const SESSION_TYPES = [
   ["quran_hifz", "حفظ قرآن"], ["quran_review", "مراجعة قرآن"], ["qiraat", "قراءات"],

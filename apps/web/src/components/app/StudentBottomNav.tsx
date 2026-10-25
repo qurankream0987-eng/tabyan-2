@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router";
 import { cn } from "@/lib/utils";
 import Icon, { type IconName } from "./Icon";
-import productRegistry from "../../../../../packages/domain/product-registry.json";
+import productRegistry from "@workspace/tabyan-domain/product-registry.json";
 
 const TABS: { to: string; feature: keyof typeof productRegistry.features; icon: IconName }[] = [
   { to: "/student/home",        feature: "home",       icon: "home" },

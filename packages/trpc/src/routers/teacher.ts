@@ -4,7 +4,7 @@ import { and, desc, eq, gte, isNull, lte, sql, inArray, asc } from "drizzle-orm"
 import { TRPCError } from "@trpc/server";
 import { createRouter, teacherProcedure, approvedTeacherProcedure } from "../middleware";
 import { db } from "@workspace/db";
-import { isValidPersonName, normalizePersonName } from "../lib/input-normalization";
+import { isValidPersonName, normalizePersonName } from "@workspace/tabyan-domain/input-normalization";
 import { verifyVideoAttachmentProof } from "../lib/video-attachment";
 import { requireOwnedPrivateMediaPath } from "../lib/user-storage-ownership";
 import {

@@ -7,8 +7,8 @@ import { useToast } from "@/hooks/useToast";
 import { authStore } from "@/lib/auth";
 import { fmtDate } from "@/lib/format";
 import { userFacingErrorMessage } from "@/lib/user-facing-error";
-import { isNonWhitespacePassword } from "@workspace/tabyan-trpc/password-validation";
-import { isValidPersonName, isValidUsername, normalizePersonName, normalizeUsername } from "@workspace/tabyan-trpc/input-normalization";
+import { isNonWhitespacePassword } from "@workspace/tabyan-domain/password-validation";
+import { isValidPersonName, isValidUsername, normalizePersonName, normalizeUsername } from "@workspace/tabyan-domain/input-normalization";
 
 const PATH_LABELS: Record<string, string> = {
   quran: "حفظ ومراجعة القرآن",

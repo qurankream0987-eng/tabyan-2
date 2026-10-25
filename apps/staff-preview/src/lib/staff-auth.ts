@@ -1,6 +1,6 @@
 import { createTRPCClient, httpLink } from "@trpc/client";
 import type { AppRouter } from "@workspace/tabyan-trpc";
-import { normalizePhoneInput } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizePhoneInput } from "@workspace/tabyan-domain/input-normalization";
 import superjson from "superjson";
 
 type StaffRole = "teacher" | "admin";

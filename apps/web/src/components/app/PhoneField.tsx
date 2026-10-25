@@ -1,5 +1,5 @@
-import { COUNTRIES, normalizeNationalPhoneInput } from "@/lib/countries";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { COUNTRIES, normalizeNationalPhoneInput } from "@workspace/tabyan-domain/countries";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 const inputCls =
   "w-full rounded-xl border-2 border-input bg-white dark:bg-card px-4 py-3 font-readex text-lg outline-none focus:border-burgundy dark:focus:border-gold transition text-left";

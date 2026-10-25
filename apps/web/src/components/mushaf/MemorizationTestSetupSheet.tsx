@@ -7,7 +7,7 @@ import Icon from "@/components/app/Icon";
 import { SURAHS, JUZ_LIST, TOTAL_PAGES } from "@/lib/quran-data";
 import { toArabicDigits } from "@/lib/mushaf/format";
 import { readAccountStorage, writeAccountStorage } from "@/lib/account-storage";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 import {
   DEFAULT_TEST_SETTINGS, resolveScope, SCOPE_AVAILABILITY,
   type TestScope, type TestScopeKind, type TestSettings,

@@ -10,10 +10,10 @@ import { loginIdentifierTarget } from "@/lib/login-identifier";
 import { isWebLoginPending } from "@/lib/web-auth-runtime";
 import { trpc } from "@/providers/trpc";
 import { useToast } from "@/hooks/useToast";
-import { COUNTRIES, toE164, validatePhoneNumber } from "@/lib/countries";
+import { COUNTRIES, toE164, validatePhoneNumber } from "@workspace/tabyan-domain/countries";
 import { biometricLogin, enableBiometric, hasBiometricSession, isBiometricAvailable } from "@/lib/webauthn";
 import { userFacingErrorMessage } from "@/lib/user-facing-error";
-import { isNonWhitespacePassword } from "@workspace/tabyan-trpc/password-validation";
+import { isNonWhitespacePassword } from "@workspace/tabyan-domain/password-validation";
 import {
   getStudentRegistrationAge,
   getStudentRegistrationStepDecision,

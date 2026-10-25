@@ -1,6 +1,6 @@
 // Shared Arabic formatting helpers
 import type { IconName } from "@/components/Icon";
-import productRegistry from "../../../../packages/domain/product-registry.json";
+import productRegistry from "@workspace/tabyan-domain/product-registry.json";
 
 export const DAY_AR: Record<string, string> = {
   sunday: "الأحد", monday: "الاثنين", tuesday: "الثلاثاء", wednesday: "الأربعاء",

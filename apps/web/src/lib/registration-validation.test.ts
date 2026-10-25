@@ -10,9 +10,9 @@ import {
   validateStudentRegistrationStep,
   type StudentRegistrationValues,
 } from "@workspace/tabyan-trpc/registration-validation";
-import { normalizePhoneInput } from "@workspace/tabyan-trpc/input-normalization";
-import { isNonWhitespacePassword } from "@workspace/tabyan-trpc/password-validation";
-import { normalizeNationalPhoneInput, toE164, validatePhoneNumber } from "./countries";
+import { normalizePhoneInput } from "@workspace/tabyan-domain/input-normalization";
+import { isNonWhitespacePassword } from "@workspace/tabyan-domain/password-validation";
+import { normalizeNationalPhoneInput, toE164, validatePhoneNumber } from "@workspace/tabyan-domain/countries";
 
 const now = new Date("2026-05-20T23:55:00.000Z");
 

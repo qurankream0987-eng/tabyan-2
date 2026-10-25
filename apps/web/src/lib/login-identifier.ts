@@ -1,4 +1,4 @@
-import { normalizePhoneInput } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizePhoneInput } from "@workspace/tabyan-domain/input-normalization";
 
 export function loginIdentifierTarget(raw: string) {
   const value = raw.trim();

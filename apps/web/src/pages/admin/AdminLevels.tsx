@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/useToast";
 import { userFacingErrorMessage } from "@/lib/user-facing-error";
 import { authStore } from "@/lib/auth";
 import { DEMO_LEVELS } from "@/lib/demo/admin-ops";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 const PATHS = [["quran", "القرآن"], ["tajweed", "التجويد"], ["qiraat", "القراءات"], ["sharia", "الدروس الشرعية"]] as const;
 const SHARIA_SUBJECTS = [["aqeedah", "العقيدة"], ["fiqh", "الفقه"], ["seerah", "السيرة النبوية"]] as const;

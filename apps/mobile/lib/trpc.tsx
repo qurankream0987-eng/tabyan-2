@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 import { isUserScopedQueryKey } from "@workspace/tabyan-domain/user-query-scope";
 // Use the built declaration so the Native compiler does not pull server-only
 // fetch/AbortSignal implementations into the React Native type graph.
-import type { AppRouter } from "../../../packages/trpc/dist/index";
+import type { AppRouter } from "@workspace/tabyan-trpc/types";
 import { storage } from "./storage";
 import { getAccountGeneration, isCurrentAccountGeneration, onAccountTransition } from "./account-transition";
 

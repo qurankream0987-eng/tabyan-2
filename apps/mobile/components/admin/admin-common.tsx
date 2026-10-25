@@ -10,7 +10,7 @@ import { LibraryMediaPlayer } from "../../components/library-media-player";
 import { useAuth } from "../../lib/auth";
 import { resolveLibraryAsset } from "../../lib/library-media";
 import { AdminSheet, ConfirmAction, useAdminFeedback } from "../../components/admin-ui";
-import { normalizeDigits } from "../../../../packages/trpc/src/lib/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 import {
   isPlacementVideoAbOriginal,
   PlacementVideoAbHarness,

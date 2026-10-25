@@ -9,7 +9,7 @@ import { userFacingErrorMessage } from "@/lib/user-facing-error";
 import { DAY_AR, fmtDateTime } from "@/lib/format";
 import { authStore } from "@/lib/auth";
 import { DEMO_BOOKINGS, DEMO_LEVELS, DEMO_SCHEDULES, DEMO_TEACHERS } from "@/lib/demo/admin-core";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 const SESSION_TYPES = [
   ["quran_hifz", "حفظ قرآن"], ["quran_review", "مراجعة قرآن"], ["qiraat", "قراءات"],

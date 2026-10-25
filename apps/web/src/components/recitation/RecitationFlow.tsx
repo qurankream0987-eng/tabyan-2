@@ -19,7 +19,7 @@ import {
 } from "@/lib/recitation-types";
 import RecitationSession from "./RecitationSession";
 import RecitationResult from "./RecitationResult";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 interface RecitationFlowProps {
   onClose: () => void;

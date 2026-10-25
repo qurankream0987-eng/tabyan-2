@@ -18,8 +18,8 @@ import {
   userStorageObjects, users,
   webauthnChallenges, webauthnCredentials,
 } from "@workspace/db";
-import { hasMinimumNameParts, isValidPersonName, normalizePersonName, normalizePhoneInput, normalizeUsername, isValidUsername } from "../lib/input-normalization";
-import { isNonWhitespacePassword } from "../lib/password-validation";
+import { hasMinimumNameParts, isValidPersonName, normalizePersonName, normalizePhoneInput, normalizeUsername, isValidUsername } from "@workspace/tabyan-domain/input-normalization";
+import { isNonWhitespacePassword } from "@workspace/tabyan-domain/password-validation";
 import { registrationEmailSchema, validateStudentBirthDate } from "../lib/registration-validation";
 import { canDeletePrivateMedia, isProtectedVideoMediaType } from "../lib/mediaDeletionPolicy";
 

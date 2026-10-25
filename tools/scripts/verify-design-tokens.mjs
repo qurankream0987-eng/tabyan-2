@@ -62,7 +62,7 @@ const webCss = fs.readFileSync(path.join(root, "apps/web/src/index.css"), "utf8"
 if (!mobileAdapter.includes("packages/design-tokens/tokens.json") && !mobileAdapter.includes("@workspace/design-tokens")) {
   errors.push("Mobile adapter is not connected to the shared token source");
 }
-if (!webAdapter.includes("packages/design-tokens/tokens.json")) {
+if (!webAdapter.includes("packages/design-tokens/tokens.json") && !webAdapter.includes("@workspace/design-tokens")) {
   errors.push("Web adapter is not connected to the shared token source");
 }
 if (!webEntry.includes("installWebDesignTokens()")) {

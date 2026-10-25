@@ -6,8 +6,8 @@ import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 import { AdminSheet, ConfirmAction, FormError, HeaderAction, SheetFooter, useAdminFeedback, useDirtyState } from "../../components/admin-ui";
-import { isNonWhitespacePassword } from "../../../../packages/trpc/src/lib/password-validation";
-import { isValidPersonName, isValidUsername, normalizePersonName, normalizeUsername } from "../../../../packages/trpc/src/lib/input-normalization";
+import { isNonWhitespacePassword } from "@workspace/tabyan-domain/password-validation";
+import { isValidPersonName, isValidUsername, normalizePersonName, normalizeUsername } from "@workspace/tabyan-domain/input-normalization";
 
 const PATH_LABELS: Record<string, string> = {
   quran: "حفظ ومراجعة القرآن",

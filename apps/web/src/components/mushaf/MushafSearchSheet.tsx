@@ -12,7 +12,7 @@ import ReaderSheet from "./ReaderSheet";
 import { SURAHS, TOTAL_PAGES } from "@/lib/quran-data";
 import { toArabicDigits } from "@/lib/mushaf/format";
 import { pageOfAyah } from "@/lib/mushaf/page-index";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 import { loadCanonicalWordsForPage } from "@/lib/recitation-ai/canonicalWords";
 import { loadQuranSearchIndex, queryTokens, searchQuran, type QuranSearchResult } from "@/lib/recitation-ai/quranSearch";
 

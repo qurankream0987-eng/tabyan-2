@@ -15,7 +15,7 @@ import {
 import type { MushafPageData } from "@/lib/mushaf/types";
 import type { RecitationRange, RecitationStartRequest } from "@/lib/mushaf/useRecitationSession";
 import { loadRecitationAiOptions, saveRecitationAiOptions, type RecitationAiOptions } from "@/lib/recitation-ai/recitationPreferences";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 type RangeMode = "page" | "fromCurrent" | "surah" | "custom";
 

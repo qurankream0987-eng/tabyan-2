@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/useToast";
 import { userFacingErrorMessage } from "@/lib/user-facing-error";
 import { authStore } from "@/lib/auth";
 import { DEMO_SHARIA_LEVELS } from "@/lib/demo/student-core";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 const INPUT = "w-full rounded-xl border border-input bg-background px-4 py-2.5 font-readex text-sm";
 const SHARIA_SESSION_TYPES = ["sharia_aqeedah", "sharia_fiqh", "sharia_seerah"] as const;

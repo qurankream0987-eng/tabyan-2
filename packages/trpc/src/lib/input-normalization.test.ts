@@ -7,7 +7,7 @@ import {
   normalizePersonName,
   normalizePhoneInput,
   normalizeUsername,
-} from "./input-normalization";
+} from "@workspace/tabyan-domain/input-normalization";
 
 describe("input normalization", () => {
   it("maps Arabic-Indic and Persian digits without changing other text", () => {

@@ -8,7 +8,7 @@ import {
 } from "../../components/admin-ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
-import { normalizeDigits } from "../../../../packages/trpc/src/lib/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 const FALLBACK_SUBJECTS = [
   { key: "aqeedah", name: "العقيدة" },

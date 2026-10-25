@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { trpc } from "../../lib/trpc";
 import { useAuth } from "../../lib/auth";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
-import { normalizeDigits } from "../../../../packages/trpc/src/lib/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 import { resolveNativeLoginMethod } from "../../lib/native-login-method";
 
 function errorMessage(error: unknown) {

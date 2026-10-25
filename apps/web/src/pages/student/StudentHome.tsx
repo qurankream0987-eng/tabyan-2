@@ -8,7 +8,7 @@ import SectionIcon, { type SectionIconName } from "@/components/app/SectionIcon"
 import { authStore } from "@/lib/auth";
 import { fmtTime, sessionDayLabel } from "@/lib/format";
 import { DEMO_DASHBOARD, type DemoDashboard, type DemoSessionRow } from "@/lib/demo/student-core";
-import productRegistry from "../../../../../packages/domain/product-registry.json";
+import productRegistry from "@workspace/tabyan-domain/product-registry.json";
 
 // ── آيات اليوم الدوارة ────────────────────────────────────────────────────────
 // آية احتياطية تظهر فقط إذا تعذر الوصول للخادم

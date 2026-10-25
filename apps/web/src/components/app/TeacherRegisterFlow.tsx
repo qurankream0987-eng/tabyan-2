@@ -10,9 +10,9 @@ import { loginIdentifierTarget } from "@/lib/login-identifier";
 import { isWebLoginPending } from "@/lib/web-auth-runtime";
 import { trpc } from "@/providers/trpc";
 import { useToast } from "@/hooks/useToast";
-import { toE164, validatePhoneNumber } from "@/lib/countries";
+import { toE164, validatePhoneNumber } from "@workspace/tabyan-domain/countries";
 import { userFacingErrorMessage } from "@/lib/user-facing-error";
-import { isNonWhitespacePassword } from "@workspace/tabyan-trpc/password-validation";
+import { isNonWhitespacePassword } from "@workspace/tabyan-domain/password-validation";
 
 type Step = "name" | "phone" | "password";
 

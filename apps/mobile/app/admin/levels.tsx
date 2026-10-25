@@ -7,7 +7,7 @@ import {
   MobileActionSheet, SheetFooter, SwitchRow, useAdminFeedback, useDirtyState,
 } from "../../components/admin-ui";
 import { trpc } from "../../lib/trpc";
-import { normalizeDigits } from "../../../../packages/trpc/src/lib/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 const PATHS = [
   { value: "quran", label: "القرآن الكريم" },

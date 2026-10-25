@@ -12,8 +12,8 @@ import { userFacingErrorMessage } from "@/lib/user-facing-error";
 import { api } from "@/lib/api";
 import { logoutWebSession } from "@/lib/web-session";
 import { DEMO_SETTINGS } from "@/lib/demo/admin-ops";
-import { isNonWhitespacePassword } from "@workspace/tabyan-trpc/password-validation";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { isNonWhitespacePassword } from "@workspace/tabyan-domain/password-validation";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 const EDITABLE_KEYS = [
   "login_max_attempts", "login_block_duration_hours", "placement_video_duration_seconds",

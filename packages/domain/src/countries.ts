@@ -1,4 +1,4 @@
-import { normalizePhoneInput } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizePhoneInput } from "./input-normalization";
 
 /** قائمة دول العالم ورموز الاتصال المشتركة بين مسارات التسجيل — الكويت افتراضياً، ثم الدول العربية، ثم بقية دول العالم */
 export const COUNTRIES: { iso: string; name: string; dial: string; flag: string }[] = [

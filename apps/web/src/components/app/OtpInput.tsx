@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 export default function OtpInput({ value, onChange, length = 4 }: { value: string; onChange: (v: string) => void; length?: number }) {
   const refs = useRef<(HTMLInputElement | null)[]>([]);

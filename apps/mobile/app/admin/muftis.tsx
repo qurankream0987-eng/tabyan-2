@@ -4,7 +4,7 @@ import { AdminFrame, AdminInput, AdminSelect, ConfirmButton, safeError } from ".
 import { Button, Card, EmptyState, ErrorState, LoadingState } from "../../components/ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 const cats = [
   ["aqeedah", "عقيدة"], ["fiqh", "فقه"], ["muamalat", "معاملات"], ["family", "أسرة"],

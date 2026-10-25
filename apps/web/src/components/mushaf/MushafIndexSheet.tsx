@@ -8,7 +8,7 @@ import Icon from "@/components/app/Icon";
 import ReaderSheet from "./ReaderSheet";
 import { SURAHS, JUZ_LIST, TOTAL_PAGES } from "@/lib/quran-data";
 import { toArabicDigits } from "@/lib/mushaf/format";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 type Tab = "surahs" | "juz" | "pages" | "bookmarks";
 

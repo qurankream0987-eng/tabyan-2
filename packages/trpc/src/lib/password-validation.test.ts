@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isNonWhitespacePassword } from "./password-validation";
+import { isNonWhitespacePassword } from "@workspace/tabyan-domain/password-validation";
 import { masterPasswordSchema, passwordSchema } from "../routers/auth";
 
 describe("password policy", () => {

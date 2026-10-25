@@ -22,7 +22,7 @@ import {
   phoneVariants,
   usernameSchema,
 } from "./auth";
-import { isValidPersonName, normalizePersonName } from "../lib/input-normalization";
+import { isValidPersonName, normalizePersonName } from "@workspace/tabyan-domain/input-normalization";
 import { requireOwnedPrivateMediaPath } from "../lib/user-storage-ownership";
 
 const SESSION_TYPE_LABELS: Record<string, string> = {

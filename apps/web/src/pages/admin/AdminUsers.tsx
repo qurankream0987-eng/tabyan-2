@@ -11,7 +11,7 @@ import { DEMO_USERS, DEMO_STUDENT_FILE } from "@/lib/demo/admin-core";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import StatusBadge from "@/components/StatusBadge";
 import ReviewVideoPlayer from "@/components/admin/ReviewVideoPlayer";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 import { userFacingErrorMessage } from "@/lib/user-facing-error";
 
 type UserRow = {

@@ -13,6 +13,7 @@
     "module": "ESNext"
   },
   "references": [
-    { "path": "../db" }
+    { "path": "../db" },
+    { "path": "../domain" }
   ]
 }

@@ -6,6 +6,10 @@
   "exports": {
     ".": "./src/index.ts",
     "./user-query-scope": "./src/user-query-scope.ts",
-    "./admin-library": "./src/admin-library.ts"
+    "./admin-library": "./src/admin-library.ts",
+    "./input-normalization": "./src/input-normalization.ts",
+    "./password-validation": "./src/password-validation.ts",
+    "./countries": "./src/countries.ts",
+    "./product-registry.json": "./product-registry.json"
   }
 }

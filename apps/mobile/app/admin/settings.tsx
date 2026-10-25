@@ -7,8 +7,8 @@ import { AdminRow, AdminSheet, ConfirmAction, FormError, FormInput, IconAction, 
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
 import { navigateToWelcome, useAuth } from "../../lib/auth";
-import { isNonWhitespacePassword } from "../../../../packages/trpc/src/lib/password-validation";
-import { normalizeDigits } from "../../../../packages/trpc/src/lib/input-normalization";
+import { isNonWhitespacePassword } from "@workspace/tabyan-domain/password-validation";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 const LABELS: Record<string, string> = {
   login_max_attempts: "الحد الأقصى لمحاولات الدخول", login_block_duration_hours: "مدة حظر الدخول بالساعات",

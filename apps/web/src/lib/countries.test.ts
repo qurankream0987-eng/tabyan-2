@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeNationalPhoneInput, toE164 } from "./countries";
+import { normalizeNationalPhoneInput, toE164 } from "@workspace/tabyan-domain/countries";
 
 describe("national phone input normalization", () => {
   it("keeps Kuwait local input local", () => {

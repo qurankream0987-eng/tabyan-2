@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { hasMinimumNameParts, isValidPersonName, normalizePersonName } from "./input-normalization";
-import { isNonWhitespacePassword } from "./password-validation";
+import { hasMinimumNameParts, isValidPersonName, normalizePersonName } from "@workspace/tabyan-domain/input-normalization";
+import { isNonWhitespacePassword } from "@workspace/tabyan-domain/password-validation";
 
 export const registrationEmailSchema = z
   .string()

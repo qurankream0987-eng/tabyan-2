@@ -3,12 +3,12 @@ import { useState } from "react";
 import { Image, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 import { Button, Card, Header, Screen } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
-import { normalizeNationalPhoneInput, toE164, validatePhoneNumber } from "../../lib/countries";
+import { normalizeNationalPhoneInput, toE164, validatePhoneNumber } from "@workspace/tabyan-domain/countries";
 import { trpc } from "../../lib/trpc";
 import { useTheme, palette } from "../../lib/theme";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 import { validateRegistrationPassword } from "../../lib/registration-validation";
-import { isValidPersonName, normalizePersonName } from "../../../../packages/trpc/src/lib/input-normalization";
+import { isValidPersonName, normalizePersonName } from "@workspace/tabyan-domain/input-normalization";
 import { CountryPicker } from "./register";
 
 type Step = "name" | "phone" | "password";

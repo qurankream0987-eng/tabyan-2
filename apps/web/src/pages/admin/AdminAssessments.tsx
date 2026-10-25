@@ -8,7 +8,7 @@ import { userFacingErrorMessage } from "@/lib/user-facing-error";
 import { fmtDateTime } from "@/lib/format";
 import { authStore } from "@/lib/auth";
 import { DEMO_ASSESSMENTS, DEMO_ATTEMPTS, DEMO_LEVELS, DEMO_QUESTIONS_BANK } from "@/lib/demo/admin-ops";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 import {
   ActionMenu, AdminButton, AdminDrawer, AdminEmpty, AdminModal, ChipGroup, FormActions, FormErrorBanner, IconAction, ListSkeleton,
   SelectField, TextAreaField, TextField, useDirtyState,

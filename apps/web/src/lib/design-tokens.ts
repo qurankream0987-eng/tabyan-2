@@ -1,4 +1,4 @@
-import designTokens from '../../../../packages/design-tokens/tokens.json';
+import designTokens from '@workspace/design-tokens/tokens.json';
 
 type TokenMode = keyof typeof designTokens.modes;
 

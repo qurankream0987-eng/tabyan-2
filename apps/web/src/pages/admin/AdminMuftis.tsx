@@ -10,7 +10,7 @@ import { FATWA_CATEGORIES } from "@/lib/format";
 import { authStore } from "@/lib/auth";
 import { DEMO_MUFTIS, DEMO_MUFTI_STATS, DEMO_TEACHERS } from "@/lib/demo/admin-ops";
 import { userFacingErrorMessage } from "@/lib/user-facing-error";
-import { normalizeDigits } from "@workspace/tabyan-trpc/input-normalization";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 const CAT_KEYS = Object.keys(FATWA_CATEGORIES);
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { ArrowRight, ShieldCheck, UserRound, X } from "lucide-react";
-import { isNonWhitespacePassword } from "@workspace/tabyan-trpc/password-validation";
+import { isNonWhitespacePassword } from "@workspace/tabyan-domain/password-validation";
 import {
   checkTeacherPhone,
   loginSupervisor,
