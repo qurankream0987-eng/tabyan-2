@@ -23,8 +23,8 @@ logs
 *.cer
 
 # generated native directories
-artifacts/mobile/ios/
-artifacts/mobile/android/
+apps/mobile/ios/
+apps/mobile/android/
 
 # recovery and transport artifacts
 attached_assets/
@@ -81,4 +81,4 @@ Thumbs.db
 .local-s3/
 
 # generated Expo static build
-artifacts/mobile/static-build/
+apps/mobile/static-build/

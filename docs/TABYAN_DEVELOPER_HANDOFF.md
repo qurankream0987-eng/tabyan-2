@@ -44,18 +44,18 @@ Production domain: `tibyanquran.com`. Both the Web build and the Mobile builds p
          ┌──────────────── API server (Express 5, Node 24, single process) ───────────────┐
          │ /health, /readiness              (app.ts)                                       │
          │ /api/healthz, /api/diagnostics/* , /api/storage/*   (REST, routes/*.ts)          │
-         │ /api/trpc/*                      (tRPC v11 + superjson, lib/tabyan-trpc)         │
+         │ /api/trpc/*                      (tRPC v11 + superjson, packages/trpc)         │
          │ WS /api/ws/session-call          (WebRTC signaling — signaling.ts)               │
          │ WS /api/ws/recitation            (Tabyan AI ASR gateway — recitationRealtime.ts) │
          │ WS /api/ws/nabr-qrc-gateway      (Nabr/QRC gateway — nabrQrcGateway.ts)          │
          │ schedulers: session reminders, private-media cleanup (TABYAN_SCHEDULERS_ENABLED) │
          └───────────────┬──────────────────────────────┬────────────────────────────────┘
                          ▼                              ▼
-            PostgreSQL 16 (Drizzle ORM, lib/db)   Object Storage (provider switch:
+            PostgreSQL 16 (Drizzle ORM, packages/db)   Object Storage (provider switch:
                                                    TABYAN_OBJECT_STORAGE_PROVIDER = replit | railway)
 ```
 
-**VERIFIED** from `artifacts/api-server/src/index.ts`, `app.ts` and `routes/index.ts`.
+**VERIFIED** from `apps/api/src/index.ts`, `app.ts` and `routes/index.ts`.
 
 The three WebSocket routes keep their rooms, leases and diagnostics state in **process memory**. The reminder scheduler has no cross-replica claim. **Run exactly one API replica** until that changes. **RECORDED** in `.agents/memory/tabyan-live-session-deployment.md` and `tabyan-replit-exit.md`, and consistent with the source.
 
@@ -65,17 +65,17 @@ pnpm workspace (`pnpm-workspace.yaml`), Node 24, TypeScript 5.9.
 
 | Path | What it is |
 |---|---|
-| `artifacts/api-server` | Express API + WebSockets + schedulers (`@workspace/api-server`). esbuild bundle → `dist/index.mjs` |
-| `artifacts/tabyan` | Web app (`@workspace/tabyan`), React 19, react-router, Tailwind 4, Vite 7 |
-| `artifacts/tabyan/smart-mushaf-v3` | Smart Mushaf V3 engine + QCF reader (mounted by the Web route) |
-| `artifacts/mobile` | Expo / React Native app (`@workspace/mobile`), expo-router file routes in `app/` |
-| `artifacts/tabyan-staff-preview` | Separate "staff preview" web artifact at `/tabyan-staff-preview/` |
-| `artifacts/mockup-sandbox` | Design mockup sandbox (not product) |
-| `lib/db` | Drizzle schema (`src/schema`), SQL migrations (`migrations/0001…0013`), seed script |
-| `lib/tabyan-trpc` | All tRPC routers: auth, student, teacher, admin, fatwa, library, notifications, sharia, dailyVerse, recitation, quranFoundation |
-| `lib/tabyan-domain`, `lib/design-tokens` | Shared domain logic and design tokens |
+| `apps/api` | Express API + WebSockets + schedulers (`@workspace/api-server`). esbuild bundle → `dist/index.mjs` |
+| `apps/web` | Web app (`@workspace/tabyan`), React 19, react-router, Tailwind 4, Vite 7 |
+| `apps/web/smart-mushaf-v3` | Smart Mushaf V3 engine + QCF reader (mounted by the Web route) |
+| `apps/mobile` | Expo / React Native app (`@workspace/mobile`), expo-router file routes in `app/` |
+| `apps/staff-preview` | Separate "staff preview" web artifact at `/tabyan-staff-preview/` |
+| `apps/mockup-sandbox` | Design mockup sandbox (not product) |
+| `packages/db` | Drizzle schema (`src/schema`), SQL migrations (`migrations/0001…0013`), seed script |
+| `packages/trpc` | All tRPC routers: auth, student, teacher, admin, fatwa, library, notifications, sharia, dailyVerse, recitation, quranFoundation |
+| `packages/domain`, `packages/design-tokens` | Shared domain logic and design tokens |
 | `lib/api-spec`, `lib/api-zod`, `lib/api-client-react` | OpenAPI spec + Orval-generated Zod/hooks (small REST surface) |
-| `verification/scripts` | Verification scripts (`verify-*.mjs`, mushaf manifest tools, `post-merge.sh`) |
+| `tools/scripts` | Verification scripts (`verify-*.mjs`, mushaf manifest tools, `post-merge.sh`) |
 | `projects/smart-mushaf-flutter` | Flutter spike. Not part of the pnpm build |
 | `docs/`, `research/`, `verification/` | Historical reports (see the warning above) |
 | `.agents/memory/` | Durable project decisions and constraints (≈86 notes). **Read the Railway/Replit ones before touching infra** |
@@ -104,24 +104,24 @@ pnpm --filter @workspace/tabyan run test:smart-mushaf   # Smart Mushaf: 11 files
 
 **Mobile**: the `dev` script assumes Replit (it sets `EXPO_PACKAGER_PROXY_URL` from `REPLIT_EXPO_DEV_DOMAIN`).
 
-- Off Replit, run `npx expo start` in `artifacts/mobile` with `EXPO_PUBLIC_DOMAIN` set to your API host.
+- Off Replit, run `npx expo start` in `apps/mobile` with `EXPO_PUBLIC_DOMAIN` set to your API host.
 - Live streaming and WebRTC need a dev client, not Expo Go.
 
-**Dev DB seed**: `node lib/db/seed-tabyan.mjs`. It is idempotent and assigns a mufti to the «قراءات» category.
+**Dev DB seed**: `node packages/db/seed-tabyan.mjs`. It is idempotent and assigns a mufti to the «قراءات» category.
 
-> ⚠️ **Broken root scripts (VERIFIED).** `pnpm run build`, `verify:mushaf`, `verify:contracts`, `verify:design-tokens`, `verify:product-registry`, `verify:home-navigation-parity` and `verify:screen-parity` all call `node scripts/…`. The root `scripts/` directory no longer exists; the files now live in `verification/scripts/`. So `pnpm run build` currently fails at `verify:mushaf` with `Cannot find module …/scripts/verify-mushaf.mjs`. Running `node verification/scripts/verify-mushaf.mjs` directly also fails: it reports a missing manifest. Build each package with `pnpm --filter <pkg> run build` until this is fixed.
+> ⚠️ **Broken root scripts (VERIFIED).** `pnpm run build`, `verify:mushaf`, `verify:contracts`, `verify:design-tokens`, `verify:product-registry`, `verify:home-navigation-parity` and `verify:screen-parity` all call `node scripts/…`. The root `scripts/` directory no longer exists; the files now live in `tools/scripts/`. So `pnpm run build` currently fails at `verify:mushaf` with `Cannot find module …/scripts/verify-mushaf.mjs`. Running `node tools/scripts/verify-mushaf.mjs` directly also fails: it reports a missing manifest. Build each package with `pnpm --filter <pkg> run build` until this is fixed.
 
-## E. Web app — `artifacts/tabyan`
+## E. Web app — `apps/web`
 
 - Routes live in `src/App.tsx`, all lazy-loaded. Shells: `StudentShell`, `TeacherShell`, `AdminShell`, `SessionRoomLayout`.
 - tRPC client (`src/providers/trpc.tsx`): `httpBatchLink` to `${BASE_URL}/api/trpc`, so it is same-origin.
 - WebSockets are built from `location.host`:
   - `src/lib/webrtc.ts` → `/api/ws/session-call`
   - `src/lib/recitation-ai/useOpenAiRealtimeTranscription.ts` → `/api/ws/recitation`
-- Replit production serves the build statically from `artifacts/tabyan/dist/public` with an SPA rewrite (`artifacts/tabyan/.replit-artifact/artifact.toml`).
+- Replit production serves the build statically from `apps/web/dist/public` with an SPA rewrite (`apps/web/.replit-artifact/artifact.toml`).
 - Admin-panel CSS must stay scoped under `.admin-shell` (**RECORDED** in `.agents/memory/tabyan-admin-shell-scope.md`).
 
-## F. Mobile app — `artifacts/mobile`
+## F. Mobile app — `apps/mobile`
 
 | Item | Value |
 |---|---|
@@ -137,7 +137,7 @@ Because shipped binaries call `tibyanquran.com`, the **backend cutover can happe
 
 Before any EAS or App Store work, read `docs/TABYAN_APPLE_IDENTITY_LOCK.md` and `.agents/memory/eas-pnpm-project-link.md`. The bundle ID and the EAS project must stay tied to the existing App Store record.
 
-## G. Backend / API — `artifacts/api-server`
+## G. Backend / API — `apps/api`
 
 **REST** (`src/routes/*`):
 
@@ -150,9 +150,9 @@ Before any EAS or App Store work, read `docs/TABYAN_APPLE_IDENTITY_LOCK.md` and 
 - `GET /health` always returns 200. This is the Railway health check.
 - `GET /readiness` checks the DB, the exact table set and the Drizzle migration ledger. See the blocker in §J.
 
-**tRPC** (`lib/tabyan-trpc/src/router.ts`): 11 routers. `admin` is the largest (≈93 procedures, 1,700 lines).
+**tRPC** (`packages/trpc/src/router.ts`): 11 routers. `admin` is the largest (≈93 procedures, 1,700 lines).
 
-**Auth** (`lib/tabyan-trpc/src/context.ts`, `routers/auth.ts`, `middleware.ts`):
+**Auth** (`packages/trpc/src/context.ts`, `routers/auth.ts`, `middleware.ts`):
 
 - Bearer tokens are stored in `auth_tokens`. Admin tokens must also have an active `admin_sessions` row, which allows revocation.
 - Procedures: `checkPhone`, `completeProfile`, `passwordLogin`, `studentPasswordLogin`, `adminLogin`, WebAuthn register and login, `me`, `logout`, `deleteAccount`.
@@ -173,17 +173,17 @@ Before any EAS or App Store work, read `docs/TABYAN_APPLE_IDENTITY_LOCK.md` and 
 
 **Video validation** needs the `ffprobe-static` binary at runtime. Startup logs an error if it is missing.
 
-## H. Database — `lib/db`
+## H. Database — `packages/db`
 
-- PostgreSQL + Drizzle ORM (`drizzle-orm` 0.45, `drizzle-kit` 0.31). The schema has **55 tables** (**VERIFIED**: `pgTable(` declarations in `lib/db/src/schema`).
-- Checked-in SQL migrations: `lib/db/migrations/0001_users_google_id.sql` … `0013_placement_attempt_permits.sql`.
+- PostgreSQL + Drizzle ORM (`drizzle-orm` 0.45, `drizzle-kit` 0.31). The schema has **55 tables** (**VERIFIED**: `pgTable(` declarations in `packages/db/src/schema`).
+- Checked-in SQL migrations: `packages/db/migrations/0001_users_google_id.sql` … `0013_placement_attempt_permits.sql`.
 - `drizzle.config.ts` writes to `migrations/canonical`, which **does not exist** in this checkout (**VERIFIED**). The `@workspace/db` `migrate` script therefore has no canonical migration set locally. **RECORDED**: there is no Drizzle migration ledger in the Replit Production database.
 - `pnpm --filter @workspace/db run push` is for development only. **Never run `push` or `push-force` against production or the Railway AMS database.**
 - **RECORDED** (`research/TABYAN_FULL_BACKEND_RAILWAY_MIGRATION.md`, 2026-10-19): Replit Production runs PostgreSQL 16.15 with 55 public tables and 2,015 rows. The workspace's own `DATABASE_URL` points at **Development**, not Production.
 
 ## I. Object Storage
 
-`artifacts/api-server/src/lib/objectStorageRuntime.ts` chooses the backend from `TABYAN_OBJECT_STORAGE_PROVIDER`:
+`apps/api/src/lib/objectStorageRuntime.ts` chooses the backend from `TABYAN_OBJECT_STORAGE_PROVIDER`:
 
 - `replit` (default): `ReplitObjectStorageProvider`. Works only on Replit (sidecar signing).
 - `railway`: `RailwayObjectStorageProvider` (S3-compatible, AWS SDK v3). Has unit tests in `RailwayObjectStorageProvider.test.ts`.
@@ -223,7 +223,7 @@ The Railway bucket's display name and its S3 contract are **different values**. 
 
 > ⚠️ **Code-level readiness blockers found during this audit (VERIFIED in source, not yet fixed):**
 >
-> 1. `artifacts/api-server/src/databaseSchemaExpectations.ts` lists **54** tables. The schema and production have **55**: `placement_attempts` is missing from the list (production has 2 rows in it). Against the restored database, `/readiness` will treat `placement_attempts` as an unexpected table and return **503**.
+> 1. `apps/api/src/databaseSchemaExpectations.ts` lists **54** tables. The schema and production have **55**: `placement_attempts` is missing from the list (production has 2 rows in it). Against the restored database, `/readiness` will treat `placement_attempts` as an unexpected table and return **503**.
 > 2. `/readiness` also returns 503 unless `drizzle.__drizzle_migrations` exists with at least one row. The source database had **no Drizzle ledger** (RECORDED), so a faithful restore has none either, unless one was created afterwards (**UNKNOWN**).
 > 3. Both failures make `/readiness` fail, which **keeps the schedulers stopped** (`index.ts` starts them only after readiness passes). `/health` still returns 200, so Railway will report the service healthy while readiness fails.
 > 4. `pnpm --filter @workspace/api-server run ams-schema-setup` (`amsMigrationPreflight.ts`) is an **empty-database baseline tool**. It hard-codes `publicTables=54` and refuses a non-empty target. In `verify-only` mode (`TABYAN_AMS_SCHEMA_MODE=verify-only`) it fails on the restored database for the same reasons. **Do not run it in `apply-empty-baseline` mode against the restored AMS database.**
@@ -234,15 +234,15 @@ The Railway bucket's display name and its S3 contract are **different values**. 
 
 Replit currently runs **production** (Web static + API + managed PostgreSQL + Object Storage).
 
-- `.replit`: modules `nodejs-24`, `python-base-3.13`, `postgresql-16`. Deployment target `autoscale` (see the WebSocket single-instance caveat in §B). `postMerge` runs `verification/scripts/post-merge.sh`. `[objectStorage] defaultBucketID` is the Replit source bucket.
-- The API artifact (`artifacts/api-server/.replit-artifact/artifact.toml`) listens on port 8080. Its health path is `/api/healthz`, and it serves `/api` and `/api/ws/nabr-qrc-gateway`.
+- `.replit`: modules `nodejs-24`, `python-base-3.13`, `postgresql-16`. Deployment target `autoscale` (see the WebSocket single-instance caveat in §B). `postMerge` runs `tools/scripts/post-merge.sh`. `[objectStorage] defaultBucketID` is the Replit source bucket.
+- The API artifact (`apps/api/.replit-artifact/artifact.toml`) listens on port 8080. Its health path is `/api/healthz`, and it serves `/api` and `/api/ws/nabr-qrc-gateway`.
 - On Replit, **Publish is project-wide**: it redeploys every artifact and syncs the managed PostgreSQL schema. Never treat it as a web-only publish (**RECORDED**, `deployment-build-parity.md`).
 - Secrets: a `[userenv.*]` entry in `.replit` with the same name **shadows** a Replit Secret, even when its value is empty. Check `.replit` before debugging a "missing" secret. Never print secret values; check only presence and length (**RECORDED**, `replit-secret-injection.md`).
 - `replit.md` is a mostly unfilled template, and its "port 5000" is out of date (the API uses 8080).
 
 ## L. Smart Mushaf
 
-Read `artifacts/tabyan/smart-mushaf-v3/docs/LIVE_RECITATION_ENGINE.md` first. It is current, and it supersedes the RC1 handoff files.
+Read `apps/web/smart-mushaf-v3/docs/LIVE_RECITATION_ENGINE.md` first. It is current, and it supersedes the RC1 handoff files.
 
 | Item | State |
 |---|---|
@@ -250,7 +250,7 @@ Read `artifacts/tabyan/smart-mushaf-v3/docs/LIVE_RECITATION_ENGINE.md` first. It
 | Route protection | Registered **outside** `StudentShell`, so there is no route-level role guard. The Nabr gateway enforces a student token server-side. No in-app link to the route was found; it is reached by URL (**VERIFIED**) |
 | Other Mushaf routes | `/student/mushaf-fahd` (legacy reader), `/student/tilawah`, and the DEV-only mock `/student/smart-mushaf` |
 | Renderer | QCF v2 page reader: `src/mushaf/qcf/{QcfMushafView,QcfPage,QcfWord}.tsx`. Pages mount as React transitions; each word subscribes individually via `useSyncExternalStore`, so pages do not re-render on word updates |
-| Quran data | Word identity: `src/quran/data/tanzil-uthmani.txt` (sha256 prefix `6933e133dd56db77`, **VERIFIED**). Geometry and glyphs: `artifacts/tabyan/public/mushaf/pages/1..604.json` + `public/mushaf/fonts/` (604 + 604 files, **VERIFIED**) |
+| Quran data | Word identity: `src/quran/data/tanzil-uthmani.txt` (sha256 prefix `6933e133dd56db77`, **VERIFIED**). Geometry and glyphs: `apps/web/public/mushaf/pages/1..604.json` + `public/mushaf/fonts/` (604 + 604 files, **VERIFIED**) |
 | Integrity | **6,236 ayahs and 77,433 recitable WordKeys**, all bound across 604 pages. **VERIFIED**: `qcfCanonicalAlignment.test.ts` and `quranDataIntegrity.test.ts` pass |
 | QCF alignment exceptions | Exactly four, in `src/quran/layout/qcfAlignment.ts` (`QCF_ALIGNMENT_EXCEPTIONS`). In each, QDC joins two Tanzil words into one glyph-word, which binds to **both** WordKeys. Neither dataset is modified. See the table below |
 | WordKeys | `{surah, ayah, wordIndex}`, 1-based per ayah: `src/quran/canonical/CanonicalWordIndex.ts`, `src/quran/layout/pageWordIndex.ts` |
@@ -261,7 +261,7 @@ Read `artifacts/tabyan/smart-mushaf-v3/docs/LIVE_RECITATION_ENGINE.md` first. It
 | Fake provider | `live/providers/FakeStreamProvider.ts`. DEV-only: dynamic imports sit inside `import.meta.env.DEV`, so production builds exclude it. Check with `node smart-mushaf-v3/scripts/audit-production-bundle.mjs dist/public` |
 | Nabr adapter | Client: `live/providers/NabrLiveAdapter.ts` (default policy `candidate-only`; segmentation configurable `tanzil`/`qdc`), `src/providers/nabr/*`, `src/audio/adapters/NabrAudioAdapter.ts`. Server: see §M |
 | Performance work | Old hot-path / diagnostics pipeline removed (commit `8b1ac6f2`, about −10k lines). Per-word subscriptions, mic and provider start in parallel, audio device pre-warmed when idle, browser benchmark `smart-mushaf-v3/scripts/browser-live-check.mjs` |
-| Mobile | **No Mushaf reader of any kind on mobile** (VERIFIED: no QCF/Smart Mushaf code in `artifacts/mobile`). Mobile recitation (`app/student/recitation.tsx`, `lib/native-recitation.ts`) uses `/api/ws/recitation` with a separate matcher |
+| Mobile | **No Mushaf reader of any kind on mobile** (VERIFIED: no QCF/Smart Mushaf code in `apps/mobile`). Mobile recitation (`app/student/recitation.tsx`, `lib/native-recitation.ts`) uses `/api/ws/recitation` with a separate matcher |
 
 The four QCF alignment exceptions:
 
@@ -284,12 +284,12 @@ The four QCF alignment exceptions:
 
 ## M. Nabr integration status
 
-- **Server gateway** `WS /api/ws/nabr-qrc-gateway` (`artifacts/api-server/src/nabrQrcGateway.ts`), **VERIFIED**:
+- **Server gateway** `WS /api/ws/nabr-qrc-gateway` (`apps/api/src/nabrQrcGateway.ts`), **VERIFIED**:
   - Tabyan-token `auth` message with a timeout. **Student role only**, one connection per user.
   - 64 KB maximum payload. Writes no DB rows. Never logs tokens, audio, or the QRC URL or key.
   - Transport: `NODE_ENV=development` uses the **fake** transport. Live requires `NABR_QRC_GATEWAY_LIVE_ENABLED=true`. Credentials stay server-side.
 - **Older path**: Nabr through `/api/ws/recitation`. `providerSelection.ts` allows `nabr` only in development, with `NABR_QRC_ENABLED`, `NABR_QRC_SHADOW_MODE` and `NABR_QRC_ONE_SHOT_TEST` all set to `true`.
-- **Tests**: `nabrQrcGateway.test.ts` and `recitation-providers/*.test.ts`. The Web e2e test against a local fake upstream is `artifacts/tabyan/e2e/nabrQrcGateway.e2e.test.ts` (`npx vitest run --config e2e/vitest.config.ts`).
+- **Tests**: `nabrQrcGateway.test.ts` and `recitation-providers/*.test.ts`. The Web e2e test against a local fake upstream is `apps/web/e2e/nabrQrcGateway.e2e.test.ts` (`npx vitest run --config e2e/vitest.config.ts`).
 - **Status**: integration code exists end-to-end against the fake transport. Live acceptance is **PENDING**. Privacy and commercial gates are in `research/NABR_QRC_PRIVACY_COMMERCIAL_GATE.md` and `research/NABR_QRC_LIVE_ACCEPTANCE_READINESS.md`.
 - **No live Nabr calls were made while preparing this handoff.** Do not enable live mode without owner approval.
 
@@ -312,7 +312,7 @@ Provider selection (`recitation-providers/providerSelection.ts`, **VERIFIED**):
 
 ## O. Supervision / admin status
 
-- Web: 20 admin pages under `artifacts/tabyan/src/pages/admin/` plus `/admin/session/:id`. Mobile: matching file routes under `artifacts/mobile/app/admin/`. Review queues use the generic `AdminWorkflow` in `app/admin/_common.tsx`.
+- Web: 20 admin pages under `apps/web/src/pages/admin/` plus `/admin/session/:id`. Mobile: matching file routes under `apps/mobile/app/admin/`. Review queues use the generic `AdminWorkflow` in `app/admin/_common.tsx`.
 - Supervisor accounts log in with a username (migration `0002_supervisor_accounts.sql`, nullable phone). `adminLogin` is backed by revocable `admin_sessions`.
 - Fatwa assignment (`admin.fatwaAssign`) rejects any mufti without an active `mufti_assignments` row for that category. **Every new fatwa category needs at least one mufti assigned** in AdminMuftis.
 - **Known backend bugs, left alone deliberately** (RECORDED in `tabyan-admin-shell-scope.md`; not re-verified):
@@ -431,8 +431,8 @@ Older parity reports (`docs/TABYAN_WEB_MOBILE_FINAL_PARITY_MATRIX.md`, `docs/TAB
 - **Git remotes**: in this workspace, the remote named `github` points to the **public** repo `qurankream0987-eng/tabyan-2`. The Railway deployment repo is the **private** `qurankream0987-eng/tabyan`. **Never push migration or infra work to `tabyan-2`, and never make the private repo public.**
 - Branch state at handoff: `feature/real-lightweight-mushaf` is 400 commits ahead of local `main` and 584 behind it. Coordinate with the owner before merging anything.
 - Replit Publish redeploys **all** artifacts and syncs the managed DB schema (§K).
-- iOS/EAS: keep `app.replit.tbyan`, build 6, and the existing EAS project. See `docs/TABYAN_APPLE_IDENTITY_LOCK.md` and `docs/TABYAN_EXTERNAL_BUILD_HANDOFF.md`. App Store preflight: `pnpm run app-store:preflight` (this one points at `verification/scripts`, so it resolves).
-- Smart Mushaf production bundle check: `node artifacts/tabyan/smart-mushaf-v3/scripts/audit-production-bundle.mjs artifacts/tabyan/dist/public`.
+- iOS/EAS: keep `app.replit.tbyan`, build 6, and the existing EAS project. See `docs/TABYAN_APPLE_IDENTITY_LOCK.md` and `docs/TABYAN_EXTERNAL_BUILD_HANDOFF.md`. App Store preflight: `pnpm run app-store:preflight` (this one points at `tools/scripts`, so it resolves).
+- Smart Mushaf production bundle check: `node apps/web/smart-mushaf-v3/scripts/audit-production-bundle.mjs apps/web/dist/public`.
 
 ## S. Security rules
 

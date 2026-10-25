@@ -16,8 +16,8 @@
 
 ## التنزيل والتخزين
 - سكربت الإعداد لمرة واحدة: `node scripts/download-mushaf.mjs`
-  - يخزّن 604 ملف JSON مدمجاً في `artifacts/tabyan/public/mushaf/pages/`
-  - و604 خطاً في `artifacts/tabyan/public/mushaf/fonts/`
+  - يخزّن 604 ملف JSON مدمجاً في `apps/web/public/mushaf/pages/`
+  - و604 خطاً في `apps/web/public/mushaf/fonts/`
   - آمن لإعادة التشغيل ويتحقق نهائياً من سلامة كل الملفات (لا صفحة مفقودة/ناقصة).
 - في وقت التشغيل لا يوجد **أي طلب API خارجي**: كل شيء يُقدَّم من ملفات التطبيق نفسه،
   ويُحمَّل كسولاً (الصفحة الحالية وجيرانها فقط) مع Cache API للعمل بكفاءة مع ضعف الشبكة.

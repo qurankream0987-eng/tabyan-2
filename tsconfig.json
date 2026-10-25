@@ -4,13 +4,13 @@
   "files": [],
   "references": [
     {
-      "path": "./lib/db"
+      "path": "./packages/db"
     },
     {
-      "path": "./lib/tabyan-trpc"
+      "path": "./packages/trpc"
     },
     {
-      "path": "./lib/tabyan-domain"
+      "path": "./packages/domain"
     }
   ]
 }

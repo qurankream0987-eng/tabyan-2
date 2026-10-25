@@ -15,10 +15,10 @@ npm install
 #     Android emulator: adb reverse tcp:9000 tcp:9000 (upload URLs point at localhost:9000)
 
 # 2. API server on :8080
-cd artifacts/api-server && NODE_ENV=development node ./build.mjs && PORT=8080 NODE_ENV=development node --env-file=../../.env --enable-source-maps ./dist/index.mjs
+cd apps/api && NODE_ENV=development node ./build.mjs && PORT=8080 NODE_ENV=development node --env-file=../../.env --enable-source-maps ./dist/index.mjs
 
 # 3. Web app on :5173 (in another terminal), proxies /api to :8080
-cd artifacts/tabyan && MSYS_NO_PATHCONV=1 PORT=5173 BASE_PATH=/ LOCAL_API_TARGET=http://localhost:8080 npx vite --config vite.config.ts --host localhost
+cd apps/web && MSYS_NO_PATHCONV=1 PORT=5173 BASE_PATH=/ LOCAL_API_TARGET=http://localhost:8080 npx vite --config vite.config.ts --host localhost
 ```
 
 Stop the database: `.local-pg/bin/pg_ctl.exe -D .local-pg/data stop`
@@ -32,7 +32,7 @@ Notes
   SESSION_SECRET in `.env` are REAL production values.
 - Keys the code never reads (production DB URL, GitHub/Railway/Expo tokens, Clerk,
   Replit leftovers) were moved to `../tabyan-secrets-backup.env`.
-- `artifacts/tabyan/vite.config.ts` reads `LOCAL_API_TARGET` to proxy `/api` locally.
+- `apps/web/vite.config.ts` reads `LOCAL_API_TARGET` to proxy `/api` locally.
 - Replit-only files were moved to `../tabyan-replit-backup`; the old pnpm files
   (`pnpm-lock.yaml`, `pnpm-workspace.yaml`) are in `../tabyan-pnpm-backup`.
 - File storage uses `TABYAN_OBJECT_STORAGE_PROVIDER=railway` pointed at the local

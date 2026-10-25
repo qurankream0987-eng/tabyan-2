@@ -9,8 +9,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MASTER = ROOT / "assets/branding/tabyan-logo.svg"
-WEB = ROOT / "artifacts/tabyan/public"
-NATIVE = ROOT / "artifacts/mobile/assets/images"
+WEB = ROOT / "apps/web/public"
+NATIVE = ROOT / "apps/mobile/assets/images"
 BURGUNDY = "#800020"
 GOLD = "#D4AF37"
 

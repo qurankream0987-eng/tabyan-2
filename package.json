@@ -3,20 +3,20 @@
   "version": "0.0.0",
   "license": "MIT",
   "workspaces": [
-    "lib/*",
-    "artifacts/*"
+    "packages/*",
+    "apps/*"
   ],
   "scripts": {
     "build": "npm run typecheck && npm run verify:mushaf && npm run build --workspaces --if-present",
-    "verify:contracts": "node scripts/verify-contract-baseline.mjs",
-    "verify:design-tokens": "node scripts/verify-design-tokens.mjs",
-    "verify:product-registry": "node scripts/verify-product-registry.mjs",
-    "verify:home-navigation-parity": "node scripts/verify-home-navigation-parity.mjs",
-    "verify:screen-parity": "node scripts/verify-screen-parity.mjs",
-    "app-store:preflight": "node verification/scripts/app-store-preflight-cleanup.mjs",
+    "verify:contracts": "node tools/scripts/verify-contract-baseline.mjs",
+    "verify:design-tokens": "node tools/scripts/verify-design-tokens.mjs",
+    "verify:product-registry": "node tools/scripts/verify-product-registry.mjs",
+    "verify:home-navigation-parity": "node tools/scripts/verify-home-navigation-parity.mjs",
+    "verify:screen-parity": "node tools/scripts/verify-screen-parity.mjs",
+    "app-store:preflight": "node tools/scripts/app-store-preflight-cleanup.mjs",
     "typecheck:libs": "tsc --build",
-    "typecheck": "npm run typecheck:libs && npm run typecheck --workspace=artifacts --if-present",
-    "verify:mushaf": "node scripts/verify-mushaf.mjs"
+    "typecheck": "npm run typecheck:libs && npm run typecheck --workspace=apps --if-present",
+    "verify:mushaf": "node tools/scripts/verify-mushaf.mjs"
   },
   "private": true,
   "overrides": {

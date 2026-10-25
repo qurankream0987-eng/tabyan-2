@@ -13,10 +13,10 @@ Git source tree and remains on the original workspace disk.
 
 Runtime QCF assets must remain tracked:
 
-- `artifacts/mobile/assets/mushaf/pages/` — 604 page JSON files
-- `artifacts/mobile/assets/mushaf/quran-words/pages/` — 604 canonical word files
-- `artifacts/mobile/assets/mushaf/fonts/` — 604 QCF2 TTF files
-- Web QCF assets under `artifacts/tabyan/public/mushaf/`
+- `apps/mobile/assets/mushaf/pages/` — 604 page JSON files
+- `apps/mobile/assets/mushaf/quran-words/pages/` — 604 canonical word files
+- `apps/mobile/assets/mushaf/fonts/` — 604 QCF2 TTF files
+- Web QCF assets under `apps/web/public/mushaf/`
 
 ## External environment
 
@@ -25,7 +25,7 @@ Runtime QCF assets must remain tracked:
 | Node.js | 24.x |
 | pnpm | 10.26.1 |
 | Workspace | pnpm workspace from the repository root |
-| Mobile directory | `artifacts/mobile` |
+| Mobile directory | `apps/mobile` |
 | Expo SDK | 54 |
 | Expo Router | 6 |
 | React Native | 0.81.5 |
@@ -45,10 +45,10 @@ npm or yarn for installation.
 
 The canonical files are:
 
-- `artifacts/mobile/app.json`
-- `artifacts/mobile/eas.json`
-- `artifacts/mobile/metro.config.js`
-- `artifacts/mobile/package.json`
+- `apps/mobile/app.json`
+- `apps/mobile/eas.json`
+- `apps/mobile/metro.config.js`
+- `apps/mobile/package.json`
 
 Configured native plugins and capabilities include:
 
@@ -167,7 +167,7 @@ pnpm --filter @workspace/mobile run typecheck
 pnpm --filter @workspace/mobile run mushaf:verify
 ```
 
-From `artifacts/mobile`, configuration validation may be run with:
+From `apps/mobile`, configuration validation may be run with:
 
 ```sh
 pnpm exec expo config --json
@@ -182,7 +182,7 @@ tmp_dir="$(mktemp -d)"
 git clone <github-repository-url> "$tmp_dir/tabyan"
 cd "$tmp_dir/tabyan"
 pnpm install --frozen-lockfile
-cd artifacts/mobile
+cd apps/mobile
 pnpm exec expo prebuild --no-install --clean
 rm -rf "$tmp_dir"
 ```
@@ -192,7 +192,7 @@ be committed to project configuration.
 
 ## EAS handoff boundary
 
-The EAS profile is `production` in `artifacts/mobile/eas.json` and is
+The EAS profile is `production` in `apps/mobile/eas.json` and is
 configured for App Store distribution. This source tree intentionally does
 not add an Expo `owner` or `projectId`; no EAS project is created during this
 handoff.

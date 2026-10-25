@@ -6,8 +6,8 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-WEB = ROOT / "artifacts/tabyan/public"
-MOBILE = ROOT / "artifacts/mobile"
+WEB = ROOT / "apps/web/public"
+MOBILE = ROOT / "apps/mobile"
 SVG = "{http://www.w3.org/2000/svg}"
 
 
@@ -58,10 +58,10 @@ assert "Math.min(200, width * 0.55)" in layout
 for width in [375, 390, 393, 430]:
     rendered = min(200, width * 0.55)
     assert rendered * 3 <= 1196
-welcome = (ROOT / "artifacts/tabyan/src/pages/GuestHome.tsx").read_text()
+welcome = (ROOT / "apps/web/src/pages/GuestHome.tsx").read_text()
 assert '/logo-light.svg' in welcome and '/logo-dark.svg' in welcome
 assert 'object-contain' in welcome
-splash = (ROOT / "artifacts/tabyan/src/components/app/SplashScreen.tsx").read_text()
+splash = (ROOT / "apps/web/src/components/app/SplashScreen.tsx").read_text()
 assert '/logo-dark.svg' in splash
 
 print("PASS: one real path master; matching color variants; Retina headroom; transparency; contain; labels; unchanged iOS layout/default.")

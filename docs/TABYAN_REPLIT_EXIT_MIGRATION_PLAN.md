@@ -20,7 +20,7 @@
 
 ### قرار نسخة الهاتف
 
-تم إلغاء نسخة الهاتف بالكامل وحذف `artifacts/mobile` وWorkflow الخاص بها من المشروع. أي تفاصيل Mobile/EAS لاحقة في هذا التقرير هي سياق تدقيق تاريخي فقط، وليست ضمن نطاق التشغيل أو النقل الحالي.
+تم إلغاء نسخة الهاتف بالكامل وحذف `apps/mobile` وWorkflow الخاص بها من المشروع. أي تفاصيل Mobile/EAS لاحقة في هذا التقرير هي سياق تدقيق تاريخي فقط، وليست ضمن نطاق التشغيل أو النقل الحالي.
 
 ---
 
@@ -79,18 +79,18 @@
 
 المستودع الحالي يشمل المكونات المطلوبة للنقل الكامل:
 
-- `artifacts/tabyan` — Web.
-- `artifacts/mobile` — Expo Mobile.
-- `artifacts/api-server` — API وWebSocket.
-- `lib/tabyan-trpc` — business/API procedures.
-- `lib/db` — Drizzle schema وPostgreSQL access.
+- `apps/web` — Web.
+- `apps/mobile` — Expo Mobile.
+- `apps/api` — API وWebSocket.
+- `packages/trpc` — business/API procedures.
+- `packages/db` — Drizzle schema وPostgreSQL access.
 - `lib/api-zod` — validation contracts.
 - `lib/api-client-react` — client contracts.
 - `lib/api-spec` — OpenAPI/codegen support.
-- `lib/tabyan-domain` — product registry.
+- `packages/domain` — product registry.
 - `scripts` — verification and build utilities.
 - `pnpm-workspace.yaml`, `pnpm-lock.yaml`, TypeScript configs.
-- `lib/db/migrations`.
+- `packages/db/migrations`.
 - Tests and release verification scripts.
 - Runtime assets, including Web public assets and Native QCF assets.
 
@@ -100,12 +100,12 @@
 
 - كل source files في `artifacts/`, `lib/`, و`scripts/`.
 - Root workspace files و`pnpm-lock.yaml`.
-- `artifacts/mobile/app.json` و`eas.json` وMetro configuration.
-- `artifacts/mobile/mushaf/`:
+- `apps/mobile/app.json` و`eas.json` وMetro configuration.
+- `apps/mobile/mushaf/`:
   - 604 TTF page fonts.
   - 604 page JSON files.
   - manifest and checksum/validation metadata.
-- Web public assets في `artifacts/tabyan/public`.
+- Web public assets في `apps/web/public`.
 - API build script وruntime assets مثل ffprobe/protobuf handling.
 - Database schema وملفات migrations.
 - جميع tests وrelease sweeps.
@@ -116,12 +116,12 @@
 هذه الملفات أو الأجزاء مرتبطة بتشغيل Replit، لكنها لا تعني أن business logic غير قابل للنقل:
 
 - `.replit` — modules، workflows، ports، Replit deployment، Object Storage declaration.
-- `artifacts/*/.replit-artifact/artifact.toml` — artifact routing وReplit workflows/deployment.
+- `apps/*/.replit-artifact/artifact.toml` — artifact routing وReplit workflows/deployment.
 - `@replit/vite-plugin-*` — أدوات تطوير فقط في Web/Canvas.
-- `artifacts/mobile/package.json` development script — يستخدم `REPLIT_EXPO_DEV_DOMAIN` و`REPLIT_DEV_DOMAIN`.
-- fallback variables في `artifacts/mobile/scripts/build.js` — Replit domains و`REPL_ID`.
-- `lib/tabyan-trpc/src/routers/auth.ts` — يسمح بنطاقات Replit في development فقط.
-- `artifacts/api-server/src/lib/objectStorage.ts` — Replit Sidecar authentication/signing.
+- `apps/mobile/package.json` development script — يستخدم `REPLIT_EXPO_DEV_DOMAIN` و`REPLIT_DEV_DOMAIN`.
+- fallback variables في `apps/mobile/scripts/build.js` — Replit domains و`REPL_ID`.
+- `packages/trpc/src/routers/auth.ts` — يسمح بنطاقات Replit في development فقط.
+- `apps/api/src/lib/objectStorage.ts` — Replit Sidecar authentication/signing.
 - روابط package firewall الموجودة داخل lockfiles للمختبرات المعزولة — metadata لمصدر تثبيت محلي وليست runtime dependency.
 
 ### FILES_THAT_MUST_NOT_BE_COMMITTED
@@ -140,7 +140,7 @@
 
 قواعد `.gitignore` تمنع معظم local/generated output، ولا توجد ملفات secrets أو certificates متعقبة في الفحص، لكن:
 
-- `artifacts/mobile/static-build/` غير مستثنى حاليًا.
+- `apps/mobile/static-build/` غير مستثنى حاليًا.
 - توجد 604 ملفات static build متعقبة بالفعل.
 - توجد lockfiles داخل مختبرات `mushaf-spike` تتضمن عناوين package firewall خاصة ببيئة Replit؛ لا تكشف سرًا، لكنها تجعل المرآة أقل نظافة.
 - يوجد عدد كبير من `attached_assets` المتعقب، ومعظمه evidence/exports وليس مطلوبًا لتشغيل المنتج.
@@ -321,7 +321,7 @@ Replit App/Object Storage، وهو GCS-backed storage مع Replit Sidecar authen
 | WEB_BUILD_COMMAND | `pnpm --filter @workspace/tabyan run build` |
 | WEB_SERVE_COMMAND | `pnpm --filter @workspace/tabyan run serve` |
 | Required runtime inputs | `PORT`, `BASE_PATH=/` |
-| Static output | `artifacts/tabyan/dist/public` |
+| Static output | `apps/web/dist/public` |
 | SPA fallback | موجود في Replit artifact config؛ يجب إعداد equivalent في Railway |
 | PORT_HANDLING | PASS |
 | RAILWAY_WEB | NEEDS_WORK — service configuration/staging فقط |
@@ -333,7 +333,7 @@ Vite configuration يسمح بـ`0.0.0.0` و`allowedHosts: true`، ويستخد�
 | Field | Result |
 |---|---|
 | API_BUILD_COMMAND | `pnpm --filter @workspace/api-server run build` |
-| API_START_COMMAND | `node --enable-source-maps artifacts/api-server/dist/index.mjs` |
+| API_START_COMMAND | `node --enable-source-maps apps/api/dist/index.mjs` |
 | Required port | `PORT` |
 | Healthcheck | `GET /api/healthz` |
 | WebSocket | `/api/ws/recitation` وsession signaling paths |
@@ -390,8 +390,8 @@ Vite configuration يسمح بـ`0.0.0.0` و`allowedHosts: true`، ويستخد�
 
 تم التحقق من وجود:
 
-- `artifacts/mobile/app.json`.
-- `artifacts/mobile/eas.json`.
+- `apps/mobile/app.json`.
+- `apps/mobile/eas.json`.
 - Expo SDK 54.
 - Expo Router.
 - native camera/location/audio/video modules.
@@ -418,7 +418,7 @@ ANDROID PACKAGE: com.tabyan.app
 1. لا يوجد حاليًا `owner` أو `projectId` في app config، ولا يُراد إضافتهما.
 2. تم إلغاء خطوة `EAS init` و`Use existing` من خطة النسخة الجديدة.
 3. المشروع التاريخي المرتبط بحساب `abdalrhmanq8` لن يُستخدم في النسخة الجديدة.
-4. كان `expo-router` يحتوي على `origin = https://replit.com/`، وقد أُزيل الآن من `artifacts/mobile/app.json`.
+4. كان `expo-router` يحتوي على `origin = https://replit.com/`، وقد أُزيل الآن من `apps/mobile/app.json`.
 5. أي بناء EAS خارجي سيبقى مؤجلًا حتى يختار المستخدم حسابًا أو مشروع Expo مختلفًا صراحةً.
 
 ### EAS_PROJECT_LINK_FOR_NEW_REPL
@@ -542,7 +542,7 @@ EAS production build
 
 - `static-build` generated output متعقب في Git.
 - Node/Pnpm غير مثبتين في root manifest؛ البيئة الحالية تستخدم Node 24 وpnpm 10.26.1، لكن clone خارجي لا يضمنهما.
-- تم حذف `expo-router origin` المرتبط بـReplit من `artifacts/mobile/app.json`؛ يلزم فقط تأكيد عدم إعادة توليده في build خارجي.
+- تم حذف `expo-router origin` المرتبط بـReplit من `apps/mobile/app.json`؛ يلزم فقط تأكيد عدم إعادة توليده في build خارجي.
 - mobile build script ما زال يعتمد على Replit fallback variables إذا غابت production variables.
 - API in-memory signaling/diagnostic state غير مناسب للتوسع الأفقي.
 - Web/API routing يحتاج إعداد Railway مستقل يحافظ على `/api` وWebSocket upgrade.

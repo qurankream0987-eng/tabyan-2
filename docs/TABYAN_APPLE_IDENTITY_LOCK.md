@@ -24,5 +24,5 @@ credential store.
 5. Any credential or App Store action must be reviewed explicitly before it is
    performed.
 
-The canonical app configuration is `artifacts/mobile/app.json`. The EAS
-profiles are in `artifacts/mobile/eas.json`.
+The canonical app configuration is `apps/mobile/app.json`. The EAS
+profiles are in `apps/mobile/eas.json`.
