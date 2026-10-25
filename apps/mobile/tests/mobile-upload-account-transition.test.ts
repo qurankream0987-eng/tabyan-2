@@ -29,7 +29,7 @@ vi.mock("../lib/trpc", () => ({ apiOrigin: () => "https://api.example" }));
 vi.mock("../lib/storage", () => ({ storage: { getToken: mocks.getToken } }));
 
 import { beginAccountTransition } from "../lib/account-transition";
-import { uploadNativeFile } from "../lib/mobile-upload";
+import { uploadNativeFile } from "../lib/media/mobile-upload";
 
 describe("Native uploads during account transitions", () => {
   beforeEach(() => {

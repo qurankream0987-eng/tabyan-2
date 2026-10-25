@@ -1,6 +1,6 @@
 import { AudioManager, AudioRecorder } from "react-native-audio-api";
 import { Platform } from "react-native";
-import { apiOrigin } from "./trpc";
+import { apiOrigin } from "../trpc";
 import { NativeRecitationCuePlayer } from "./native-recitation-cues";
 import {
   NativeRecitationControllerCore,

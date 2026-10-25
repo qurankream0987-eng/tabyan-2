@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
-import { Icon } from "./ui";
-import { palette, useTheme } from "../lib/theme";
-import { placementCaptureMetrics } from "../lib/placement-capture-layout";
+import { Icon } from "../ui";
+import { palette, useTheme } from "../../lib/theme";
+import { placementCaptureMetrics } from "../../lib/placement/placement-capture-layout";
 
 export function PlacementRecordingHUD({ elapsed, maximum, minimumReached, minimumLabel }: {
   elapsed: string; maximum: string; minimumReached: boolean; minimumLabel: string;

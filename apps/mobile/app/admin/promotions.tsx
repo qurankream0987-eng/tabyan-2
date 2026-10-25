@@ -2,11 +2,11 @@ import { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { AdminFrame, ConfirmButton } from "../../components/admin/admin-common";
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState, SectionTitle } from "../../components/ui";
-import { LibraryMediaPlayer } from "../../components/library-media-player";
+import { LibraryMediaPlayer } from "../../components/library/library-media-player";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
-import { AdminRow, AdminSheet, FormError, useAdminFeedback } from "../../components/admin-ui";
+import { AdminRow, AdminSheet, FormError, useAdminFeedback } from "../../components/admin/admin-ui";
 
 type Promotion = { id: string; studentName?: string; fromName?: string; toName?: string; fromLevelName?: string; toLevelName?: string; videoUrl?: string; status?: string; hoursAgo?: number; };
 

@@ -7,7 +7,7 @@ import { normalizeNationalPhoneInput, toE164, validatePhoneNumber } from "@works
 import { trpc } from "../../lib/trpc";
 import { useTheme, palette } from "../../lib/theme";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
-import { validateRegistrationPassword } from "../../lib/registration-validation";
+import { validateRegistrationPassword } from "../../lib/account/registration-validation";
 import { isValidPersonName, normalizePersonName } from "@workspace/tabyan-domain/input-normalization";
 import { CountryPicker } from "./register";
 

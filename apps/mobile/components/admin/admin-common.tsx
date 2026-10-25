@@ -2,20 +2,20 @@ import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, SafeAreaView
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
-import { Badge, Button, Card, EmptyState, ErrorState, Header, Icon, LoadingState, Screen, SectionTitle } from "../../components/ui";
+import { Badge, Button, Card, EmptyState, ErrorState, Header, Icon, LoadingState, Screen, SectionTitle } from "../ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
-import { LibraryMediaPlayer } from "../../components/library-media-player";
+import { LibraryMediaPlayer } from "../library/library-media-player";
 import { useAuth } from "../../lib/auth";
-import { resolveLibraryAsset } from "../../lib/library-media";
-import { AdminSheet, ConfirmAction, useAdminFeedback } from "../../components/admin-ui";
+import { resolveLibraryAsset } from "../../lib/media/library-media";
+import { AdminSheet, ConfirmAction, useAdminFeedback } from "./admin-ui";
 import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 import {
   isPlacementVideoAbOriginal,
   PlacementVideoAbHarness,
   PLACEMENT_VIDEO_AB_DIAGNOSTIC_ENABLED,
-} from "../../components/placement-video-ab-harness";
+} from "../placement/placement-video-ab-harness";
 
 export const adminRoutes = [
   ["users", "المستخدمون", "people-outline"], ["accounts", "الحسابات", "key-outline"],

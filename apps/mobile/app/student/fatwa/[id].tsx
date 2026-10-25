@@ -5,7 +5,7 @@ import { useAuth } from "../../../lib/auth";
 import { trpc } from "../../../lib/trpc";
 import { StudentScreen, LoadingState, ErrorState, EmptyState, Card } from "../../../components/student/student-screen";
 import { Button } from "../../../components/ui";
-import { LibraryMediaPlayer } from "../../../components/library-media-player";
+import { LibraryMediaPlayer } from "../../../components/library/library-media-player";
 import { useTheme } from "../../../lib/theme";
 
 export default function FatwaDetail() {

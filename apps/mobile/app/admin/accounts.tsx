@@ -5,7 +5,7 @@ import { Badge, Button, Card, EmptyState, ErrorState, LoadingState } from "../..
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
-import { AdminSheet, ConfirmAction, FormError, HeaderAction, SheetFooter, useAdminFeedback, useDirtyState } from "../../components/admin-ui";
+import { AdminSheet, ConfirmAction, FormError, HeaderAction, SheetFooter, useAdminFeedback, useDirtyState } from "../../components/admin/admin-ui";
 import { isNonWhitespacePassword } from "@workspace/tabyan-domain/password-validation";
 import { isValidPersonName, isValidUsername, normalizePersonName, normalizeUsername } from "@workspace/tabyan-domain/input-normalization";
 

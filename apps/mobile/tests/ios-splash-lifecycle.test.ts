@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
   createIOSExitGate, iosDestinationReady, iosSplashLogoFrame, iosSplashMotion,
-} from "../lib/ios-splash-lifecycle";
+} from "../lib/platform/ios-splash-lifecycle";
 
 function fakeClock() {
   let now = 0;

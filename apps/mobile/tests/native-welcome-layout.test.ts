@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { initialThemeMode, nativeWelcomeLayout } from "../lib/native-welcome-layout";
+import { initialThemeMode, nativeWelcomeLayout } from "../lib/platform/native-welcome-layout";
 
 test("Native first appearance is light, while web still follows the system theme", () => {
   for (const system of ["dark", "light", null]) {

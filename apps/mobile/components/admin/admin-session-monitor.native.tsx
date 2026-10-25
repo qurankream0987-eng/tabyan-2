@@ -7,10 +7,10 @@ import {
   RTCSessionDescription,
   RTCView,
 } from "react-native-webrtc";
-import { useAuth } from "../lib/auth";
-import { apiOrigin } from "../lib/trpc";
-import { storage } from "../lib/storage";
-import { useTheme } from "../lib/theme";
+import { useAuth } from "../../lib/auth";
+import { apiOrigin } from "../../lib/trpc";
+import { storage } from "../../lib/storage";
+import { useTheme } from "../../lib/theme";
 
 type MonitorPhase = "connecting" | "joined" | "connected" | "reconnecting" | "failed" | "ended";
 type PeerState = "new" | "connecting" | "connected" | "disconnected" | "failed";

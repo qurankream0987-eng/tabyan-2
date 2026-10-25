@@ -6,13 +6,13 @@ import {
   type NativeAudioRecorder,
   type NativeRecitationRuntime,
   type NativeSocket,
-} from "../lib/native-recitation-controller";
+} from "../lib/recitation/native-recitation-controller";
 import {
   NativeQuranLiveMatcher,
   type CanonicalQuranWord,
   type NativeRecitationState,
-} from "../lib/native-recitation-matcher";
-import { normalizeQuranText } from "../lib/quran-normalizer";
+} from "../lib/recitation/native-recitation-matcher";
+import { normalizeQuranText } from "../lib/recitation/quran-normalizer";
 
 const canonicalWords = ["بسم", "الله", "الرحمن", "الرحيم"].map((displayText, index) => ({
   surah: 1,

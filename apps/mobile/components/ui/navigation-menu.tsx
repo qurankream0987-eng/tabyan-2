@@ -1,11 +1,11 @@
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { usePathname, useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { navigateToWelcome, useAuth, type Role } from "../lib/auth";
-import { trpc } from "../lib/trpc";
+import { navigateToWelcome, useAuth, type Role } from "../../lib/auth";
+import { trpc } from "../../lib/trpc";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useReducedMotion } from "react-native-reanimated";
-import { palette, useTheme } from "../lib/theme";
+import { palette, useTheme } from "../../lib/theme";
 
 type MenuItem = {
   href: string;

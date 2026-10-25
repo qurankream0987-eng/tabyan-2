@@ -5,8 +5,8 @@ import { Badge, Card, EmptyState, ErrorState, Icon, LoadingState, Screen } from 
 import { useAuth } from "../../../lib/auth";
 import { trpc } from "../../../lib/trpc";
 import { useTheme } from "../../../lib/theme";
-import { resolveLibraryAsset, resolveLibrarySource } from "../../../lib/library-media";
-import { downloadLibraryPdf, removeLibraryDownload } from "../../../lib/library-download";
+import { resolveLibraryAsset, resolveLibrarySource } from "../../../lib/media/library-media";
+import { downloadLibraryPdf, removeLibraryDownload } from "../../../lib/media/library-download";
 import { userFacingErrorMessage } from "../../../lib/user-facing-error";
 
 type Section = "" | "curriculum" | "hadith" | "fatwa" | "general";

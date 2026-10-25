@@ -1,6 +1,6 @@
 import { Redirect, Stack } from "expo-router";
 import { useAuth } from "../../lib/auth";
-import { AdminFeedbackProvider } from "../../components/admin-ui";
+import { AdminFeedbackProvider } from "../../components/admin/admin-ui";
 
 export default function AdminLayout() {
   const { ready, token, role } = useAuth();

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { StudentScreen, Card, EmptyState, LoadingState, ErrorState, Badge } from "../../../components/student/student-screen";
 import { Button, Icon } from "../../../components/ui";
-import SectionIcon, { type SectionIconName } from "../../../components/section-icon";
+import SectionIcon, { type SectionIconName } from "../../../components/ui/section-icon";
 import { useAuth } from "../../../lib/auth";
 import { trpc } from "../../../lib/trpc";
 import { useTheme, palette, type LearningCategory } from "../../../lib/theme";

@@ -1,12 +1,12 @@
 import { File } from "expo-file-system";
 import * as LegacyFileSystem from "expo-file-system/legacy";
-import { apiOrigin } from "./trpc";
-import { storage } from "./storage";
+import { apiOrigin } from "../trpc";
+import { storage } from "../storage";
 import {
   getAccountGeneration,
   isCurrentAccountGeneration,
   onAccountTransition,
-} from "./account-transition";
+} from "../account-transition";
 
 type UploadProgress = (percentage: number) => void;
 type VideoAttachmentPurpose = "student_placement_video" | "teacher_kyc_video" | "live_session_recording";

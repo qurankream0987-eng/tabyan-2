@@ -8,8 +8,8 @@ import {
   NativeRecitationController,
   type NativeRecitationMatch,
   type NativeRecitationState,
-} from "../../lib/native-recitation";
-import { normalizeQuranText } from "../../lib/quran-normalizer";
+} from "../../lib/recitation/native-recitation";
+import { normalizeQuranText } from "../../lib/recitation/quran-normalizer";
 import { trpc } from "../../lib/trpc";
 import { StudentScreen } from "../../components/student/student-screen";
 

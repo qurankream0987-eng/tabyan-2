@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { AdminDateTimeField, AdminFrame, AdminSelect, ConfirmButton, safeError } from "../../components/admin/admin-common";
-import { AdminSheet, FormError, HeaderAction, ListSkeleton, SheetFooter, useAdminFeedback, useDirtyState } from "../../components/admin-ui";
+import { AdminSheet, FormError, HeaderAction, ListSkeleton, SheetFooter, useAdminFeedback, useDirtyState } from "../../components/admin/admin-ui";
 import { Button, Card, EmptyState, ErrorState, LoadingState } from "../../components/ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";

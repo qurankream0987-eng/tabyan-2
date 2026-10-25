@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveNativeLoginMethod } from "../lib/native-login-method";
+import { resolveNativeLoginMethod } from "../lib/account/native-login-method";
 
 describe("Native Tabyan password login routing", () => {
   it.each(["+965 55667788", "0096555667788", "055667788"])(

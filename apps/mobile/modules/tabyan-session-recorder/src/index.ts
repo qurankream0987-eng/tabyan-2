@@ -10,7 +10,7 @@ export type NativeSessionRecording = {
 
 type NativeRecorderModule = {
   preparePlacementRecording?(): Promise<void>;
-  inspectPlacementVideo?(uri: string): Promise<import("../../../lib/placement-media").PlacementVideoInspection>;
+  inspectPlacementVideo?(uri: string): Promise<import("../../../lib/placement/placement-media").PlacementVideoInspection>;
   startSessionRecording(): Promise<void>;
   stopSessionRecording(): Promise<NativeSessionRecording>;
   cancelSessionRecording(): Promise<void>;

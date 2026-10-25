@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Linking, StyleSheet, Text, View } from "react-native";
 import { Badge, Button, Card, EmptyState, ErrorState, Icon, LoadingState } from "../../../components/ui";
-import { LibraryMediaPlayer } from "../../../components/library-media-player";
+import { LibraryMediaPlayer } from "../../../components/library/library-media-player";
 import { useAuth } from "../../../lib/auth";
 import { trpc } from "../../../lib/trpc";
 import { useTheme } from "../../../lib/theme";
-import { resolveLibrarySource } from "../../../lib/library-media";
+import { resolveLibrarySource } from "../../../lib/media/library-media";
 import { StudentScreen } from "../../../components/student/student-screen";
-import { downloadLibraryPdf, getLibraryDownload, removeLibraryDownload } from "../../../lib/library-download";
+import { downloadLibraryPdf, getLibraryDownload, removeLibraryDownload } from "../../../lib/media/library-download";
 import { userFacingErrorMessage } from "../../../lib/user-facing-error";
 
 type Book = {

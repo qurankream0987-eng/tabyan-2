@@ -4,7 +4,7 @@ import { AdminFrame, adminRoutes } from "../../components/admin/admin-common";
 import { ErrorState, FeatureTile, Card, Icon, LoadingState, SectionTitle } from "../../components/ui";
 import { useTheme, palette } from "../../lib/theme";
 import { trpc } from "../../lib/trpc";
-import { ListSkeleton } from "../../components/admin-ui";
+import { ListSkeleton } from "../../components/admin/admin-ui";
 
 // ── لوحة المشرف مطابقة للموقع (AdminHome.tsx):
 //    «لوحة التحكم المركزية» → 4 مؤشرات KPI → «يحتاج تدخّلك الآن» (6 عناصر) → مسارات الإدارة — كل البيانات من admin.kpis

@@ -4,16 +4,16 @@ import * as DocumentPicker from "expo-document-picker";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Badge, Button, Card, EmptyState, ErrorState, Icon, LoadingState } from "../../components/ui";
-import { LocalVideoPreview } from "../../components/library-media-player";
+import { LocalVideoPreview } from "../../components/library/library-media-player";
 import { TeacherScreen } from "../../components/teacher/teacher-screen";
 import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
-import { uploadNativeFile, uploadNativeVideo } from "../../lib/mobile-upload";
-import { reviewableRecordingOptions } from "../../lib/native-recording";
+import { uploadNativeFile, uploadNativeVideo } from "../../lib/media/mobile-upload";
+import { reviewableRecordingOptions } from "../../lib/media/native-recording";
 import { useTheme, palette } from "../../lib/theme";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 import { getAccountGeneration, isCurrentAccountGeneration, onAccountTransition } from "../../lib/account-transition";
-import { removePrivateTemporaryFile, trackPrivateTemporaryFile } from "../../lib/private-temporary-files";
+import { removePrivateTemporaryFile, trackPrivateTemporaryFile } from "../../lib/media/private-temporary-files";
 
 const NativeCameraView = CameraView as unknown as React.ComponentType<any>;
 

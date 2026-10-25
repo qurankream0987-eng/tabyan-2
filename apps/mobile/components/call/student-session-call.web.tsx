@@ -1,7 +1,7 @@
 import { Text } from "react-native";
-import { Card } from "./ui";
+import { Card } from "../ui";
 import type { StudentSessionCallProps } from "./student-session-call.native";
-import { useTheme } from "../lib/theme";
+import { useTheme } from "../../lib/theme";
 
 export default function StudentSessionCall({ sessionStatus }: StudentSessionCallProps) {
   const { colors } = useTheme();

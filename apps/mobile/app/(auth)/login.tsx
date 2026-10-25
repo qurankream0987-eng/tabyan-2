@@ -9,7 +9,7 @@ import { trpc } from "../../lib/trpc";
 import { useAuth } from "../../lib/auth";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
-import { resolveNativeLoginMethod } from "../../lib/native-login-method";
+import { resolveNativeLoginMethod } from "../../lib/account/native-login-method";
 
 function errorMessage(error: unknown) {
   return userFacingErrorMessage(error, "تعذر تسجيل الدخول. تحقق من بياناتك.");

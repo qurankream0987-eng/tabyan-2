@@ -37,7 +37,7 @@ const mocks = vi.hoisted(() => {
 vi.mock("@react-native-async-storage/async-storage", () => ({ default: mocks.asyncStorage }));
 vi.mock("expo-file-system/legacy", () => mocks.fileSystem);
 
-import { clearLibraryDownloads, downloadLibraryPdf } from "../lib/library-download";
+import { clearLibraryDownloads, downloadLibraryPdf } from "../lib/media/library-download";
 
 describe("offline library account isolation", () => {
   beforeEach(() => {

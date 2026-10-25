@@ -2,21 +2,21 @@ import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Linking, Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { useEventListener } from "expo";
 import { VideoPlayerStatus, VideoView, useVideoPlayer, type VideoSource } from "expo-video";
-import { Button, Card, EmptyState, ErrorState, Icon } from "./ui";
-import { useTheme } from "../lib/theme";
-import { userFacingErrorMessage } from "../lib/user-facing-error";
-import { useAuth } from "../lib/auth";
-import { apiOrigin } from "../lib/trpc";
+import { Button, Card, EmptyState, ErrorState, Icon } from "../ui";
+import { useTheme } from "../../lib/theme";
+import { userFacingErrorMessage } from "../../lib/user-facing-error";
+import { useAuth } from "../../lib/auth";
+import { apiOrigin } from "../../lib/trpc";
 import {
   privateObjectPathFromUrl,
   resolveLibraryPlayableSource,
   type LibraryPlayableSource,
-} from "../lib/library-media";
+} from "../../lib/media/library-media";
 import {
   downloadPrivateMediaToCache,
   removeCachedPrivateMedia,
   type CachePreparationStage,
-} from "../lib/private-media-cache";
+} from "../../lib/media/private-media-cache";
 
 const NativeVideoView = VideoView as unknown as React.ComponentType<any>;
 

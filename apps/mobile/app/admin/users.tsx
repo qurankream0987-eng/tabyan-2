@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Share, StyleSheet, Text, View } from "react-native";
 import { AdminFrame, AdminInput, safeError } from "../../components/admin/admin-common";
-import { AdminSheet, SheetFooter, useAdminFeedback } from "../../components/admin-ui";
+import { AdminSheet, SheetFooter, useAdminFeedback } from "../../components/admin/admin-ui";
 import { Button, Card, EmptyState, ErrorState, LoadingState } from "../../components/ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
-import { LibraryMediaPlayer } from "../../components/library-media-player";
+import { LibraryMediaPlayer } from "../../components/library/library-media-player";
 
 type UserRow = {
   id: string;

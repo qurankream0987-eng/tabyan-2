@@ -3,7 +3,7 @@ import { Card, StudentScreen } from "../../components/student/student-screen";
 import { Button } from "../../components/ui";
 import { useTheme } from "../../lib/theme";
 import { useRouter } from "expo-router";
-import SectionIcon from "../../components/section-icon";
+import SectionIcon from "../../components/ui/section-icon";
 
 export default function Tilawah() {
   const { colors } = useTheme();

@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { AdminFrame } from "../../components/admin/admin-common";
 import { Icon } from "../../components/ui";
 import { useTheme } from "../../lib/theme";
-import { NotificationFeed } from "../../components/notification-feed";
+import { NotificationFeed } from "../../components/notifications/notification-feed";
 
 export default function Inbox() {
   const router = useRouter();

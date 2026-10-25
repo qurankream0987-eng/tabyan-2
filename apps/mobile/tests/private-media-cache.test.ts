@@ -50,7 +50,7 @@ vi.mock("expo-file-system/legacy", () => ({
   readDirectoryAsync: mockFs.readDirectoryAsync,
 }));
 
-import { clearPrivateMediaCache, downloadPrivateMediaToCache } from "../lib/private-media-cache";
+import { clearPrivateMediaCache, downloadPrivateMediaToCache } from "../lib/media/private-media-cache";
 
 describe("private media cache account cleanup", () => {
   beforeEach(() => {

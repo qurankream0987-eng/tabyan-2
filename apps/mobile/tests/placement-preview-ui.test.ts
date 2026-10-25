@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const placementScreen = readFileSync(new URL("../app/student/placement.tsx", import.meta.url), "utf8");
-const previewComponent = readFileSync(new URL("../components/placement-preview.tsx", import.meta.url), "utf8");
-const localVideoPlayer = readFileSync(new URL("../components/library-media-player.tsx", import.meta.url), "utf8");
+const previewComponent = readFileSync(new URL("../components/placement/placement-preview.tsx", import.meta.url), "utf8");
+const localVideoPlayer = readFileSync(new URL("../components/library/library-media-player.tsx", import.meta.url), "utf8");
 
 describe("iOS placement preview presentation contract", () => {
   it("clears the old file, validation, duration, attempt, and choice before re-recording", () => {

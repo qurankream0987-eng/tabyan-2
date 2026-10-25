@@ -9,7 +9,7 @@ import {
   microphoneFailureMessage,
   shouldConfirmPlacementNavigation,
   transitionPlacementRecorderPhase,
-} from "../lib/placement-recording";
+} from "../lib/placement/placement-recording";
 
 describe("Native Placement recording flow", () => {
   it("moves from ready through countdown and starts timing only after recorder start", () => {

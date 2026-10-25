@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
-import { isCurrentAccountGeneration, getAccountGeneration } from "./account-transition";
+import { isCurrentAccountGeneration, getAccountGeneration } from "../account-transition";
 
 const PRIVATE_TEMP_FILES_KEY = "tabyan.native.private-temp-files";
 let operationQueue: Promise<void> = Promise.resolve();

@@ -1,5 +1,5 @@
 import { StyleSheet, Text } from "react-native";
-import { Card, EmptyState, ErrorState, Header, LoadingState, Screen } from "../../components/ui";
+import { Card, EmptyState, ErrorState, Header, LoadingState, Screen } from "../ui";
 import { palette, useTheme } from "../../lib/theme";
 
 export function TeacherScreen({ title, right, children, loading, error, retry }: { title: string; right?: React.ReactNode; children?: React.ReactNode; loading?: boolean; error?: boolean; retry?: () => void }) {

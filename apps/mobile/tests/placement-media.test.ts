@@ -3,8 +3,8 @@ import {
   canSubmitIOSPlacementMedia, deriveIOSPlacementPreviewViewModel, hasPlacementCapturePermissions,
   isIOSPlacementPreviewPhase, placementMediaFailure, placementPreviewStep,
   placementVideoUploadMetadata, type PlacementVideoInspection,
-} from "../lib/placement-media";
-import { transitionPlacementRecorderPhase, shouldConfirmPlacementNavigation } from "../lib/placement-recording";
+} from "../lib/placement/placement-media";
+import { transitionPlacementRecorderPhase, shouldConfirmPlacementNavigation } from "../lib/placement/placement-recording";
 
 const media: PlacementVideoInspection = {
   uri: "file:///private/camera/test.mov",

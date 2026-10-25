@@ -4,7 +4,7 @@ import { Badge, Card, ErrorState, LoadingState } from "../../../components/ui";
 import { useTheme } from "../../../lib/theme";
 import { Text } from "react-native";
 import { trpc } from "../../../lib/trpc";
-import { AdminSessionMonitor } from "../../../components/admin-session-monitor";
+import { AdminSessionMonitor } from "../../../components/admin/admin-session-monitor";
 export default function SessionDetails() {
   const { id } = useLocalSearchParams<{ id: string }>(); const { colors } = useTheme();
   const q = trpc.admin.sessionRoom.useQuery({ id: String(id ?? "") }, { enabled: !!id, refetchInterval: 10000 });

@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { Button, Card, Icon } from "./ui";
-import { LocalVideoPreview } from "./library-media-player";
-import { useTheme } from "../lib/theme";
+import { Button, Card, Icon } from "../ui";
+import { LocalVideoPreview } from "../library/library-media-player";
+import { useTheme } from "../../lib/theme";
 import {
   placementPreviewStep,
   type PlacementPreviewViewModel,
-} from "../lib/placement-media";
+} from "../../lib/placement/placement-media";
 
 const DIGITS = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
 const toArabicDigits = (value: number) => String(value).replace(/\d/g, (digit) => DIGITS[Number(digit)]);

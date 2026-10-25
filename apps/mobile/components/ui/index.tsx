@@ -2,13 +2,13 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { usePathname, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
-import { useTheme, palette } from "../lib/theme";
+import { useTheme, palette } from "../../lib/theme";
 import { NavigationMenu } from "./navigation-menu";
-import { useAuth, type Role } from "../lib/auth";
-import { trpc } from "../lib/trpc";
+import { useAuth, type Role } from "../../lib/auth";
+import { trpc } from "../../lib/trpc";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SoftPressable } from "./soft-pressable";
-import designTokens from "../constants/colors";
+import designTokens from "../../constants/colors";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -115,7 +115,7 @@ export function Header({ title, subtitle, back = false, right, menu, nativeHeade
             <Icon name={isDark ? "sunny-outline" : "moon-outline"} color={colors.primary} />
           </SoftPressable>
         ) : null}
-        {right ?? <Image source={isDark ? require("../assets/images/logo-dark.png") : require("../assets/images/logo-light.png")} resizeMode="contain" style={styles.headerLogo} accessibilityLabel="تبيان" />}
+        {right ?? <Image source={isDark ? require("../../assets/images/logo-dark.png") : require("../../assets/images/logo-light.png")} resizeMode="contain" style={styles.headerLogo} accessibilityLabel="تبيان" />}
       </View>
       </View>
       {menu ? <NavigationMenu role={menu} visible={menuOpen} onClose={() => setMenuOpen(false)} /> : null}

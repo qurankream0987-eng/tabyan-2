@@ -1,12 +1,12 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { useAuth } from "../../../lib/auth";
-import { resolveLibraryAsset } from "../../../lib/library-media";
+import { resolveLibraryAsset } from "../../../lib/media/library-media";
 import { trpc } from "../../../lib/trpc";
-import { LibraryMediaPlayer } from "../../../components/library-media-player";
+import { LibraryMediaPlayer } from "../../../components/library/library-media-player";
 import { StudentScreen, LoadingState, ErrorState, EmptyState, Card, Badge } from "../../../components/student/student-screen";
 import { useTheme } from "../../../lib/theme";
-import StudentSessionCall from "../../../components/student-session-call";
+import StudentSessionCall from "../../../components/call/student-session-call";
 
 export default function Session() {
   const { id } = useLocalSearchParams<{ id: string }>();

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { NativeRecitationControllerCore, type NativeSocket, type NativeAudioRecorder, type NativeAudioBuffer } from "../lib/native-recitation-controller";
-import { NativeQuranLiveMatcher } from "../lib/native-recitation-matcher";
-import { NativeRecitationFeedback } from "../lib/native-recitation-feedback";
+import { NativeRecitationControllerCore, type NativeSocket, type NativeAudioRecorder, type NativeAudioBuffer } from "../lib/recitation/native-recitation-controller";
+import { NativeQuranLiveMatcher } from "../lib/recitation/native-recitation-matcher";
+import { NativeRecitationFeedback } from "../lib/recitation/native-recitation-feedback";
 
 const words = ["بسم", "الله", "الرحمن", "الرحيم"].map((text, index) => ({
   surah: 1, ayah: 1, verseKey: "1:1", position: index + 1,

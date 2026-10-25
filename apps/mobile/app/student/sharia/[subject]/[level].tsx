@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState, ProgressBar } from "../../../../components/ui";
 import { StudentScreen } from "../../../../components/student/student-screen";
-import SectionIcon from "../../../../components/section-icon";
+import SectionIcon from "../../../../components/ui/section-icon";
 import { trpc } from "../../../../lib/trpc";
 import { useAuth } from "../../../../lib/auth";
 import { useTheme, palette } from "../../../../lib/theme";

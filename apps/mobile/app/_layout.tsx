@@ -20,8 +20,8 @@ import { usePathname, useRouter } from "expo-router";
 import TabyanSplash from "../components/app/TabyanSplash";
 import IOSSplash from "../components/app/IOSSplash";
 import IOSStartupFailure from "../components/app/IOSStartupFailure";
-import { iosDestinationReady, iosSplashMotion } from "../lib/ios-splash-lifecycle";
-import { IOSWelcomeLogoVisible } from "../lib/ios-welcome-visibility";
+import { iosDestinationReady, iosSplashMotion } from "../lib/platform/ios-splash-lifecycle";
+import { IOSWelcomeLogoVisible } from "../lib/platform/ios-welcome-visibility";
 import { splashColors } from "../constants/splash";
 
 if (Platform.OS === "ios") {

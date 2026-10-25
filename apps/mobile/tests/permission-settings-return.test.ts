@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createPermissionSettingsReturnWatcher,
   readPlacementPermissionStatus,
-} from "../lib/permission-settings-return";
+} from "../lib/platform/permission-settings-return";
 
 type Permission = { granted: boolean; canAskAgain: boolean };
 

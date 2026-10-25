@@ -3,13 +3,13 @@ import { useEffect, useState } from "react";
 import { StyleSheet, Text } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { Button, Card, EmptyState, ErrorState, LoadingState } from "../../../../components/ui";
-import { LibraryMediaPlayer } from "../../../../components/library-media-player";
+import { LibraryMediaPlayer } from "../../../../components/library/library-media-player";
 import { useAuth } from "../../../../lib/auth";
 import { trpc } from "../../../../lib/trpc";
 import { useTheme } from "../../../../lib/theme";
-import { resolveLibrarySource } from "../../../../lib/library-media";
+import { resolveLibrarySource } from "../../../../lib/media/library-media";
 import { StudentScreen } from "../../../../components/student/student-screen";
-import { getLibraryDownload } from "../../../../lib/library-download";
+import { getLibraryDownload } from "../../../../lib/media/library-download";
 import { userFacingErrorMessage } from "../../../../lib/user-facing-error";
 
 export default function Read() {

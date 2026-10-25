@@ -14,12 +14,12 @@ import { Badge, Button, EmptyState, ErrorState } from "../../components/ui";
 import {
   ActiveFilters, AdminRow, AdminSearchBar, AdminSheet, AdminToolbar, ChoiceChips, ConfirmAction, FilterSheet, FormError,
   FormField, FormInput, HeaderAction, IconAction, ListSkeleton, MobileActionSheet, MultiChoiceChips, SheetFooter, useAdminFeedback, useDirtyState, useSheetChain,
-} from "../../components/admin-ui";
+} from "../../components/admin/admin-ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
 import { useAuth } from "../../lib/auth";
-import { resolveLibraryAsset } from "../../lib/library-media";
-import { uploadNativeFile } from "../../lib/mobile-upload";
+import { resolveLibraryAsset } from "../../lib/media/library-media";
+import { uploadNativeFile } from "../../lib/media/mobile-upload";
 
 const options = (pairs: readonly (readonly [string, string])[]) => pairs.map(([value, label]) => ({ value, label }));
 const TYPE_ICON: Record<string, string> = { pdf: "document-text-outline", text: "reader-outline", audio: "headset-outline", video: "videocam-outline", link: "link-outline" };

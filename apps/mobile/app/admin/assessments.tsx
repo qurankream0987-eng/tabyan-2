@@ -5,7 +5,7 @@ import { Badge, EmptyState, ErrorState, LoadingState } from "../../components/ui
 import {
   AdminRow, AdminSheet, ChoiceChips, FormError, FormInput, HeaderAction, IconAction, ListSkeleton, MobileActionSheet, SheetFooter,
   useAdminFeedback, useDirtyState, useSheetChain,
-} from "../../components/admin-ui";
+} from "../../components/admin/admin-ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
 

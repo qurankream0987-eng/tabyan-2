@@ -4,8 +4,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TABYAN_WELCOME_GREETING } from "@workspace/tabyan-domain";
 import { Button } from "../ui";
 import { palette, useTheme } from "../../lib/theme";
-import { nativeWelcomeLayout } from "../../lib/native-welcome-layout";
-import { IOSWelcomeLogoVisible } from "../../lib/ios-welcome-visibility";
+import { nativeWelcomeLayout } from "../../lib/platform/native-welcome-layout";
+import { IOSWelcomeLogoVisible } from "../../lib/platform/ios-welcome-visibility";
 
 export default function NativeWelcomeHero({ onRegister }: {
   onRegister: () => void;

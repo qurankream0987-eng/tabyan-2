@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Button, Card, Icon, Screen } from "../components/ui";
-import SectionIcon, { type SectionIconName } from "../components/section-icon";
+import SectionIcon, { type SectionIconName } from "../components/ui/section-icon";
 import { palette, useTheme } from "../lib/theme";
 import { useAuth } from "../lib/auth";
 import NativeWelcomeHero from "../components/app/NativeWelcomeHero";

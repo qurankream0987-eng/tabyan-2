@@ -14,9 +14,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, Animated, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type KeyboardTypeOptions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Icon } from "./ui";
-import { palette, useTheme } from "../lib/theme";
-import { SoftPressable } from "./soft-pressable";
+import { Button, Icon } from "../ui";
+import { palette, useTheme } from "../../lib/theme";
+import { SoftPressable } from "../ui/soft-pressable";
 
 const FONT = { regular: "IBMPlexSansArabic_400Regular", medium: "IBMPlexSansArabic_500Medium", semibold: "IBMPlexSansArabic_600SemiBold", bold: "IBMPlexSansArabic_700Bold" } as const;
 

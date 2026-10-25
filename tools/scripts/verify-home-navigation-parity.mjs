@@ -10,7 +10,7 @@ const webHome = read("apps/web/src/pages/student/StudentHome.tsx");
 const mobileHome = read("apps/mobile/app/(tabs)/index.tsx");
 const webNav = read("apps/web/src/components/app/StudentBottomNav.tsx");
 const mobileNav = read("apps/mobile/app/(tabs)/_layout.tsx");
-const mobileUi = read("apps/mobile/components/ui.tsx");
+const mobileUi = read("apps/mobile/components/ui/index.tsx");
 const errors = [];
 
 function expect(condition, message) {

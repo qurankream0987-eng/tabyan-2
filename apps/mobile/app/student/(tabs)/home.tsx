@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Card, ErrorState, LoadingState, ProgressBar, Screen } from "../../../components/ui";
-import SectionIcon, { type SectionIconName } from "../../../components/section-icon";
+import SectionIcon, { type SectionIconName } from "../../../components/ui/section-icon";
 import { useAuth } from "../../../lib/auth";
 import { trpc } from "../../../lib/trpc";
 import { useTheme, palette } from "../../../lib/theme";

@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { AdminFrame, safeError } from "../../components/admin/admin-common";
 import { Button, Card, EmptyState, ErrorState } from "../../components/ui";
-import { AdminRow, AdminSheet, ConfirmAction, FormError, FormInput, IconAction, ListSkeleton, SheetFooter, useAdminFeedback, useDirtyState } from "../../components/admin-ui";
+import { AdminRow, AdminSheet, ConfirmAction, FormError, FormInput, IconAction, ListSkeleton, SheetFooter, useAdminFeedback, useDirtyState } from "../../components/admin/admin-ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
 import { navigateToWelcome, useAuth } from "../../lib/auth";

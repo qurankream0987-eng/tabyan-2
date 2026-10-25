@@ -4,7 +4,7 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 import { splashColors } from "../../constants/splash";
-import { createIOSExitGate, iosSplashLogoFrame, iosSplashMotion } from "../../lib/ios-splash-lifecycle";
+import { createIOSExitGate, iosSplashLogoFrame, iosSplashMotion } from "../../lib/platform/ios-splash-lifecycle";
 
 type Props = {
   active: boolean;

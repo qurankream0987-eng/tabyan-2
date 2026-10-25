@@ -38,7 +38,7 @@ describe("Native supervision interaction rules", () => {
   });
 
   it("guards dismissal of edited forms and keeps touch targets ≥ 44pt", () => {
-    const ui = read("components/admin-ui.tsx");
+    const ui = read("components/admin/admin-ui.tsx");
     expect(ui).toContain("تجاهل التعديلات؟");
     expect(ui).toMatch(/iconAction: \{ width: 44, height: 44/);
     expect(ui).toMatch(/automaticallyAdjustKeyboardInsets/);

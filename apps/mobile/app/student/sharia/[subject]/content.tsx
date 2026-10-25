@@ -2,11 +2,11 @@ import { useCallback, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { Button, Card, EmptyState, ErrorState, Icon, LoadingState, ProgressBar } from "../../../../components/ui";
-import { LibraryMediaPlayer } from "../../../../components/library-media-player";
+import { LibraryMediaPlayer } from "../../../../components/library/library-media-player";
 import { StudentScreen } from "../../../../components/student/student-screen";
 import { useAuth } from "../../../../lib/auth";
 import { trpc } from "../../../../lib/trpc";
-import { resolveLibraryAsset } from "../../../../lib/library-media";
+import { resolveLibraryAsset } from "../../../../lib/media/library-media";
 import { useTheme, palette } from "../../../../lib/theme";
 import { userFacingErrorMessage } from "../../../../lib/user-facing-error";
 

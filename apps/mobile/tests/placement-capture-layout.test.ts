@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { placementCaptureBudget, placementCaptureMetrics, usesPlacementCameraMode } from "../lib/placement-capture-layout";
+import { placementCaptureBudget, placementCaptureMetrics, usesPlacementCameraMode } from "../lib/placement/placement-capture-layout";
 
 describe("iOS placement presentation modes", () => {
   it.each(["COUNTDOWN", "STARTING", "RECORDING", "STOPPING", "FINALIZING", "VALIDATING"])("simplifies the camera in %s", state => {

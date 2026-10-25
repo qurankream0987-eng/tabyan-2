@@ -1,9 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { storage } from "./storage";
 import { clearUserScopedQueryCache, revokeServerSession } from "./trpc";
-import { clearPrivateMediaCache } from "./private-media-cache";
-import { clearLibraryDownloads } from "./library-download";
-import { clearPrivateTemporaryFiles } from "./private-temporary-files";
+import { clearPrivateMediaCache } from "./media/private-media-cache";
+import { clearLibraryDownloads } from "./media/library-download";
+import { clearPrivateTemporaryFiles } from "./media/private-temporary-files";
 import { beginAccountTransition } from "./account-transition";
 import { clearNativeSessionRecordings } from "../modules/tabyan-session-recorder/src";
 

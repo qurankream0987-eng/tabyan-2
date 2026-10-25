@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { Appearance, Platform, useColorScheme } from "react-native";
 import { storage } from "./storage";
 import designTokens from "../constants/colors";
-import { initialThemeMode } from "./native-welcome-layout";
+import { initialThemeMode } from "./platform/native-welcome-layout";
 
 export const palette = {
   burgundy: designTokens.brand.burgundy,

@@ -5,7 +5,7 @@
  * AdminModal or AdminDrawer (portal + body scroll lock, so the list keeps its scroll
  * position), long forms keep Save/Cancel in StickyFormFooter, destructive actions go
  * through ConfirmDialog, and secondary row actions live in ActionMenu.
- * Mobile counterparts: apps/mobile/components/admin-ui.tsx.
+ * Mobile counterparts: apps/mobile/components/admin/admin-ui.tsx.
  */
 import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { createPortal } from "react-dom";

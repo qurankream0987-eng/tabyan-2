@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Card, ErrorState, Header, Icon, LoadingState, Screen, SectionTitle } from "./ui";
-import { useAuth } from "../lib/auth";
-import { trpc } from "../lib/trpc";
-import { useTheme, palette } from "../lib/theme";
-import { userFacingErrorMessage } from "../lib/user-facing-error";
+import { Card, ErrorState, Header, Icon, LoadingState, Screen, SectionTitle } from "../ui";
+import { useAuth } from "../../lib/auth";
+import { trpc } from "../../lib/trpc";
+import { useTheme, palette } from "../../lib/theme";
+import { userFacingErrorMessage } from "../../lib/user-facing-error";
 
 type ToggleKey =
   | "sessionReminders"

@@ -5,7 +5,7 @@ import { Badge, EmptyState, ErrorState } from "../../components/ui";
 import {
   AdminRow, AdminSheet, AdminToolbar, ChoiceChips, ConfirmAction, FormError, FormInput, HeaderAction, IconAction, ListSkeleton,
   MobileActionSheet, SheetFooter, SwitchRow, useAdminFeedback, useDirtyState,
-} from "../../components/admin-ui";
+} from "../../components/admin/admin-ui";
 import { trpc } from "../../lib/trpc";
 import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 

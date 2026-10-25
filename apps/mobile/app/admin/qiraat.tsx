@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Linking, StyleSheet, Text, TextInput, View } from "react-native";
 import { AdminFrame, ConfirmButton } from "../../components/admin/admin-common";
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState, SectionTitle } from "../../components/ui";
-import { AdminSheet, FormError, useAdminFeedback } from "../../components/admin-ui";
+import { AdminSheet, FormError, useAdminFeedback } from "../../components/admin/admin-ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
 import { useAuth } from "../../lib/auth";
-import { resolveLibraryAsset } from "../../lib/library-media";
+import { resolveLibraryAsset } from "../../lib/media/library-media";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 
 type Certificate = { id: string; studentName?: string; certificateUrl?: string; status?: string; hoursAgo?: number; createdAt?: string | Date | null; };

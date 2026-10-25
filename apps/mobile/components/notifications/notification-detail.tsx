@@ -1,12 +1,12 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
-import { Badge, Button, Card, ErrorState, Header, Icon, LoadingState, Screen } from "./ui";
-import { palette, useTheme } from "../lib/theme";
-import { trpc } from "../lib/trpc";
-import { userFacingErrorMessage } from "../lib/user-facing-error";
-import { useAuth } from "../lib/auth";
-import { resolveLibraryAsset } from "../lib/library-media";
+import { Badge, Button, Card, ErrorState, Header, Icon, LoadingState, Screen } from "../ui";
+import { palette, useTheme } from "../../lib/theme";
+import { trpc } from "../../lib/trpc";
+import { userFacingErrorMessage } from "../../lib/user-facing-error";
+import { useAuth } from "../../lib/auth";
+import { resolveLibraryAsset } from "../../lib/media/library-media";
 
 type RolePrefix = "/student" | "/teacher" | "/admin";
 

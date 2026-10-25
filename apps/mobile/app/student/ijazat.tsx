@@ -4,11 +4,11 @@ import * as DocumentPicker from "expo-document-picker";
 import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
 import { StudentScreen, LoadingState, ErrorState, Card } from "../../components/student/student-screen";
-import SectionIcon from "../../components/section-icon";
+import SectionIcon from "../../components/ui/section-icon";
 import { palette, useTheme } from "../../lib/theme";
-import { resolveLibraryAsset } from "../../lib/library-media";
+import { resolveLibraryAsset } from "../../lib/media/library-media";
 import { Button, Icon } from "../../components/ui";
-import { uploadNativeFile } from "../../lib/mobile-upload";
+import { uploadNativeFile } from "../../lib/media/mobile-upload";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 import { useState } from "react";
 

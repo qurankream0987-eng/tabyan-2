@@ -5,8 +5,8 @@ import { Badge, Button, Card, EmptyState } from "../../../components/ui";
 import { trpc } from "../../../lib/trpc";
 import { TeacherScreen } from "../../../components/teacher/teacher-screen";
 import { useTheme } from "../../../lib/theme";
-import TeacherSessionCall, { type TeacherSessionCallHandle } from "../../../components/teacher-session-call";
-import { finalizeLiveSessionRecording, uploadNativeLiveSessionRecording } from "../../../lib/mobile-upload";
+import TeacherSessionCall, { type TeacherSessionCallHandle } from "../../../components/call/teacher-session-call";
+import { finalizeLiveSessionRecording, uploadNativeLiveSessionRecording } from "../../../lib/media/mobile-upload";
 
 const STATUS_LABELS: Record<string, string> = {
   scheduled: "قيد التأكيد",

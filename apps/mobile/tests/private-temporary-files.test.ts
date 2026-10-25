@@ -24,7 +24,7 @@ import {
   clearPrivateTemporaryFiles,
   removePrivateTemporaryFile,
   trackPrivateTemporaryFile,
-} from "../lib/private-temporary-files";
+} from "../lib/media/private-temporary-files";
 
 describe("private temporary file cleanup", () => {
   beforeEach(() => {

@@ -5,25 +5,25 @@ import * as Crypto from "expo-crypto";
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { StudentScreen, LoadingState, ErrorState, Card } from "../../components/student/student-screen";
 import { Button, Icon } from "../../components/ui";
-import SectionIcon from "../../components/section-icon";
-import { LocalVideoPreview } from "../../components/library-media-player";
-import { PlacementPreview } from "../../components/placement-preview";
-import { PlacementRecordingHUD } from "../../components/placement-recording-hud";
-import { placementCaptureMetrics, usesPlacementCameraMode } from "../../lib/placement-capture-layout";
+import SectionIcon from "../../components/ui/section-icon";
+import { LocalVideoPreview } from "../../components/library/library-media-player";
+import { PlacementPreview } from "../../components/placement/placement-preview";
+import { PlacementRecordingHUD } from "../../components/placement/placement-recording-hud";
+import { placementCaptureMetrics, usesPlacementCameraMode } from "../../lib/placement/placement-capture-layout";
 import { inspectIOSPlacementVideo, prepareIOSPlacementRecording } from "../../modules/tabyan-session-recorder/src";
 import {
   deriveIOSPlacementPreviewViewModel, hasPlacementCapturePermissions, isIOSPlacementPreviewPhase,
   placementMediaFailure, placementVideoUploadMetadata, type PlacementVideoInspection,
-} from "../../lib/placement-media";
+} from "../../lib/placement/placement-media";
 import { useTheme, palette } from "../../lib/theme";
 import { useAuth } from "../../lib/auth";
-import { uploadNativeVideo } from "../../lib/mobile-upload";
-import { reviewableRecordingOptions } from "../../lib/native-recording";
+import { uploadNativeVideo } from "../../lib/media/mobile-upload";
+import { reviewableRecordingOptions } from "../../lib/media/native-recording";
 import { trpc } from "../../lib/trpc";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 import { getAccountGeneration, isCurrentAccountGeneration, onAccountTransition } from "../../lib/account-transition";
-import { removePrivateTemporaryFile, trackPrivateTemporaryFile } from "../../lib/private-temporary-files";
-import { createPermissionSettingsReturnWatcher, readPlacementPermissionStatus, type PermissionReturnWatcher } from "../../lib/permission-settings-return";
+import { removePrivateTemporaryFile, trackPrivateTemporaryFile } from "../../lib/media/private-temporary-files";
+import { createPermissionSettingsReturnWatcher, readPlacementPermissionStatus, type PermissionReturnWatcher } from "../../lib/platform/permission-settings-return";
 import {
   canStartPlacementRecording,
   canStopPlacementRecording,
@@ -36,7 +36,7 @@ import {
   transitionPlacementRecorderPhase,
   type PlacementRecorderEvent,
   type PlacementRecorderPhase,
-} from "../../lib/placement-recording";
+} from "../../lib/placement/placement-recording";
 
 // ── مطابق لصفحة اختبار القبول في الموقع (Placement.tsx) ─────────────────────
 const NON_IOS_ATTEMPT_LIMIT = 5;

@@ -5,7 +5,7 @@ const mobileRoot = new URL("../", import.meta.url);
 const readMobileFile = (path: string) => readFileSync(new URL(path, mobileRoot), "utf8");
 
 describe("Native header dark-mode surface", () => {
-  const header = readMobileFile("components/ui.tsx");
+  const header = readMobileFile("components/ui/index.tsx");
   const theme = readMobileFile("lib/theme.tsx");
   const appRoot = readMobileFile("app/_layout.tsx");
   const screenTokens = JSON.parse(readMobileFile("constants/tokens.json")) as {

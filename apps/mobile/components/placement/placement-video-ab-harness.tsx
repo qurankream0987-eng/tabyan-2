@@ -1,11 +1,11 @@
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Card } from "./ui";
+import { Card } from "../ui";
 import {
   LibraryMediaPlayer,
   type LibraryMediaDiagnosticEvent,
-} from "./library-media-player";
-import { useTheme } from "../lib/theme";
+} from "../library/library-media-player";
+import { useTheme } from "../../lib/theme";
 
 export const PLACEMENT_VIDEO_AB_DIAGNOSTIC_ENABLED =
   process.env.EXPO_PUBLIC_PLACEMENT_VIDEO_AB_DIAGNOSTIC === "true";

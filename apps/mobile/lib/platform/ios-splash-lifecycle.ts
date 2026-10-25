@@ -1,4 +1,4 @@
-import { splashLayout } from "../constants/splash";
+import { splashLayout } from "../../constants/splash";
 
 export const iosSplashMotion = {
   initialScale: 0.96,

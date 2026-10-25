@@ -1,5 +1,5 @@
 import { Platform } from "react-native";
-import { apiOrigin } from "./trpc";
+import { apiOrigin } from "../trpc";
 
 export type LibraryMediaBook = {
   id: string;

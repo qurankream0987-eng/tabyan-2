@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Badge, Button, Card, EmptyState, ErrorState, Icon, LoadingState } from "./ui";
-import { palette, useTheme } from "../lib/theme";
-import { trpc } from "../lib/trpc";
-import { userFacingErrorMessage } from "../lib/user-facing-error";
+import { Badge, Button, Card, EmptyState, ErrorState, Icon, LoadingState } from "../ui";
+import { palette, useTheme } from "../../lib/theme";
+import { trpc } from "../../lib/trpc";
+import { userFacingErrorMessage } from "../../lib/user-facing-error";
 
 type Period = "all" | "today" | "week" | "month";
 type ReadStatus = "all" | "read" | "unread";

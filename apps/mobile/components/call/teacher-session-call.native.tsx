@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import * as FileSystem from "expo-file-system/legacy";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import {
   MediaStream,
@@ -8,11 +9,19 @@ import {
   RTCView,
   mediaDevices,
 } from "react-native-webrtc";
-import { Button } from "./ui";
-import { useAuth } from "../lib/auth";
-import { apiOrigin } from "../lib/trpc";
-import { storage } from "../lib/storage";
-import { useTheme } from "../lib/theme";
+import { Button } from "../ui";
+import { useAuth } from "../../lib/auth";
+import { apiOrigin } from "../../lib/trpc";
+import { storage } from "../../lib/storage";
+import { useTheme } from "../../lib/theme";
+import {
+  cancelSessionRecording,
+  startSessionRecording,
+  stopSessionRecording,
+  type NativeSessionRecording,
+} from "../../modules/tabyan-session-recorder/src";
+import { userFacingErrorMessage } from "../../lib/user-facing-error";
+import { getAccountGeneration, isCurrentAccountGeneration, onAccountTransition } from "../../lib/account-transition";
 
 type Phase = "permission" | "connecting" | "joined" | "connected" | "reconnecting" | "failed" | "ended";
 type PeerState = "new" | "connecting" | "connected" | "disconnected" | "failed";
@@ -26,6 +35,7 @@ type PeerInfo = {
   role: string;
   stream: MediaStream | null;
   state: PeerState;
+  recordingConsent: boolean;
 };
 type PeerRecord = {
   name: string;
@@ -47,13 +57,21 @@ type SignalingSocket = {
   onmessage: ((event: { data: unknown }) => void) | null;
 };
 
-export type StudentSessionCallProps = {
+export type TeacherSessionCallProps = {
   sessionId: string;
   sessionStatus: string;
   displayName?: string | null;
   recordingEnabled?: boolean;
+  isTeacher?: boolean;
+  onRecordingReady?: (recording: NativeSessionRecording & { accountGeneration: number }) => Promise<void>;
   onLeave: () => void;
 };
+
+export type TeacherSessionCallHandle = {
+  stopRecording: () => Promise<void>;
+};
+
+type RecordingState = "idle" | "starting" | "recording" | "saving" | "saved" | "failed";
 
 const ICE_SERVERS = [
   { urls: "stun:stun.l.google.com:19302" },
@@ -69,26 +87,28 @@ function websocketOrigin() {
 function phaseLabel(phase: Phase) {
   if (phase === "permission") return "يلزم السماح بالكاميرا والميكروفون";
   if (phase === "connecting") return "جارٍ الاتصال بخادم الحلقة…";
-  if (phase === "joined") return "دخلت الغرفة — بانتظار المعلم…";
-  if (phase === "connected") return "متصل فعليًا بالمعلم";
+  if (phase === "joined") return "دخلت الغرفة — بانتظار الطالب…";
+  if (phase === "connected") return "متصل فعليًا بالطالب";
   if (phase === "reconnecting") return "انقطع الاتصال — جارٍ إعادة المحاولة…";
   if (phase === "ended") return "انتهت الحلقة أو لم تعد متاحة";
   return "تعذر الاتصال بالحلقة";
 }
 
 function roleLabel(role: string) {
-  if (role === "teacher") return "المعلم";
+  if (role === "student") return "الطالب";
   if (role === "admin") return "المشرف";
   return "مشارك";
 }
 
-export default function StudentSessionCall({
+const TeacherSessionCall = forwardRef<TeacherSessionCallHandle, TeacherSessionCallProps>(function TeacherSessionCall({
   sessionId,
   sessionStatus,
   displayName,
   recordingEnabled = false,
+  isTeacher = false,
+  onRecordingReady,
   onLeave,
-}: StudentSessionCallProps) {
+}, ref) {
   const { token } = useAuth();
   const { colors } = useTheme();
   const [phase, setPhase] = useState<Phase>(sessionStatus === "in_progress" ? "permission" : "ended");
@@ -99,6 +119,8 @@ export default function StudentSessionCall({
   const [camOn, setCamOn] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
   const [consented, setConsented] = useState(false);
+  const [recordingState, setRecordingState] = useState<RecordingState>("idle");
+  const [recordingError, setRecordingError] = useState("");
   const peersRef = useRef(new Map<string, PeerRecord>());
   const socketRef = useRef<SignalingSocket | null>(null);
   const selfIdRef = useRef("");
@@ -111,6 +133,98 @@ export default function StudentSessionCall({
   const generationRef = useRef(0);
   const consentRef = useRef(false);
   const sendConsentRef = useRef<(() => void) | null>(null);
+  const recordingStateRef = useRef<RecordingState>("idle");
+  const recordingStartRef = useRef<Promise<void> | null>(null);
+  const recordingStopRef = useRef<Promise<void> | null>(null);
+  const accountTransitioningRef = useRef(false);
+  const recordingAccountGenerationRef = useRef<number | null>(null);
+
+  useEffect(() => onAccountTransition(() => {
+    accountTransitioningRef.current = true;
+    void cancelSessionRecording().catch(() => undefined);
+  }), []);
+
+  const setRecording = (state: RecordingState) => {
+    recordingStateRef.current = state;
+    setRecordingState(state);
+  };
+
+  const stopRecording = useCallback(async () => {
+    if (recordingStopRef.current) return recordingStopRef.current;
+    if (recordingStartRef.current) await recordingStartRef.current;
+    if (recordingStateRef.current !== "recording") return;
+    const accountGeneration = recordingAccountGenerationRef.current ?? getAccountGeneration();
+    if (accountTransitioningRef.current || !isCurrentAccountGeneration(accountGeneration)) {
+      await cancelSessionRecording().catch(() => undefined);
+      setRecording("idle");
+      return;
+    }
+    const operation = (async () => {
+      setRecording("saving");
+      try {
+        const result = await stopSessionRecording();
+        if (accountTransitioningRef.current || !isCurrentAccountGeneration(accountGeneration)) {
+          await FileSystem.deleteAsync(result.uri, { idempotent: true }).catch(() => undefined);
+          setRecording("idle");
+          return;
+        }
+        try {
+          await onRecordingReady?.({ ...result, accountGeneration });
+        } finally {
+          await FileSystem.deleteAsync(result.uri, { idempotent: true }).catch(() => undefined);
+        }
+        if (accountTransitioningRef.current || !isCurrentAccountGeneration(accountGeneration)) {
+          setRecording("idle");
+          return;
+        }
+        setRecording("saved");
+        setRecordingError("");
+      } catch (cause) {
+        if (accountTransitioningRef.current || !isCurrentAccountGeneration(accountGeneration)) {
+          setRecording("idle");
+          return;
+        }
+        setRecording("failed");
+        setRecordingError(userFacingErrorMessage(cause, "تعذر حفظ تسجيل الحلقة. يمكن إكمال الحلقة وتقييم الطالب."));
+      } finally {
+        recordingStopRef.current = null;
+      }
+    })();
+    recordingStopRef.current = operation;
+    return operation;
+  }, [onRecordingReady]);
+
+  useImperativeHandle(ref, () => ({ stopRecording }), [stopRecording]);
+
+  const startRecording = useCallback(async () => {
+    if (accountTransitioningRef.current || recordingStateRef.current !== "idle" || recordingStartRef.current || recordingStopRef.current) return;
+    const accountGeneration = getAccountGeneration();
+    recordingAccountGenerationRef.current = accountGeneration;
+    setRecording("starting");
+    setRecordingError("");
+    const operation = (async () => {
+      try {
+        await startSessionRecording();
+        if (accountTransitioningRef.current || !isCurrentAccountGeneration(accountGeneration)) {
+          await cancelSessionRecording().catch(() => undefined);
+          setRecording("idle");
+          return;
+        }
+        setRecording("recording");
+      } catch (cause) {
+        if (accountTransitioningRef.current || !isCurrentAccountGeneration(accountGeneration)) {
+          setRecording("idle");
+          return;
+        }
+        setRecording("failed");
+        setRecordingError(userFacingErrorMessage(cause, "تعذر بدء تسجيل الحلقة. يمكن متابعة الاتصال دون تسجيل."));
+      } finally {
+        recordingStartRef.current = null;
+      }
+    })();
+    recordingStartRef.current = operation;
+    await operation;
+  }, []);
 
   useEffect(() => {
     consentRef.current = consented;
@@ -134,14 +248,12 @@ export default function StudentSessionCall({
       && !fatalRef.current
       && generationRef.current === generation;
 
+    const hasConnectedStudent = () => [...peersRef.current.values()]
+      .some((peer) => peer.role === "student" && peer.pc.connectionState === "connected");
     const setPeerState = (peerId: string, state: PeerState) => {
       if (!isCurrent()) return;
       setPeers((current) => current.map((peer) => peer.peerId === peerId ? { ...peer, state } : peer));
     };
-
-    const hasConnectedTeacher = () => [...peersRef.current.values()]
-      .some((peer) => peer.role === "teacher" && peer.pc.connectionState === "connected");
-
     const removePeer = (peerId: string) => {
       const record = peersRef.current.get(peerId);
       if (!record) return;
@@ -154,9 +266,8 @@ export default function StudentSessionCall({
       peersRef.current.delete(peerId);
       if (!isCurrent()) return;
       setPeers((current) => current.filter((peer) => peer.peerId !== peerId));
-      if (!hasConnectedTeacher() && !fatalRef.current && !cancelledRef.current) setPhase("joined");
+      if (!hasConnectedStudent() && !fatalRef.current && !cancelledRef.current) setPhase("joined");
     };
-
     const closePeers = () => {
       peersRef.current.forEach((record) => {
         record.pc.onnegotiationneeded = null;
@@ -169,7 +280,6 @@ export default function StudentSessionCall({
       peersRef.current.clear();
       if (isCurrent()) setPeers([]);
     };
-
     const send = (message: unknown) => {
       if (!isCurrent()) return;
       const socket = socketRef.current;
@@ -178,32 +288,20 @@ export default function StudentSessionCall({
     sendConsentRef.current = () => {
       if (recordingEnabled) send({ t: "recording-consent", accepted: consentRef.current });
     };
-
-    const sendSignal = (peerId: string, data: SignalData) => {
-      send({ t: "signal", to: peerId, data });
-    };
+    const sendSignal = (peerId: string, data: SignalData) => send({ t: "signal", to: peerId, data });
 
     const createPeer = (peerId: string, name: string, role: string): PeerRecord => {
       const existing = peersRef.current.get(peerId);
       if (existing) return existing;
-
       const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
       const record: PeerRecord = {
-        name,
-        role,
-        pc,
-        remoteSet: false,
-        candidates: [],
-        makingOffer: false,
-        ignoreOffer: false,
-        chain: Promise.resolve(),
+        name, role, pc, remoteSet: false, candidates: [], makingOffer: false, ignoreOffer: false, chain: Promise.resolve(),
       };
       peersRef.current.set(peerId, record);
       if (!isCurrent()) return record;
       setPeers((current) => current.some((peer) => peer.peerId === peerId)
         ? current
-        : [...current, { peerId, name, role, stream: null, state: "new" }]);
-
+        : [...current, { peerId, name, role, stream: null, state: "new", recordingConsent: false }]);
       localRef.current?.getTracks().forEach((track) => pc.addTrack(track, localRef.current!));
 
       (pc as any).onnegotiationneeded = async () => {
@@ -234,7 +332,7 @@ export default function StudentSessionCall({
         const state = pc.connectionState;
         if (state === "connected") {
           setPeerState(peerId, "connected");
-          if (role === "teacher") {
+          if (role === "student") {
             setPhase("connected");
             setError("");
           }
@@ -242,9 +340,9 @@ export default function StudentSessionCall({
           setPeerState(peerId, "connecting");
         } else if (state === "disconnected") {
           setPeerState(peerId, "disconnected");
-          if (!hasConnectedTeacher()) {
+          if (!hasConnectedStudent()) {
             setPhase("reconnecting");
-            setError("فقدت شبكة الاتصال مع المعلم.");
+            setError("فقدت شبكة الاتصال مع الطالب.");
           }
         } else if (state === "failed" || state === "closed") {
           setPeerState(peerId, "failed");
@@ -290,25 +388,7 @@ export default function StudentSessionCall({
           if (isCurrent()) setPeerState(peerId, "failed");
         });
       };
-
       return record;
-    };
-
-    const closeSocketAndPeers = () => {
-      if (reconnectTimerRef.current) {
-        clearTimeout(reconnectTimerRef.current);
-        reconnectTimerRef.current = undefined;
-      }
-      closePeers();
-      const socket = socketRef.current;
-      socketRef.current = null;
-      if (socket) {
-        socket.onopen = null;
-        socket.onerror = null;
-        socket.onclose = null;
-        socket.onmessage = null;
-        socket.close();
-      }
     };
 
     const scheduleReconnect = () => {
@@ -332,7 +412,6 @@ export default function StudentSessionCall({
         setError("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
         return;
       }
-
       setPhase(reconnectAttemptRef.current === 0 ? "connecting" : "reconnecting");
       closePeers();
       const previousSocket = socketRef.current;
@@ -381,23 +460,38 @@ export default function StudentSessionCall({
           const existing = Array.isArray(message.peers)
             ? message.peers as Array<{ peerId: string; name: string; role: string; recordingConsent?: boolean }>
             : [];
-          existing.forEach((peer) => createPeer(peer.peerId, peer.name, peer.role));
+          existing.forEach((peer) => {
+            createPeer(peer.peerId, peer.name, peer.role);
+            setPeers((current) => current.map((item) => item.peerId === peer.peerId
+              ? { ...item, recordingConsent: peer.recordingConsent === true }
+              : item));
+          });
           sendConsentRef.current?.();
         } else if (message.t === "peer-joined") {
-          const peer = message.peer as { peerId: string; name: string; role: string } | undefined;
-          if (peer?.peerId) createPeer(peer.peerId, peer.name, peer.role);
+          const peer = message.peer as { peerId: string; name: string; role: string; recordingConsent?: boolean } | undefined;
+          if (peer?.peerId) {
+            createPeer(peer.peerId, peer.name, peer.role);
+            setPeers((current) => current.map((item) => item.peerId === peer.peerId
+              ? { ...item, recordingConsent: peer.recordingConsent === true }
+              : item));
+          }
         } else if (message.t === "peer-left") {
           removePeer(String(message.peerId ?? ""));
+        } else if (message.t === "recording-consent") {
+          const peerId = String(message.peerId ?? "");
+          setPeers((current) => current.map((peer) => peer.peerId === peerId
+            ? { ...peer, recordingConsent: message.accepted === true }
+            : peer));
         } else if (message.t === "signal") {
           const record = peersRef.current.get(String(message.from ?? ""));
           const handler = (record?.pc as any)?.handleSignal as ((data: SignalData) => void) | undefined;
           handler?.(message.data as SignalData);
         } else if (message.t === "error") {
           fatalRef.current = true;
-          const messageText = String(message.message ?? "تعذر الانضمام إلى الحلقة");
-          const ended = messageText.includes("ليست جارية") || messageText.includes("صلاحية");
+          const text = String(message.message ?? "تعذر الانضمام إلى الحلقة");
+          const ended = text.includes("ليست جارية") || text.includes("صلاحية");
           setPhase(ended ? "ended" : "failed");
-          setError(ended ? "انتهت الجلسة أو لا تملك صلاحية الدخول إليها." : messageText);
+          setError(ended ? "انتهت الجلسة أو لا تملك صلاحية الدخول إليها." : text);
           socket.onopen = null;
           socket.onerror = null;
           socket.onclose = null;
@@ -430,7 +524,6 @@ export default function StudentSessionCall({
         }
       }
     };
-
     void requestMediaAndConnect();
 
     return () => {
@@ -448,7 +541,9 @@ export default function StudentSessionCall({
       } catch {
         // Socket may already be closed.
       }
-      closeSocketAndPeers();
+      closePeers();
+      socketRef.current?.close();
+      socketRef.current = null;
       sendConsentRef.current = null;
       localRef.current?.getTracks().forEach((track) => track.stop());
       localRef.current = null;
@@ -457,25 +552,42 @@ export default function StudentSessionCall({
     };
   }, [recordingEnabled, sessionId, sessionStatus, token, retryCount]);
 
+  const connectedStudent = peers.some((peer) => peer.role === "student" && peer.state === "connected");
+  const connectedStudentsConsented = peers
+    .filter((peer) => peer.role === "student" && peer.state === "connected")
+    .every((peer) => peer.recordingConsent);
+  const recordingAllowed = recordingEnabled
+    && isTeacher
+    && consented
+    && phase === "connected"
+    && connectedStudent
+    && connectedStudentsConsented;
+
+  useEffect(() => {
+    if (recordingAllowed) {
+      void startRecording();
+    } else if (recordingStateRef.current === "recording") {
+      void stopRecording();
+    }
+  }, [recordingAllowed, startRecording, stopRecording]);
+
+  useEffect(() => () => {
+    void stopRecording();
+  }, [stopRecording]);
+
   const retry = () => {
     if (phase !== "permission" && phase !== "failed") return;
     setError("");
     setPhase("permission");
     setRetryCount((value) => value + 1);
   };
-
   const toggleMic = () => {
     localRef.current?.getAudioTracks().forEach((track) => { track.enabled = !micOn; });
     setMicOn((value) => !value);
   };
-
   const toggleCam = () => {
     localRef.current?.getVideoTracks().forEach((track) => { track.enabled = !camOn; });
     setCamOn((value) => !value);
-  };
-
-  const leave = () => {
-    onLeave();
   };
 
   return (
@@ -490,35 +602,36 @@ export default function StudentSessionCall({
         <Text style={[styles.title, { color: colors.text }]}>الحلقة الحية</Text>
       </View>
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-      {recordingEnabled ? (
-        <View style={[styles.consentPanel, { borderColor: colors.border, backgroundColor: colors.input }]}>
-          <Text style={[styles.consentText, { color: colors.text }]}>
-            {consented ? "وافقت على تسجيل الحلقة." : "لا يبدأ تسجيل الحلقة إلا بعد موافقتك وموافقة المعلم."}
+      {recordingEnabled && isTeacher ? (
+        <View style={[styles.recordingPanel, { borderColor: colors.border, backgroundColor: colors.input }]}>
+          <Text style={[styles.recordingText, { color: colors.text }]}>
+            {recordingState === "recording"
+              ? "يُسجَّل الاتصال بعد موافقة جميع المشاركين."
+              : recordingState === "saving"
+                ? "جارٍ إغلاق ملف التسجيل ورفعه…"
+                : "لن يبدأ التسجيل إلا بعد موافقتك وموافقة الطالب واتصال الوسائط."}
           </Text>
-          <Button
-            label={consented ? "إلغاء الموافقة" : "الموافقة على تسجيل الحلقة"}
-            onPress={() => setConsented((value) => !value)}
-          />
+          {recordingState === "idle" || recordingState === "failed" ? (
+            <Button
+              label={consented ? "إلغاء موافقة التسجيل" : "الموافقة على تسجيل الحلقة"}
+              onPress={() => setConsented((value) => !value)}
+            />
+          ) : null}
+          {recordingError ? <Text style={[styles.error, { color: colors.danger }]}>{recordingError}</Text> : null}
         </View>
       ) : null}
       {phase === "permission" ? <Button label="السماح بالكاميرا والميكروفون" icon="videocam-outline" onPress={retry} /> : null}
-      {phase === "joined" && peers.length === 0 ? <Text style={[styles.empty, { color: colors.muted }]}>تم التحقق من دخولك — بانتظار انضمام المعلم…</Text> : null}
-      {phase === "connected" && !peers.some((peer) => peer.role === "teacher" && peer.state === "connected") ? <Text style={[styles.empty, { color: colors.muted }]}>تم فقدان الوسائط مؤقتًا — جارٍ إعادة الاتصال.</Text> : null}
+      {phase === "joined" && peers.length === 0 ? <Text style={[styles.empty, { color: colors.muted }]}>تم دخولك — بانتظار انضمام الطالب…</Text> : null}
+      {phase === "connected" && !peers.some((peer) => peer.role === "student" && peer.state === "connected") ? <Text style={[styles.empty, { color: colors.muted }]}>تم فقدان الوسائط مؤقتًا — جارٍ إعادة الاتصال.</Text> : null}
       {localStream ? (
         <View style={[styles.tile, { borderColor: colors.border }]}>
           <RTCView streamURL={localStream.toURL()} objectFit="cover" mirror style={styles.video} />
-          <Text style={[styles.tileLabel, { color: colors.text, backgroundColor: colors.card }]}>أنت — {displayName || "الطالب"}</Text>
+          <Text style={[styles.tileLabel, { color: colors.text, backgroundColor: colors.card }]}>أنت — {displayName || "المعلم"}</Text>
         </View>
       ) : null}
       {peers.map((peer) => (
         <View key={peer.peerId} style={[styles.tile, { borderColor: colors.border }]}>
-          {peer.stream ? (
-            <RTCView streamURL={peer.stream.toURL()} objectFit="cover" style={styles.video} />
-          ) : (
-            <View style={[styles.noMedia, { backgroundColor: colors.input }]}>
-              <Text style={[styles.noMediaText, { color: colors.muted }]}>بانتظار وسائط {roleLabel(peer.role)}…</Text>
-            </View>
-          )}
+          {peer.stream ? <RTCView streamURL={peer.stream.toURL()} objectFit="cover" style={styles.video} /> : <View style={[styles.noMedia, { backgroundColor: colors.input }]}><Text style={[styles.noMediaText, { color: colors.muted }]}>بانتظار وسائط {roleLabel(peer.role)}…</Text></View>}
           <Text style={[styles.tileLabel, { color: colors.text, backgroundColor: colors.card }]}>{peer.name} — {roleLabel(peer.role)}</Text>
         </View>
       ))}
@@ -527,12 +640,14 @@ export default function StudentSessionCall({
         <View style={styles.controls}>
           <Control label={micOn ? "كتم الصوت" : "تشغيل الصوت"} icon={micOn ? "🎙️" : "🔇"} active={micOn} onPress={toggleMic} colors={colors} />
           <Control label={camOn ? "إيقاف الكاميرا" : "تشغيل الكاميرا"} icon={camOn ? "📹" : "🚫"} active={camOn} onPress={toggleCam} colors={colors} />
-          <Control label="مغادرة" icon="↩" active={false} danger onPress={leave} colors={colors} />
+          <Control label="مغادرة" icon="↩" active={false} danger onPress={onLeave} colors={colors} />
         </View>
       ) : null}
     </View>
   );
-}
+});
+
+export default TeacherSessionCall;
 
 function Control({
   label,
@@ -564,8 +679,8 @@ const styles = StyleSheet.create({
   statusRow: { flexDirection: "row", alignItems: "center", gap: 7, flexShrink: 1 },
   status: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "left" },
   error: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 20, textAlign: "right", marginTop: 10 },
-  consentPanel: { borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 12, gap: 8 },
-  consentText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 20, textAlign: "right" },
+  recordingPanel: { borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 12, gap: 8 },
+  recordingText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 20, textAlign: "right" },
   empty: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13, lineHeight: 22, textAlign: "right", marginTop: 16 },
   tile: { borderWidth: 1, borderRadius: 12, overflow: "hidden", marginTop: 14, backgroundColor: "#111827" },
   video: { width: "100%", height: 210, backgroundColor: "#111827" },
