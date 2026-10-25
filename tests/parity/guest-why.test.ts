@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const website = readFileSync(new URL("../../web/src/pages/GuestHome.tsx", import.meta.url), "utf8");
-const mobile = readFileSync(new URL("../app/guest.tsx", import.meta.url), "utf8");
+const website = readFileSync(new URL("../../apps/web/src/pages/GuestHome.tsx", import.meta.url), "utf8");
+const mobile = readFileSync(new URL("../../apps/mobile/app/guest.tsx", import.meta.url), "utf8");
 
 describe("Why Tabyan content parity", () => {
   it("copies every website feature into the Native guest screen in the same order", () => {

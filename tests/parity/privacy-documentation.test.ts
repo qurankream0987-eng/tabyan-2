@@ -12,11 +12,11 @@ import {
 import { describe, expect, it } from "vitest";
 
 const webPolicySource = readFileSync(
-  new URL("../pages/PrivacyPolicy.tsx", import.meta.url),
+  new URL("../../apps/web/src/pages/PrivacyPolicy.tsx", import.meta.url),
   "utf8",
 );
 const nativePolicySource = readFileSync(
-  new URL("../../../mobile/app/privacy.tsx", import.meta.url),
+  new URL("../../apps/mobile/app/privacy.tsx", import.meta.url),
   "utf8",
 );
 

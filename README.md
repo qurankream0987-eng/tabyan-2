@@ -13,6 +13,9 @@ Quran learning platform: web app, mobile app (Expo), and API, in one npm workspa
 | `packages/domain` | Shared product/domain content |
 | `packages/design-tokens` | Shared colors and design tokens |
 | `tools/scripts` | Verification and asset scripts |
+| `tools/benchmarks` | Recitation provider benchmark (web + API code) |
+| `tests/parity` | Cross-app checks: web/mobile parity, shared domain rules (`npm run test:parity`) |
+| `tests/integration` | Web client against API server in one process (`npm run test:integration`) |
 | `docs` | Living docs; old reports are in `docs/archive` |
 
 ## Getting started

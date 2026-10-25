@@ -1,13 +1,13 @@
 import { createServer } from 'node:http';
 import { describe, expect, it } from 'vitest';
-import { attachNabrQrcGateway } from '../../api/src/nabrQrcGateway';
-import { NabrQrcProvider } from '../smart-mushaf-v3/src/providers/nabr/NabrQrcProvider';
-import { NabrLiveAdapter, type NabrTranslationPolicy } from '../smart-mushaf-v3/src/live/providers/NabrLiveAdapter';
-import { LiveRecitationController } from '../smart-mushaf-v3/src/live/LiveRecitationController';
-import { WordPresentationStore, decodeVisual } from '../smart-mushaf-v3/src/live/store/WordPresentationStore';
-import { MicrophonePipeline, type MicChunk, type MicSource } from '../smart-mushaf-v3/src/live/audio/MicrophonePipeline';
-import { getCanonicalWordIndex } from '../smart-mushaf-v3/src/quran/canonical/CanonicalWordIndex';
-import type { LiveRecitationEvent } from '../smart-mushaf-v3/src/live/contracts/events';
+import { attachNabrQrcGateway } from '../../apps/api/src/nabrQrcGateway';
+import { NabrQrcProvider } from '../../apps/web/smart-mushaf-v3/src/providers/nabr/NabrQrcProvider';
+import { NabrLiveAdapter, type NabrTranslationPolicy } from '../../apps/web/smart-mushaf-v3/src/live/providers/NabrLiveAdapter';
+import { LiveRecitationController } from '../../apps/web/smart-mushaf-v3/src/live/LiveRecitationController';
+import { WordPresentationStore, decodeVisual } from '../../apps/web/smart-mushaf-v3/src/live/store/WordPresentationStore';
+import { MicrophonePipeline, type MicChunk, type MicSource } from '../../apps/web/smart-mushaf-v3/src/live/audio/MicrophonePipeline';
+import { getCanonicalWordIndex } from '../../apps/web/smart-mushaf-v3/src/quran/canonical/CanonicalWordIndex';
+import type { LiveRecitationEvent } from '../../apps/web/smart-mushaf-v3/src/live/contracts/events';
 
 /** 20 ms frames on demand; never touches a real device. */
 class SyntheticMic implements MicSource {

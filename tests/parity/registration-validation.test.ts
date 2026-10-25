@@ -106,8 +106,8 @@ describe("shared student registration validation", () => {
   });
 
   it("routes both Web and Native keyboard actions through the same validated step handler", () => {
-    const web = readFileSync(new URL("../components/app/StudentRegisterFlow.tsx", import.meta.url), "utf8");
-    const native = readFileSync(new URL("../../../mobile/app/(auth)/register.tsx", import.meta.url), "utf8");
+    const web = readFileSync(new URL("../../apps/web/src/components/app/StudentRegisterFlow.tsx", import.meta.url), "utf8");
+    const native = readFileSync(new URL("../../apps/mobile/app/(auth)/register.tsx", import.meta.url), "utf8");
     expect(web).toMatch(/getStudentRegistrationStepDecision\(step, registrationValues\)/);
     expect(web).toMatch(/onKeyDown=\{\(e\) => e\.key === "Enter" && goNext\(\)\}/);
     expect(web).toMatch(/onEnter=\{goNext\}/);
@@ -116,8 +116,8 @@ describe("shared student registration validation", () => {
   });
 
   it("keeps complete-form validation ahead of account creation on both clients", () => {
-    const web = readFileSync(new URL("../components/app/StudentRegisterFlow.tsx", import.meta.url), "utf8");
-    const native = readFileSync(new URL("../../../mobile/app/(auth)/register.tsx", import.meta.url), "utf8");
+    const web = readFileSync(new URL("../../apps/web/src/components/app/StudentRegisterFlow.tsx", import.meta.url), "utf8");
+    const native = readFileSync(new URL("../../apps/mobile/app/(auth)/register.tsx", import.meta.url), "utf8");
     expect(web).toMatch(/const validationError = validateStudentRegistration\(registrationValues\);[\s\S]*?if \(validationError\) \{[\s\S]*?return;[\s\S]*?completeProfile\.mutateAsync/);
     expect(native).toMatch(/const validationError = validateStudentRegistration\(registrationValues\);[\s\S]*?if \(validationError\) \{[\s\S]*?return;[\s\S]*?completeProfile\.mutateAsync/);
   });

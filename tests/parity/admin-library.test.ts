@@ -7,7 +7,7 @@ import {
   withLibrarySource, withUploadedPdf, type LibraryBookRow,
 } from "@workspace/tabyan-domain/admin-library";
 
-const adminRouter = readFileSync(path.resolve(import.meta.dirname, "../../../../packages/trpc/src/routers/admin.ts"), "utf8");
+const adminRouter = readFileSync(path.resolve(import.meta.dirname, "../../packages/trpc/src/routers/admin.ts"), "utf8");
 
 function serverEnum(procedure: string, field: string): string[] {
   const start = adminRouter.indexOf(`${procedure}: adminProcedure`);

@@ -12,26 +12,26 @@
  * boundaries (not a human making the mistake), and clearly labelled as such.
  *
  * Usage:
- *   BENCH_PROVIDER=openai OPENAI_API_KEY=... npm exec --workspace @workspace/tabyan -- tsx scripts/recitation-audio-benchmark.ts [scenario...]
- *   BENCH_PROVIDER=tarteel npm exec --workspace @workspace/tabyan -- tsx scripts/recitation-audio-benchmark.ts [scenario...]
+ *   BENCH_PROVIDER=openai OPENAI_API_KEY=... npx tsx tools/benchmarks/recitation-audio-benchmark.ts [scenario...]
+ *   BENCH_PROVIDER=tarteel npx tsx tools/benchmarks/recitation-audio-benchmark.ts [scenario...]
  * Env: BENCH_PROVIDER (default openai), BENCH_CACHE_DIR (default OS tmp), BENCH_OUT (JSON path).
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { OpenAiRealtimeProvider } from "../../api/src/recitation-providers/OpenAiRealtimeProvider";
-import { TarteelWhisperProvider } from "../../api/src/recitation-providers/TarteelWhisperProvider";
-import { stopTarteelWhisperWorker } from "../../api/src/recitation-providers/TarteelWhisperWorker";
+import { OpenAiRealtimeProvider } from "../../apps/api/src/recitation-providers/OpenAiRealtimeProvider";
+import { TarteelWhisperProvider } from "../../apps/api/src/recitation-providers/TarteelWhisperProvider";
+import { stopTarteelWhisperWorker } from "../../apps/api/src/recitation-providers/TarteelWhisperWorker";
 import type {
   SpeechRecognitionProvider,
   SpeechRecognitionProviderEvents,
-} from "../../api/src/recitation-providers/types";
-import { QuranLiveMatcher } from "../src/lib/recitation-ai/QuranLiveMatcher";
-import { normalizeQuranText } from "../src/lib/recitation-ai/normalizer";
-import { RecitationStateEngine } from "../src/lib/recitation-ai/recitationStateEngine";
-import { UtteranceSegmenter } from "../src/lib/recitation-ai/latencyTelemetry";
-import type { CanonicalQuranWord } from "../src/lib/recitation-ai/canonicalWords";
+} from "../../apps/api/src/recitation-providers/types";
+import { QuranLiveMatcher } from "../../apps/web/src/lib/recitation-ai/QuranLiveMatcher";
+import { normalizeQuranText } from "../../apps/web/src/lib/recitation-ai/normalizer";
+import { RecitationStateEngine } from "../../apps/web/src/lib/recitation-ai/recitationStateEngine";
+import { UtteranceSegmenter } from "../../apps/web/src/lib/recitation-ai/latencyTelemetry";
+import type { CanonicalQuranWord } from "../../apps/web/src/lib/recitation-ai/canonicalWords";
 
 const RATE = 24_000;
 const FRAME_SAMPLES = RATE / 10;
@@ -209,7 +209,7 @@ function scenarios(verses: Map<string, VerseAudio>): Scenario[] {
 // ─── canonical corpus (same page JSON the web app serves) ────────────────────
 
 function loadPageWords(page: number): CanonicalQuranWord[] {
-  const file = resolve(import.meta.dirname, `../public/mushaf/quran-words/pages/${page}.json`);
+  const file = resolve(import.meta.dirname, `../../apps/web/public/mushaf/quran-words/pages/${page}.json`);
   const data = JSON.parse(readFileSync(file, "utf8")) as { words: Omit<CanonicalQuranWord, "normalizedText">[] };
   return data.words.map((word) => ({ ...word, normalizedText: normalizeQuranText(word.displayText) }));
 }
@@ -438,7 +438,7 @@ async function run(scenario: Scenario, providerName: "openai" | "tarteel", apiKe
 async function main() {
   const wanted = process.argv.slice(2);
   if (wanted.includes("--help") || wanted.includes("-h")) {
-    console.log("Usage: BENCH_PROVIDER=openai|tarteel npm exec --workspace @workspace/tabyan -- tsx scripts/recitation-audio-benchmark.ts [scenario...]");
+    console.log("Usage: BENCH_PROVIDER=openai|tarteel npx tsx tools/benchmarks/recitation-audio-benchmark.ts [scenario...]");
     console.log("Scenarios: clear_67_1-3 pause_2500ms repeated_word omitted_word wrong_word_uncorrected self_correction jump_forward_skip_ayah restart_ayah_backward fast_x1.3 slow_x0.8 noise_snr10db weak_mic_x0.08");
     return;
   }

@@ -289,7 +289,7 @@ The four QCF alignment exceptions:
   - 64 KB maximum payload. Writes no DB rows. Never logs tokens, audio, or the QRC URL or key.
   - Transport: `NODE_ENV=development` uses the **fake** transport. Live requires `NABR_QRC_GATEWAY_LIVE_ENABLED=true`. Credentials stay server-side.
 - **Older path**: Nabr through `/api/ws/recitation`. `providerSelection.ts` allows `nabr` only in development, with `NABR_QRC_ENABLED`, `NABR_QRC_SHADOW_MODE` and `NABR_QRC_ONE_SHOT_TEST` all set to `true`.
-- **Tests**: `nabrQrcGateway.test.ts` and `recitation-providers/*.test.ts`. The Web e2e test against a local fake upstream is `apps/web/e2e/nabrQrcGateway.e2e.test.ts` (`npx vitest run --config e2e/vitest.config.ts`).
+- **Tests**: `nabrQrcGateway.test.ts` and `recitation-providers/*.test.ts`. The e2e test against a local fake upstream is `tests/integration/nabr-qrc-gateway.test.ts` (`npm run test:integration`).
 - **Status**: integration code exists end-to-end against the fake transport. Live acceptance is **PENDING**. Privacy and commercial gates are in `research/NABR_QRC_PRIVACY_COMMERCIAL_GATE.md` and `research/NABR_QRC_LIVE_ACCEPTANCE_READINESS.md`.
 - **No live Nabr calls were made while preparing this handoff.** Do not enable live mode without owner approval.
 

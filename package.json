@@ -16,6 +16,8 @@
     "app-store:preflight": "node tools/scripts/app-store-preflight-cleanup.mjs",
     "typecheck:libs": "tsc --build",
     "typecheck": "npm run typecheck:libs && npm run typecheck --workspace=apps --if-present",
+    "test:parity": "vitest run --config tests/vitest.config.ts",
+    "test:integration": "vitest run --config tests/vitest.integration.config.ts",
     "verify:mushaf": "node tools/scripts/verify-mushaf.mjs"
   },
   "private": true,
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "prettier": "^3.9.6",
-    "typescript": "~5.9.3"
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.10"
   }
 }

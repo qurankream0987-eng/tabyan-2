@@ -42,7 +42,8 @@ Mobile tests: `cd apps/mobile && npx vitest run tests` — four files use `node:
 
 Stop the database: `.local-pg/bin/pg_ctl.exe -D .local-pg/data stop`
 
-Tests: `npm test --workspace @workspace/tabyan` (the API and tRPC suites also need
+Tests: `npm test --workspace @workspace/tabyan`, `npm run test:parity`, `npm run test:integration`
+(the API, tRPC and integration suites also need
 `DATABASE_URL` from `.env` in the environment).
 
 Notes

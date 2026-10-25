@@ -8,7 +8,7 @@ transcripts only; it does not provide Whisper partials or replace OpenAI.
 From the workspace root:
 
 ```sh
-BENCH_PROVIDER=tarteel pnpm --filter @workspace/tabyan exec tsx scripts/recitation-audio-benchmark.ts clear_67_1-3
+BENCH_PROVIDER=tarteel npx tsx tools/benchmarks/recitation-audio-benchmark.ts clear_67_1-3
 ```
 
 The benchmark uses the same public Alafasy audio, PCM framing, segmenter,
