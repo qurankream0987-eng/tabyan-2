@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { AdminFrame } from "./_common";
+import { AdminFrame } from "../../components/admin/admin-common";
 import { Icon } from "../../components/ui";
 import { useTheme } from "../../lib/theme";
 import { NotificationFeed } from "../../components/notification-feed";

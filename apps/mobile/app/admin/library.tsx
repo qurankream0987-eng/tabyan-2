@@ -9,7 +9,7 @@ import {
   librarySectionLabel, libraryStatusLabel, libraryStatusToggle, libraryUpdateInput, validateLibraryDraft, withLibrarySource,
   withUploadedPdf, type LibraryBookDraft, type LibraryBookRow, type LibraryDraftErrors, type LibraryFilters,
 } from "@workspace/tabyan-domain/admin-library";
-import { AdminFrame, safeError } from "./_common";
+import { AdminFrame, safeError } from "../../components/admin/admin-common";
 import { Badge, Button, EmptyState, ErrorState } from "../../components/ui";
 import {
   ActiveFilters, AdminRow, AdminSearchBar, AdminSheet, AdminToolbar, ChoiceChips, ConfirmAction, FilterSheet, FormError,

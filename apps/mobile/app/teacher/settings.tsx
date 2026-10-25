@@ -5,7 +5,7 @@ import { Badge, Button, Card } from "../../components/ui";
 import { navigateToWelcome, useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
 import { useTheme, palette } from "../../lib/theme";
-import { TeacherScreen } from "./_components";
+import { TeacherScreen } from "../../components/teacher/teacher-screen";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 import { isValidPersonName, normalizePersonName } from "../../../../packages/trpc/src/lib/input-normalization";
 

@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Badge, Card, EmptyState, Icon } from "../../components/ui";
 import { trpc } from "../../lib/trpc";
-import { TeacherScreen } from "./_components";
+import { TeacherScreen } from "../../components/teacher/teacher-screen";
 import { useTheme } from "../../lib/theme";
 
 export default function Students() {

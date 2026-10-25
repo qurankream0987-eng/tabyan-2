@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { StudentScreen, Card, EmptyState, LoadingState, ErrorState, Badge } from "../_screen";
+import { StudentScreen, Card, EmptyState, LoadingState, ErrorState, Badge } from "../../../components/student/student-screen";
 import { Button, Icon } from "../../../components/ui";
 import SectionIcon, { type SectionIconName } from "../../../components/section-icon";
 import { useAuth } from "../../../lib/auth";

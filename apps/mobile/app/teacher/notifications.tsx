@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { Icon } from "../../components/ui";
-import { TeacherScreen } from "./_components";
+import { TeacherScreen } from "../../components/teacher/teacher-screen";
 import { useTheme } from "../../lib/theme";
 import { NotificationFeed } from "../../components/notification-feed";
 export default function Notifications() {

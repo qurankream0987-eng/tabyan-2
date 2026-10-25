@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState } from "../../../../components/ui";
-import { StudentScreen } from "../../_screen";
+import { StudentScreen } from "../../../../components/student/student-screen";
 import { useAuth } from "../../../../lib/auth";
 import { trpc } from "../../../../lib/trpc";
 import { useTheme } from "../../../../lib/theme";

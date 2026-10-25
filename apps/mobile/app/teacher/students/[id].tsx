@@ -10,7 +10,7 @@ import { uploadNativeFile } from "../../../lib/mobile-upload";
 import { resolveLibraryAsset } from "../../../lib/library-media";
 import { userFacingErrorMessage } from "../../../lib/user-facing-error";
 import { useTheme } from "../../../lib/theme";
-import { TeacherScreen } from "../_components";
+import { TeacherScreen } from "../../../components/teacher/teacher-screen";
 
 export default function StudentDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();

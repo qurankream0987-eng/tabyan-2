@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { StudentScreen, LoadingState, ErrorState, EmptyState, Card } from "./_screen";
+import { StudentScreen, LoadingState, ErrorState, EmptyState, Card } from "../../components/student/student-screen";
 import { Button, Icon } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";

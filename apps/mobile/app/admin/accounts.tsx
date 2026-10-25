@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useEffect, useMemo, useState } from "react";
-import { AdminFrame, AdminSelect } from "./_common";
+import { AdminFrame, AdminSelect } from "../../components/admin/admin-common";
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState } from "../../components/ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";

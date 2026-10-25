@@ -7,7 +7,7 @@ import { useAuth } from "../../../lib/auth";
 import { trpc } from "../../../lib/trpc";
 import { useTheme } from "../../../lib/theme";
 import { resolveLibrarySource } from "../../../lib/library-media";
-import { StudentScreen } from "../_screen";
+import { StudentScreen } from "../../../components/student/student-screen";
 import { downloadLibraryPdf, getLibraryDownload, removeLibraryDownload } from "../../../lib/library-download";
 import { userFacingErrorMessage } from "../../../lib/user-facing-error";
 

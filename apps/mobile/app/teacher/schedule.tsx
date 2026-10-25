@@ -5,7 +5,7 @@ import { Badge, Button, Card, EmptyState } from "../../components/ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
-import { TeacherScreen } from "./_components";
+import { TeacherScreen } from "../../components/teacher/teacher-screen";
 
 // فلاتر المدة مطابقة للموقع (TeacherSchedule): اليوم، غداً، الأسبوع، الشهر
 const RANGES: { key: "today" | "tomorrow" | "week" | "month"; label: string }[] = [

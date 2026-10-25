@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { StudentScreen } from "./_screen";
+import { StudentScreen } from "../../components/student/student-screen";
 import { Icon } from "../../components/ui";
 import { useTheme } from "../../lib/theme";
 import { NotificationFeed } from "../../components/notification-feed";

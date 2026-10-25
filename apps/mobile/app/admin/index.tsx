@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { AdminFrame, adminRoutes } from "./_common";
+import { AdminFrame, adminRoutes } from "../../components/admin/admin-common";
 import { ErrorState, FeatureTile, Card, Icon, LoadingState, SectionTitle } from "../../components/ui";
 import { useTheme, palette } from "../../lib/theme";
 import { trpc } from "../../lib/trpc";

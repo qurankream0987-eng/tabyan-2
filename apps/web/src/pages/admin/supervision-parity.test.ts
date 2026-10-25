@@ -4,6 +4,7 @@ import { bookingAvailability, matchesBookingContext, shariaSessionType } from ".
 
 const web = (name: string) => readFileSync(new URL(`./${name}.tsx`, import.meta.url), "utf8");
 const mobile = (name: string) => readFileSync(new URL(`../../../../mobile/app/${name}.tsx`, import.meta.url), "utf8");
+const mobileAdminCommon = () => readFileSync(new URL("../../../../mobile/components/admin/admin-common.tsx", import.meta.url), "utf8");
 const endpoints = (source: string) => {
   const canonical = source.includes("const api = trpc.admin") ? source.replace(/\bapi\./g, "trpc.admin.") : source;
   return [...new Set(Array.from(canonical.matchAll(/trpc\.(admin|sharia|dailyVerse)\.(\w+)\.use(?:Query|Mutation)/g), ([, group, name]) => `${group}.${name}`))].sort();
@@ -33,7 +34,7 @@ describe("Supervision Web/Mobile contract coverage (not device acceptance)", () 
   });
 
   it("keeps reviews on protected canonical endpoints and declares hooks before loading returns", () => {
-    const source = mobile("admin/_common");
+    const source = mobileAdminCommon();
     const loadingReturn = source.indexOf("if (q.isLoading)");
     const workflow = source.indexOf("export function AdminWorkflow");
     // The first loading guard belongs to the unused generic list; inspect only the workflow.
@@ -67,8 +68,8 @@ describe("Supervision Web/Mobile contract coverage (not device acceptance)", () 
   });
 
   it("keeps review actions and notification submission in persistent footers", () => {
-    for (const name of ["_common", "promotions", "qiraat", "notifications"]) {
-      const source = mobile(`admin/${name}`);
+    for (const name of ["admin-common", "promotions", "qiraat", "notifications"]) {
+      const source = name === "admin-common" ? mobileAdminCommon() : mobile(`admin/${name}`);
       expect(source, name).toContain("<AdminSheet");
       expect(source, name).toContain("footer={");
     }

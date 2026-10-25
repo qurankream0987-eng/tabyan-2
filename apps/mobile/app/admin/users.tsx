@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Share, StyleSheet, Text, View } from "react-native";
-import { AdminFrame, AdminInput, safeError } from "./_common";
+import { AdminFrame, AdminInput, safeError } from "../../components/admin/admin-common";
 import { AdminSheet, SheetFooter, useAdminFeedback } from "../../components/admin-ui";
 import { Button, Card, EmptyState, ErrorState, LoadingState } from "../../components/ui";
 import { trpc } from "../../lib/trpc";

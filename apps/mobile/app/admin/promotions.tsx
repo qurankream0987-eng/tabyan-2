@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
-import { AdminFrame, ConfirmButton } from "./_common";
+import { AdminFrame, ConfirmButton } from "../../components/admin/admin-common";
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState, SectionTitle } from "../../components/ui";
 import { LibraryMediaPlayer } from "../../components/library-media-player";
 import { trpc } from "../../lib/trpc";

@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { Card, StudentScreen } from "./_screen";
+import { Card, StudentScreen } from "../../components/student/student-screen";
 import { Button } from "../../components/ui";
 import { useTheme } from "../../lib/theme";
 import { useRouter } from "expo-router";

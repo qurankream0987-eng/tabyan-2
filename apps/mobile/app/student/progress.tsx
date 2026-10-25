@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
-import { Card, EmptyState, ErrorState, LoadingState, StudentScreen } from "./_screen";
+import { Card, EmptyState, ErrorState, LoadingState, StudentScreen } from "../../components/student/student-screen";
 import { Badge, ProgressBar } from "../../components/ui";
 import { useTheme } from "../../lib/theme";
 

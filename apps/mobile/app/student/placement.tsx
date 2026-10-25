@@ -3,7 +3,7 @@ import { Alert, AppState, Linking, Platform, Pressable, StyleSheet, Text, View }
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
 import * as Crypto from "expo-crypto";
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import { StudentScreen, LoadingState, ErrorState, Card } from "./_screen";
+import { StudentScreen, LoadingState, ErrorState, Card } from "../../components/student/student-screen";
 import { Button, Icon } from "../../components/ui";
 import SectionIcon from "../../components/section-icon";
 import { LocalVideoPreview } from "../../components/library-media-player";

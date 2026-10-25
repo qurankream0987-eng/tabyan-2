@@ -1,9 +1,9 @@
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Badge, Card, ErrorState, LoadingState } from "./_screen";
+import { Badge, Card, ErrorState, LoadingState } from "../../components/student/student-screen";
 import { Button, Icon } from "../../components/ui";
 import SectionIcon, { type SectionIconName } from "../../components/section-icon";
-import { StudentScreen } from "./_screen";
+import { StudentScreen } from "../../components/student/student-screen";
 import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
 import { useTheme, palette } from "../../lib/theme";

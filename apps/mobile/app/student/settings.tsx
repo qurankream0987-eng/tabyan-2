@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { navigateToWelcome, useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
 import { Button } from "../../components/ui";
-import { StudentScreen, LoadingState, ErrorState, Card } from "./_screen";
+import { StudentScreen, LoadingState, ErrorState, Card } from "../../components/student/student-screen";
 import { useTheme } from "../../lib/theme";
 
 export default function Settings() {

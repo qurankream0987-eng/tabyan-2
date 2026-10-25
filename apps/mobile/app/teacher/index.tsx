@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Card, FeatureTile, Icon } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
-import { TeacherScreen, OfflineNotice } from "./_components";
+import { TeacherScreen, OfflineNotice } from "../../components/teacher/teacher-screen";
 import { useTheme, palette } from "../../lib/theme";
 
 const TEACHER_DESTINATIONS = [

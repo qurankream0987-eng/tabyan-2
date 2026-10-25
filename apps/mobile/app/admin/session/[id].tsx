@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from "expo-router";
-import { AdminFrame, safeError } from "../_common";
+import { AdminFrame, safeError } from "../../../components/admin/admin-common";
 import { Badge, Card, ErrorState, LoadingState } from "../../../components/ui";
 import { useTheme } from "../../../lib/theme";
 import { Text } from "react-native";

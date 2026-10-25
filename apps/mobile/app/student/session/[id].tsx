@@ -4,7 +4,7 @@ import { useAuth } from "../../../lib/auth";
 import { resolveLibraryAsset } from "../../../lib/library-media";
 import { trpc } from "../../../lib/trpc";
 import { LibraryMediaPlayer } from "../../../components/library-media-player";
-import { StudentScreen, LoadingState, ErrorState, EmptyState, Card, Badge } from "../_screen";
+import { StudentScreen, LoadingState, ErrorState, EmptyState, Card, Badge } from "../../../components/student/student-screen";
 import { useTheme } from "../../../lib/theme";
 import StudentSessionCall from "../../../components/student-session-call";
 

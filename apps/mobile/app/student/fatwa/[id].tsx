@@ -3,7 +3,7 @@ import { useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
 import { useAuth } from "../../../lib/auth";
 import { trpc } from "../../../lib/trpc";
-import { StudentScreen, LoadingState, ErrorState, EmptyState, Card } from "../_screen";
+import { StudentScreen, LoadingState, ErrorState, EmptyState, Card } from "../../../components/student/student-screen";
 import { Button } from "../../../components/ui";
 import { LibraryMediaPlayer } from "../../../components/library-media-player";
 import { useTheme } from "../../../lib/theme";

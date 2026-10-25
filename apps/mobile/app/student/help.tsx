@@ -3,7 +3,7 @@ import { Linking, Platform, StyleSheet, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { Button, Card, SectionTitle } from "../../components/ui";
 import { useTheme } from "../../lib/theme";
-import { StudentScreen } from "./_screen";
+import { StudentScreen } from "../../components/student/student-screen";
 
 const questions = [
   ["كيف أبدأ الدراسة؟", "ابدأ باختبار القبول، ثم ستظهر لك الخطة والجلسات المناسبة بعد اعتماد النتيجة."],

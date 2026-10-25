@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
-import { StudentScreen, LoadingState, ErrorState, Card } from "./_screen";
+import { StudentScreen, LoadingState, ErrorState, Card } from "../../components/student/student-screen";
 import SectionIcon from "../../components/section-icon";
 import { palette, useTheme } from "../../lib/theme";
 import { resolveLibraryAsset } from "../../lib/library-media";

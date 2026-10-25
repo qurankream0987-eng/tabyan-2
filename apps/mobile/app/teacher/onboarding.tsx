@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Badge, Button, Card, EmptyState, ErrorState, Icon, LoadingState } from "../../components/ui";
 import { LocalVideoPreview } from "../../components/library-media-player";
-import { TeacherScreen } from "./_components";
+import { TeacherScreen } from "../../components/teacher/teacher-screen";
 import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
 import { uploadNativeFile, uploadNativeVideo } from "../../lib/mobile-upload";

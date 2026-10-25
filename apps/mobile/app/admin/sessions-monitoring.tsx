@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { AdminFrame } from "./_common";
+import { AdminFrame } from "../../components/admin/admin-common";
 import { Badge, Button, Card, EmptyState, ErrorState, Icon, LoadingState } from "../../components/ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";

@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { PanResponder, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Button, Card } from "../../../components/ui";
 import { trpc } from "../../../lib/trpc";
-import { TeacherScreen } from "../_components";
+import { TeacherScreen } from "../../../components/teacher/teacher-screen";
 import { useTheme } from "../../../lib/theme";
 import { userFacingErrorMessage } from "../../../lib/user-facing-error";
 

@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from "expo-router";
 import { Share, StyleSheet, Text, View } from "react-native";
 import { Card, EmptyState, ErrorState, LoadingState, Badge, Button } from "../../../../components/ui";
-import { StudentScreen } from "../../_screen";
+import { StudentScreen } from "../../../../components/student/student-screen";
 import { useAuth } from "../../../../lib/auth";
 import { trpc } from "../../../../lib/trpc";
 import { useTheme, palette } from "../../../../lib/theme";

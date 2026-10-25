@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { StyleSheet, Text } from "react-native";
-import { AdminFrame, AdminSelect, safeError } from "./_common";
+import { AdminFrame, AdminSelect, safeError } from "../../components/admin/admin-common";
 import { Badge, Button, EmptyState, ErrorState } from "../../components/ui";
 import {
   ActiveFilters, AdminRow, AdminSearchBar, AdminSheet, ChoiceChips, ConfirmAction, FilterSheet, FormError, FormInput, IconAction, ListSkeleton,

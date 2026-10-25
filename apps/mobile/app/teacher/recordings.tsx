@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { Button, Card, EmptyState, Icon } from "../../components/ui";
 import { LibraryMediaPlayer } from "../../components/library-media-player";
 import { trpc } from "../../lib/trpc";
-import { TeacherScreen } from "./_components";
+import { TeacherScreen } from "../../components/teacher/teacher-screen";
 import { useTheme } from "../../lib/theme";
 import { useAuth } from "../../lib/auth";
 import { resolveLibraryAsset } from "../../lib/library-media";

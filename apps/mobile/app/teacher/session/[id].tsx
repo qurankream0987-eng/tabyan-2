@@ -3,7 +3,7 @@ import { Alert, Text } from "react-native";
 import { useCallback, useRef, useState } from "react";
 import { Badge, Button, Card, EmptyState } from "../../../components/ui";
 import { trpc } from "../../../lib/trpc";
-import { TeacherScreen } from "../_components";
+import { TeacherScreen } from "../../../components/teacher/teacher-screen";
 import { useTheme } from "../../../lib/theme";
 import TeacherSessionCall, { type TeacherSessionCallHandle } from "../../../components/teacher-session-call";
 import { finalizeLiveSessionRecording, uploadNativeLiveSessionRecording } from "../../../lib/mobile-upload";

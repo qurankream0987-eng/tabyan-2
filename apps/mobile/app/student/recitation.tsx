@@ -11,7 +11,7 @@ import {
 } from "../../lib/native-recitation";
 import { normalizeQuranText } from "../../lib/quran-normalizer";
 import { trpc } from "../../lib/trpc";
-import { StudentScreen } from "./_screen";
+import { StudentScreen } from "../../components/student/student-screen";
 
 type ScreenPhase = "setup" | "preparing" | "listening" | "paused" | "ending" | "user-ended" | "cancelled" | "error";
 

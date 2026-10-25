@@ -30,7 +30,7 @@ describe("iOS placement presentation modes", () => {
   });
   it("keeps camera ancestors stable, hides explanation, and separates the stop control", () => {
     const source = readFileSync(new URL("../app/student/placement.tsx", import.meta.url), "utf8");
-    const screen = readFileSync(new URL("../app/student/_screen.tsx", import.meta.url), "utf8");
+    const screen = readFileSync(new URL("../components/student/student-screen.tsx", import.meta.url), "utf8");
     expect(source).toContain('key="placement-capture"');
     expect(source).toContain('!cameraMode ? <Card key="placement-guidance"');
     expect(source).toContain('!cameraMode && (Platform.OS !== "ios" || !videoUri) ? <Card key="placement-instructions"');
