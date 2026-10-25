@@ -1,0 +1,235 @@
+/* Tabyan Smart Mushaf — live dock. Fixed height in every state; safe-area aware. */
+
+.sm-dock {
+  --sm-dock-bg: color-mix(in srgb, #faf6ee 94%, transparent);
+  --sm-dock-border: color-mix(in srgb, #c5a059 28%, transparent);
+  --sm-dock-fg: #4a0e17;
+  --sm-dock-muted: color-mix(in srgb, #4a0e17 66%, transparent);
+  --sm-mic-bg: #4a0e17;
+  --sm-mic-fg: #fff;
+  --sm-live: #2f6b4a;
+  --sm-warn: #b07d1e;
+  --sm-error: #9f1d2b;
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 40;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--sm-dock-bg);
+  border-top: 1px solid var(--sm-dock-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--sm-dock-fg);
+  font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  user-select: none;
+}
+
+.dark .sm-dock {
+  --sm-dock-bg: color-mix(in srgb, #1a1114 94%, transparent);
+  --sm-dock-border: color-mix(in srgb, #e5c378 22%, transparent);
+  --sm-dock-fg: #f3e6cf;
+  --sm-dock-muted: color-mix(in srgb, #f3e6cf 66%, transparent);
+  --sm-mic-bg: #c5a059;
+  --sm-mic-fg: #1a1114;
+  --sm-live: #8fd0aa;
+  --sm-warn: #e0a96d;
+  --sm-error: #f08a7e;
+}
+
+/* The app colours bare SVGs globally; dock icons follow their button's colour. */
+.sm-dock svg { color: inherit; }
+
+.sm-dock-inner {
+  max-width: 34rem;
+  height: 104px;
+  margin-inline: auto;
+  padding: 6px 14px 12px;
+  display: grid;
+  grid-template-rows: 18px 1fr;
+  gap: 4px;
+}
+
+.sm-dock-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.sm-dock-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--sm-dock-muted);
+}
+.sm-dock[data-tone='live'] .sm-dock-dot { background: var(--sm-live); }
+.sm-dock[data-tone='busy'] .sm-dock-dot,
+.sm-dock[data-tone='warning'] .sm-dock-dot { background: var(--sm-warn); }
+.sm-dock[data-tone='error'] .sm-dock-dot { background: var(--sm-error); }
+
+/* Fixed-width title: status changes never move the text beside it. */
+.sm-dock-title {
+  flex: none;
+  width: min(10.5rem, 46%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 700;
+}
+.sm-dock[data-tone='error'] .sm-dock-title { color: var(--sm-error); }
+
+.sm-dock-meta {
+  flex: 1;
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--sm-dock-muted);
+}
+
+.sm-dock-meta > span {
+  grid-area: 1 / 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sm-dock-meta > span[data-visible='false'] { visibility: hidden; }
+
+.sm-num {
+  display: inline-block;
+  min-inline-size: 3.2ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.sm-dock-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.sm-dock-side {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-start;
+}
+.sm-dock-side-end { justify-content: flex-end; }
+
+.sm-dock-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  min-width: 44px;
+  padding-inline: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--sm-dock-border);
+  background: transparent;
+  color: var(--sm-dock-fg);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+.sm-dock-button svg { width: 15px; height: 15px; }
+/* Reserved controls keep their box while hidden (no layout change on start). */
+.sm-dock-button[data-reserve][hidden] { display: inline-flex !important; visibility: hidden; }
+
+.sm-mic {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  justify-self: center;
+  border: 0;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--sm-mic-bg);
+  color: var(--sm-mic-fg);
+  cursor: pointer;
+  box-shadow: 0 6px 18px -8px rgba(74, 14, 23, 0.6);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 80ms ease;
+}
+.sm-mic:active { transform: scale(0.96); }
+.sm-mic svg { width: 24px; height: 24px; position: relative; z-index: 1; }
+
+.sm-mic-ring {
+  position: absolute;
+  inset: -5px;
+  border-radius: inherit;
+  border: 2px solid transparent;
+  pointer-events: none;
+}
+.sm-dock[data-phase='REQUESTING_MIC'] .sm-mic-ring { border-color: color-mix(in srgb, var(--sm-warn) 70%, transparent); }
+.sm-dock[data-phase='LISTENING'] .sm-mic-ring { border-color: color-mix(in srgb, var(--sm-live) 55%, transparent); }
+.sm-dock[data-phase='VOICE_ACTIVE'] .sm-mic-ring,
+.sm-dock[data-phase='TRACKING'] .sm-mic-ring {
+  border-color: var(--sm-live);
+  animation: sm-breathe 1.6s ease-in-out infinite;
+}
+.sm-dock[data-phase='RECOVERING'] .sm-mic-ring { border-color: var(--sm-warn); }
+.sm-dock[data-phase='ERROR'] .sm-mic { background: var(--sm-error); }
+
+@keyframes sm-breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.55; }
+}
+
+.sm-spin { animation: sm-spin 0.9s linear infinite; }
+@keyframes sm-spin { to { transform: rotate(360deg); } }
+
+.sm-return-pill {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  inset-inline: 0;
+  margin-inline: auto;
+  width: max-content;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--sm-dock-border);
+  background: var(--sm-mic-bg);
+  color: var(--sm-mic-fg);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+/* Narrow screens and large zoom: icon-only side buttons (labels stay as aria-labels). */
+@media (max-width: 359px) {
+  .sm-dock-inner { padding-inline: 8px; }
+  .sm-dock-button { min-width: 40px; padding-inline: 8px; }
+  .sm-dock-button span { display: none; }
+}
+
+/* Landscape phones: one compact row so the Mushaf keeps the height. */
+@media (max-height: 500px) {
+  .sm-dock-inner {
+    max-width: 52rem;
+    height: 64px;
+    padding-block: 6px;
+    grid-template-rows: 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+  }
+  .sm-dock-controls { grid-template-columns: minmax(0, auto) 56px minmax(0, auto); }
+  .sm-mic { width: 48px; height: 48px; }
+  .sm-mic svg { width: 20px; height: 20px; }
+  .sm-dock-button { height: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sm-dock[data-phase] .sm-mic-ring { animation: none; }
+  .sm-spin { animation-duration: 2.4s; }
+}

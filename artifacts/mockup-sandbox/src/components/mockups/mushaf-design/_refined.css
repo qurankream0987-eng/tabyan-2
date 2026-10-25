@@ -1,0 +1,102 @@
+.mushaf-mockup.is-refined .mushaf-paper {
+  box-shadow:
+    0 14px 34px rgba(61, 31, 16, .13),
+    0 3px 8px rgba(61, 31, 16, .08);
+}
+
+.mushaf-mockup.is-refined .mushaf-page-ornament {
+  position: absolute;
+  z-index: 1;
+  inset: 7px;
+  border: 1px solid rgba(185, 154, 67, .72);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 0 0 3px var(--mushaf-paper),
+    inset 0 0 0 4px rgba(112, 32, 57, .32);
+  pointer-events: none;
+}
+
+.mushaf-mockup.is-refined .mushaf-opening-panel {
+  border-color: rgba(185, 154, 67, .86);
+  background:
+    radial-gradient(ellipse at center, rgba(185, 154, 67, .11), transparent 73%),
+    linear-gradient(90deg, transparent 0%, rgba(185, 154, 67, .025) 50%, transparent 100%);
+  box-shadow: 0 0 0 3px rgba(185, 154, 67, .08);
+}
+
+.mushaf-mockup.is-refined .mushaf-opening-panel::before {
+  inset: 5px;
+  border-color: rgba(112, 32, 57, .36);
+}
+
+.mushaf-mockup.is-refined .mushaf-opening-panel::after {
+  inset-inline: 8%;
+  top: -12px;
+  bottom: -12px;
+  border-block-color: rgba(185, 154, 67, .58);
+}
+
+.mushaf-mockup.is-refined .mushaf-corner {
+  width: 12px;
+  height: 12px;
+  border-color: rgba(185, 154, 67, .95);
+  box-shadow:
+    inset 0 0 0 2px var(--mushaf-paper),
+    inset 0 0 0 4px rgba(185, 154, 67, .78),
+    0 0 0 2px rgba(253, 249, 239, .78);
+}
+
+.mushaf-mockup.is-refined .surah-cartouche {
+  filter: drop-shadow(0 1px 1px rgba(112, 32, 57, .12));
+}
+
+.mushaf-mockup.is-refined .surah-title {
+  text-shadow: 0 1px 0 rgba(255, 253, 247, .75);
+}
+
+@media (min-width: 768px) {
+  .mushaf-mockup.is-refined .mushaf-topbar {
+    height: 56px;
+  }
+
+  .mushaf-mockup.is-refined .mushaf-topbar-inner {
+    min-height: 54px;
+  }
+
+  .mushaf-mockup.is-refined .mushaf-stage {
+    padding: 0;
+  }
+
+  .mushaf-mockup.is-refined .mushaf-dock-wrap {
+    padding: 8px 12px 6px;
+  }
+
+  .mushaf-mockup.is-refined .mushaf-dock {
+    min-height: 62px;
+    padding: 4px 8px;
+  }
+
+  .mushaf-mockup.is-refined .mushaf-dock-action {
+    min-height: 48px;
+  }
+
+  .mushaf-mockup.is-refined .mushaf-primary {
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    margin-top: -12px;
+  }
+
+  .mushaf-mockup.is-refined .mushaf-primary span {
+    top: 55px;
+  }
+}
+
+@media (max-width: 767px) {
+  .mushaf-mockup.is-refined .mushaf-page-ornament {
+    inset: 4px;
+    box-shadow:
+      inset 0 0 0 2px var(--mushaf-paper),
+      inset 0 0 0 3px rgba(112, 32, 57, .3);
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["TabyanSessionRecorderModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.tabyan.sessionrecorder.TabyanSessionRecorderModule"]
+  }
+}

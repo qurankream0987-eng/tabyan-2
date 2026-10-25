@@ -1,0 +1,273 @@
+Source: https://raw.githubusercontent.com/alheekmahlib/alquranalkareem/main/pubspec.yaml
+Title: 
+Fetched: 2026-10-15T02:19:31.183Z
+
+name: alquranalkareem
+description: Al-Quran Al-Kareem - Al-Heekmah Library.
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 5.5.4+127
+
+environment:
+  sdk: '>=3.12.2 <4.0.0'
+
+dependencies:
+  anim_search_bar: ^2.0.3
+  animated_custom_dropdown: ^4.0.0
+  animated_search_bar: ^2.8.0
+  animations: ^3.0.0
+  another_xlider: ^3.0.2
+  arabic_justified_text: ^1.0.4
+  arabic_numbers: ^1.0.0
+  archive: ^4.4.0
+  awesome_notifications: ^0.12.1
+  background_fetch: ^1.7.0
+  badges: ^4.0.1
+  camera_desktop: ^2.0.0
+  connectivity_kit:
+    git:
+      url: https://github.com/alheekmahlib/connectivity_kit.git
+      ref: v0.4.1
+  # connectivity_plus: ^7.3.2
+  cupertino_icons: ^2.0.0
+  delightful_toast: ^1.1.0
+  dio: ^5.11.1
+  drawing_animation:
+    git:
+      ref: master
+      url: https://github.com/alheekmahlib/drawing_animation.git
+  drift: ^2.35.2
+  drift_flutter: ^0.3.1
+  dropdown_button2: ^3.1.0
+  easy_image_viewer: ^1.5.1
+  either_dart: ^1.0.0
+  expansion_tile_card: ^3.0.0
+  family_bottom_sheet: ^0.1.0
+  file_picker: ^13.1.0
+  flex_color_picker: ^4.0.0
+  flexible_sheet: ^1.0.0+2
+  floating_menu_expendable: ^1.1.1
+  flutter:
+    sdk: flutter
+  flutter_app_info: #^3.0.3
+    git:
+      url: https://github.com/alheekmahlib/flutter-app-info.git
+      ref: v4.0.0
+  flutter_cache_manager: ^3.4.5
+  flutter_dotenv: ^6.0.1
+  flutter_launcher_icons: ^0.14.4
+  flutter_localizations:
+    sdk: flutter
+  flutter_native_splash: ^2.4.8
+  flutter_onnxruntime: ^1.9.0
+  flutter_rounded_progress_bar: ^0.3.2
+  flutter_screenutil: ^5.9.3
+  flutter_slider_drawer: ^3.0.2
+  flutter_staggered_animations: ^1.1.1
+  flutter_staggered_grid_view: ^0.7.0
+  flutter_streaming_text_markdown: ^1.11.0
+  flutter_svg: ^2.3.0
+  flutter_timezone: ^5.1.1
+  flutter_zxing: ^3.1.0
+  gap: ^3.0.1
+  get: ^4.7.3
+  get_it: ^9.3.0
+  get_storage: 2.1.1
+  glob: ^2.2.0
+  hijri_date: ^1.1.0
+  home_widget: ^0.10.0
+  html: ^0.15.7
+  # info_popup: ^4.3.2
+  intl: ^0.20.3
+  lottie: ^3.6.1
+  media_kit_libs_windows_video: ^1.0.11
+  mini_music_visualizer: ^1.1.4
+  multi_store_review:
+    git:
+      url: https://github.com/alheekmahlib/multi_store_review.git
+      path: multi_store_review
+      ref: multi_store_review-v2.2.1
+  package_rename: ^1.10.1
+  particles_flutter: ^3.2.0
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  pretty_qr_code: ^3.6.0
+  qr_flutter: ^4.1.0
+  quran_library: #^5.0.1
+    git:
+      url: https://github.com/alheekmahlib/quran_library.git
+  read_more_less: ^1.0.1
+  rxdart: ^0.28.0
+  screenshot: ^3.0.0
+  scrollable_positioned_list: ^0.3.8
+  share_plus: ^13.3.1
+  # shared_preferences: ^2.2.0
+  shimmer: ^4.0.0
+  smooth_page_indicator: ^3.0.0
+  smooth_sheets: ^1.3.0
+  square_percent_indicater: ^0.1.0
+  timezone: ^0.11.1
+  url_launcher: ^6.3.3
+  uuid: ^4.6.0
+  video_player: ^2.14.1
+  video_player_media_kit: ^2.0.0
+  wakelock_plus: ^1.8.1
+
+dependency_overrides:
+  # واجهة المنصة في نفس المستودع وغير منشورة على pub.dev بعد.
+  multi_store_review_platform_interface:
+    git:
+      url: https://github.com/alheekmahlib/multi_store_review.git
+      path: multi_store_review_platform_interface
+      ref: multi_store_review_platform_interface-v2.2.0
+  path_provider_android: 2.2.22
+
+dev_dependencies:
+  app_name_localizer: ^1.0.5
+  build_runner: ^2.16.1
+  drift_dev: ^2.35.0
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  msix: ^3.18.0
+
+flutter_native_splash:
+  color: "#283618"
+  color_dark: "#2d2d2d"
+  image: assets/quran_logo1152.png
+  image_dark: assets/quran_logo1152.png
+
+  android_12:
+    image: assets/quran_logo1152.png
+    icon_background_color: "#283618"
+    image_dark: assets/quran_logo1152.png
+    icon_background_color_dark: "#2d2d2d"
+
+package_rename_config:
+  android:
+    package_name: com.alheekmah.alquranalkareem.alquranalkareem
+
+  ios:
+    app_name: القرآن الكريم - مكتبة الحكمة
+    package_name: com.alheekmah.alquranalkareem.alquranalkareem
+
+    macos:
+      app_name: القرآن الكريم مكتبة الحكمة
+      package_name: com.alheekmah.alquranalkareem.alquranalkareem2
+
+app_name_localizer:
+  en: "Al Quran Al Kareem - Al Heekmah Library"
+  ar: "القرآن الكريم - مكتبة الحكمة"
+  es: "El Corán - Biblioteca Al-Hikmah"
+  id: "Al-Qur'an Al-Karim - Perpustakaan Hikmah"
+  ku: "قورئانی پیرۆز - کتێبخانەی حیکمە"
+  fil: "Qur'an Al-Karim - Aklatan ng Karunungan"
+  ru: "Священный Коран - Библиотека Мудрости"
+  so: "Al Quraanka Al Kareem - Maktabadda Al Heekmah"
+  tr: "Kur'an-ı Kerim - Hikmet Kütüphanesi"
+  ur: "القرآن الکریم - الحکمہ لائبریری"
+
+msix_config:
+  display_name: القرآن الكريم - مكتبة الحكمة
+  publisher_display_name: مكتبة الحكمة - Al-hikmah Library
+  identity_name: -Al-hikmahLibrary.-
+  publisher: CN=80C4D4C2-E4E8-47EC-8263-D409F68DE30F
+  msix_version: 5.5.1.0
+  logo_path: assets\quran_logo_mac.png
+  capabilities: internetClient, microphone
+  store: true
+
+# flutter_launcher_icons:
+#   android: "launcher_icon"
+#   ios: true
+#   image_path: "assets/app_icon.png"
+#   min_sdk_android: 21 # android min sdk min:16, default 21
+#   windows:
+#     generate: true
+#     image_path: "assets/app_icon.png"
+#     icon_size: 48 # min:48, max:256, default: 48
+#   macos:
+#     generate: true
+#     image_path: "assets/app_icon.png"
+
+flutter_assets:
+  # assets_path: assets/lottie/
+  assets_path: assets/svg/
+  output_path: lib/core/utils/constants/
+  # filename: lottie_constants.dart
+  filename: svg_constants.dart
+  field_prefix: null
+  class_name: SvgPath
+
+flutter:
+
+  generate: true
+  uses-material-design: true
+
+  assets:
+    - assets/svg/
+    - assets/icons/
+    - assets/svg/surah_name/
+    - assets/images/
+    - assets/svg/hijri/
+    - assets/svg/alwaqf/
+    - assets/svg/home/
+    - assets/svg/quran/
+    - assets/svg/audio/
+    - assets/svg/athkar/
+    - assets/svg/books/
+    - assets/json/
+    - assets/lottie/
+    - assets/locales/
+    - assets/json/azkar.json
+    - .env
+    - assets/quran_logo.png
+    - assets/quran_logo_mac.png
+    - assets/quran_logo512.png
+
+  fonts:
+    - family: uthmanic
+      fonts:
+        - asset: assets/fonts/UthmanTN1_Ver10.otf
+
+    - family: uthmanic2
+      fonts:
+        - asset: assets/fonts/UthmanicHafs_V20.ttf
+
+    - family: kufi
+      fonts:
+        - asset: assets/fonts/Kufam-Italic-VariableFont_wght.ttf
+          style: italic
+        - asset: assets/fonts/Kufam-VariableFont_wght.ttf
+          weight: 500
+        - asset: assets/fonts/Kufam-Regular.ttf
+          weight: 100
+
+    - family: naskh
+      fonts:
+        - asset: assets/fonts/NotoNaskhArabic-VariableFont_wght.ttf
+    - family: ayahNumber
+      fonts:
+        - asset: assets/fonts/Uthmanic_NeoCOLORD-Regular.ttf
+
+    - family: urdu
+      fonts:
+        - asset: assets/fonts/NotoNastaliqUrdu.ttf
+
+    - family: bn
+      fonts:
+        - asset: assets/fonts/NotoSerifBengali.ttf
+
+    - family: playpen
+      fonts:
+        - asset: assets/fonts/Playpen_Sans_Arabic/PlaypenSansArabic-ExtraLight.ttf
+          weight: 100
+        - asset: assets/fonts/Playpen_Sans_Arabic/PlaypenSansArabic-Light.ttf
+          weight: 200
+        - asset: assets/fonts/Playpen_Sans_Arabic/PlaypenSansArabic-Regular.ttf
+          weight: 300
+        - asset: assets/fonts/Playpen_Sans_Arabic/PlaypenSansArabic-Medium.ttf
+          weight: 400
+        - asset: assets/fonts/Playpen_Sans_Arabic/PlaypenSansArabic-Bold.ttf
+          weight: 700

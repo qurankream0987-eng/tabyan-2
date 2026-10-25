@@ -1,0 +1,361 @@
+Source URL: https://huggingface.co/wasimlhr/whisper-quran-v1
+Focused query: WasimLHR model card: architecture, parameter count, reported training configuration and evaluation, license, files, and inference claims.
+Fetched via webFetch; retrieved content follows.
+
+# Whisper Quran v1 — Arabic Quranic Speech Recognition
+
+**The first open-source, production-tested Whisper Large-v3 model fine-tuned specifically for Quran recitation.**
+
+Fine-tuned on professional recitations from 5 world-renowned Qurʾān reciters, achieving **5.35% WER** on held-out evaluation data. Tested across **19 reciters** (including 14 completely unseen) with strong generalization. Deployed and validated in a real-time verse-tracking system on smart glasses.
+
+## Key Results
+
+| Metric | Value |
+| --- | --- |
+| **Word Error Rate (WER)** | **5.35%** (best) / 5.74% (this checkpoint) |
+| **Cross-reciter generalization** | 19/19 reciters produce usable transcription |
+| **Short ayah accuracy** (<10 words) | ~97% across all 19 reciters |
+| **Medium ayah accuracy** (10-20 words) | ~88% across all 19 reciters |
+| **Real-time verse matching** | Score 1.00 (perfect) on live recitation |
+| **Base model** | `openai/whisper-large-v3` (1.55B parameters) |
+| **Training data** | 5 reciters × 6,236 ayahs from Buraaq/quran-md-ayahs |
+
+## What Makes This Model Different
+
+|  | Tarteel AI | Academic Papers | Other HF Models | **This Model** |
+| --- | --- | --- | --- | --- |
+| Architecture | whisper-base/tiny | Various | whisper-large-v3 | **whisper-large-v3** |
+| Training data | Crowd-sourced amateurs | Small / private | Tarteel everyayah | **Professional reciters** |
+| Reciter diversity | 1,200+ amateurs | 2-10 | 36 pros | **5 trained + 14 unseen validated** |
+| Open weights | ✅ | ❌ | ✅ (no WER docs) | **✅ with full pipeline + benchmarks** |
+| Production tested | App only | Research | No | **Real-time smart glasses system** |
+| Reproducible | ❌ | ❌ | Partial | **✅ full training notebook** |
+
+## Training Details
+
+### Reciters (Phase 1)
+
+| # | Reciter | Style | Origin |
+| --- | --- | --- | --- |
+| 1 | **Mishary Rashid Alafasy** | Modern Murattal | Kuwait |
+| 2 | **Abdurrahman As-Sudais** | Haramain Imam | Saudi Arabia |
+| 3 | **Mahmoud Khalil Al-Husary** | Classical Murattal | Egypt |
+| 4 | **Mahmoud Khalil Al-Husary** | Mujawwad (slow, melodic) | Egypt |
+| 5 | **Muhammad Siddiq Al-Minshawy** | Classical Murattal | Egypt |
+
+This covers Gulf, Saudi Haramain, and Egyptian classical styles — the three dominant recitation traditions worldwide.
+
+### Training Configuration
+
+| Parameter | Value |
+| --- | --- |
+| Base model | `openai/whisper-large-v3` |
+| Dataset | `Buraaq/quran-md-ayahs` (ayah-level aligned) |
+| Training samples | ~31,180 (5 reciters × 6,236 ayahs) |
+| Evaluation samples | 115 (held-out split) |
+| Max steps | 5,000 |
+| Best checkpoint | Step 3,500 (5.35% WER) |
+| Released checkpoint | Step 4,500 (5.74% WER) |
+| Learning rate | 1e-5 with warmup |
+| Batch size | 8 (effective, with gradient accumulation) |
+| Precision | bf16 |
+| GPU | AMD Radeon RX 7900 XTX (24 GB) |
+| Training time | ~38 hours |
+
+### WER Progression
+
+| Step | WER | Notes |
+| --- | --- | --- |
+| 1,000 | 34.46% | Early training |
+| 1,500 | 15.84% | Rapid improvement |
+| 2,000 | 10.89% |  |
+| 2,500 | 7.92% |  |
+| 3,000 | 9.90% | Eval variance (small eval set) |
+| **3,500** | **5.35%** | **Best checkpoint** |
+| 4,000 | 9.11% | Eval variance |
+| **4,500** | **5.74%** | **Released checkpoint** |
+
+The oscillation between checkpoints is due to the small evaluation set (115 samples). Both 3,500 and 4,500 are strong models.
+
+## Cross-Reciter Evaluation (19 Reciters)
+
+Tested on 10 ayahs per reciter spanning short, medium, and long verses. Reciters marked with ✅ were in the training set; all others are **completely unseen**.
+
+### Trained Reciters (5)
+
+| Reciter | Short Ayahs | Medium Ayahs | Long Ayahs |
+| --- | --- | --- | --- |
+| ✅ Alafasy | Perfect | Perfect | Core words correct, tail drift |
+| ✅ As-Sudais | Perfect | Perfect | Core words correct, tail drift |
+| ✅ Al-Husary | Perfect | Perfect | Core words correct, tail drift |
+| ✅ Al-Husary (Mujawwad) | Perfect | Perfect | Core words correct, tail drift |
+| ✅ Al-Minshawy | Perfect | Perfect | Core words correct, tail drift |
+
+### Unseen Reciters (14) — Zero-Shot Generalization
+
+| Reciter | Short Ayahs | Medium Ayahs | Long Ayahs |
+| --- | --- | --- | --- |
+| Abdul Basit (Egyptian) | Near perfect | Good | Drift |
+| Maher Al-Muaiqly (Saudi) | Near perfect | Good | Drift |
+| Muhammad Jibreel (Egyptian) | Good | Good | Drift |
+| Ali Jaber (Saudi) | Good | Good | Drift |
+| Saood Ash-Shuraym (Saudi) | Good | Good | Drift |
+| Ayman Sowaid (Average style) | **Near perfect** | **Near perfect** | Drift |
+| Abdullah Basfar (Saudi) | Excellent | Good | Drift |
+| Hani Ar-Rifai (Saudi) | Minor diacritics | Good | More drift |
+| Fares Abbad (Saudi) | Minor errors | Good | Drift |
+| Nasser Al-Qatami (Kuwaiti) | Good | Good | Drift |
+| Yasser Ad-Dossary (Saudi) | Good | Good | Drift |
+| Ghamadi (Saudi) | Good | Good | Drift |
+| Alafasy 64kbps (low bitrate) | Identical to 128kbps | — | — |
+| Abu Bakr Ash-Shatri (Saudi) | Good | Good | Drift |
+
+**Key finding:** Ayman Sowaid (who recites like an average person, not a professional) scored near-perfect — this confirms the model works for everyday reciters, not just professionals.
+
+**Long ayah drift** is expected and is solved in production by chunking audio into 10-second windows.
+
+## Live Production Results
+
+This model has been deployed in a real-time Quran verse tracking system running on G2 smart glasses. The pipeline processes 10-second audio chunks through Whisper, then matches output against all 6,236 Quran ayahs using Token F1 + IDF-weighted scoring.
+
+### Real-Time Matching Scores (Live Recitation)
+
+| Surah | Verses Tracked | Match Quality | Notes |
+| --- | --- | --- | --- |
+| Al-Fatiha (1) | 1:1 → 1:7 | Score 0.69–1.00 | Perfect tracking |
+| Ar-Rahman (55) | 55:37 → 55:56 | **Score 1.00** | Perfect on refrain verse |
+| An-Nazi'at (79) | 79:12 → 79:46 | Score 0.43–0.88 | Full surah tracked |
+
+Example from live log:
+
+```
+Whisper: "فَبِأَيِّ آلَاءِ رَبِّكُمَا تُكَذِّبَانِ"
+Match:   [55:13] score=1.00 F1=1.00 IDF=1.00 coverage=100%
+```
+
+The 10-second chunking eliminates the long-ayah drift problem entirely — every chunk contains 5-15 words, which is the model's sweet spot.
+
+## Usage
+
+### Hugging Face Inference Endpoint (custom handler, recommended)
+
+This repo now includes a custom `handler.py` for HF Inference Endpoints that supports:
+
+- micro-batching concurrent requests on one GPU worker
+- low-latency queue window (`ASR_BATCH_WINDOW_MS`)
+- bounded batching (`ASR_MAX_BATCH_SIZE`)
+- output shape compatible with clients expecting `{ text, chunks }`
+
+#### Endpoint configuration
+
+Set your endpoint to use this repository revision and custom handler.
+
+Optional environment variables:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `ASR_BATCH_WINDOW_MS` | `35` | Queue window to coalesce near-simultaneous requests into one forward pass |
+| `ASR_MAX_BATCH_SIZE` | `4` | Max requests per micro-batch |
+| `ASR_REQUEST_TIMEOUT_S` | `45` | Per-request queue wait timeout |
+
+The handler accepts raw `audio/wav` bytes or JSON payloads with:
+
+- `inputs` (base64/string/bytes audio), and optional
+- `parameters` (`language`, `task`, `return_timestamps`, `chunk_length_s`, `temperature`)
+
+### Basic Transcription
+
+```python
+from transformers import pipeline
+
+pipe = pipeline(
+    "automatic-speech-recognition",
+    model="wasimlhr/whisper-quran-v1",
+    device=0  # GPU, or -1 for CPU
+)
+
+result = pipe(
+    "recitation.wav",
+    generate_kwargs={"language": "ar", "task": "transcribe"}
+)
+print(result["text"])
+```
+
+### From Audio Array (No ffmpeg Required)
+
+```python
+import librosa
+
+audio, sr = librosa.load("recitation.wav", sr=16000)
+result = pipe(
+    {"array": audio, "sampling_rate": 16000},
+    generate_kwargs={"language": "ar", "task": "transcribe"}
+)
+print(result["text"])
+```
+
+### Direct Model Usage (Full Control)
+
+```python
+import torch
+import librosa
+from transformers import WhisperProcessor, WhisperForConditionalGeneration
+
+processor = WhisperProcessor.from_pretrained("wasimlhr/whisper-quran-v1")
+model = WhisperForConditionalGeneration.from_pretrained(
+    "wasimlhr/whisper-quran-v1",
+    torch_dtype=torch.float16
+).to("cuda")
+
+audio, sr = librosa.load("recitation.wav", sr=16000)
+inputs = processor(audio, sampling_rate=16000, return_tensors="pt")
+input_features = inputs.input_features.to("cuda").half()
+
+with torch.no_grad():
+    predicted_ids = model.generate(
+        input_features,
+        language="ar",
+        task="transcribe",
+    )
+
+text = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+print(text)
+```
+
+### Production Chunking (Recommended)
+
+For real-time applications, send audio in 5-10 second chunks rather than full recordings. This eliminates long-ayah drift and keeps transcription in the model's optimal accuracy range:
+
+```python
+import numpy as np
+
+CHUNK_SECONDS = 10
+SAMPLE_RATE = 16000
+
+audio, sr = librosa.load("long_recitation.wav", sr=SAMPLE_RATE)
+chunks = [\
+    audio[i:i + CHUNK_SECONDS * SAMPLE_RATE]\
+    for i in range(0, len(audio), CHUNK_SECONDS * SAMPLE_RATE)\
+]
+
+for i, chunk in enumerate(chunks):
+    result = pipe(
+        {"array": chunk, "sampling_rate": SAMPLE_RATE},
+        generate_kwargs={"language": "ar", "task": "transcribe"}
+    )
+    print(f"Chunk {i}: {result['text']}")
+```
+
+## Known Limitations
+
+1. **Long ayahs (20+ words):** Transcription drifts after ~15 words when processing full-length audio. Solved by chunking in production.
+
+2. **Systematic training artifact:** The phrase "وَإِيَّاكَ نَسْتَعِينُ" (Fatiha 1:5) consistently outputs as "وَإِنَّيِّيكَنَ اسْتَعِينِ" across all reciters — a known training artifact.
+
+3. **Diacritics:** The model sometimes produces slightly incorrect tashkeel (vowel marks). The core consonantal text is almost always correct, which is sufficient for verse identification.
+
+4. **Non-Quran audio:** The model is specialized for Quran recitation. General Arabic speech will produce poor results. Whisper's hallucination tokens ("شكرا", "موسيقى") appear on non-speech audio.
+
+5. **Single Qira'a:** Trained primarily on Hafs 'an 'Asim readings. Warsh, Qalun, and other qira'at are not specifically covered.
+
+
+## Deployment Options
+
+| Option | Cost | Latency | Best For |
+| --- | --- | --- | --- |
+| HuggingFace Inference Endpoint (GPU) | ~$0.60/hr | ~2-3s per chunk | Production apps |
+| HuggingFace Inference Endpoint (CPU) | ~$0.06/hr | ~8-10s per chunk | Budget / low traffic |
+| Replicate / Modal (serverless) | ~$0.0002/sec | ~2-3s per chunk | Intermittent use |
+| Self-hosted (Docker + GPU) | Hardware cost | ~2-3s per chunk | Privacy, offline |
+| `faster-whisper` (CTranslate2, CPU) | VPS ~$5/mo | ~10s per chunk | Single user, budget |
+
+## Citation
+
+```bibtex
+@misc{whisper-quran-v1,
+  title={Whisper Quran v1: Fine-tuned Whisper Large-v3 for Quranic Arabic Speech Recognition},
+  author={Abdul Rahman Nasim},
+  year={2026},
+  url={https://huggingface.co/wasimlhr/whisper-quran-v1},
+  note={Fine-tuned on Buraaq/quran-md-ayahs dataset}
+}
+
+@article{radford2022whisper,
+  title={Robust speech recognition via large-scale weak supervision},
+  author={Radford, Alec and Kim, Jong Wook and Xu, Tao and Brockman, Greg and McLeavey, Christine and Sutskever, Ilya},
+  journal={arXiv preprint arXiv:2212.04356},
+  year={2022}
+}
+```
+
+## Acknowledgments
+
+- **OpenAI** for the Whisper architecture and pre-trained weights
+- **Buraaq** for the comprehensive ayah-level Quran recitation dataset
+- The Quran reciter community for preserving and sharing these recordings
+
+## License
+
+This project and the fine-tuned Whisper model (wasimlhr/whisper-quran-v1) are free for personal, educational, and non-commercial use only. This includes mosques, madaris, Islamic schools, and non-profit organizations.
+Commercial use is strictly prohibited without prior written permission. This applies to the model weights, the application code, and any derivative works.
+For commercial licensing inquiries, contact via GitHub: wasimlhr/taraweeh-companion-g2
+
+Downloads last month195
+
+Safetensors
+
+Model size
+
+2B params
+
+Tensor type
+
+F32
+
+·
+
+Files info
+
+Inference Providers [NEW](https://huggingface.co/docs/inference-providers)
+
+[Automatic Speech Recognition](https://huggingface.co/tasks/automatic-speech-recognition "Learn more about automatic-speech-recognition")
+
+This model isn't deployed by any Inference Provider. [🙋Ask for provider support](https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/new?title=wasimlhr/whisper-quran-v1&description=React%20to%20this%20comment%20with%20an%20emoji%20to%20vote%20for%20%5Bwasimlhr%2Fwhisper-quran-v1%5D(%2Fwasimlhr%2Fwhisper-quran-v1)%20to%20be%20supported%20by%20Inference%20Providers.%0A%0A(optional)%20Which%20providers%20are%20you%20interested%20in%3F%20(Novita%2C%20Hyperbolic%2C%20Together%E2%80%A6)%0A)
+
+## Model tree for wasimlhr/whisper-quran-v1
+
+Base model
+
+[openai/whisper-large-v3](https://huggingface.co/openai/whisper-large-v3)
+
+Finetuned
+
+( [1086](https://huggingface.co/models?other=base_model:finetune:openai/whisper-large-v3))
+
+this model
+
+Quantizations
+
+[1 model](https://huggingface.co/models?other=base_model:quantized:wasimlhr/whisper-quran-v1)
+
+## Dataset used to train wasimlhr/whisper-quran-v1
+
+## Space using wasimlhr/whisper-quran-v11
+
+## Paper for wasimlhr/whisper-quran-v1
+
+[Paper • 2212.04356 •Published Dec 6, 2022• 56](https://huggingface.co/papers/2212.04356)
+
+## Evaluation results
+
+- WER (best checkpoint)on Buraaq/quran-md-ayahs (holdout)
+[self-reported](https://huggingface.co/wasimlhr/whisper-quran-v1/blob/main/README.md)
+
+
+5.350
+
+- WER (released checkpoint)on Buraaq/quran-md-ayahs (holdout)
+[self-reported](https://huggingface.co/wasimlhr/whisper-quran-v1/blob/main/README.md)
+
+
+5.740

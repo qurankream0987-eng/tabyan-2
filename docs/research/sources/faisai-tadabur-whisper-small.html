@@ -1,0 +1,142 @@
+Source: https://huggingface.co/FaisaI/tadabur-Whisper-Small
+Title: FaisaI/tadabur-Whisper-Small · Hugging Face
+Fetched: 2026-10-05T15:27:15.617Z
+
+![](https://huggingface.co/datasets/FaisaI/tadabur/resolve/main/tadabur_logo.png)
+
+# Tadabur-Whisper-Small
+
+A Whisper Small model fine-tuned on [Tadabur](https://huggingface.co/datasets/FaisaI/tadabur) for Qur'anic speech recognition.
+
+[![Paper](https://img.shields.io/badge/Paper-Read-a27b5c?style=flat-square)](https://huggingface.co/papers/2604.18932)[![Dataset](https://img.shields.io/badge/%F0%9F%A4%97_Dataset-FaisaI%2Ftadabur-c8a97a?style=flat-square)](https://huggingface.co/datasets/FaisaI/tadabur)[![Base Model](https://img.shields.io/badge/Base-Whisper_Small-1c1f1e?style=flat-square)](https://huggingface.co/openai/whisper-small)[![License](https://img.shields.io/badge/License-CC_BY--NC_4.0-e6ddd0?style=flat-square)](https://creativecommons.org/licenses/by-nc/4.0/)[![Page](https://img.shields.io/badge/%F0%9F%8C%90_Project_Page-tadabur-a27b5c?style=flat-square)](https://fherran.github.io/tadabur)
+
+* * *
+
+## Overview
+
+**Tadabur-Whisper-Small** is a fine-tuned version of [Whisper Small](https://huggingface.co/openai/whisper-small) on the [Tadabur dataset](https://huggingface.co/datasets/FaisaI/tadabur), as presented in the paper [Tadabur: A Large-Scale Quran Audio Dataset](https://huggingface.co/papers/2604.18932).
+
+- **GitHub Repository:** [fherran/tadabur](https://github.com/fherran/tadabur)
+- **Project Page:** [fherran.github.io/tadabur](https://fherran.github.io/tadabur)
+
+* * *
+
+## Training Iteration
+
+| Step | Epoch | WER ↓ |
+| :-: | :-: | :-: |
+| 2,500 | 0.15 | 13.78% |
+| 5,000 | 0.30 | 11.20% |
+| 7,500 | 0.44 | 11.15% |
+| 25,000 | 1.48 | **7.89%** ⭐ |
+| 32,500 | 1.93 | 14.75% |
+
+* * *
+
+## Usage
+
+```python
+from transformers import pipeline
+
+asr = pipeline(
+    "automatic-speech-recognition",
+    model="FaisaI/tadabur-whisper-small",
+    generate_kwargs={"language": "arabic"}
+)
+
+result = asr("path/to/audiofile")
+print(result["text"])
+```
+
+Or with the full Whisper API:
+
+```python
+from transformers import WhisperProcessor, WhisperForConditionalGeneration
+import librosa
+
+processor = WhisperProcessor.from_pretrained("FaisaI/tadabur-whisper-small")
+model = WhisperForConditionalGeneration.from_pretrained("FaisaI/tadabur-whisper-small")
+
+# Audio must be 16kHz mono
+audio_array, sampling_rate = librosa.load("path/to/audiofile", sr=16000,mono=True)
+inputs = processor(audio_array, sampling_rate=16000, return_tensors="pt")
+
+predicted_ids = model.generate(**inputs, language="arabic")
+transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)
+print(transcription[0])
+```
+
+* * *
+
+## Limitations
+
+- Not suitable for speaker identification or diarization.
+- May underperform on noisy or low-quality recordings.
+- Not fully generalized — transcription errors are expected.
+
+* * *
+
+## Ethical Considerations
+
+This model is trained exclusively on Qur'anic recitation data. Users must engage with outputs respectfully and must not use this model for mockery, distortion, or any disrespectful application involving Qur'anic content.
+
+**For research and educational use only.**
+
+* * *
+
+## Citation
+
+```bibtex
+@misc{alherran2026tadabur,
+  author        = {Alherran, Faisal},
+  title         = {Tadabur: A Large-Scale Quran Audio Dataset},
+  year          = {2026},
+  eprint        = {2604.18932},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.SD},
+  doi           = {10.48550/arXiv.2604.18932},
+  url           = {https://arxiv.org/abs/2604.18932}
+}
+```
+
+Downloads last month106
+
+Safetensors
+
+Model size
+
+0.2B params
+
+Tensor type
+
+F32
+
+·
+
+Files info
+
+Inference Providers [NEW](https://huggingface.co/docs/inference-providers)
+
+[Automatic Speech Recognition](https://huggingface.co/tasks/automatic-speech-recognition "Learn more about automatic-speech-recognition")
+
+This model isn't deployed by any Inference Provider. [🙋Ask for provider support](https://huggingface.co/spaces/huggingface/InferenceSupport/discussions/new?title=FaisaI/tadabur-Whisper-Small&description=React%20to%20this%20comment%20with%20an%20emoji%20to%20vote%20for%20%5BFaisaI%2Ftadabur-Whisper-Small%5D(%2FFaisaI%2Ftadabur-Whisper-Small)%20to%20be%20supported%20by%20Inference%20Providers.%0A%0A(optional)%20Which%20providers%20are%20you%20interested%20in%3F%20(Novita%2C%20Hyperbolic%2C%20Together%E2%80%A6)%0A)
+
+## Model tree for FaisaI/tadabur-Whisper-Small
+
+Base model
+
+[openai/whisper-small](https://huggingface.co/openai/whisper-small)
+
+Finetuned
+
+( [3784](https://huggingface.co/models?other=base_model:finetune:openai/whisper-small))
+
+this model
+
+## Dataset used to train FaisaI/tadabur-Whisper-Small
+
+## Space using FaisaI/tadabur-Whisper-Small1
+
+## Paper for FaisaI/tadabur-Whisper-Small
+
+[Paper • 2604.18932 •Published Apr 21• 4](https://huggingface.co/papers/2604.18932)

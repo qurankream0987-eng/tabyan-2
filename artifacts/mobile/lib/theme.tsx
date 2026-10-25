@@ -1,0 +1,129 @@
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Appearance, Platform, useColorScheme } from "react-native";
+import { storage } from "./storage";
+import designTokens from "../constants/colors";
+import { initialThemeMode } from "./native-welcome-layout";
+
+export const palette = {
+  burgundy: designTokens.brand.burgundy,
+  burgundyLight: "#A02040",
+  maroon: "#4C091B",
+  maroonDeep: "#360512",
+  gold: "#D4AF37",
+  goldLight: "#F1D27A",
+  goldDark: "#B8860B",
+  cream: "#F5EFE0",
+  night: "#2B0D12",
+} as const;
+
+export type ThemeMode = "light" | "dark";
+export type ThemeColors = {
+  background: string;
+  card: string;
+  secondary: string;
+  text: string;
+  muted: string;
+  primary: string;
+  primaryText: string;
+  border: string;
+  input: string;
+  success: string;
+  danger: string;
+  selected: string;
+  disabled: string;
+  overlay: string;
+};
+
+/** هوية بصرية ثابتة لكل مسار تعليمي — قرآن أخضر، تجويد أزرق، شرعي بنفسجي، قراءات بني.
+ *  تُستخدم كلمسة تمييز خفيفة (حد جانبي/أيقونة) لا كخلفية كاملة، حفاظاً على الهوية الذهبية/الخمرية العامة. */
+export type LearningCategory = "quran" | "tajweed" | "sharia" | "qiraat";
+export type CategoryColors = Record<LearningCategory, string>;
+
+const categoriesLight: CategoryColors = designTokens.categories.light;
+const categoriesDark: CategoryColors = designTokens.categories.dark;
+
+/** مقياس التباعد والانحناء الموحّد — استخدمها بدل أرقام حرة جديدة. */
+export const spacing = designTokens.spacing;
+export const radius = designTokens.radius;
+
+const glassLight = "rgba(255,252,245,0.90)";
+const glassDark = "rgba(66,18,31,0.84)";
+
+const light: ThemeColors = {
+  background: designTokens.modes.light.background,
+  card: glassLight,
+  secondary: designTokens.modes.light.secondary,
+  text: designTokens.modes.light.foreground,
+  muted: designTokens.modes.light.mutedForeground,
+  primary: designTokens.modes.light.primary,
+  primaryText: designTokens.modes.light.primaryForeground,
+  border: designTokens.modes.light.border,
+  input: designTokens.modes.light.input,
+  success: designTokens.modes.light.success,
+  danger: designTokens.modes.light.destructive,
+  selected: designTokens.modes.light.burgundyBackground,
+  disabled: `rgba(128,0,32,${1 - designTokens.buttonStates.disabledOpacity})`,
+  overlay: designTokens.modes.light.overlay,
+};
+
+const dark: ThemeColors = {
+  background: designTokens.modes.dark.background,
+  card: glassDark,
+  secondary: designTokens.modes.dark.secondary,
+  text: designTokens.modes.dark.foreground,
+  muted: designTokens.modes.dark.mutedForeground,
+  primary: designTokens.modes.dark.primary,
+  primaryText: designTokens.modes.dark.primaryForeground,
+  border: designTokens.modes.dark.border,
+  input: designTokens.modes.dark.input,
+  success: designTokens.modes.dark.success,
+  danger: designTokens.modes.dark.destructive,
+  selected: designTokens.modes.dark.burgundyBackground,
+  disabled: `rgba(212,175,55,${1 - designTokens.buttonStates.disabledOpacity})`,
+  overlay: designTokens.modes.dark.overlay,
+};
+
+type ThemeContextValue = {
+  mode: ThemeMode;
+  colors: ThemeColors;
+  categories: CategoryColors;
+  isDark: boolean;
+  ready: boolean;
+  toggleTheme: () => void;
+};
+
+const ThemeContext = createContext<ThemeContextValue | null>(null);
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const system = useColorScheme();
+  const [mode, setMode] = useState<ThemeMode>(initialThemeMode(Platform.OS, system));
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    storage.getTheme().then((saved) => {
+      if (saved === "light" || saved === "dark") setMode(saved);
+    }).catch(() => {}).finally(() => setReady(true));
+  }, []);
+
+  const value = useMemo(() => ({
+    mode,
+    ready,
+    colors: mode === "dark" ? dark : light,
+    categories: mode === "dark" ? categoriesDark : categoriesLight,
+    isDark: mode === "dark",
+    toggleTheme: () => {
+      const next = mode === "dark" ? "light" : "dark";
+      setMode(next);
+      void storage.setTheme(next);
+      Appearance.setColorScheme?.(next);
+    },
+  }), [mode, ready]);
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
+
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  if (!context) throw new Error("useTheme must be used inside ThemeProvider");
+  return context;
+}

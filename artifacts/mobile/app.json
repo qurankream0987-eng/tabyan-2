@@ -1,0 +1,129 @@
+{
+  "expo": {
+    "name": "Tabyan",
+    "slug": "mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "tabyan",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.replit.tbyan",
+      "buildNumber": "6",
+      "infoPlist": {
+        "CFBundleDisplayName": "تبيان",
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "يستخدم تبيان الكاميرا عند بدء تسجيل اختبار تحديد المستوى أو التحقق المهني، وعند الانضمام إلى حلقة مرئية.",
+        "NSMicrophoneUsageDescription": "يستخدم تبيان الميكروفون عند بدء تسجيل اختبار أو تحقق مهني، وعند استخدام التصحيح الصوتي أو الحلقات المباشرة.",
+        "NSLocationWhenInUseUsageDescription": "يستخدم تبيان موقعك عند فتح مواقيت الصلاة أو القبلة، ولا يتتبعه في الخلفية."
+      },
+      "bitcode": false
+    },
+    "android": {
+      "package": "com.tabyan.app",
+      "versionCode": 1,
+      "permissions": [
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.INTERNET",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WAKE_LOCK",
+        "android.permission.BLUETOOTH",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.INTERNET",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WAKE_LOCK",
+        "android.permission.BLUETOOTH"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/logo-splash.png",
+          "imageWidth": 260,
+          "resizeMode": "contain",
+          "backgroundColor": "#4C091B"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "يستخدم تبيان الكاميرا عند بدء تسجيل اختبار تحديد المستوى أو التحقق المهني، وعند الانضمام إلى حلقة مرئية.",
+          "microphonePermission": "يستخدم تبيان الميكروفون عند بدء تسجيل اختبار أو تحقق مهني، وعند استخدام التصحيح الصوتي أو الحلقات المباشرة."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "يستخدم تبيان الصور فقط عندما تختار صورة غلاف لإضافتها إلى مكتبة المحتوى.",
+          "cameraPermission": "يستخدم تبيان الكاميرا عند بدء تسجيل اختبار تحديد المستوى أو التحقق المهني، وعند الانضمام إلى حلقة مرئية.",
+          "microphonePermission": "يستخدم تبيان الميكروفون عند بدء تسجيل اختبار أو تحقق مهني، وعند استخدام التصحيح الصوتي أو الحلقات المباشرة."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "يستخدم تبيان موقعك عند فتح مواقيت الصلاة أو القبلة، ولا يتتبعه في الخلفية.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false
+        }
+      ],
+      [
+        "react-native-audio-api",
+        {
+          "iosMicrophonePermission": "يستخدم تبيان الميكروفون عند بدء تسجيل اختبار أو تحقق مهني، وعند استخدام التصحيح الصوتي أو الحلقات المباشرة."
+        }
+      ],
+      "@config-plugins/react-native-webrtc",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ]
+    ],
+    "extra": {
+      "productionDomain": "tibyanquran.com",
+      "privacyUrl": "https://tibyanquran.com/privacy",
+      "termsUrl": "https://tibyanquran.com/terms",
+      "supportUrl": "https://tibyanquran.com/support",
+      "eas": {
+        "projectId": "bcac43ba-905a-4b13-a834-b36051da4da6"
+      }
+    },
+    "experiments": {
+      "typedRoutes": true
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/bcac43ba-905a-4b13-a834-b36051da4da6"
+    }
+  }
+}

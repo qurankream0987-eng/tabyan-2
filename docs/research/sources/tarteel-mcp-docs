@@ -1,0 +1,36 @@
+Source: https://mcp.tarteel.ai/docs
+Title: Tarteel MCP Server Docs
+Fetched: 2026-10-05T15:27:09.447Z
+
+[Skip to content](https://mcp.tarteel.ai/docs/#VPContent)
+
+On this page
+
+# Tarteel MCP Server Docs [​](https://mcp.tarteel.ai/docs/\#tarteel-mcp-server-docs)
+
+Use Tarteel Quran tools in Claude, Gemini, and OpenAI clients.
+
+## Start Here [​](https://mcp.tarteel.ai/docs/\#start-here)
+
+One-click install:
+
+- **ChatGPT** — [Install from the ChatGPT Apps directory](https://chatgpt.com/apps/tarteel/asdk_app_694ede64ff608191b4ae858c9f75f100)
+- **Claude (Web/Desktop)** — [Add Tarteel as a custom connector](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Tarteel&connectorUrl=https://mcp.tarteel.ai/mcp)
+
+For any other MCP client:
+
+1. Open the [Quick Start guide](https://mcp.tarteel.ai/docs/quick-start.html).
+2. Add this server URL in your app: `https://mcp.tarteel.ai/mcp`.
+3. Enable Tarteel tools and start querying Quran content.
+4. If you want to know more about the tools check [Tool Index](https://mcp.tarteel.ai/docs/tools/).
+
+## Public Listings [​](https://mcp.tarteel.ai/docs/\#public-listings)
+
+- [Glama MCP Integration Connector](https://glama.io/connectors/io.github.Khaled-Abdelhamid/tarteel-mcp-server)
+- [MCP Servers Directory: Tarteel AI](https://mcpservers.org/en/servers/mcp-tarteel-ai-docs)
+
+## Documentation & Support [​](https://mcp.tarteel.ai/docs/\#documentation-support)
+
+- [Privacy Policy](https://tarteel.ai/privacy)
+- [Terms / Data Processing](https://tarteel.ai/terms)
+- [Support](https://support.tarteel.ai/)

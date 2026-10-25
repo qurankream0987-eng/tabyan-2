@@ -1,0 +1,60 @@
+{
+  "release": "TABYAN_SMART_MUSHAF_RC1",
+  "webBuild": "pass",
+  "tests": {
+    "passed": 339,
+    "failed": 0,
+    "suites": 44,
+    "scope": "Tabyan primary app tests; nested Smart Mushaf tests are run separately"
+  },
+  "isolatedBundleBaselineTests": {
+    "passed": 62,
+    "failed": 0,
+    "suites": 12
+  },
+  "smartMushafTestRun": {
+    "passed": 63,
+    "failed": 0,
+    "suiteFilesExecuted": 13,
+    "suiteFilesBlocked": 0
+  },
+  "canonicalText": {
+    "sourceFile": "src/quran/data/tanzil-uthmani.txt",
+    "sourceSha256": "6933e133dd56db778c801bf738848454e43648105a151e8d84d86a7cae39ec5f",
+    "sourceTextVerbatim": true,
+    "runtimeAttributionVisible": true,
+    "incompleteCorpusFailsClosed": true,
+    "surahsVerified": 114,
+    "ayahRowsVerified": 6236,
+    "rawTokenizerCount": 77881,
+    "embeddedBasmalaPrefixesSeparated": 110,
+    "canonicalWordKeyCount": 77433
+  },
+  "tabyanIntegration": {
+    "route": "/student/smart-mushaf-v3",
+    "defaultRecitationProvider": "MockNabrProvider",
+    "liveNabrConnected": false,
+    "typecheck": "pass",
+    "productionBuild": "pass",
+    "routeStatus": "integrated; desktop and mobile previews verified; not published",
+    "buildWarnings": [
+      "Smart Mushaf route chunk: 1,522.68 kB minified, 332.24 kB gzip; the route is lazy-loaded."
+    ]
+  },
+  "testOnlyDependencies": {
+    "happy-dom": "21.0.1"
+  },
+  "liveNabrTested": false,
+  "productionAuthConnected": false,
+  "productionDbConnected": false,
+  "googleRuntimeDependency": false,
+  "oldTabyanMushafDependency": false,
+  "secretsFound": 0,
+  "architecture": {
+    "canonicalWordKeyInvariance": "verified",
+    "zeroBypassPipeline": "verified",
+    "layoutInvariantMasking": "verified",
+    "riffWavChunking": "verified",
+    "opusModeStatus": "not_implemented"
+  }
+}

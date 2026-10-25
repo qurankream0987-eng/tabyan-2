@@ -1,0 +1,52 @@
+{
+  "name": "@workspace/api-server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "export NODE_ENV=development && npm run build && npm run start",
+    "build": "node ./build.mjs",
+    "start": "node --enable-source-maps ./dist/index.mjs",
+    "ams-schema-setup": "tsx src/amsMigrationPreflight.ts",
+    "ams-storage-smoke": "tsx src/amsStorageSmokeTest.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test \"src/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1152.0",
+    "@aws-sdk/s3-request-presigner": "^3.1152.0",
+    "@google-cloud/storage": "^7.21.0",
+    "@grpc/grpc-js": "^1.14.4",
+    "@grpc/proto-loader": "^0.8.1",
+    "@msgpack/msgpack": "^3.1.3",
+    "@trpc/server": "^11.18.0",
+    "@workspace/api-zod": "*",
+    "@workspace/db": "*",
+    "@workspace/tabyan-domain": "*",
+    "@workspace/tabyan-trpc": "*",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.2.1",
+    "ffprobe-static": "^3.1.0",
+    "http-proxy-middleware": "^4.2.0",
+    "node-cron": "^4.6.0",
+    "pino": "^9.14.0",
+    "pino-http": "^10.5.0",
+    "ws": "^8.21.3",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.3.3",
+    "@types/node-cron": "^3.0.11",
+    "@types/ws": "^8.18.1",
+    "esbuild": "0.27.3",
+    "esbuild-plugin-pino": "^2.3.3",
+    "pino-pretty": "^13.1.3",
+    "thread-stream": "3.1.0",
+    "tsx": "4.23.1"
+  }
+}

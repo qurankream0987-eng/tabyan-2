@@ -1,0 +1,10 @@
+{
+  "name": "Tabyan Smart Mushaf",
+  "description": "The New Tabyan Smart Mushaf: Web-first, Nabr/QRC ready, provider-neutral smart Quran recitation, tasmee memorization, and correction platform.",
+  "requestFramePermissions": [
+    "android.permission.RECORD_AUDIO"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

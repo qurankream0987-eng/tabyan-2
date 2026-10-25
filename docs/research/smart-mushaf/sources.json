@@ -1,0 +1,526 @@
+{
+  "researchDate": "2026-10-15",
+  "citationRule": "Citation numbers are shared across the five-report audit suite and follow this registry.",
+  "sources": [
+    {
+      "citationNumber": 1,
+      "key": "alquranalkareem-repository",
+      "title": "alheekmahlib/alquranalkareem repository",
+      "url": "https://github.com/alheekmahlib/alquranalkareem",
+      "date": "Fetched 2026-10-15; repository last pushed 2026-10-12",
+      "tier": "Tier 1",
+      "evidenceLevel": "Repository page",
+      "evidencePath": "research/smart-mushaf/sources/alquranalkareem-github.md"
+    },
+    {
+      "citationNumber": 2,
+      "key": "alquranalkareem-pubspec",
+      "title": "alquranalkareem pubspec.yaml",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/alquranalkareem/main/pubspec.yaml",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/app-pubspec.md"
+    },
+    {
+      "citationNumber": 3,
+      "key": "alquranalkareem-github-api",
+      "title": "GitHub repository metadata for alquranalkareem",
+      "url": "https://api.github.com/repos/alheekmahlib/alquranalkareem",
+      "date": "Fetched 2026-10-15; last push 2026-10-12",
+      "tier": "Tier 1",
+      "evidenceLevel": "API metadata",
+      "evidencePath": "research/smart-mushaf/sources/app-api.md"
+    },
+    {
+      "citationNumber": 4,
+      "key": "quran-library-readme",
+      "title": "quran_library README",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/README.md",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Project documentation",
+      "evidencePath": "research/smart-mushaf/sources/quran-library-readme.md"
+    },
+    {
+      "citationNumber": 5,
+      "key": "quran-library-pubspec",
+      "title": "quran_library pubspec.yaml on main",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/pubspec.yaml",
+      "date": "Fetched 2026-10-15; source branch version 5.0.2",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/quran-library-pubspec-current.md"
+    },
+    {
+      "citationNumber": 6,
+      "key": "quran-library-pubdev-api",
+      "title": "quran_library pub.dev package API",
+      "url": "https://pub.dev/api/packages/quran_library",
+      "date": "Fetched 2026-10-15; latest metadata reports 5.0.1 uploaded 2026-09-23",
+      "tier": "Tier 1",
+      "evidenceLevel": "Package metadata",
+      "evidencePath": "research/smart-mushaf/sources/quran-library-pubdev-api-current.md"
+    },
+    {
+      "citationNumber": 7,
+      "key": "quran-library-mit-license",
+      "title": "quran_library MIT LICENSE",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/LICENSE",
+      "date": "Fetched 2026-10-15; copyright 2025",
+      "tier": "Tier 1",
+      "evidenceLevel": "License text",
+      "evidencePath": "research/smart-mushaf/sources/quran-library-license-source.md"
+    },
+    {
+      "citationNumber": 8,
+      "key": "quran-library-asset-notice",
+      "title": "quran_library NOTICE: QCF fonts and QUL/KFGQPC resources",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/NOTICE",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Project notice",
+      "evidencePath": "research/smart-mushaf/sources/quran-library-notice-source.md"
+    },
+    {
+      "citationNumber": 9,
+      "key": "quran-library-pubdev-page-current",
+      "title": "quran_library pub.dev package page",
+      "url": "https://pub.dev/packages/quran_library",
+      "date": "Fetched 2026-10-15; page reports 5.0.1 uploaded 2026-09-23",
+      "tier": "Tier 1",
+      "evidenceLevel": "Package release metadata",
+      "evidencePath": "research/smart-mushaf/sources/quran-library-pubdev-page-late-2026.md"
+    },
+    {
+      "citationNumber": 10,
+      "key": "quran-recitation-session",
+      "title": "Tasmee RecitationSession",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/lib/src/tasmee/engine/recitation_session.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/recitation-session-source.md"
+    },
+    {
+      "citationNumber": 11,
+      "key": "quran-sherpa-engine",
+      "title": "Sherpa Zipformer engine",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/lib/src/tasmee/engine/sherpa_zipformer_engine.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/sherpa-zipformer-engine-source.md"
+    },
+    {
+      "citationNumber": 12,
+      "key": "quran-phoneme-aligner",
+      "title": "Quran phoneme aligner",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/lib/src/tasmee/engine/phoneme_aligner.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/phoneme-aligner-source.md"
+    },
+    {
+      "citationNumber": 13,
+      "key": "quran-range-tracker",
+      "title": "RangeLiveTracker",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/lib/src/tasmee/engine/range_tracker.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/range-tracker-source.md"
+    },
+    {
+      "citationNumber": 14,
+      "key": "quranlab-npl-1-2",
+      "title": "Quran-Lab No-Profit License NPL-1.2",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/assets/quran_lab/LICENSE-QuranLab-NPL-1.2.txt",
+      "date": "Fetched 2026-10-15; version 1.2",
+      "tier": "Tier 1",
+      "evidenceLevel": "License text",
+      "evidencePath": "research/smart-mushaf/sources/quran-lab-license-source.md"
+    },
+    {
+      "citationNumber": 15,
+      "key": "qul-font-docs",
+      "title": "QUL font resource documentation",
+      "url": "https://qul.tarteel.ai/docs/font",
+      "date": "Fetched 2026-10-15; no license statement shown on listing page",
+      "tier": "Tier 1",
+      "evidenceLevel": "Resource listing",
+      "evidencePath": "research/smart-mushaf/sources/qul-font-documentation.md"
+    },
+    {
+      "citationNumber": 16,
+      "key": "kfgqpc-rights-discovery",
+      "title": "KFGQPC developer-resource discovery snippets",
+      "url": "https://qurancomplex.gov.sa/quran-dev",
+      "date": "Search snippets captured 2026-10-15; terms page fetch failed",
+      "tier": "Tier 1",
+      "evidenceLevel": "Snippet only; not a license grant",
+      "evidencePath": "research/smart-mushaf/sources/gapfill-rights-snippets.md"
+    },
+    {
+      "citationNumber": 17,
+      "key": "quran-audio-provider-discovery",
+      "title": "Audio providers listed by quran_audio",
+      "url": "https://github.com/alheekmahlib/quran_audio",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Project README lists providers but grants no recording rights",
+      "evidencePath": "research/smart-mushaf/sources/alheekmahlib-quran-audio.md"
+    },
+    {
+      "citationNumber": 18,
+      "key": "quran-audio-pubspec",
+      "title": "quran_audio pubspec.yaml",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_audio/main/pubspec.yaml",
+      "date": "Fetched 2026-10-15; source version 1.0.0",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/quran-audio-pubspec-current.md"
+    },
+    {
+      "citationNumber": 19,
+      "key": "quran-audio-pubdev-api",
+      "title": "quran_audio pub.dev package API",
+      "url": "https://pub.dev/api/packages/quran_audio",
+      "date": "Fetched 2026-10-15; latest metadata reports 1.0.0 uploaded 2026-07-11",
+      "tier": "Tier 1",
+      "evidenceLevel": "Package metadata",
+      "evidencePath": "research/smart-mushaf/sources/quran-audio-pubdev-api-current.md"
+    },
+    {
+      "citationNumber": 20,
+      "key": "quran-audio-repository",
+      "title": "alheekmahlib/quran_audio repository and README",
+      "url": "https://github.com/alheekmahlib/quran_audio",
+      "date": "Fetched 2026-10-15; repository activity page shows 2026-07-11 changes",
+      "tier": "Tier 1",
+      "evidenceLevel": "Repository/README",
+      "evidencePath": "research/smart-mushaf/sources/alheekmahlib-quran-audio.md"
+    },
+    {
+      "citationNumber": 21,
+      "key": "quran-audio-pubdev-page-current",
+      "title": "quran_audio pub.dev package page",
+      "url": "https://pub.dev/packages/quran_audio",
+      "date": "Fetched 2026-10-15; page reports 1.0.0 uploaded 2026-07-11",
+      "tier": "Tier 1",
+      "evidenceLevel": "Package release metadata",
+      "evidencePath": "research/smart-mushaf/sources/quran-audio-pubdev-page-late-2026.md"
+    },
+    {
+      "citationNumber": 22,
+      "key": "quran-pages-screen",
+      "title": "Quran pages screen",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/lib/src/pages/quran_pages_screen.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/quran-pages-screen-source.md"
+    },
+    {
+      "citationNumber": 23,
+      "key": "quran-rich-text-reveal",
+      "title": "QPC RichText Tasmee word-state rendering",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/lib/src/quran/presentation/widgets/download_fonts_page/rich_text_build.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/quran-rich-text-build-source.md"
+    },
+    {
+      "citationNumber": 24,
+      "key": "quran-phoneme-units",
+      "title": "Quran phoneme units",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/lib/src/tasmee/engine/quran_units.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/quran_units-source.md"
+    },
+    {
+      "citationNumber": 25,
+      "key": "tasmee-reference-store",
+      "title": "TasmeeReferenceStore",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/lib/src/tasmee/core/services/tasmee_reference_store.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/tasmee-reference-store-source.md"
+    },
+    {
+      "citationNumber": 26,
+      "key": "tasmee-final-reconciliation",
+      "title": "Tasmee final reconciliation",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/lib/src/tasmee/engine/final_reconciliation.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/final-reconciliation-source.md"
+    },
+    {
+      "citationNumber": 27,
+      "key": "tasmee-error-detector",
+      "title": "Tasmee error detector",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/lib/src/tasmee/engine/error_detector.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/error-detector-source.md"
+    },
+    {
+      "citationNumber": 28,
+      "key": "tasmee-madd-timing",
+      "title": "Tasmee madd timing heuristic",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/lib/src/tasmee/engine/madd_timing.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/madd-timing-source.md"
+    },
+    {
+      "citationNumber": 29,
+      "key": "quran-library-source-tree",
+      "title": "quran_library repository source tree",
+      "url": "https://api.github.com/repos/alheekmahlib/quran_library/git/trees/main?recursive=1",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Repository file listing; absence is only a search result, not proof",
+      "evidencePath": "research/smart-mushaf/sources/quran-library-source-tree.md"
+    },
+    {
+      "citationNumber": 30,
+      "key": "tasmee-model-service",
+      "title": "Tasmee optional model download service",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_library/main/lib/src/tasmee/core/services/tasmee_model_service.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file",
+      "evidencePath": "research/smart-mushaf/sources/tasmee-model-service-source.md"
+    },
+    {
+      "citationNumber": 31,
+      "key": "quranlab-zipformer-card",
+      "title": "Quran-Lab Zipformer P Arabic v3 model card",
+      "url": "https://huggingface.co/Quran-Lab/zipformer_p-arabic-v3/blob/main/README.md",
+      "date": "Fetched 2026-10-15; model-card publication date not stated",
+      "tier": "Tier 3",
+      "evidenceLevel": "Publisher/model card",
+      "evidencePath": "research/smart-mushaf/sources/quran-lab-zipformer-card.md"
+    },
+    {
+      "citationNumber": 32,
+      "key": "quran-audio-qrc-client",
+      "title": "quran_audio QrcClient",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_audio/main/lib/src/recitation/qrc_client.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file on mutable main branch",
+      "evidencePath": "research/smart-mushaf/sources/qrc-client-source.md"
+    },
+    {
+      "citationNumber": 33,
+      "key": "quran-audio-qrc-session",
+      "title": "quran_audio RecitationSession",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_audio/main/lib/src/recitation/recitation_session.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file on mutable main branch",
+      "evidencePath": "research/smart-mushaf/sources/qrc-session-source.md"
+    },
+    {
+      "citationNumber": 34,
+      "key": "quran-audio-qrc-config",
+      "title": "quran_audio QrcConfig",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_audio/main/lib/src/recitation/models/qrc_config.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file on mutable main branch",
+      "evidencePath": "research/smart-mushaf/sources/qrc-config-source-current.md"
+    },
+    {
+      "citationNumber": 35,
+      "key": "quran-audio-qrc-method",
+      "title": "quran_audio QrcMethod wire strings",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_audio/main/lib/src/recitation/models/qrc_method.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file on mutable main branch",
+      "evidencePath": "research/smart-mushaf/sources/qrc-method-source-current.md"
+    },
+    {
+      "citationNumber": 36,
+      "key": "quran-audio-qrc-feedback",
+      "title": "quran_audio QrcFeedback JSON parser",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_audio/main/lib/src/recitation/models/qrc_feedback.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file on mutable main branch",
+      "evidencePath": "research/smart-mushaf/sources/qrc-feedback-source-current.md"
+    },
+    {
+      "citationNumber": 37,
+      "key": "quran-audio-qrc-constants",
+      "title": "quran_audio QRC constants and event names",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_audio/main/lib/src/recitation/qrc_constants.dart",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Source file on mutable main branch",
+      "evidencePath": "research/smart-mushaf/sources/qrc-constants-source.md"
+    },
+    {
+      "citationNumber": 38,
+      "key": "qrc-official-guide",
+      "title": "Qurani.ai Nabr real-time recitation correction API guide",
+      "url": "https://qurani.ai/en/docs/2-advanced-tools/qrc",
+      "date": "Fetched 2026-10-15; publication/version date not shown",
+      "tier": "Tier 1",
+      "evidenceLevel": "Provider protocol documentation",
+      "evidencePath": "research/smart-mushaf/sources/qurani-ai-qrc-guide.md"
+    },
+    {
+      "citationNumber": 39,
+      "key": "quran-audio-mit-license",
+      "title": "quran_audio MIT LICENSE",
+      "url": "https://raw.githubusercontent.com/alheekmahlib/quran_audio/main/LICENSE",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "License text",
+      "evidencePath": "research/smart-mushaf/sources/audio-license.md"
+    },
+    {
+      "citationNumber": 40,
+      "key": "qul-changelog-october-2026",
+      "title": "QUL changelog: October 2026 font fix",
+      "url": "https://qul.tarteel.ai/change_logs/23",
+      "date": "2026-10-05",
+      "tier": "Tier 1",
+      "evidenceLevel": "Official resource changelog; no rights text",
+      "evidencePath": "research/smart-mushaf/sources/qul-changelog-2026-10.md"
+    },
+    {
+      "citationNumber": 41,
+      "key": "qul-rights-discovery",
+      "title": "QUL resource and terms discovery snippets",
+      "url": "https://qul.tarteel.ai/docs/download-resources",
+      "date": "Search snippets captured 2026-10-15; terms page not fetched",
+      "tier": "Tier 1",
+      "evidenceLevel": "Snippet only; not a license grant",
+      "evidencePath": "research/smart-mushaf/sources/gapfill-rights-snippets.md"
+    },
+    {
+      "citationNumber": 42,
+      "key": "qul-homepage-terms-link",
+      "title": "QUL homepage terms-link inspection",
+      "url": "https://qul.tarteel.ai/",
+      "date": "Fetched 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Page extraction did not expose the footer link or asset-rights terms",
+      "evidencePath": "research/smart-mushaf/sources/qul-homepage-terms-link.md"
+    },
+    {
+      "citationNumber": 43,
+      "key": "quran-text-notice",
+      "title": "quran-ws/quran-text NOTICE",
+      "url": "https://github.com/quran-ws/quran-text/blob/main/NOTICE.md",
+      "date": "Updated 2026-09-12 per saved page",
+      "tier": "Tier 1",
+      "evidenceLevel": "Project notice about its own data and upstream assets",
+      "evidencePath": "research/smart-mushaf/sources/kfgqpc-quran-text-notice.md"
+    },
+    {
+      "citationNumber": 44,
+      "key": "quran-foundation-developer-terms",
+      "title": "Quran Foundation API Developer Terms",
+      "url": "https://api-docs.quran.com/legal/developer-terms",
+      "date": "Updated 2026-10-11 per saved source",
+      "tier": "Tier 1",
+      "evidenceLevel": "Official terms; applies to QF API content, not automatically to QUL downloads",
+      "evidencePath": "research/smart-mushaf/sources/gapfill-rights-02.md"
+    },
+    {
+      "citationNumber": 45,
+      "key": "quran-foundation-terms-canonical",
+      "title": "Quran Foundation Developer Terms, foundation-domain URL",
+      "url": "https://api-docs.quran.foundation/legal/developer-terms/",
+      "date": "Fetched 2026-10-15; page says updated 2026-10-11",
+      "tier": "Tier 1",
+      "evidenceLevel": "Official terms; applies to QF services",
+      "evidencePath": "research/smart-mushaf/sources/qf-terms-foundation-domain.md"
+    },
+    {
+      "citationNumber": 46,
+      "key": "flutter-add-to-app",
+      "title": "Flutter add-to-app guide",
+      "url": "https://docs.flutter.dev/add-to-app",
+      "date": "Fetched 2026-10-15; publication date not stated",
+      "tier": "Tier 1",
+      "evidenceLevel": "Official framework documentation",
+      "evidencePath": "research/smart-mushaf/sources/flutter-add-to-app.md"
+    },
+    {
+      "citationNumber": 47,
+      "key": "flutter-add-to-app-performance",
+      "title": "Flutter add-to-app performance, load sequence, and memory",
+      "url": "https://docs.flutter.dev/add-to-app/performance",
+      "date": "Fetched 2026-10-15; publication date not stated",
+      "tier": "Tier 1",
+      "evidenceLevel": "Official framework documentation",
+      "evidencePath": "research/smart-mushaf/sources/flutter-add-to-app-performance.md"
+    },
+    {
+      "citationNumber": 48,
+      "key": "expo-custom-native",
+      "title": "Expo: add custom native code",
+      "url": "https://docs.expo.dev/workflow/customizing/",
+      "date": "Fetched 2026-10-15; publication date not stated",
+      "tier": "Tier 1",
+      "evidenceLevel": "Official framework documentation",
+      "evidencePath": "research/smart-mushaf/sources/expo-custom-native.md"
+    },
+    {
+      "citationNumber": 49,
+      "key": "expo-development-builds",
+      "title": "Expo development builds FAQ",
+      "url": "https://docs.expo.dev/develop/development-builds/faq/",
+      "date": "Search snippet captured 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Snippet only",
+      "evidencePath": "research/smart-mushaf/sources/expo-development-builds-snippets.md"
+    },
+    {
+      "citationNumber": 50,
+      "key": "apple-universal-links",
+      "title": "Apple: supporting universal links",
+      "url": "https://developer.apple.com/documentation/xcode/supporting-universal-links-in-your-app",
+      "date": "Search snippet captured 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Snippet only",
+      "evidencePath": "research/smart-mushaf/sources/apple-universal-links-snippets.md"
+    },
+    {
+      "citationNumber": 51,
+      "key": "apple-keychain-groups",
+      "title": "Apple Keychain Access Groups entitlement",
+      "url": "https://developer.apple.com/documentation/bundleresources/entitlements/keychain-access-groups",
+      "date": "Search snippet captured 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Snippet only",
+      "evidencePath": "research/smart-mushaf/sources/apple-keychain-groups-snippets.md"
+    },
+    {
+      "citationNumber": 52,
+      "key": "android-services",
+      "title": "Android background services overview",
+      "url": "https://developer.android.com/develop/background-work/services",
+      "date": "Search snippet captured 2026-10-15",
+      "tier": "Tier 1",
+      "evidenceLevel": "Snippet only",
+      "evidencePath": "research/smart-mushaf/sources/android-services-snippets.md"
+    }
+  ]
+}

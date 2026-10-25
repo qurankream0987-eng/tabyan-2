@@ -1,0 +1,176 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Tabyan Smart Mushaf — QCF page and live word states.
+   Geometry rules: word states change colour and paint-only backgrounds
+   (background / box-shadow / text-decoration). Never font-size, weight,
+   padding, margin, border or width — QCF line geometry must not move.
+═══════════════════════════════════════════════════════════════════ */
+
+.sm-mushaf {
+  --sm-paper: #fdfaf2;
+  --sm-ink: #1b1214;
+  --sm-ground: #f5efe2;
+  --sm-current-bg: color-mix(in srgb, #c5a059 34%, transparent);
+  --sm-current-ink: #4a0e17;
+  --sm-current-ring: color-mix(in srgb, #c5a059 55%, transparent);
+  --sm-candidate-bg: color-mix(in srgb, #c5a059 16%, transparent);
+  --sm-confirmed-ink: #2f5d46;
+  --sm-skipped-line: #b07d1e;
+  --sm-mistake-line: #9f1d2b;
+  --sm-revealed-ink: #832238;
+  --sm-page-number: color-mix(in srgb, #6b1d2f 62%, transparent);
+  position: relative;
+  width: 100%;
+  contain: layout;
+}
+
+.dark .sm-mushaf {
+  --sm-paper: #1f1619;
+  --sm-ink: #efe4d2;
+  --sm-ground: #170f11;
+  --sm-current-bg: color-mix(in srgb, #e5c378 30%, transparent);
+  --sm-current-ink: #fff4dc;
+  --sm-current-ring: color-mix(in srgb, #e5c378 50%, transparent);
+  --sm-candidate-bg: color-mix(in srgb, #e5c378 14%, transparent);
+  --sm-confirmed-ink: #9fd1b4;
+  --sm-skipped-line: #e0a96d;
+  --sm-mistake-line: #f08a7e;
+  --sm-revealed-ink: #e5c378;
+  --sm-page-number: color-mix(in srgb, #e5c378 60%, transparent);
+}
+
+.sm-slot {
+  position: absolute;
+  inset-inline: 0;
+  margin-inline: auto;
+}
+
+/* The paper reuses the reader's printed-page surface; dark mode swaps its tokens. */
+.sm-paper.tby-mushaf-paper {
+  --mushaf-paper: var(--sm-paper);
+  --mushaf-ink: var(--sm-ink);
+  --mushaf-orn: #800020;
+  --mushaf-orn-accent: #c5a059;
+  --mushaf-orn-soft: color-mix(in srgb, #c5a059 45%, var(--sm-paper));
+  --mushaf-orn-deep: #4c091b;
+  --mushaf-banner-wash: color-mix(in srgb, #c5a059 12%, var(--sm-paper));
+  --mushaf-medallion-ink: #4c091b;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(76, 9, 27, 0.06), 0 10px 28px -16px rgba(76, 9, 27, 0.28);
+}
+
+.dark .sm-paper.tby-mushaf-paper {
+  --mushaf-orn: #e5c378;
+  --mushaf-orn-deep: #f3dfb0;
+  --mushaf-medallion-ink: #e5c378;
+  background: var(--sm-paper);
+  box-shadow: 0 0 0 1px rgba(229, 195, 120, 0.14);
+}
+
+.dark .sm-paper.tby-mushaf-paper::before { opacity: 0; }
+
+.sm-row {
+  position: absolute;
+  inset-inline: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sm-line {
+  display: flex;
+  width: 94%;
+  align-items: center;
+  justify-content: space-between;
+  white-space: nowrap;
+  line-height: 1;
+  color: var(--sm-ink);
+}
+
+.sm-line-centered {
+  width: auto;
+  justify-content: center;
+  column-gap: 0.24em;
+}
+
+.sm-basmala {
+  white-space: nowrap;
+  line-height: 1;
+  color: var(--sm-ink);
+  position: relative;
+  top: -0.1em;
+}
+
+.sm-page-number {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 14px;
+  font: 600 10px/14px 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  text-align: center;
+  color: var(--sm-page-number);
+  pointer-events: none;
+}
+
+.sm-page-error {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 500 13px/1.6 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  color: var(--sm-page-number);
+}
+
+/* ── Live word states ─────────────────────────────────────────────── */
+
+.sm-word {
+  border-radius: 0.16em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 90ms linear, color 90ms linear, box-shadow 90ms linear;
+}
+
+.sm-word[data-s='current'] {
+  color: var(--sm-current-ink);
+  background-color: var(--sm-current-bg);
+  /* Visual breathing room without changing the glyph's box. */
+  box-shadow: 0 0 0 0.07em var(--sm-current-bg), 0 0.1em 0 0 var(--sm-current-ring);
+}
+
+.sm-word[data-s='candidate'] {
+  background-color: var(--sm-candidate-bg);
+  box-shadow: 0 0 0 0.05em var(--sm-candidate-bg);
+}
+
+.sm-mushaf[data-show-confirmed='true'] .sm-word[data-b='confirmed']:not([data-s='current']) {
+  color: var(--sm-confirmed-ink);
+}
+
+.sm-word[data-b='skipped']:not([data-s='current']) {
+  text-decoration: underline dashed var(--sm-skipped-line) 0.04em;
+  text-underline-offset: 0.18em;
+}
+
+.sm-word[data-b='revealed']:not([data-s='current']) {
+  color: var(--sm-revealed-ink);
+}
+
+.sm-word[data-mistake] {
+  text-decoration: underline wavy var(--sm-mistake-line) 0.04em;
+  text-underline-offset: 0.2em;
+}
+
+.sm-word[data-tashkeel]:not([data-mistake]) {
+  text-decoration: underline dotted var(--sm-skipped-line) 0.05em;
+  text-underline-offset: 0.2em;
+}
+
+/* Tasmee: unrecited words are masked; their exact advances stay in place, and
+   the current position still shows as a highlighted slot. */
+.sm-mushaf[data-mask='tasmee'] .sm-word:not([data-b='confirmed']):not([data-b='revealed']) {
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sm-word { transition: none; }
+}

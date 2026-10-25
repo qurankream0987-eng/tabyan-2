@@ -1,0 +1,164 @@
+Source: https://huggingface.co/datasets/Quran-Lab/quranic-asr-benchmark
+Title: Quran-Lab/quranic-asr-benchmark · Datasets at Hugging Face
+Fetched: 2026-10-10T21:08:31.488Z
+
+## You need to agree to share your contact information to access this dataset
+
+This repository is publicly accessible, but you have to accept the conditions to access its files and content.
+
+This benchmark contains Quranic recitation audio from three sources, including REAL USER PHONE RECORDINGS (Tarteel tlog) and studio recitations, redistributed here only to enable reproducible ASR evaluation. By requesting access you agree: (1) to use it solely for ASR research / evaluation, (2) NOT to redistribute the audio or use it for voice cloning / TTS / re-identification, and (3) to respect the reciters' and users' rights and the upstream dataset terms (tarteel-ai/tlog, tarteel-ai/everyayah, QUL).
+
+[Log in](https://huggingface.co/login?next=%2Fdatasets%2FQuran-Lab%2Fquranic-asr-benchmark) or [Sign Up](https://huggingface.co/join?next=%2Fdatasets%2FQuran-Lab%2Fquranic-asr-benchmark) to review the conditions and access this dataset content.
+
+# Quranic ASR Benchmark - leakage-free, held-out
+
+A small, **leakage-free** benchmark (600 clips) for evaluating Arabic ASR on **Quranic recitation**
+**(Hafs riwayah)**. Every clip is verified **absent from our training data**, so it measures
+generalization, not memorization. Same clips + same scoring for every model.
+
+📊 Live leaderboard: **[https://huggingface.co/spaces/Muno459/quranic-asr-leaderboard](https://huggingface.co/spaces/Muno459/quranic-asr-leaderboard)**
+
+## The set (600 clips, 200 per source)
+
+| Source | n | What it is |
+| --- | --- | --- |
+| `everyayah_heldout` | 200 | 3 EveryAyah reciters with **zero** training samples (clean studio). |
+| `qul_alnufais` | 200 | A QUL reciter (Al-Nufais) never trained on; references from the canonical mushaf. |
+| `tlog_holdout` | 200 | **Real phone-mic** recitation held out from training (the hard, real-world case). |
+
+`tlog` is the one that matters for apps; studio numbers flatter every model.
+
+## Hugging Face loading
+
+Each source is exposed as its own dataset configuration with a single `test` split.
+Rows include `audio`, `text`, `id`, and `source`, so ASR evaluation can be run without
+extra reference-transcript preprocessing.
+
+```python
+from datasets import load_dataset
+
+ds = load_dataset("Muno459/quranic-asr-benchmark", "tlog_holdout", split="test")
+print(ds[0]["audio"], ds[0]["text"])
+```
+
+Available configs:
+
+- `everyayah_heldout` \- clean studio held-out EveryAyah reciters
+- `qul_alnufais` \- held-out QUL Al-Nufais reciter
+- `tlog_holdout` \- held-out real phone-mic Tarteel tlog recordings
+
+## Files
+
+- `benchmark.jsonl` \- one row per clip: `id`, `source`, `reference_text`, `audio` (relative path).
+- `audio/<source>/*.wav` \- 16 kHz mono audio.
+- `score.py` \- the official scorer (exact normalization + WER/CER, per-source + overall).
+- `results.json` \- current leaderboard results.
+
+## How to evaluate your model
+
+```bash
+# 1. transcribe every clip in benchmark.jsonl (use the `audio` path), write one hyp per `id`:
+#    {"id": "everyayah_heldout/xxx", "text": "..."}   (jsonl)  OR  {id: text} (json)
+# 2. score (same normalization as the leaderboard):
+pip install rapidfuzz
+python score.py --hyps my_hyps.jsonl
+```
+
+## Scoring / normalization
+
+WER & CER over normalized text: combining marks + Quranic annotation signs + tatweel stripped;
+hamza forms and alef-maqsura unified. The **alef-insensitive** column additionally strips alef to
+neutralize the Uthmani-rasm vs imlaei spelling-convention mismatch (eval refs are rasm-ish; many
+models output imlaei), reflecting true word accuracy over orthography.
+
+### Inference config (language hint)
+
+Each model is run to **transcribe in Arabic**, with the language set wherever the model exposes one, so
+every model is evaluated in its intended Arabic mode (not language-auto-detect, which under-rates
+multilingual models on short clips):
+
+| Model / family | Arabic hint |
+| --- | --- |
+| Whisper (large-v3) | `language="arabic"`, `task="transcribe"` |
+| Seamless-m4t-v2 | `tgt_lang="arb"` |
+| omniASR | `lang="arb_Arab"` |
+| Cohere transcribe | `language="ar"` |
+| Gemma-4 | prompt "transcribe in Arabic" |
+| Qwen3-ASR | `language="Arabic"` |
+| Tarteel (official) | `ar-SA` |
+| ElevenLabs Scribe v2 | `ar` |
+| Deepgram nova-3 | `ar` |
+| Speechmatics enhanced | `ar` |
+| Google Chirp 3 (sync + realtime) | `ar-XA` |
+| Arabic-only models (this/nvidia-ar/Tarteel-whisper) | n/a (single-language) |
+
+Decoding is greedy / each model's default. **No language-model rescoring, and no forced alignment** -
+every model only ever sees the audio, never the reference transcript. Whisper uses short-form decoding
+(timestamp tokens only for the rare clip > 30 s, which Whisper requires for long audio; this is the
+model's own prediction, not alignment to the reference).
+
+## Leakage control
+
+The public EveryAyah `test` split overlaps most Quran ASR training sets, so we use only the EveryAyah
+reciters with **zero** training overlap, plus a held-out QUL reciter and held-out real-phone tlog.
+nvidia FastConformer (current public #1) is scored on the **same** clips for a fair head-to-head.
+
+## Acknowledgements
+
+Special thanks to **David Jiménez Paredes** / **deepdml** for the original community effort around the
+[Open Universal Arabic Quranic ASR Leaderboard](https://huggingface.co/spaces/deepdml/open_universal_arabic_quranic_asr_leaderboard),
+which helped inspire this benchmark and leaderboard work. His feedback directly improved this dataset's
+Hugging Face structure (source-specific configurations and direct transcript fields for easier downstream
+evaluation), and his careful review materially raised its rigor - catching a scorer/results metric
+mismatch, identifying that whisper-large-v3 was being evaluated without the Arabic language hint, and
+contributing the prediction script used to standardize inference across models.
+
+## Provenance & licensing
+
+Audio is redistributed for research reproducibility under a manual-approval gate. Upstream sources and
+their terms: **EveryAyah** (`tarteel-ai/everyayah`, CC-BY 4.0), **tlog** (`tarteel-ai/tlog`, gated),
+**QUL** (qul.tarteel.ai). Respect each upstream license; do not redistribute the audio. Reciters and
+tlog users retain their rights. If you are a rights-holder and want a clip removed, open a discussion.
+
+## Revision v1.1 (2026-08-15): corrected references for 10 qul\_alnufais clips
+
+Ten clips in the `qul_alnufais` split contain more speech than their reference covered. In nine of
+them the reciter recites the ayah twice in the same recording; in one (`51_56`) the recording
+contains 51:56, then 51:57, then 51:56 again.
+
+**The defect originates upstream, not in this benchmark's pipeline or in any evaluated model.** The
+audio files were obtained from QUL (qul.tarteel.ai), already segmented per ayah and named
+`surah_ayah` by QUL; QUL presents these segments as human-reviewed. Each reference here is the
+canonical text of exactly the ayah QUL's own file naming declares. For these ten files the audio as
+distributed by QUL contains repeated recitation that the per-ayah naming does not reflect, so any
+faithful transcription of the full recording disagreed with the reference.
+
+The affected clips: `37_43, 37_83, 24_20, 50_21, 43_46, 6_132, 6_102, 17_72, 6_32, 51_56`.
+
+Each correction was verified against the audio before being applied: the repeated composition was
+selected by matching a phoneme-level decode of the recording against candidate reference
+compositions (for `51_56` the chosen composition matches the audio at normalized distance 0.000
+where the single-ayah reference does not). No audio was changed and no clips were removed; only
+`reference_text` for these 10 rows.
+
+Impact on scores: models that transcribed the full recording faithfully were penalized under v1.0
+and improve under v1.1; models that truncated after the first recitation lose the advantage the
+defect gave them. All prediction files with stored hypotheses (24 models) were rescored and the
+leaderboard updated. Entries whose hypotheses are no longer available are marked as scored against
+v1.0 references. For most models the two scales differ by about 1 WER point or less.
+
+Copy to bucket new
+
+Downloads last month
+
+666
+
+Total file size:
+
+247 MB
+
+## Models trained or fine-tuned on Quran-Lab/quranic-asr-benchmark
+
+[Automatic Speech Recognition •Updated Aug 25• 43• 1](https://huggingface.co/Saboorhsn/quran-stt-onnx)
+
+## Space using Quran-Lab/quranic-asr-benchmark1

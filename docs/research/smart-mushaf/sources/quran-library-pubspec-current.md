@@ -1,0 +1,127 @@
+Source: https://raw.githubusercontent.com/alheekmahlib/quran_library/main/pubspec.yaml
+Title: 
+Fetched: 2026-10-15T02:24:47.417Z
+
+name: quran_library
+description: "An integrated package for displaying the Holy Qur’an identical to
+  the Medina Quran with the narration of Hafs on the authority of Asim."
+version: 5.0.2
+homepage: https://github.com/alheekmahlib/quran_library
+documentation: https://quran-library.vexaltech.dev/
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: ">=3.16.0"
+
+dependencies:
+  arabic_justified_text: ^1.0.4
+  archive: ^4.3.0
+  audio_service: ^0.18.19
+  connectivity_plus: ^7.3.1
+  dio: ^5.11.1
+  flutter:
+    sdk: flutter
+  flutter_scale_kit: ^2.0.2
+  flutter_svg: ^2.3.0
+  get: ^4.7.3
+  get_storage: ^2.1.1
+  html: ^0.15.7
+  just_audio: ^0.10.6
+  just_audio_media_kit: ^2.1.0
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  preload_page_view: ^0.2.0
+  record: ^7.1.1
+  rxdart: ^0.28.0
+  sherpa_onnx: 1.13.8
+  sherpa_onnx_android_arm64: 1.13.8
+  sherpa_onnx_android_armeabi: 1.13.8
+  sherpa_onnx_android_x86: 1.13.8
+  sherpa_onnx_android_x86_64: 1.13.8
+  sherpa_onnx_ios: 1.13.8
+  sherpa_onnx_macos: 1.13.8
+
+# This package supports all platforms listed below.
+# But note that it works and fits on mobile size devices
+# Additional Screen Sizes will be supported later
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+  path_provider_platform_interface: ^2.1.2
+
+package_rename_config:
+  android:
+    package_name: com.alheekmah.quranPackage
+
+  ios:
+    bundle_name: com.alheekmah.quranPackage
+    package_name: com.alheekmah.quranPackage
+
+  linux:
+    package_name: com.alheekmah.quranPackage
+
+  macos:
+    package_name: com.alheekmah.quranPackage
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.alheekmah.quranPackage
+        pluginClass: QuranLibraryPlugin
+      # ios:
+      #   pluginClass: QuranLibraryPlugin
+  assets:
+    - assets/
+    - assets/fonts/
+    - assets/fonts/Kufam-Regular.ttf
+    - assets/fonts/NotoNaskhArabic-VariableFont_wght.ttf
+    - assets/fonts/UthmanicHafs_V20.ttf
+    - assets/jsons/
+    - assets/svg/
+    - assets/images/
+    - assets/saadi.json.gz
+    - assets/en.json.gz
+    - assets/quran_lab/
+    - assets/fonts/quran_fonts_qfc4/
+
+  fonts:
+    - family: kufi
+      fonts:
+        - asset: assets/fonts/Kufam-Regular.ttf
+    - family: naskh
+      fonts:
+        - asset: assets/fonts/NotoNaskhArabic-VariableFont_wght.ttf
+    - family: hafs
+      fonts:
+        - asset: assets/fonts/UthmanicHafs_V20.ttf
+    - family: surahName
+      fonts:
+        - asset: assets/fonts/surah_name_naskh.ttf
+    - family: cairo
+      fonts:
+        - asset: assets/fonts/Cairo-Bold.ttf
+          weight: 900
+        - asset: assets/fonts/Cairo-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Cairo-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Cairo-Regular.ttf
+    - family: bismillah
+      fonts:
+        - asset: assets/fonts/vertopal.com_QCF_Bismillah-Regular.ttf
+    - family: ayahNumber
+      fonts:
+        - asset: assets/fonts/Uthmanic_NeoCOLORD-Regular.ttf
+    - family: surah-name-v4
+      fonts:
+        - asset: assets/fonts/surah-name-v4.ttf

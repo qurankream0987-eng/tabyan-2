@@ -1,0 +1,59 @@
+Source: https://raw.githubusercontent.com/alheekmahlib/quran_audio/main/pubspec.yaml
+Title: 
+Fetched: 2026-10-15T02:24:49.834Z
+
+name: quran_audio
+description: "A Flutter package for Quran audio playback — logic only, no UI. Supports full-surah and per-ayah playback with system media notifications, offline downloads, and repeat modes."
+version: 1.0.0
+documentation: https://quran-audio.vexaltech.dev
+homepage: https://github.com/alheekmahlib/quran_audio
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: '>=3.16.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # إدارة الحالة والتخزين / State management & storage
+  get: ^4.7.3
+  get_storage: ^2.1.1
+  # محرك الصوت / Audio engine
+  just_audio: ^0.10.6
+  audio_service: ^0.18.19
+  just_audio_media_kit: ^2.1.0
+  # التحميل / Downloads
+  dio: ^5.10.0
+  # مسارات الملفات / File paths
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  # دمج الـ streams / Stream combination
+  rxdart: ^0.28.0
+  # فك ضغط gzip عبر كل المنصات (بديل dart:io gzip غير المتوفر على الويب)
+  # Cross-platform gzip (replaces dart:io gzip which is unavailable on web)
+  archive: ^4.0.9
+  # التسميع (qurani.ai QRC) — اختياري، يُحمّل فقط عند Recitation.init()
+  # Recitation correction (qurani.ai QRC) — optional, lazy-loaded
+  # ملاحظة: مثبّت على 2.x لِتفادي objective_c FFI في web_socket 1.x على iOS.
+  # Note: pinned to 2.x to avoid the objective_c FFI in web_socket 1.x on iOS.
+  web_socket_channel: ^2.4.0
+  record: ^6.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  assets:
+    - assets/jsons/
+    - assets/images/
+
+# إعلان المنصات المدعومة رسمياً على pub.dev / Declares supported platforms
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:

@@ -1,0 +1,288 @@
+Source: https://huggingface.co/datasets/FaisaI/tadabur
+Title: FaisaI/tadabur · Datasets at Hugging Face
+Fetched: 2026-10-05T15:27:36.910Z
+
+Dataset Viewer
+
+[Auto-converted to Parquet](https://huggingface.co/datasets/FaisaI/tadabur/tree/refs%2Fconvert%2Fparquet/default) APIEmbed [Duplicate](https://huggingface.co/datasets/FaisaI/tadabur?duplicate=true)Data Studio
+
+Subset (2)
+default·384k rows
+default (384k rows)preview (300 rows)
+Split (1)
+
+train·384k rows
+train (384k rows)
+
+Search is not available for this dataset
+
+SQL
+Console
+
+The dataset viewer is not available for this split.
+
+Cannot load the dataset split (in streaming mode) to extract the first rows.
+
+```
+Error code:   StreamingRowsError
+Exception:    ArrowNotImplementedError
+Message:      Nested data conversions not implemented for chunked array outputs
+Traceback:    Traceback (most recent call last):
+                File "/src/services/worker/src/worker/utils.py", line 149, in get_rows_or_raise
+                  return get_rows(
+                      dataset=dataset,
+                  ...<4 lines>...
+                      column_names=column_names,
+                  )
+                File "/src/libs/libcommon/src/libcommon/utils.py", line 272, in decorator
+                  return func(*args, **kwargs)
+                File "/src/services/worker/src/worker/utils.py", line 129, in get_rows
+                  rows_plus_one = list(itertools.islice(safe_iter(ds, dataset=dataset), rows_max_number + 1))
+                File "/src/services/worker/src/worker/utils.py", line 489, in safe_iter
+                  yield from ds.decode(False) if ds.features else ds
+                File "/usr/local/lib/python3.14/site-packages/datasets/iterable_dataset.py", line 2818, in __iter__
+                  for key, example in ex_iterable:
+                                      ^^^^^^^^^^^
+                File "/usr/local/lib/python3.14/site-packages/datasets/iterable_dataset.py", line 2355, in __iter__
+                  for key, pa_table in self._iter_arrow():
+                                       ~~~~~~~~~~~~~~~~^^
+                File "/usr/local/lib/python3.14/site-packages/datasets/iterable_dataset.py", line 2380, in _iter_arrow
+                  for key, pa_table in self.ex_iterable._iter_arrow():
+                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+                File "/usr/local/lib/python3.14/site-packages/datasets/iterable_dataset.py", line 536, in _iter_arrow
+                  for key, pa_table in iterator:
+                                       ^^^^^^^^
+                File "/usr/local/lib/python3.14/site-packages/datasets/iterable_dataset.py", line 419, in _iter_arrow
+                  for key, pa_table in self.generate_tables_fn(**gen_kwags):
+                                       ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+                File "/usr/local/lib/python3.14/site-packages/datasets/packaged_modules/parquet/parquet.py", line 207, in _generate_tables
+                  for batch_idx, record_batch in enumerate(
+                                                 ~~~~~~~~~^
+                      parquet_fragment.to_batches(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                  ...<5 lines>...
+                      )
+                      ^
+                  ):
+                  ^
+                File "pyarrow/_dataset.pyx", line 3934, in _iterator
+                File "pyarrow/_dataset.pyx", line 3524, in pyarrow._dataset.TaggedRecordBatchIterator.__next__
+                  batch = GetResultValue(move(self.iterator.get().Next()))
+                File "pyarrow/error.pxi", line 155, in pyarrow.lib.pyarrow_internal_check_status
+                File "pyarrow/error.pxi", line 92, in pyarrow.lib.check_status
+                  raise convert_status(status)
+              pyarrow.lib.ArrowNotImplementedError: Nested data conversions not implemented for chunked array outputs
+```
+
+Need help to make the dataset viewer work? Make sure to review [how to configure the dataset viewer](https://huggingface.co/docs/hub/datasets-data-files-configuration), and [open a discussion](https://huggingface.co/datasets/FaisaI/tadabur/discussions/new?title=Dataset+Viewer+issue%3A+StreamingRowsError&description=The+dataset+viewer+is+not+working.%0A%0AError+details%3A%0A%0A%60%60%60%0AError+code%3A+++StreamingRowsError%0AException%3A++++ArrowNotImplementedError%0AMessage%3A++++++Nested+data+conversions+not+implemented+for+chunked+array+outputs%0ATraceback%3A++++Traceback+%28most+recent+call+last%29%3A%0A++++++++++++++++File+%22%2Fsrc%2Fservices%2Fworker%2Fsrc%2Fworker%2Futils.py%22%2C+line+149%2C+in+get_rows_or_raise%0A++++++++++++++++++return+get_rows%28%0A++++++++++++++++++++++dataset%3Ddataset%2C%0A++++++++++++++++++...%3C4+lines%3E...%0A++++++++++++++++++++++column_names%3Dcolumn_names%2C%0A++++++++++++++++++%29%0A++++++++++++++++File+%22%2Fsrc%2Flibs%2Flibcommon%2Fsrc%2Flibcommon%2Futils.py%22%2C+line+272%2C+in+decorator%0A++++++++++++++++++return+func%28*args%2C+**kwargs%29%0A++++++++++++++++File+%22%2Fsrc%2Fservices%2Fworker%2Fsrc%2Fworker%2Futils.py%22%2C+line+129%2C+in+get_rows%0A++++++++++++++++++rows_plus_one+%3D+list%28itertools.islice%28safe_iter%28ds%2C+dataset%3Ddataset%29%2C+rows_max_number+%2B+1%29%29%0A++++++++++++++++File+%22%2Fsrc%2Fservices%2Fworker%2Fsrc%2Fworker%2Futils.py%22%2C+line+489%2C+in+safe_iter%0A++++++++++++++++++yield+from+ds.decode%28False%29+if+ds.features+else+ds%0A++++++++++++++++File+%22%2Fusr%2Flocal%2Flib%2Fpython3.14%2Fsite-packages%2Fdatasets%2Fiterable_dataset.py%22%2C+line+2818%2C+in+__iter__%0A++++++++++++++++++for+key%2C+example+in+ex_iterable%3A%0A++++++++++++++++++++++++++++++++++++++%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%0A++++++++++++++++File+%22%2Fusr%2Flocal%2Flib%2Fpython3.14%2Fsite-packages%2Fdatasets%2Fiterable_dataset.py%22%2C+line+2355%2C+in+__iter__%0A++++++++++++++++++for+key%2C+pa_table+in+self._iter_arrow%28%29%3A%0A+++++++++++++++++++++++++++++++++++++++%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%5E%5E%0A++++++++++++++++File+%22%2Fusr%2Flocal%2Flib%2Fpython3.14%2Fsite-packages%2Fdatasets%2Fiterable_dataset.py%22%2C+line+2380%2C+in+_iter_arrow%0A++++++++++++++++++for+key%2C+pa_table+in+self.ex_iterable._iter_arrow%28%29%3A%0A+++++++++++++++++++++++++++++++++++++++%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%5E%5E%0A++++++++++++++++File+%22%2Fusr%2Flocal%2Flib%2Fpython3.14%2Fsite-packages%2Fdatasets%2Fiterable_dataset.py%22%2C+line+536%2C+in+_iter_arrow%0A++++++++++++++++++for+key%2C+pa_table+in+iterator%3A%0A+++++++++++++++++++++++++++++++++++++++%5E%5E%5E%5E%5E%5E%5E%5E%0A++++++++++++++++File+%22%2Fusr%2Flocal%2Flib%2Fpython3.14%2Fsite-packages%2Fdatasets%2Fiterable_dataset.py%22%2C+line+419%2C+in+_iter_arrow%0A++++++++++++++++++for+key%2C+pa_table+in+self.generate_tables_fn%28**gen_kwags%29%3A%0A+++++++++++++++++++++++++++++++++++++++%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%7E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%0A++++++++++++++++File+%22%2Fusr%2Flocal%2Flib%2Fpython3.14%2Fsite-packages%2Fdatasets%2Fpackaged_modules%2Fparquet%2Fparquet.py%22%2C+line+207%2C+in+_generate_tables%0A++++++++++++++++++for+batch_idx%2C+record_batch+in+enumerate%28%0A+++++++++++++++++++++++++++++++++++++++++++++++++%7E%7E%7E%7E%7E%7E%7E%7E%7E%5E%0A++++++++++++++++++++++parquet_fragment.to_batches%28%0A++++++++++++++++++++++%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%5E%0A++++++++++++++++++...%3C5+lines%3E...%0A++++++++++++++++++++++%29%0A++++++++++++++++++++++%5E%0A++++++++++++++++++%29%3A%0A++++++++++++++++++%5E%0A++++++++++++++++File+%22pyarrow%2F_dataset.pyx%22%2C+line+3934%2C+in+_iterator%0A++++++++++++++++File+%22pyarrow%2F_dataset.pyx%22%2C+line+3524%2C+in+pyarrow._dataset.TaggedRecordBatchIterator.__next__%0A++++++++++++++++++batch+%3D+GetResultValue%28move%28self.iterator.get%28%29.Next%28%29%29%29%0A++++++++++++++++File+%22pyarrow%2Ferror.pxi%22%2C+line+155%2C+in+pyarrow.lib.pyarrow_internal_check_status%0A++++++++++++++++File+%22pyarrow%2Ferror.pxi%22%2C+line+92%2C+in+pyarrow.lib.check_status%0A++++++++++++++++++raise+convert_status%28status%29%0A++++++++++++++pyarrow.lib.ArrowNotImplementedError%3A+Nested+data+conversions+not+implemented+for+chunked+array+outputs%0A%60%60%60%0A%0A%0Acc+%40lhoestq+%40cfahlgren1.) for direct support.
+
+![Tadabur Logo](https://huggingface.co/datasets/FaisaI/tadabur/resolve/main/tadabur_logo.png)
+
+# Tadabur: A Large-Scale Quran Audio Dataset
+
+_The most comprehensive and richly annotated Qur'anic recitation corpus to date_
+
+**Faisal Alherran**
+
+[![Paper](https://img.shields.io/badge/%F0%9F%93%84_Paper-Tadabur-a27b5c?style=flat-square)](https://arxiv.org/abs/2604.18932)[![GitHub](https://img.shields.io/badge/GitHub-fherran%2Ftadabur-1c1f1e?style=flat-square&logo=github)](https://github.com/fherran/tadabur)[![Models](https://img.shields.io/badge/%F0%9F%8E%99_Models-FaisaI-374440?style=flat-square)](https://huggingface.co/FaisaI)[![License](https://img.shields.io/badge/License-CC_BY--NC_4.0-dfc49a?style=flat-square)](https://huggingface.co/datasets/FaisaI/tadabur#license)
+
+* * *
+
+## ✦ Overview
+
+**Tadabur** is a large-scale, high-diversity Qur'anic speech dataset designed to advance research in **Qur'anic Automatic Speech Recognition (ASR)**, **reciter modeling**, **tajwīd-aware speech processing**, and **prosodic analysis**. It is the most comprehensive publicly available collection of Qur'anic recitation audio to date.
+
+* * *
+
+## 📊 Dataset at a Glance
+
+| Property | Value |
+| :-- | :-- |
+| 🕐 **Total Audio Duration** | 1400+ hours |
+| 🎙️ **Distinct Reciters** | 600+ |
+| 🔗 **Alignment** | Verse-level + word-level timestamps |
+| ⚖️ **License** | CC BY-NC 4.0 |
+
+* * *
+
+## 🧭 Abstract
+
+Despite growing interest in Quranic data research, existing Quran datasets remain limited in both scale and diversity. To address this gap, we present **Tadabur**, a large-scale Quran audio dataset comprising more than **1400 hours** of recitation audio from over **600 distinct reciters**, providing substantial variation in recitation styles, vocal characteristics, and recording conditions.
+
+Tadabur includes complete coverage of all Qur'an, spanning styles such as _murattal_ and _mujawwad_. Each file is accompanied by automatically derived **word-level temporal alignments** and structured metadata in a consistent JSON schema.
+
+This diversity makes Tadabur a comprehensive and representative resource for Quranic speech research — enabling advances in ASR, tajwīd-aware modeling, reciter identification, and prosodic analysis.
+
+* * *
+
+## 📈 Comparison with Prior Datasets
+
+| Dataset | Samples | Reciters | Transcription | Word-Level Alignment |
+| :-- | --: | --: | :-: | :-: |
+| Quran Recitations (Kaggle) | 6,689 | 12 | ✗ | ✗ |
+| Quran Speech-to-Text (SLR132) | 226,129 | 30 | ✓ | ✗ |
+| Buraaq Quran Audio–Text | 187,080 | 30 | ✓ | ✗ |
+| **Tadabur** _(Ours)_ | **365,000+** | **600+** | **✓** | **✓** |
+
+> Tadabur surpasses all prior publicly available Quranic datasets by a wide margin in scale, reciter diversity, and annotation richness.
+
+* * *
+
+## 🔄 Dataset Pipeline
+
+A fully automated, multi-stage process transforms raw long-form recitations into clean, verse-level annotated audio files:
+
+```
+🌐 Collection  →  🤖 LLM Metadata  →  🎙️ WhisperX Align  →  ✂️ Boundary Detect  →  🧹 Curation
+  Public repos      Surah & reciter      Word-level             Recitation-stop        ASR filtering &
+  & archives        extraction via LLM   timestamps & AAM       segmenter              deduplication
+```
+
+* * *
+
+## 🧩 Dataset Structure
+
+Each example in the dataset consists of two components:
+
+1. **Audio file** — a single Qur'anic verse (`.wav`)
+2. **Metadata file (JSON)** — verse, reciter, and word alignment info
+
+### JSON Schema
+
+```json
+{
+  "reciter_id": 88,
+  "surah_id": 3,
+  "ayah_id": 82,
+  "word_alignments": [\
+    {\
+      "word": "أَفَلَا",\
+      "start": 0.00,\
+      "end": 0.62\
+    },\
+    ...\
+  ],
+  "text_ar_simple": "افلا يتدبرون القران ولو كان من عند غير الله لوجدوا فيه اختلافا كثيرا",
+  "text_ar_uthmani": "أَفَلَا يَتَدَبَّرُونَ ٱلْقُرْءَانَ ۚ وَلَوْ كَانَ مِنْ عِندِ غَيْرِ ٱللَّهِ لَوَجَدُوا۟ فِيهِ ٱخْتِلَـٰفًا كَثِيرًا",
+  "ayah_duration_s": 10.9,
+  "audio_filename": "tadabur_spk0088_S3_A82_db1f8e71_000003.wav"
+}
+```
+
+### File Naming Convention
+
+```
+tadabur_spk{reciter_id:04d}_S{surah_id}_A{ayah_id}_{hash}_{segment:06d}.wav
+```
+
+* * *
+
+## 🎯 Supported Tasks
+
+| Task | Description |
+| :-- | :-- |
+| 🗣️ **Automatic Speech Recognition (ASR)** | Verse-level transcription of Qur'anic audio |
+| 👤 **Reciter Identification** | Speaker classification across 600 reciters |
+| 📊 **Model Evaluation** | Benchmarking ASR models on Qur'anic speech using WER |
+
+* * *
+
+## 🤖 Fine-Tuned Whisper Models
+
+Alongside the dataset, we release Whisper models fine-tuned on Tadabur for Qur'anic ASR. These models are domain-adapted to handle prolonged phoneme durations, tajwīd rules, melodic articulation, and the wide acoustic diversity unique to Qur'anic recitation.
+
+| Model | Base | Status | Link |
+| :-- | :-- | :-: | :-- |
+| **Tadabur-Whisper-Small** | Whisper Small | ✅ Available | [🤗 HuggingFace](https://huggingface.co/FaisaI/tadabur-Whisper-Small) |
+
+* * *
+
+## 📝 Notes
+
+- Some reciters may appear **multiple times for the same surah and ayah**. These repetitions intentionally capture **natural variation** in recitation, including differences in pace, melody, pronunciation, and recording conditions.
+- Recitation styles include _murattal_ (measured/standard), _mujawwad_ (melodic/ornate), and others.
+- Audio was collected from public Qur'anic repositories and archives, then processed through the automated pipeline described above.
+
+* * *
+
+## ⚖️ License
+
+This dataset is released under the **[Creative Commons Attribution–NonCommercial 4.0 (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/)** license.
+
+**For research and educational purposes only. Attribution is required.**
+
+* * *
+
+## 🕌 Ethical & Cultural Considerations
+
+The Qur'an holds deep religious and cultural significance for over a billion people worldwide. Tadabur is intended solely for **respectful and beneficial use**, including:
+
+- ✅ Academic research
+- ✅ Education and literacy tools
+- ✅ Development of assistive technologies
+
+🚫 Users must **not** employ this dataset for:
+
+- Mockery or distortion of Qur'anic recitation
+- Disrespectful or misleading audio synthesis
+- Any application that may cause offense to Muslim communities
+
+* * *
+
+## 📚 Citation
+
+If you use Tadabur in your research, please cite:
+
+```bibtex
+@misc{alherran2026tadabur,
+  author        = {Alherran, Faisal},
+  title         = {Tadabur: A Large-Scale Quran Audio Dataset},
+  year          = {2026},
+  eprint        = {2604.18932},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.SD},
+  doi           = {10.48550/arXiv.2604.18932},
+  url           = {https://arxiv.org/abs/2604.18932}
+}
+```
+
+* * *
+
+**Tadabur** · A Large-Scale Quran Audio Dataset ·
+[github.com/fherran/tadabur](https://github.com/fherran/tadabur)
+
+Released under CC BY-NC 4.0 for research and educational use.
+Users must engage with Qur'anic content respectfully.
+
+
+Copy to bucket new
+
+Use this dataset
+
+Downloads last month
+
+3,130
+
+Number of rows:
+
+384,750
+
+Total file size:
+
+938 GB
+
+## Models trained or fine-tuned on FaisaI/tadabur
+
+[Automatic Speech Recognition • 0.1B•Updated 14 days ago• 531](https://huggingface.co/sysofwan/hifzguide-muaalem-mini)
+
+[Feature Extraction • 91.5M•Updated 29 days ago• 132• 5](https://huggingface.co/FaisaI/tadabur-embedding)
+
+[Automatic Speech Recognition • 0.2B•Updated Apr 24• 106• 18](https://huggingface.co/FaisaI/tadabur-Whisper-Small)
+
+[0.8B•Updated Aug 10• 101• 2](https://huggingface.co/rakansuliman/tadabur-whisper-medium)
+
+## Space using FaisaI/tadabur1
+
+## Paper for FaisaI/tadabur
+
+[Paper • 2604.18932 •Published Apr 21• 4](https://huggingface.co/papers/2604.18932)

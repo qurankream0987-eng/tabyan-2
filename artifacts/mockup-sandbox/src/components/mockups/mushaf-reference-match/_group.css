@@ -1,0 +1,58 @@
+@import url("https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Readex+Pro:wght@400;500;600;700&display=swap");
+
+:root {
+  --tby-brand-maroon: #4c091b; --tby-brand-maroon-deep: #360512;
+  --tby-brand-burgundy: #800020; --tby-brand-gold: #d4af37;
+  --tby-brand-gold-light: #f1d27a; --tby-brand-gold-dark: #b8860b;
+  --tby-brand-gold-soft: #e6d5b8; --tby-brand-cream: #f5efe0; --tby-brand-night: #2b0d12;
+  --tby-font-interface: "Readex Pro", sans-serif; --tby-font-quran: "Amiri Quran", serif;
+  --mushaf-paper: #fffdf7; --mushaf-ground: #f5efe5; --mushaf-ink: #000;
+  --mushaf-orn: #6d241f; --mushaf-orn-accent: #b8860b;
+  --mushaf-chrome: rgba(255,253,247,.9); --mushaf-chrome-solid: #fffdf7;
+  --mushaf-chrome-border: rgba(128,0,32,.13); --mushaf-chrome-fg: #3d1f10;
+  --mushaf-chrome-muted: rgba(61,31,16,.68); --mushaf-primary: #800020;
+  --mushaf-on-primary: #fffaf0; --mushaf-shadow: 0 1px 2px rgba(61,31,16,.06),0 10px 32px -14px rgba(61,31,16,.28);
+}
+.mushaf-reference-match { font-family: var(--tby-font-interface); direction: rtl; }
+.mushaf-reference-match .tby-reader { position:relative; min-height:100vh; overflow:hidden; background:var(--mushaf-ground); color:var(--mushaf-chrome-fg); }
+.mushaf-reference-match .tby-topbar,.mushaf-reference-match .tby-dock-wrap { width:min(100%,720px); margin-inline:auto; }
+.mushaf-reference-match .tby-topbar { position:absolute; inset:0 0 auto; z-index:2; background:linear-gradient(to bottom,var(--mushaf-paper) 0%,rgba(255,253,247,.84) 60%,transparent); border-bottom:1px solid var(--mushaf-chrome-border); }
+.mushaf-reference-match .tby-topbar-inner { display:grid; grid-template-columns:88px minmax(0,1fr) 88px; align-items:center; min-height:64px; padding-inline:8px; }
+.mushaf-reference-match .tby-header-actions { display:flex; align-items:center; }
+.mushaf-reference-match button { font:inherit; border:0; cursor:pointer; }
+.mushaf-reference-match .tby-icon-btn { width:44px;height:44px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;color:var(--mushaf-chrome-muted);background:transparent; }
+.mushaf-reference-match .tby-icon-btn:hover { background:rgba(61,31,16,.07);color:var(--mushaf-chrome-fg); }
+.mushaf-reference-match .tby-title-button { justify-self:center;width:100%;max-width:240px;min-height:52px;background:transparent;color:var(--mushaf-chrome-fg); }
+.mushaf-reference-match .tby-topbar-title { font-family:var(--tby-font-quran);font-size:21px;font-weight:700;line-height:1.2; }
+.mushaf-reference-match .tby-topbar-meta { display:block;color:var(--mushaf-chrome-muted);font-size:11px;line-height:1.6; }
+.mushaf-reference-match .tby-reader-viewport { position:absolute;inset:68px 0 104px;overflow-y:auto;overflow-x:hidden; }
+.mushaf-reference-match .tby-reading-stage { min-height:100%;display:flex;justify-content:center;align-items:flex-start;padding-block:8px; }
+.mushaf-reference-match .tby-page-frame { position:relative;flex:none;border-radius:6px; }
+.mushaf-reference-match .tby-page-frame::after { content:"";position:absolute;inset:0;border:1px solid var(--mushaf-chrome-border);border-radius:6px;pointer-events:none; }
+.mushaf-reference-match .tby-mushaf-paper { position:relative;border-radius:6px;background:var(--mushaf-paper);box-shadow:0 3px 16px rgba(60,40,20,.05); }
+.mushaf-reference-match .tby-mushaf-paper[data-mushaf-page]::before { content:"";position:absolute;z-index:0;inset:4px;border:1px solid rgba(184,134,11,.7);border-radius:3px;box-shadow:inset 0 0 0 2px var(--mushaf-paper),inset 0 0 0 3px rgba(109,36,31,.3);pointer-events:none; }
+.mushaf-reference-match .tby-opening-panel { position:absolute;inset-inline:4.5%;pointer-events:none;border:1px solid rgba(184,134,11,.62);border-radius:3px; }
+.mushaf-reference-match .tby-opening-panel::before { content:"";position:absolute;inset:4px;border:1px solid rgba(109,36,31,.24); }
+.mushaf-reference-match .tby-opening-panel::after { content:"";position:absolute;inset-inline:10%;top:-9px;bottom:-9px;border-block:1px solid rgba(184,134,11,.42); }
+.mushaf-reference-match .tby-opening-corner { position:absolute;width:9px;height:9px;transform:rotate(45deg);background:var(--mushaf-paper);border:1px solid rgba(184,134,11,.8);box-shadow:inset 0 0 0 2px var(--mushaf-paper),inset 0 0 0 5px rgba(184,134,11,.55); }
+.mushaf-reference-match .tby-opening-corner[data-corner=ts]{top:-5px;inset-inline-start:-5px}.mushaf-reference-match .tby-opening-corner[data-corner=te]{top:-5px;inset-inline-end:-5px}.mushaf-reference-match .tby-opening-corner[data-corner=bs]{bottom:-5px;inset-inline-start:-5px}.mushaf-reference-match .tby-opening-corner[data-corner=be]{bottom:-5px;inset-inline-end:-5px}
+.mushaf-reference-match .tby-surah-banner { display:flex;align-items:center;width:94%;justify-content:center;color:var(--mushaf-orn); }
+.mushaf-reference-match .tby-surah-side { flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;align-self:stretch; }
+.mushaf-reference-match .tby-surah-side::before { content:"";position:absolute;top:50%;inset-inline:calc(var(--band-h)*.3) 2px;height:1px;background:linear-gradient(to right,#b8860b,transparent); }
+.mushaf-reference-match .tby-surah-side[data-side=end]::before { inset-inline:2px calc(var(--band-h)*.3);background:linear-gradient(to left,#b8860b,transparent); }
+.mushaf-reference-match .tby-surah-finial { position:absolute;top:50%;width:calc(var(--band-h)*.3);height:calc(var(--band-h)*.3);transform:translateY(-50%);inset-inline-start:0; }
+.mushaf-reference-match .tby-surah-side[data-side=end] .tby-surah-finial { inset-inline:auto 0; }
+.mushaf-reference-match .tby-surah-detail { position:relative;padding-inline:.5em;background:var(--mushaf-paper);font-size:10px;white-space:nowrap; }
+.mushaf-reference-match .tby-surah-cartouche { position:relative;z-index:1;display:flex;flex:none;align-items:stretch;height:100%;max-width:72%; }
+.mushaf-reference-match .tby-surah-cartouche-body { position:relative;display:flex;align-items:center;justify-content:center;min-width:0;padding-inline:.82em; }
+.mushaf-reference-match .tby-surah-cartouche-rules { position:absolute;inset:0;width:100%;height:100%; }
+.mushaf-reference-match .tby-orn-line { stroke:#b8860b;stroke-width:1; }.mushaf-reference-match .tby-orn-line-soft{stroke:rgba(184,134,11,.42);stroke-width:.75}.mushaf-reference-match .tby-orn-dot{fill:#b8860b}
+.mushaf-reference-match .tby-surah-title { position:relative;white-space:nowrap;line-height:1;top:-.05em;color:var(--mushaf-orn);font-family:var(--tby-font-quran);text-shadow:0 0 .01em currentColor; }
+.mushaf-reference-match .tby-basmala-row { position:absolute;display:flex;align-items:center;justify-content:center;inset-inline:3%;gap:6px; }
+.mushaf-reference-match .font-quran { font-family:var(--tby-font-quran); }
+.mushaf-reference-match .tby-dock-wrap { position:absolute;bottom:0;z-index:2;display:flex;justify-content:center;pointer-events:none;padding:20px 12px 14px;background:linear-gradient(transparent,var(--mushaf-ground)); }
+.mushaf-reference-match .tby-utility-dock { display:grid;grid-template-columns:repeat(5,1fr);width:min(440px,100%);min-height:68px;padding:6px 8px;border:1px solid var(--mushaf-chrome-border);border-radius:28px;background:var(--mushaf-chrome-solid);box-shadow:var(--mushaf-shadow);pointer-events:auto; }
+.mushaf-reference-match .tby-dock-action { min-width:44px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:16px;background:transparent;color:var(--mushaf-chrome-muted);font-size:11px; }
+.mushaf-reference-match .tby-primary-action { position:relative;width:64px;height:64px;min-width:64px;justify-self:center;align-self:start;margin:-22px 0 0;border:4px solid var(--mushaf-chrome-solid);border-radius:999px;background:var(--mushaf-primary);color:#fff;box-shadow:0 6px 18px -6px rgba(128,0,32,.55);display:flex;align-items:center;justify-content:center; }
+.mushaf-reference-match .tby-recitation-label { position:absolute;top:63px;color:var(--mushaf-chrome-fg);white-space:nowrap;font-size:10px; }
+@media (min-width:768px){.mushaf-reference-match .tby-reading-stage{align-items:center}.mushaf-reference-match .tby-mushaf-paper[data-mushaf-page]::before{inset:7px;box-shadow:inset 0 0 0 3px var(--mushaf-paper),inset 0 0 0 4px rgba(109,36,31,.34)}}

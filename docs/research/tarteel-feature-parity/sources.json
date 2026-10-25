@@ -1,0 +1,347 @@
+{
+  "researchDate": "2026-10-07",
+  "scope": "Current public Tarteel Quran product behavior for the 68-group Tabyan parity audit",
+  "sourceQualityNote": "All sources are Tarteel first-party Help Center, product, or store material (Tier 3 under the general source-independence scale). They are primary evidence of Tarteel's own published feature claims, not independent validation of accuracy, safety, or in-app availability. Search snippets support only their quoted wording.",
+  "sources": [
+    {
+      "number": 1,
+      "key": "tarteel-free-access",
+      "title": "Can I use Tarteel for free?",
+      "url": "https://support.tarteel.ai/en/articles/12267535-can-i-use-tarteel-for-free",
+      "publicationDate": "Updated this week (as displayed on 2026-10-07)",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-listings-07-free-vs-premium.md"
+    },
+    {
+      "number": 2,
+      "key": "tarteel-hide-ayahs",
+      "title": "Hide ayahs",
+      "url": "https://support.tarteel.ai/en/articles/12414416-hide-ayahs",
+      "publicationDate": "2025-09-25",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-recite-01-hide-ayahs.md"
+    },
+    {
+      "number": 3,
+      "key": "tarteel-recording-playback",
+      "title": "How to listen to your recitation recordings and mistakes",
+      "url": "https://support.tarteel.ai/en/articles/14423894-how-to-listen-to-your-recitation-recordings-and-mistakes",
+      "publicationDate": "2026-04-02",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-recite-02-recordings-mistakes.md"
+    },
+    {
+      "number": 4,
+      "key": "tarteel-text-colours",
+      "title": "What do the different text colours mean?",
+      "url": "https://support.tarteel.ai/en/articles/12414414-what-do-the-different-text-colours-mean",
+      "publicationDate": "2025-09-25",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-reading-03-text-colours.md"
+    },
+    {
+      "number": 5,
+      "key": "tarteel-testing-getting-started",
+      "title": "Getting started with Testing",
+      "url": "https://support.tarteel.ai/en/articles/16557456-getting-started-with-testing",
+      "publicationDate": "Not displayed in result",
+      "tier": 3,
+      "evidenceType": "search-snippet",
+      "evidencePath": "research/sources/tarteel-parity-recite-snippets.md"
+    },
+    {
+      "number": 6,
+      "key": "tarteel-voice-search",
+      "title": "AI Voice Search",
+      "url": "https://support.tarteel.ai/en/articles/12414480-ai-voice-search",
+      "publicationDate": "Updated this week (as displayed on 2026-10-07)",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-reading-02-ai-voice-search.md"
+    },
+    {
+      "number": 7,
+      "key": "tarteel-layout-options",
+      "title": "Layout options",
+      "url": "https://support.tarteel.ai/en/articles/12414375-layout-options",
+      "publicationDate": "Updated this week (as displayed on 2026-10-07)",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-reading-04-layout-options.md"
+    },
+    {
+      "number": 8,
+      "key": "tarteel-surah-selector",
+      "title": "Surah selector",
+      "url": "https://support.tarteel.ai/en/articles/12414413-surah-selector",
+      "publicationDate": "2025-09-25",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-reading-01-surah-selector.md"
+    },
+    {
+      "number": 9,
+      "key": "tarteel-tajweed-colors",
+      "title": "Understanding Tajweed Colors in the Tarteel Mushaf",
+      "url": "https://support.tarteel.ai/en/articles/14936922-understanding-tajweed-colors-in-the-tarteel-mushaf",
+      "publicationDate": "2026-05-05",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-gap-study-01-tajweed-colors.md"
+    },
+    {
+      "number": 10,
+      "key": "tarteel-translations",
+      "title": "Translations",
+      "url": "https://support.tarteel.ai/en/articles/12414411-translations",
+      "publicationDate": "Updated this week (as displayed on 2026-10-07)",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-audio-03-translations.md"
+    },
+    {
+      "number": 11,
+      "key": "tarteel-goals",
+      "title": "How do I use the Goals feature?",
+      "url": "https://support.tarteel.ai/en/articles/12782033-how-do-i-use-the-goals-feature",
+      "publicationDate": "2025-11-07",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-progress-01-goals-feature.md"
+    },
+    {
+      "number": 12,
+      "key": "tarteel-goal-management",
+      "title": "Creating, Editing, Archiving Goals",
+      "url": "https://support.tarteel.ai/en/articles/12414402-creating-editing-archiving-goals",
+      "publicationDate": "2025-09-25",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-progress-02-goal-management.md"
+    },
+    {
+      "number": 13,
+      "key": "tarteel-todays-goals",
+      "title": "What are Today's Goals?",
+      "url": "https://support.tarteel.ai/en/articles/12414404-what-are-today-s-goals",
+      "publicationDate": "2025-09-25",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-gap-social-01-todays-goals.md"
+    },
+    {
+      "number": 14,
+      "key": "tarteel-memorization-tracker",
+      "title": "Memorization tracker",
+      "url": "https://support.tarteel.ai/en/articles/12414407-memorization-tracker",
+      "publicationDate": "2025-09-25",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-progress-03-memorization-tracker.md"
+    },
+    {
+      "number": 15,
+      "key": "tarteel-groups-leaderboards",
+      "title": "Groups and Leaderboards",
+      "url": "https://support.tarteel.ai/en/articles/12414382-groups-and-leaderboards",
+      "publicationDate": "2025-09-25",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-gap-social-02-groups-leaderboards.md"
+    },
+    {
+      "number": 16,
+      "key": "tarteel-badges",
+      "title": "Badges",
+      "url": "https://support.tarteel.ai/en/articles/12414371-badges",
+      "publicationDate": "2025-09-25",
+      "tier": 3,
+      "evidenceType": "search-snippet",
+      "evidencePath": "research/sources/tarteel-parity-gap-social-snippets.md"
+    },
+    {
+      "number": 17,
+      "key": "tarteel-off-platform-session",
+      "title": "How to add an off-platform session?",
+      "url": "https://support.tarteel.ai/en/articles/12414408-how-to-add-an-off-platform-session",
+      "publicationDate": "2026-03-18",
+      "tier": 3,
+      "evidenceType": "search-snippet",
+      "evidencePath": "research/sources/tarteel-parity-gap-social-snippets.md"
+    },
+    {
+      "number": 18,
+      "key": "tarteel-reciter-selection",
+      "title": "How to switch between reciters in listening mode?",
+      "url": "https://support.tarteel.ai/en/articles/12414377-how-to-switch-between-reciters-in-listening-mode",
+      "publicationDate": "Updated this week (as displayed on 2026-10-07)",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-audio-04-reciter-selection.md"
+    },
+    {
+      "number": 19,
+      "key": "tarteel-offline-audio",
+      "title": "How to download reciters' audio for offline listening?",
+      "url": "https://support.tarteel.ai/en/articles/12414400-how-to-download-reciters-audio-for-offline-listening",
+      "publicationDate": "2025-09-25",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-audio-02-offline-reciters-audio.md"
+    },
+    {
+      "number": 20,
+      "key": "tarteel-recording-deletion",
+      "title": "How to delete audio recordings",
+      "url": "https://support.tarteel.ai/en/articles/12414461-how-to-delete-audio-recordings",
+      "publicationDate": "2025-09-25",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-gap-study-02-audio-deletion.md"
+    },
+    {
+      "number": 21,
+      "key": "tarteel-privacy-recordings-collection",
+      "title": "Privacy & Recordings",
+      "url": "https://support.tarteel.ai/en/collections/14746182-privacy-recordings",
+      "publicationDate": "Not displayed",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-listings-04-privacy-recordings.md"
+    },
+    {
+      "number": 22,
+      "key": "tarteel-ai-training-opt-out",
+      "title": "How to opt-out of AI training?",
+      "url": "https://support.tarteel.ai/en/articles/12414504-how-to-opt-out-of-ai-training",
+      "publicationDate": "Not displayed in result",
+      "tier": 3,
+      "evidenceType": "search-snippet",
+      "evidencePath": "research/sources/tarteel-parity-gap-study-snippets.md"
+    },
+    {
+      "number": 23,
+      "key": "tarteel-privacy-policy-2023",
+      "title": "Privacy Policy",
+      "url": "https://tarteel.ai/en/privacy",
+      "publicationDate": "2023-05-26",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-listings-06-privacy-policy-en.md"
+    },
+    {
+      "number": 24,
+      "key": "tarteel-apple-store",
+      "title": "Tarteel: AI Quran Memorization",
+      "url": "https://apps.apple.com/us/app/tarteel-ai-quran-memorization/id1391009396",
+      "publicationDate": "Store listing retrieved 2026-10-07; release date not captured",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-listings-01-apple-app-store.md"
+    },
+    {
+      "number": 25,
+      "key": "tarteel-google-play",
+      "title": "Tarteel: AI Quran Memorization",
+      "url": "https://play.google.com/store/apps/details?hl=en_US&id=com.mmmoussa.iqra",
+      "publicationDate": "Updated 2026-09-17",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-listings-02-google-play.md"
+    },
+    {
+      "number": 26,
+      "key": "tarteel-features-index",
+      "title": "Tarteel Features",
+      "url": "https://support.tarteel.ai/en/collections/15105266-tarteel-features",
+      "publicationDate": "Not displayed",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-progress-05-features-index.md"
+    },
+    {
+      "number": 27,
+      "key": "tarteel-multilingual-support",
+      "title": "Multi-language Support",
+      "url": "https://support.tarteel.ai/en/articles/12041685-multi-language-support",
+      "publicationDate": "Not displayed",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-listings-05-multilanguage-support.md"
+    },
+    {
+      "number": 28,
+      "key": "tarteel-bookmarks-navigation-blog",
+      "title": "Tarteel App Update - Translations, Tafsir, Bookmarks, and More!",
+      "url": "https://tarteel.ai/blog/translations-tafsir-bookmarks-and-more",
+      "publicationDate": "Search result updated 2026-02-18; full article not fetched",
+      "tier": 3,
+      "evidenceType": "search-snippet",
+      "evidencePath": "research/sources/tarteel-parity-gap-study-snippets.md"
+    },
+    {
+      "number": 29,
+      "key": "tarteel-goal-scope-troubleshooting",
+      "title": "My progress, streak, or goals are missing or not updating",
+      "url": "https://support.tarteel.ai/en/articles/14075443-my-progress-streak-or-goals-are-missing-or-not-updating",
+      "publicationDate": "Not displayed in result",
+      "tier": 3,
+      "evidenceType": "search-snippet",
+      "evidencePath": "research/sources/tarteel-parity-gap-social-snippets.md"
+    },
+    {
+      "number": 30,
+      "key": "tarteel-public-api-answer-2025",
+      "title": "Do you have an API I can use?",
+      "url": "https://support.tarteel.ai/en/articles/12414464-do-you-have-an-api-i-can-use",
+      "publicationDate": "2025-09-27",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-help-api"
+    },
+    {
+      "number": 31,
+      "key": "tarteel-testing-mode-index",
+      "title": "Tarteel Help Center — Testing Mode collection index",
+      "url": "https://support.tarteel.ai/en",
+      "publicationDate": "Not displayed",
+      "tier": 3,
+      "evidenceType": "search-snippet",
+      "evidencePath": "research/sources/tarteel-parity-gap-study-snippets.md"
+    },
+    {
+      "number": 32,
+      "key": "tarteel-text-colours-article-2025",
+      "title": "What do the different text colours mean?",
+      "url": "https://support.tarteel.ai/en/articles/12160141-what-do-the-different-text-colours-mean",
+      "publicationDate": "2025-09-04",
+      "tier": 3,
+      "evidenceType": "search-snippet",
+      "evidencePath": "research/sources/tarteel-parity-gap-study-snippets.md"
+    },
+    {
+      "number": 33,
+      "key": "tarteel-premium-features",
+      "title": "What features do I unlock with Tarteel Premium?",
+      "url": "https://support.tarteel.ai/en/articles/12414460-what-features-do-i-unlock-with-tarteel-premium",
+      "publicationDate": "Updated this week (as displayed on 2026-10-07)",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-progress-04-premium-features.md"
+    },
+    {
+      "number": 34,
+      "key": "tarteel-audio-settings",
+      "title": "How do I customize the settings?",
+      "url": "https://support.tarteel.ai/en/articles/12414399-how-do-i-customize-the-settings",
+      "publicationDate": "2025-09-25",
+      "tier": 3,
+      "evidenceType": "fetched",
+      "evidencePath": "research/sources/tarteel-parity-audio-01-playback-settings.md"
+    }
+  ]
+}

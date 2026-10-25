@@ -1,0 +1,30 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "workspaces": [
+    "lib/*",
+    "artifacts/*"
+  ],
+  "scripts": {
+    "build": "npm run typecheck && npm run verify:mushaf && npm run build --workspaces --if-present",
+    "verify:contracts": "node scripts/verify-contract-baseline.mjs",
+    "verify:design-tokens": "node scripts/verify-design-tokens.mjs",
+    "verify:product-registry": "node scripts/verify-product-registry.mjs",
+    "verify:home-navigation-parity": "node scripts/verify-home-navigation-parity.mjs",
+    "verify:screen-parity": "node scripts/verify-screen-parity.mjs",
+    "app-store:preflight": "node verification/scripts/app-store-preflight-cleanup.mjs",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "npm run typecheck:libs && npm run typecheck --workspace=artifacts --if-present",
+    "verify:mushaf": "node scripts/verify-mushaf.mjs"
+  },
+  "private": true,
+  "overrides": {
+    "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0",
+    "esbuild": "0.27.3"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "typescript": "~5.9.3"
+  }
+}

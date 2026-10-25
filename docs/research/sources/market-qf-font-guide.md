@@ -1,0 +1,1425 @@
+# Source capture: market-qf-font-guide
+
+URL: https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/
+Fetched: 2026-10-15
+
+[Skip to main content](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/#docusaurus_skipToContent_fallback)
+
+On this page
+
+# Integrating Quran Font Rendering
+
+## Overview [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#overview "Direct link to heading")
+
+This guide explains how to integrate Quran text rendering in your application using the same fonts
+and techniques used on Quran.com. You'll learn how to:
+
+- Fetch verse data with the correct API parameters for font rendering
+- Load and apply Quran fonts
+- Render Arabic text with proper styling
+- Handle different script types (Madani, IndoPak Nastaleeq, Uthmani, Tajweed)
+
+* * *
+
+## TL;DR: Quick Decision Guide [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#tldr-quick-decision-guide "Direct link to heading")
+
+**Choose your path based on your needs:**
+
+```text
+                        ┌─────────────────────────────────┐
+                        │   What do you need?             │
+                        └─────────────────┬───────────────┘
+                                          │
+              ┌───────────────────────────┼───────────────────────────┐
+              │                           │                           │
+              ▼                           ▼                           ▼
+    ┌─────────────────┐       ┌─────────────────┐        ┌─────────────────┐
+    │  Quickest Setup │       │  Physical Mushaf│        │  Tajweed Colors │
+    │  (Simple apps)  │       │     Layout      │        │   (Learning)    │
+    └────────┬────────┘       └────────┬────────┘        └────────┬────────┘
+             │                         │                          │
+             ▼                         ▼                          ▼
+    ┌─────────────────┐       ┌─────────────────┐        ┌─────────────────┐
+    │  Use QPC Hafs   │       │   Use QCF V2    │        │   Use QCF V4    │
+    │   (Unicode)     │       │  (Glyph-based)  │        │   (Tajweed)     │
+    └─────────────────┘       └─────────────────┘        └─────────────────┘
+```
+
+| If you want... | Use this font | API field |
+| --- | --- | --- |
+| **Fastest implementation** | QPC Hafs | `text_qpc_hafs` |
+| **South Asian script** | IndoPak Nastaleeq | `text_indopak_nastaleeq` (`fields` or `word_fields`) |
+| **Pixel-perfect Mushaf** | QCF V2 | `code_v2` \+ `page_number` |
+| **Tajweed color rules** | QCF V4 | `code_v2` \+ `page_number` |
+
+## Quick Start [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#quick-start "Direct link to heading")
+
+### Simplest Implementation (Unicode Font) [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#simplest-implementation-unicode-font "Direct link to heading")
+
+If you want the quickest setup, use Unicode fonts (QPC Hafs). No page-based font loading required:
+
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <style>
+    @font-face {
+      font-family: 'UthmanicHafs';
+      src: url('https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.woff2') format('woff2'),
+           url('https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.ttf') format('truetype');
+      font-display: swap;
+    }
+
+    .quran-text {
+      font-family: 'UthmanicHafs', 'Traditional Arabic', serif;
+      font-size: 28px;
+      line-height: 2;
+      direction: rtl;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="quran-text" id="verse"></div>
+
+  <script>
+    // NOTE: In production, fetch token server-side and pass to client
+    // Never expose client_secret in browser code!
+    const API_BASE = 'https://apis.quran.foundation/content/api/v4';
+    const accessToken = 'YOUR_ACCESS_TOKEN'; // Get from your server
+    const clientId = 'YOUR_CLIENT_ID';
+
+    fetch(`${API_BASE}/verses/by_key/1:1?words=true&word_fields=text_uthmani,text_qpc_hafs`, {
+      headers: {
+        'x-auth-token': accessToken,
+        'x-client-id': clientId
+      }
+    })
+      .then(res => res.json())
+      .then(data => {
+        const text = data.verse.words.map(w => w.text_qpc_hafs).join(' ');
+        document.getElementById('verse').textContent = text;
+      });
+  </script>
+</body>
+</html>
+```
+
+> ⚠️ **Security Note:** The example above shows client-side code for simplicity. In production,
+> always obtain access tokens on your server and proxy API requests to avoid exposing credentials.
+
+* * *
+
+## Understanding Font Types [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#understanding-font-types "Direct link to heading")
+
+### Font Categories [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#font-categories "Direct link to heading")
+
+Quran.com supports two categories of fonts:
+
+| Category | Description | Fonts | Pros | Cons |
+| --- | --- | --- | --- | --- |
+| **QCF (Glyph-Based)** | Special glyph codes mapped to custom fonts | V1, V2, V4 (Tajweed) | Pixel-perfect Mushaf rendering | Requires per-page font loading |
+| **Unicode** | Standard Arabic Unicode text | QPC Hafs, Uthmani, IndoPak Nastaleeq | Simple to implement | Standard text rendering |
+
+### Available Fonts [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#available-fonts "Direct link to heading")
+
+| Font Name | API Field | Mushaf ID | Type | Best For |
+| --- | --- | --- | --- | --- |
+| **QCF V1** | `code_v1` | 2 | Glyph-based | Traditional Madani Mushaf look |
+| **QCF V2** | `code_v2` | 1 | Glyph-based | Modern Madani Mushaf (recommended) |
+| **QCF V4 Tajweed** | `code_v2` | 19 | Glyph-based | Colored Tajweed rules |
+| **QPC Hafs** | `text_qpc_hafs` | 5 | Unicode | Use with the `UthmanicHafs` font family (`UthmanicHafs1Ver18` files) |
+| **Uthmani** | `text_uthmani` | 4 | Unicode | Standard Uthmani text |
+| **IndoPak Nastaleeq** | `text_indopak_nastaleeq` | 3, 6, 7 | Unicode | South Asian users. Requires the compatible IndoPak Nastaleeq font file (see [Font Files](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/#indopak-nastaleeq-font)) |
+
+### Choosing a Font [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#choosing-a-font "Direct link to heading")
+
+**Choose QCF V2 if:**
+
+- You want pixel-perfect Mushaf rendering
+- You're building a dedicated Quran app
+- You can handle dynamic font loading
+
+**Choose QPC Hafs if:**
+
+- You want simple implementation
+- You're embedding Quran verses in another app
+- You need quick setup
+
+**Choose Tajweed V4 if:**
+
+- You want to display Tajweed color rules
+- You can handle additional theme complexity
+
+* * *
+
+## API Parameters for Font Rendering [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#api-parameters-for-font-rendering "Direct link to heading")
+
+This section covers the specific API parameters needed for font rendering. For complete API documentation including authentication, endpoints, and general usage, see the [Content APIs Quickstart Guide](https://api-docs.quran.foundation/docs/quickstart/).
+
+### Essential Parameters [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#essential-parameters "Direct link to heading")
+
+| Parameter | Description | Example |
+| --- | --- | --- |
+| `words` | Include word-level data | `words=true` |
+| `word_fields` | Which text fields to return | `word_fields=code_v2,text_qpc_hafs,text_uthmani_simple` |
+| `mushaf` | Mushaf layout/format ID | `mushaf=1` (QCF V2) |
+| `translations` | Translation resource IDs to include | `translations=131,95` (comma-separated) |
+
+### Word Fields for Font Rendering [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#word-fields-for-font-rendering "Direct link to heading")
+
+The key word fields needed for font rendering:
+
+| Field | Description | Required For |
+| --- | --- | --- |
+| `code_v1` | QCF V1 glyph codes | V1 font rendering |
+| `code_v2` | QCF V2 glyph codes | V2 or V4 font rendering |
+| `text_qpc_hafs` | QPC Hafs Unicode text | Unicode font rendering |
+| `text_indopak_nastaleeq` | IndoPak Nastaleeq Unicode text | IndoPak Nastaleeq rendering (compatible font only) |
+
+IndoPak Nastaleeq text
+
+Quran.com uses `text_indopak_nastaleeq`; the older `text_indopak` field is deprecated. Request it for whole verses with `fields=text_indopak_nastaleeq`, or per word with `words=true&word_fields=text_indopak_nastaleeq`. This text works only with the compatible [IndoPak Nastaleeq font file](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/#indopak-nastaleeq-font) (`indopak-nastaleeq-waqf-lazim-v4.2.1`); with other fonts, waqf signs and verse-end markers will not render correctly.
+
+📚 **Full field reference:** [Word-level Fields Documentation](https://api-docs.quran.foundation/docs/api/field-reference/#-word-level-fields-word_fields)
+
+### Understanding Character Types [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#understanding-character-types "Direct link to heading")
+
+Each word in the API response has a `char_type_name` field indicating its type:
+
+| Type | Description | Rendering Notes |
+| --- | --- | --- |
+| `word` | Regular Quranic word | Standard rendering |
+| `end` | Verse end marker (۝) | QCF fields: use the `UthmanicHafs` font. `text_indopak_nastaleeq`: keep the IndoPak Nastaleeq font |
+| `pause` | Pause/stop mark | May skip rendering in some views |
+| `sajdah` | Prostration marker | Special styling may apply |
+| `rub-el-hizb` | Quarter Hizb marker | Special styling may apply |
+
+> ⚠️ **Important:** When rendering QCF fields (`code_v1`, `code_v2`), use the Unicode font (`UthmanicHafs`)
+> for `end` markers, not QCF fonts, as the verse number glyphs render better with the Unicode font.
+> When rendering `text_indopak_nastaleeq`, keep `end` markers in the compatible IndoPak Nastaleeq font;
+> other fonts do not render its verse-end markers correctly.
+
+### API Request Examples [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#api-request-examples "Direct link to heading")
+
+#### For QCF V2 (Glyph-Based) [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#for-qcf-v2-glyph-based "Direct link to heading")
+
+```bash
+curl -X GET "https://apis.quran.foundation/content/api/v4/verses/by_chapter/1?words=true&word_fields=code_v2,text_qpc_hafs&mushaf=1" \
+  -H "x-auth-token: YOUR_ACCESS_TOKEN" \
+  -H "x-client-id: YOUR_CLIENT_ID"
+```
+
+#### For QPC Hafs (Unicode) [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#for-qpc-hafs-unicode "Direct link to heading")
+
+```bash
+curl -X GET "https://apis.quran.foundation/content/api/v4/verses/by_chapter/1?words=true&word_fields=text_qpc_hafs" \
+  -H "x-auth-token: YOUR_ACCESS_TOKEN" \
+  -H "x-client-id: YOUR_CLIENT_ID"
+```
+
+#### For Tajweed V4 [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#for-tajweed-v4 "Direct link to heading")
+
+```bash
+curl -X GET "https://apis.quran.foundation/content/api/v4/verses/by_chapter/1?words=true&word_fields=code_v2,text_qpc_hafs&mushaf=19" \
+  -H "x-auth-token: YOUR_ACCESS_TOKEN" \
+  -H "x-client-id: YOUR_CLIENT_ID"
+```
+
+### API Response Structure [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#api-response-structure "Direct link to heading")
+
+```json
+{
+    "verses": [\
+        {\
+            "id": 1,\
+            "verse_number": 1,\
+            "verse_key": "1:1",\
+            "hizb_number": 1,\
+            "rub_el_hizb_number": 1,\
+            "ruku_number": 1,\
+            "manzil_number": 1,\
+            "sajdah_number": null,\
+            "page_number": 1,\
+            "juz_number": 1,\
+            "words": [\
+                {\
+                    "id": 1,\
+                    "position": 1,\
+                    "audio_url": "wbw/001_001_001.mp3",\
+                    "char_type_name": "word",\
+                    "code_v2": "ﱁ",\
+                    "text_qpc_hafs": "بِسۡمِ",\
+                    "page_number": 1,\
+                    "line_number": 2,\
+                    "text": "ﱁ",\
+                    "translation": {\
+                        "text": "In (the) name",\
+                        "language_name": "english"\
+                    },\
+                    "transliteration": {\
+                        "text": "bis'mi",\
+                        "language_name": "english"\
+                    }\
+                },\
+                {\
+                    "id": 2,\
+                    "position": 2,\
+                    "audio_url": "wbw/001_001_002.mp3",\
+                    "char_type_name": "word",\
+                    "code_v2": "ﱂ",\
+                    "text_qpc_hafs": "ٱللَّهِ",\
+                    "page_number": 1,\
+                    "line_number": 2,\
+                    "text": "ﱂ",\
+                    "translation": {\
+                        "text": "(of) Allah",\
+                        "language_name": "english"\
+                    },\
+                    "transliteration": {\
+                        "text": "l-lahi",\
+                        "language_name": "english"\
+                    }\
+                },\
+                ....\
+            ]\
+        },\
+        ...\
+    ],
+    "pagination": {
+        "per_page": 10,
+        "current_page": 1,
+        "next_page": null,
+        "total_pages": 1,
+        "total_records": 7
+    }
+}
+```
+
+### View Modes: Reading View vs Translation View [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#view-modes-reading-view-vs-translation-view "Direct link to heading")
+
+When building a Quran application, you'll typically implement one of two view modes:
+
+| Aspect | Reading View | Translation View |
+| --- | --- | --- |
+| **Layout Unit** | Mushaf page (lines) | Single verse |
+| **Data Grouping** | Words → Lines → Pages | Verses (no grouping) |
+| **Line Construction** | Required | Not applicable |
+| **Use Case** | Physical Mushaf layout | Study with translations |
+
+### Reading View: From API Response to Rendered Page [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#reading-view-from-api-response-to-rendered-page "Direct link to heading")
+
+The API returns **verses**, but Reading View needs **lines** to match the physical Mushaf layout.
+
+**Why?** A single Mushaf line often contains words from multiple verses. You must group by line, not by verse.
+
+**Word Layout Properties:**
+
+Each word includes:
+
+- `page_number`: Which Mushaf page (1-604)
+- `line_number`: Which line on that page (1-15 typically)
+- `position`: Word order within the verse
+
+> **Note:** The API returns words in correct Mushaf order, so no sorting is needed—just group by line.
+
+**Data Transformation (Pseudo-code):**
+
+```text
+// Step 1: Extract all words from all verses (already in correct order)
+words = verses.flatMap(verse => verse.words)
+
+// Step 2: Group words by page and line (order is preserved)
+lines = groupBy(words, word => `page-${page_number}-line-${line_number}`)
+// Result: { "page-1-line-1": [words], "page-1-line-2": [words], ... }
+
+// Step 3: Render each line, then render words within each line
+for each line in lines:
+    for each word in line:
+        render word with font based on page_number
+```
+
+**Key Points:**
+
+1. **Cross-Verse Lines:** One line may contain words from multiple verses
+2. **Font Loading:** For QCF fonts, `page_number` determines which font file to load
+
+#### Complete Reading View Example (QCF V2) [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#complete-reading-view-example-qcf-v2 "Direct link to heading")
+
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>Quran Reading View - Glyph-Based Rendering</title>
+  <style>
+    @font-face {
+      font-family: 'UthmanicHafs';
+      src: url('https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.woff2') format('woff2');
+      font-display: swap;
+    }
+
+    .page-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 20px;
+      font-family: sans-serif;
+      color: #666;
+    }
+
+    .mushaf-line {
+      display: flex;
+      justify-content: center;
+      direction: rtl;
+      font-size: 28px;
+      line-height: 2.5;
+      margin-bottom: 8px;
+      min-height: 48px;
+    }
+
+    .word {
+      display: inline-block;
+      cursor: pointer;
+      padding: 0 2px;
+      transition: background-color 0.2s;
+    }
+
+    .word:hover {
+      background-color: rgba(0, 123, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    .word.loading {
+      font-family: 'UthmanicHafs', serif;
+      opacity: 0.7;
+    }
+
+    .verse-separator {
+      display: inline-block;
+      font-family: 'UthmanicHafs', serif;
+      color: #888;
+      margin: 0 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <div class="page-header">
+      <span id="page-info">Loading...</span>
+    </div>
+    <div id="mushaf-page"></div>
+  </div>
+
+  <script>
+    const CDN_BASE = 'https://verses.quran.foundation';
+    const API_BASE = 'https://apis.quran.foundation/content/api/v4';
+    const loadedFonts = new Set();
+
+    // NOTE: In production, obtain these from your server
+    const accessToken = 'YOUR_ACCESS_TOKEN';
+    const clientId = 'YOUR_CLIENT_ID';
+
+    /**
+     * Load QCF V2 font for a specific Mushaf page
+     */
+    async function loadPageFont(pageNumber) {
+      const fontName = `p${pageNumber}-v2`;
+      if (loadedFonts.has(fontName)) return fontName;
+
+      try {
+        const fontFace = new FontFace(
+          fontName,
+          `url('${CDN_BASE}/fonts/quran/hafs/v2/woff2/p${pageNumber}.woff2')`
+        );
+        fontFace.display = 'block';
+        await fontFace.load();
+        document.fonts.add(fontFace);
+        loadedFonts.add(fontName);
+      } catch (error) {
+        console.error(`Failed to load font for page ${pageNumber}:`, error);
+      }
+      return fontName;
+    }
+
+    /**
+     * Group words by their line number for Mushaf layout
+     */
+    function groupWordsByLine(verses) {
+      const lines = new Map();
+
+      // Extract all words from all verses
+      verses.forEach(verse => {
+        verse.words.forEach(word => {
+          const lineKey = `line-${word.line_number}`;
+
+          if (!lines.has(lineKey)) {
+            lines.set(lineKey, []);
+          }
+          lines.get(lineKey).push({
+            ...word,
+            verseKey: verse.verse_key
+          });
+        });
+      });
+
+      // Convert to sorted array of lines
+      return Array.from(lines.entries())
+        .sort((a, b) => {
+          const lineA = parseInt(a[0].split('-')[1]);
+          const lineB = parseInt(b[0].split('-')[1]);
+          return lineA - lineB;
+        })
+        .map(([lineKey, words]) => ({
+          lineNumber: parseInt(lineKey.split('-')[1]),
+          words
+        }));
+    }
+
+    /**
+     * Render a single word with QCF font
+     */
+    function renderWord(word, isFontLoaded) {
+      const span = document.createElement('span');
+      span.className = 'word' + (isFontLoaded ? '' : ' loading');
+      span.dataset.page = word.page_number;
+      span.dataset.verseKey = word.verseKey;
+      span.dataset.position = word.position;
+
+      // Handle verse end markers with Unicode font
+      if (word.char_type_name === 'end') {
+        span.classList.add('verse-separator');
+        span.textContent = word.text_qpc_hafs;
+      } else if (isFontLoaded) {
+        // Use QCF glyph - MUST use innerHTML for glyph codes!
+        span.style.fontFamily = `p${word.page_number}-v2`;
+        span.innerHTML = word.code_v2;
+      } else {
+        // Fallback to Unicode while font loads
+        span.textContent = word.text_qpc_hafs;
+      }
+
+      return span;
+    }
+
+    /**
+     * Render a Mushaf line (may contain words from multiple verses)
+     */
+    function renderLine(lineData, loadedPages) {
+      const lineDiv = document.createElement('div');
+      lineDiv.className = 'mushaf-line';
+      lineDiv.dataset.lineNumber = lineData.lineNumber;
+
+      lineData.words.forEach(word => {
+        const isFontLoaded = loadedPages.has(word.page_number);
+        const wordSpan = renderWord(word, isFontLoaded);
+        lineDiv.appendChild(wordSpan);
+      });
+
+      return lineDiv;
+    }
+
+    /**
+     * Fetch and render a Mushaf page
+     */
+    async function renderMushafPage(pageNumber) {
+      const container = document.getElementById('mushaf-page');
+      const pageInfo = document.getElementById('page-info');
+
+      container.innerHTML = '';
+      pageInfo.textContent = `Page ${pageNumber} - Loading...`;
+
+      try {
+        // Fetch verses for this page with line_number included
+        const response = await fetch(
+          `${API_BASE}/verses/by_page/${pageNumber}?` +
+          `words=true&word_fields=code_v2,text_qpc_hafs,line_number,page_number&mushaf=1`,
+          {
+            headers: {
+              'x-auth-token': accessToken,
+              'x-client-id': clientId
+            }
+          }
+        );
+        const data = await response.json();
+        const verses = data.verses;
+
+        if (!verses || verses.length === 0) {
+          pageInfo.textContent = `Page ${pageNumber} - No verses found`;
+          return;
+        }
+
+        // Get unique page numbers (usually just one, but can span pages)
+        const pageNumbers = [...new Set(\
+          verses.flatMap(v => v.words.map(w => w.page_number))\
+        )];
+
+        // Group words by line for Mushaf layout
+        const lines = groupWordsByLine(verses);
+
+        // Render with fallback fonts first
+        const loadedPages = new Set();
+        lines.forEach(lineData => {
+          const lineDiv = renderLine(lineData, loadedPages);
+          container.appendChild(lineDiv);
+        });
+
+        pageInfo.textContent = `Page ${pageNumber} - ${verses.length} verses`;
+
+        // Load QCF fonts in parallel
+        await Promise.all(pageNumbers.map(loadPageFont));
+
+        // Update words with loaded fonts
+        pageNumbers.forEach(pn => loadedPages.add(pn));
+
+        document.querySelectorAll('.word.loading').forEach(span => {
+          const page = parseInt(span.dataset.page);
+          if (loadedPages.has(page) && !span.classList.contains('verse-separator')) {
+            span.classList.remove('loading');
+            span.style.fontFamily = `p${page}-v2`;
+            // Re-render with glyph code
+            const verseKey = span.dataset.verseKey;
+            const position = parseInt(span.dataset.position);
+
+            // Find the original word data
+            const verse = verses.find(v => v.verse_key === verseKey);
+            const word = verse?.words.find(w => w.position === position);
+
+            if (word && word.code_v2) {
+              span.innerHTML = word.code_v2;
+            }
+          }
+        });
+
+      } catch (error) {
+        console.error('Failed to render page:', error);
+        pageInfo.textContent = `Page ${pageNumber} - Error loading`;
+      }
+    }
+
+    // Render page 1 (Al-Fatiha starts on page 1)
+    renderMushafPage(1);
+  </script>
+</body>
+</html>
+```
+
+**Key implementation details:**
+
+1. **Line Grouping:** Words are grouped by `line_number` to match the physical Mushaf layout
+2. **Progressive Loading:** Unicode fallback text is shown immediately, then replaced with QCF glyphs when fonts load
+3. **Verse End Markers:**`char_type_name === 'end'` words use Unicode font (renders better)
+4. **innerHTML for Glyphs:** QCF `code_v2` values **must** use `innerHTML`, not `textContent`
+5. **Cross-Verse Lines:** Each line may contain words from multiple verses—this is handled by grouping
+
+### Translation View: Verse-by-Verse Rendering [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#translation-view-verse-by-verse-rendering "Direct link to heading")
+
+Translation View displays verses one by one with their translations. No line grouping needed.
+
+#### Requesting Translations [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#requesting-translations "Direct link to heading")
+
+To include translations in your API response, add the `translations` parameter with comma-separated translation resource IDs:
+
+```bash
+curl -X GET "https://apis.quran.foundation/content/api/v4/verses/by_chapter/1?words=true&word_fields=code_v2,text_qpc_hafs&translations=131,95" \
+  -H "x-auth-token: YOUR_ACCESS_TOKEN" \
+  -H "x-client-id: YOUR_CLIENT_ID"
+```
+
+The response will include a `translations` array for each verse:
+
+```json
+{
+  "verses": [\
+    {\
+      "verse_key": "1:1",\
+      "words": [...],\
+      "translations": [\
+        {\
+          "id": 1338348,\
+          "resource_id": 95,\
+          "text": "In the name of Allah, the Merciful, the Compassionate<sup foot_note=\"176997\">1</sup>"\
+        }\
+      ]\
+    }\
+  ]
+}
+```
+
+#### Handling Translation HTML and Footnotes [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#handling-translation-html-and-footnotes "Direct link to heading")
+
+> ⚠️ **Important:** Translation `text` is returned as **HTML**, not plain text. It may contain footnote markers that need special handling.
+
+**Footnote Format:**
+
+Footnotes appear as `<sup>` elements with a `foot_note` attribute containing the footnote ID:
+
+```html
+"text": "Praise<sup foot_note=\"176998\">1</sup> be to Allah, the Lord<sup foot_note=\"176999\">2</sup> of the entire universe."
+```
+
+**Rendering Translation Text:**
+
+Since the text contains HTML, you must render it using `innerHTML` (or React's `dangerouslySetInnerHTML`):
+
+```javascript
+// ✅ Correct - renders HTML including footnote markers
+translationDiv.innerHTML = translation.text;
+
+// ❌ Wrong - displays raw HTML tags as text
+translationDiv.textContent = translation.text;
+```
+
+**Fetching Footnote Content:**
+
+When a user clicks a footnote, fetch its content using the footnote ID:
+
+```javascript
+// Extract footnote ID from the clicked <sup> element
+const footnoteId = supElement.getAttribute('foot_note');
+
+// Fetch footnote content
+const response = await fetch(
+  `${API_BASE}/foot_notes/${footnoteId}`,
+  { headers: { 'x-auth-token': accessToken, 'x-client-id': clientId } }
+);
+const data = await response.json();
+// data.footNote.text contains the footnote explanation
+```
+
+**Complete Footnote Handling Example:**
+
+```javascript
+function renderTranslation(translation, container) {
+  const div = document.createElement('div');
+  div.innerHTML = translation.text;
+
+  // Add click handler for footnotes
+  div.addEventListener('click', async (event) => {
+    const target = event.target;
+    if (target.tagName !== 'SUP') return;
+
+    const footnoteId = target.getAttribute('foot_note');
+    if (!footnoteId) return;
+
+    // Fetch and display footnote
+    const response = await fetch(`${API_BASE}/foot_notes/${footnoteId}`, {
+      headers: { 'x-auth-token': accessToken, 'x-client-id': clientId }
+    });
+    const data = await response.json();
+    showFootnotePopup(data.footNote.text);
+  });
+
+  container.appendChild(div);
+}
+```
+
+**Data Flow (Pseudo-code):**
+
+```text
+for each verse in verses:
+    render verse.words (Quran text with appropriate font)
+    for each translation in verse.translations:
+        render translation.text as HTML (not textContent!)
+        attach click handlers for footnote <sup> elements
+```
+
+* * *
+
+## Font Files & CDN [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#font-files--cdn "Direct link to heading")
+
+### CDN Base URL [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#cdn-base-url "Direct link to heading")
+
+```text
+https://verses.quran.foundation/fonts/quran
+```
+
+### Font File Paths [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#font-file-paths "Direct link to heading")
+
+#### QCF V1 (604 page files) [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#qcf-v1-604-page-files "Direct link to heading")
+
+```text
+https://verses.quran.foundation/fonts/quran/hafs/v1/woff2/p{PAGE}.woff2
+https://verses.quran.foundation/fonts/quran/hafs/v1/woff/p{PAGE}.woff
+https://verses.quran.foundation/fonts/quran/hafs/v1/ttf/p{PAGE}.ttf
+```
+
+Replace `{PAGE}` with 1-604.
+
+#### QCF V2 (604 page files) [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#qcf-v2-604-page-files "Direct link to heading")
+
+```text
+https://verses.quran.foundation/fonts/quran/hafs/v2/woff2/p{PAGE}.woff2
+https://verses.quran.foundation/fonts/quran/hafs/v2/woff/p{PAGE}.woff
+https://verses.quran.foundation/fonts/quran/hafs/v2/ttf/p{PAGE}.ttf
+```
+
+#### QCF V4 Tajweed (604 page files) [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#qcf-v4-tajweed-604-page-files "Direct link to heading")
+
+**COLRv1 format** (Chrome, Safari, Edge - supports CSS font-palette):
+
+```text
+https://verses.quran.foundation/fonts/quran/hafs/v4/colrv1/woff2/p{PAGE}.woff2
+https://verses.quran.foundation/fonts/quran/hafs/v4/colrv1/woff/p{PAGE}.woff
+https://verses.quran.foundation/fonts/quran/hafs/v4/colrv1/ttf/p{PAGE}.ttf
+```
+
+**OT-SVG format** (Firefox dark mode - baked-in colors):
+
+```text
+https://verses.quran.foundation/fonts/quran/hafs/v4/ot-svg/light/woff2/p{PAGE}.woff2
+https://verses.quran.foundation/fonts/quran/hafs/v4/ot-svg/dark/woff2/p{PAGE}.woff2
+https://verses.quran.foundation/fonts/quran/hafs/v4/ot-svg/sepia/woff2/p{PAGE}.woff2
+```
+
+#### Unicode Fonts (Single Files) [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#unicode-fonts-single-files "Direct link to heading")
+
+**QPC Hafs / Uthmanic Hafs:**
+
+```text
+https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.woff2
+https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.ttf
+```
+
+**IndoPak Nastaleeq:**
+
+Use this font file with `text_indopak_nastaleeq`. The text works only with this compatible font version; other IndoPak or Nastaliq fonts will not render its waqf signs and verse-end markers correctly.
+
+```text
+https://verses.quran.foundation/fonts/quran/hafs/nastaleeq/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2
+https://verses.quran.foundation/fonts/quran/hafs/nastaleeq/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff
+https://verses.quran.foundation/fonts/quran/hafs/nastaleeq/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.ttf
+```
+
+### Font Caching and App Bundling [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#font-caching-and-app-bundling "Direct link to heading")
+
+Loading fonts from the CDN at runtime is the simplest way to receive corrections and improvements promptly. Local font caching and bundling font files with your application are also allowed if both of these conditions are met:
+
+- You maintain an active account in the [Developer Console](https://dev-console.quran.foundation/projects).
+- You credit Quran Foundation somewhere reasonably accessible in your application or its associated credits, for example: “Quran fonts provided by [Quran Foundation](https://quran.foundation/).”
+
+Because font files can receive corrections and improvements, we recommend using a refresh or invalidation strategy for cached files and updating bundled copies in new application releases.
+
+This permission applies to font files served from the documented Quran Foundation font URLs for use in your application. The files may be distributed only as an integrated part of your application; they may not be offered separately through your own API, asset package, standalone download, or similar offering. The [Developer Terms](https://api-docs.quran.foundation/legal/developer-terms/) are the authoritative source for font and Mushaf-image caching and bundling conditions. Other API data remains subject to those storage rules and, where applicable, the [Content Sync documentation](https://api-docs.quran.foundation/docs/tutorials/content-sync/getting-started/).
+
+* * *
+
+## Rendering QCF Fonts (V1, V2, V4) [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#rendering-qcf-fonts-v1-v2-v4 "Direct link to heading")
+
+QCF fonts require special handling because each Mushaf page (1-604) has its own font file.
+
+### Step 1: Fetch Verse Data [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#step-1-fetch-verse-data "Direct link to heading")
+
+Request `code_v2` (or `code_v1`), `text_qpc_hafs` (for fallback), and `page_number`:
+
+```javascript
+const API_BASE = 'https://apis.quran.foundation/content/api/v4';
+
+async function fetchVerses(chapter, accessToken, clientId) {
+  const response = await fetch(
+    `${API_BASE}/verses/by_chapter/${chapter}?` +
+    `words=true&word_fields=code_v2,text_qpc_hafs&mushaf=1`,
+    {
+      headers: {
+        'x-auth-token': accessToken,
+        'x-client-id': clientId
+      }
+    }
+  );
+  const data = await response.json();
+  return data.verses;
+}
+```
+
+### Step 2: Load Page Fonts Dynamically [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#step-2-load-page-fonts-dynamically "Direct link to heading")
+
+```javascript
+const loadedFonts = new Set();
+
+async function loadFontForPage(pageNumber, version = 'v2') {
+  const fontName = `p${pageNumber}-${version}`;
+
+  if (loadedFonts.has(fontName)) {
+    return fontName; // Already loaded
+  }
+
+  const fontUrl = `https://verses.quran.foundation/fonts/quran/hafs/${version}/woff2/p${pageNumber}.woff2`;
+
+  const fontFace = new FontFace(fontName, `url('${fontUrl}')`);
+  fontFace.display = 'block';
+
+  await fontFace.load();
+  document.fonts.add(fontFace);
+  loadedFonts.add(fontName);
+
+  return fontName;
+}
+```
+
+### Step 3: Render Words with Correct Font [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#step-3-render-words-with-correct-font "Direct link to heading")
+
+> ⚠️ **Critical:** QCF glyph codes contain special Unicode characters that must be rendered using
+> `innerHTML` (or React's `dangerouslySetInnerHTML`), not `textContent`. Using `textContent` will
+> display incorrect characters.
+
+```javascript
+async function renderVerse(verse, container) {
+  // Get unique page numbers from words
+  const pageNumbers = [...new Set(verse.words.map(w => w.page_number))];
+
+  // Load all required fonts
+  await Promise.all(pageNumbers.map(page => loadFontForPage(page)));
+
+  // Render each word
+  verse.words.forEach(word => {
+    const span = document.createElement('span');
+
+    // Handle verse end markers with Unicode font
+    if (word.char_type_name === 'end') {
+      span.style.fontFamily = 'UthmanicHafs, serif';
+      span.textContent = word.text_qpc_hafs;
+    } else {
+      span.style.fontFamily = `p${word.page_number}-v2`;
+      span.innerHTML = word.code_v2; // MUST use innerHTML for QCF codes!
+    }
+
+    container.appendChild(span);
+    container.appendChild(document.createTextNode(' ')); // Word separator
+  });
+}
+```
+
+### Step 4: Implement Fallback [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#step-4-implement-fallback "Direct link to heading")
+
+Show readable text while fonts load:
+
+```javascript
+function renderWordWithFallback(word, fontLoaded) {
+  const span = document.createElement('span');
+
+  if (fontLoaded) {
+    span.style.fontFamily = `p${word.page_number}-v2`;
+    span.innerHTML = word.code_v2;
+  } else {
+    span.style.fontFamily = 'UthmanicHafs, serif';
+    span.textContent = word.text_qpc_hafs; // Fallback text
+  }
+
+  return span;
+}
+```
+
+### Complete QCF Implementation [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#complete-qcf-implementation "Direct link to heading")
+
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>Quran QCF V2 Rendering</title>
+  <style>
+    @font-face {
+      font-family: 'UthmanicHafs';
+      src: url('https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.woff2') format('woff2');
+      font-display: swap;
+    }
+
+    .verse-container {
+      font-size: 32px;
+      line-height: 2.5;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .word {
+      display: inline-block;
+    }
+
+    .word.loading {
+      font-family: 'UthmanicHafs', serif;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div id="quran" class="verse-container"></div>
+
+  <script>
+    const loadedFonts = new Set();
+    const CDN_BASE = 'https://verses.quran.foundation';
+
+    async function loadPageFont(pageNumber) {
+      const fontName = `p${pageNumber}-v2`;
+      if (loadedFonts.has(fontName)) return fontName;
+
+      const fontFace = new FontFace(
+        fontName,
+        `url('${CDN_BASE}/fonts/quran/hafs/v2/woff2/p${pageNumber}.woff2')`
+      );
+      fontFace.display = 'block';
+
+      try {
+        await fontFace.load();
+        document.fonts.add(fontFace);
+        loadedFonts.add(fontName);
+      } catch (error) {
+        console.error(`Failed to load font for page ${pageNumber}:`, error);
+      }
+
+      return fontName;
+    }
+
+    // NOTE: In production, obtain these from your server
+    const API_BASE = 'https://apis.quran.foundation/content/api/v4';
+    const accessToken = 'YOUR_ACCESS_TOKEN';
+    const clientId = 'YOUR_CLIENT_ID';
+
+    async function fetchAndRenderChapter(chapterNumber) {
+      const container = document.getElementById('quran');
+      container.innerHTML = 'Loading...';
+
+      // Fetch verses (with authentication)
+      const response = await fetch(
+        `${API_BASE}/verses/by_chapter/${chapterNumber}?` +
+        `words=true&word_fields=code_v2,text_qpc_hafs&mushaf=1`,
+        {
+          headers: {
+            'x-auth-token': accessToken,
+            'x-client-id': clientId
+          }
+        }
+      );
+      const data = await response.json();
+
+      container.innerHTML = '';
+
+      // Get all unique pages
+      const allPageNumbers = new Set();
+      data.verses.forEach(verse => {
+        verse.words.forEach(word => allPageNumbers.add(word.page_number));
+      });
+
+      // Start loading fonts in parallel
+      const fontPromises = [...allPageNumbers].map(loadPageFont);
+
+      // Render immediately with fallback
+      data.verses.forEach(verse => {
+        const verseDiv = document.createElement('div');
+        verseDiv.className = 'verse';
+
+        verse.words.forEach(word => {
+          const span = document.createElement('span');
+          span.className = 'word loading';
+          span.dataset.page = word.page_number;
+          span.dataset.codeV2 = word.code_v2;
+          span.textContent = word.text_qpc_hafs; // Show fallback first
+          verseDiv.appendChild(span);
+          verseDiv.appendChild(document.createTextNode(' '));
+        });
+
+        container.appendChild(verseDiv);
+      });
+
+      // When fonts load, update to QCF rendering
+      await Promise.all(fontPromises);
+
+      document.querySelectorAll('.word.loading').forEach(span => {
+        span.classList.remove('loading');
+        span.style.fontFamily = `p${span.dataset.page}-v2`;
+        span.innerHTML = span.dataset.codeV2;
+      });
+    }
+
+    // Load Surah Al-Fatiha
+    fetchAndRenderChapter(1);
+  </script>
+</body>
+</html>
+```
+
+* * *
+
+## Rendering Unicode Fonts [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#rendering-unicode-fonts "Direct link to heading")
+
+Unicode fonts are simpler - one font file works for all text.
+
+### QPC Hafs Implementation [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#qpc-hafs-implementation "Direct link to heading")
+
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>Quran Unicode Rendering</title>
+  <style>
+    @font-face {
+      font-family: 'UthmanicHafs';
+      src: url('https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.woff2') format('woff2'),
+           url('https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.ttf') format('truetype');
+      font-display: swap;
+    }
+
+    .quran-text {
+      font-family: 'UthmanicHafs', 'Traditional Arabic', 'Scheherazade', serif;
+      font-size: 28px;
+      line-height: 2;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .verse-number {
+      font-family: sans-serif;
+      font-size: 14px;
+      color: #666;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="quran" class="quran-text"></div>
+
+  <script>
+    // NOTE: In production, obtain these from your server
+    const API_BASE = 'https://apis.quran.foundation/content/api/v4';
+    const accessToken = 'YOUR_ACCESS_TOKEN';
+    const clientId = 'YOUR_CLIENT_ID';
+
+    async function fetchAndRender(chapterNumber) {
+      const container = document.getElementById('quran');
+
+      const response = await fetch(
+        `${API_BASE}/verses/by_chapter/${chapterNumber}?` +
+        `words=true&word_fields=text_qpc_hafs`,
+        {
+          headers: {
+            'x-auth-token': accessToken,
+            'x-client-id': clientId
+          }
+        }
+      );
+      const data = await response.json();
+
+      data.verses.forEach(verse => {
+        const div = document.createElement('div');
+
+        // Combine words into verse text
+        const text = verse.words.map(w => w.text_qpc_hafs).join(' ');
+        div.textContent = text;
+
+        // Add verse number
+        const verseNum = document.createElement('span');
+        verseNum.className = 'verse-number';
+        verseNum.textContent = `(${verse.verse_key})`;
+        div.appendChild(verseNum);
+
+        container.appendChild(div);
+      });
+    }
+
+    fetchAndRender(1);
+  </script>
+</body>
+</html>
+```
+
+### IndoPak Nastaleeq Implementation [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#indopak-nastaleeq-implementation "Direct link to heading")
+
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>Quran IndoPak Nastaleeq Rendering</title>
+  <style>
+    @font-face {
+      font-family: 'IndoPakNastaleeq';
+      src: url('https://verses.quran.foundation/fonts/quran/hafs/nastaleeq/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2') format('woff2'),
+           url('https://verses.quran.foundation/fonts/quran/hafs/nastaleeq/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff') format('woff');
+      font-display: block;
+    }
+
+    .quran-text {
+      /* text_indopak_nastaleeq works only with the compatible IndoPak Nastaleeq font,
+         so there is no fallback font; text is shown only after the font loads. */
+      font-family: 'IndoPakNastaleeq';
+      font-size: 32px;
+      line-height: 2.5;
+      direction: rtl;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div id="quran" class="quran-text"></div>
+
+  <script>
+    // NOTE: In production, obtain these from your server
+    const API_BASE = 'https://apis.quran.foundation/content/api/v4';
+    const accessToken = 'YOUR_ACCESS_TOKEN';
+    const clientId = 'YOUR_CLIENT_ID';
+
+    async function fetchAndRender(chapterNumber) {
+      const container = document.getElementById('quran');
+
+      // Show the text only after the compatible font has loaded. Do not fall
+      // back to another font: it would render waqf signs and verse-end markers incorrectly.
+      const fontSpec = "32px 'IndoPakNastaleeq'";
+      const faces = await document.fonts.load(fontSpec).catch(() => []);
+      if (faces.length === 0 || !document.fonts.check(fontSpec)) {
+        container.textContent = 'The IndoPak Nastaleeq font could not be loaded. Please try again.';
+        return;
+      }
+
+      // Verse-level text via `fields`. For per-word rendering, request
+      // `words=true&word_fields=text_indopak_nastaleeq` and read it from each word.
+      const response = await fetch(
+        `${API_BASE}/verses/by_chapter/${chapterNumber}?` +
+        `fields=text_indopak_nastaleeq`,
+        {
+          headers: {
+            'x-auth-token': accessToken,
+            'x-client-id': clientId
+          }
+        }
+      );
+      const data = await response.json();
+
+      data.verses.forEach(verse => {
+        const div = document.createElement('div');
+        div.textContent = verse.text_indopak_nastaleeq;
+        container.appendChild(div);
+      });
+    }
+
+    fetchAndRender(1);
+  </script>
+</body>
+</html>
+```
+
+* * *
+
+## Complete Implementation Examples [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#complete-implementation-examples "Direct link to heading")
+
+### React Implementation (QCF V2) [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#react-implementation-qcf-v2 "Direct link to heading")
+
+```jsx
+import React, { useState, useEffect, useCallback } from 'react';
+
+const CDN_BASE = 'https://verses.quran.foundation';
+const loadedFonts = new Set();
+
+// Hook to load QCF fonts
+function useQcfFontLoader(verses) {
+  const [fontsLoaded, setFontsLoaded] = useState(new Set());
+
+  useEffect(() => {
+    if (!verses?.length) return;
+
+    const pageNumbers = new Set();
+    verses.forEach(verse => {
+      verse.words.forEach(word => {
+        if (word.page_number) pageNumbers.add(word.page_number);
+      });
+    });
+
+    const loadFonts = async () => {
+      const newlyLoaded = new Set(fontsLoaded);
+
+      await Promise.all([...pageNumbers].map(async (page) => {
+        const fontName = `p${page}-v2`;
+        if (loadedFonts.has(fontName)) {
+          newlyLoaded.add(page);
+          return;
+        }
+
+        try {
+          const fontFace = new FontFace(
+            fontName,
+            `url('${CDN_BASE}/fonts/quran/hafs/v2/woff2/p${page}.woff2')`
+          );
+          fontFace.display = 'block';
+          await fontFace.load();
+          document.fonts.add(fontFace);
+          loadedFonts.add(fontName);
+          newlyLoaded.add(page);
+        } catch (error) {
+          console.error(`Failed to load font for page ${page}:`, error);
+        }
+      }));
+
+      setFontsLoaded(newlyLoaded);
+    };
+
+    loadFonts();
+  }, [verses]);
+
+  return fontsLoaded;
+}
+
+// Word component
+function QuranWord({ word, isFontLoaded }) {
+  if (isFontLoaded) {
+    return (
+      <span
+        style={{ fontFamily: `p${word.page_number}-v2` }}
+        dangerouslySetInnerHTML={{ __html: word.code_v2 }}
+      />
+    );
+  }
+
+  // Fallback while loading
+  return (
+    <span style={{ fontFamily: 'UthmanicHafs, serif', opacity: 0.8 }}>
+      {word.text_qpc_hafs}
+    </span>
+  );
+}
+
+// Verse component
+function Verse({ verse, loadedPages }) {
+  return (
+    <div style={{
+      direction: 'rtl',
+      textAlign: 'right',
+      fontSize: '28px',
+      lineHeight: 2.5,
+      marginBottom: '16px'
+    }}>
+      {verse.words.map((word, index) => (
+        <React.Fragment key={word.id || index}>
+          <QuranWord
+            word={word}
+            isFontLoaded={loadedPages.has(word.page_number)}
+          />
+          {' '}
+        </React.Fragment>
+      ))}
+      <span style={{ fontSize: '14px', color: '#666' }}>
+        ({verse.verse_key})
+      </span>
+    </div>
+  );
+}
+
+// API configuration (get tokens from your server in production)
+const API_BASE = 'https://apis.quran.foundation/content/api/v4';
+
+// Main component
+function QuranChapter({ chapterNumber, accessToken, clientId }) {
+  const [verses, setVerses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const loadedPages = useQcfFontLoader(verses);
+
+  useEffect(() => {
+    async function fetchVerses() {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `${API_BASE}/verses/by_chapter/${chapterNumber}?` +
+          `words=true&word_fields=code_v2,text_qpc_hafs&mushaf=1`,
+          {
+            headers: {
+              'x-auth-token': accessToken,
+              'x-client-id': clientId
+            }
+          }
+        );
+        const data = await response.json();
+        setVerses(data.verses);
+      } catch (error) {
+        console.error('Failed to fetch verses:', error);
+      }
+      setLoading(false);
+    }
+
+    fetchVerses();
+  }, [chapterNumber, accessToken, clientId]);
+
+  if (loading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      {verses.map(verse => (
+        <Verse
+          key={verse.id}
+          verse={verse}
+          loadedPages={loadedPages}
+        />
+      ))}
+    </div>
+  );
+}
+
+export default QuranChapter;
+```
+
+### Vue 3 Implementation [​](https://api-docs.quran.foundation/docs/tutorials/fonts/font-rendering/\#vue-3-implementation "Direct link to heading")
+
+```vue
+<template>
+  <div class="quran-container">
+    <div v-if="loading">Loading...</div>
+    <div v-else>
+      <div
+        v-for="verse in verses"
+        :key="verse.id"
+        class="verse"
+      >
+        <span
+          v-for="(word, index) in verse.words"
+          :key="word.id || index"
+          class="word"
+          :style="getWordStyle(word)"
+          v-html="getWordText(word)"
+        />
+        <span class="verse-number">({{ verse.verse_key }})</span>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, watch } from 'vue';
+
+const props = defineProps({
+  chapterNumber: { type: Number, required: true }
+});
+
+const CDN_BASE = 'https://verses.quran.foundation';
+const loadedFonts = new Set();
+const loadedPages = ref(new Set());
+const verses = ref([]);
+const loading = ref(true);
+
+async function loadPageFont(pageNumber) {
+  const fontName = `p${pageNumber}-v2`;
+  if (loadedFonts.has(fontName)) return;
+
+  try {
+    const fontFace = new FontFace(
+      fontName,
+      `url('${CDN_BASE}/fonts/quran/hafs/v2/woff2/p${pageNumber}.woff2')`
+    );
+    fontFace.display = 'block';
+    await fontFace.load();
+    document.fonts.add(fontFace);
+    loadedFonts.add(fontName);
+    loadedPages.value = new Set([...loadedPages.value, pageNumber]);
+  } catch (error) {
+    console.error(`Failed to load font for page ${pageNumber}:`, error);
+  }
+}
+
+// API configuration (get tokens from your server in production)
+const API_BASE = 'https://apis.quran.foundation/content/api/v4';
+
+async function fetchVerses() {
+  loading.value = true;
+  try {
+    const res
+…[truncated]

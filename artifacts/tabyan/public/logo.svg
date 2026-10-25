@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="260" height="72" viewBox="0 0 260 72" role="img" aria-labelledby="title">
+  <title id="title">تبيان</title>
+  <g fill="none" stroke="#7A263A" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+    <path d="M10 20h16c8 0 14 5 14 13v25c-8-5-18-7-30-5V20Z"/>
+    <path d="M40 33c0-8 6-13 14-13h16v33c-12-2-22 0-30 5V33Z"/>
+    <path d="M19 29h12M49 29h12M19 38h12M49 38h12"/>
+  </g>
+  <path d="M40 21v37" stroke="#C69A39" stroke-width="3"/>
+  <text x="238" y="49" fill="#7A263A" font-family="IBM Plex Sans Arabic, sans-serif" font-size="31" font-weight="700" text-anchor="end" direction="rtl">تبيان</text>
+</svg>

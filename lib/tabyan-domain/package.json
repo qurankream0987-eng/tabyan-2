@@ -1,0 +1,11 @@
+{
+  "name": "@workspace/tabyan-domain",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./user-query-scope": "./src/user-query-scope.ts",
+    "./admin-library": "./src/admin-library.ts"
+  }
+}

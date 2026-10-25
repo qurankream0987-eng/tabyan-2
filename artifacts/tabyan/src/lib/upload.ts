@@ -1,0 +1,205 @@
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+type VideoAttachmentPurpose = "student_placement_video" | "teacher_kyc_video" | "live_session_recording";
+type SubmissionVideoPurpose = Exclude<VideoAttachmentPurpose, "live_session_recording">;
+type UploadPurpose = "live_session_recording" | "book_pdf" | VideoAttachmentPurpose;
+export type VideoUploadOptions = { signal?: AbortSignal; token?: string | null };
+
+export type VideoUploadResult = {
+  playableObjectPath: string;
+  videoProof: string;
+  purpose: VideoAttachmentPurpose;
+  durationSeconds: number;
+};
+
+/**
+ * Real two-step upload: request a presigned URL from our API server,
+ * then PUT the bytes directly to cloud storage.
+ * Returns the objectPath (e.g. /objects/uploads/<id>) to store in the DB.
+ * The file is later served from `${BASE}/api/storage${objectPath}`.
+ */
+export async function uploadFile(
+  file: Blob,
+  name: string,
+  onProgress?: (pct: number) => void,
+  purpose?: "book_pdf",
+): Promise<string> {
+  const result = await uploadFileWithResult(file, name, onProgress, purpose);
+  return result.playableObjectPath;
+}
+
+export async function uploadVideoFile(
+  file: Blob,
+  name: string,
+  onProgress: ((pct: number) => void) | undefined,
+  purpose: SubmissionVideoPurpose,
+  options?: VideoUploadOptions,
+): Promise<VideoUploadResult> {
+  return uploadFileWithResult(file, name, onProgress, purpose, options) as Promise<VideoUploadResult>;
+}
+
+export async function uploadLiveSessionRecording(
+  file: Blob,
+  name: string,
+  onProgress?: (pct: number) => void,
+): Promise<VideoUploadResult> {
+  return uploadFileWithResult(
+    file,
+    name,
+    onProgress,
+    "live_session_recording",
+  ) as Promise<VideoUploadResult>;
+}
+
+async function uploadFileWithResult(
+  file: Blob,
+  name: string,
+  onProgress: ((pct: number) => void) | undefined,
+  purpose?: UploadPurpose,
+  options?: VideoUploadOptions,
+): Promise<VideoUploadResult | { playableObjectPath: string }> {
+  const token = options?.token !== undefined ? options.token : localStorage.getItem("tabyan_token");
+  const signal = options?.signal;
+  if (signal?.aborted) throw new DOMException("Upload cancelled", "AbortError");
+  const res = await fetch(`${BASE}/api/storage/uploads/request-url`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: "Bearer " + token } : {}),
+    },
+    signal,
+    body: JSON.stringify({
+      name,
+      size: file.size,
+      contentType: file.type || "application/octet-stream",
+      ...(purpose ? { purpose } : {}),
+    }),
+  });
+  if (!res.ok) throw new Error("تعذر تجهيز الرفع — تأكد من تسجيل الدخول");
+  const { uploadURL, objectPath, uploadProof } = (await res.json()) as {
+    uploadURL: string;
+    objectPath: string;
+    uploadProof?: string;
+  };
+
+  await new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const cleanup = () => signal?.removeEventListener("abort", abort);
+    const abort = () => xhr.abort();
+    xhr.open("PUT", uploadURL);
+    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      cleanup();
+      xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error("فشل رفع الملف"));
+    };
+    xhr.onerror = () => { cleanup(); reject(new Error("انقطع الاتصال أثناء الرفع")); };
+    xhr.onabort = () => { cleanup(); reject(new DOMException("Upload cancelled", "AbortError")); };
+    signal?.addEventListener("abort", abort, { once: true });
+    if (signal?.aborted) {
+      abort();
+      return;
+    }
+    try {
+      xhr.send(file);
+    } catch (error) {
+      cleanup();
+      reject(error);
+    }
+  });
+
+  // تأمين الملف: ملكية خاصة للرافع (+ قراءة للمسؤول) — بدونها يبقى الملف غير قابل للقراءة (fail-closed)
+  const fin = await fetch(`${BASE}/api/storage/uploads/finalize`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: "Bearer " + token } : {}),
+    },
+    signal,
+    body: JSON.stringify({ objectPath, ...(purpose ? { purpose } : {}), ...(uploadProof ? { uploadProof } : {}) }),
+  });
+  if (!fin.ok) {
+    // الخادم قد يرفض الملف لأنه ليس فيديو صالحاً — نُظهر رسالته الواضحة للمستخدم
+    const body = (await fin.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(body?.error || "تعذر تأمين الملف بعد الرفع");
+  }
+
+  const result = await fin.json() as {
+    playableObjectPath?: string;
+    videoProof?: string;
+    purpose?: VideoAttachmentPurpose;
+    durationSeconds?: number;
+  };
+  if (!result.playableObjectPath) throw new Error("استجاب الخادم دون مسار فيديو قابل للتشغيل");
+  if (
+    purpose === "student_placement_video"
+    || purpose === "teacher_kyc_video"
+    || purpose === "live_session_recording"
+  ) {
+    if (!result.videoProof || result.purpose !== purpose || typeof result.durationSeconds !== "number") {
+      throw new Error("استجاب الخادم دون إثبات فيديو مكتمل");
+    }
+    return {
+      playableObjectPath: result.playableObjectPath,
+      videoProof: result.videoProof,
+      purpose,
+      durationSeconds: result.durationSeconds,
+    };
+  }
+  return { playableObjectPath: result.playableObjectPath };
+}
+
+/**
+ * A live recording is not considered saved when its bytes reach storage. The
+ * final request verifies the finalized private object and only then creates
+ * its session record. This preserves the invariant that the database never
+ * points at a fabricated recording URL.
+ */
+export async function finalizeLiveSessionRecording(
+  sessionId: string,
+  recording: VideoUploadResult,
+  clientDurationSeconds: number,
+): Promise<void> {
+  const token = localStorage.getItem("tabyan_token");
+  const response = await fetch(`${BASE}/api/storage/live-session-recordings/finalize`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      sessionId,
+      objectPath: recording.playableObjectPath,
+      durationSeconds: clientDurationSeconds,
+      videoProof: recording.videoProof,
+    }),
+  });
+  if (response.ok) return;
+  const body = await response.json().catch(() => null) as { error?: string } | null;
+  throw new Error(body?.error || "تعذر ربط التسجيل بالحلقة");
+}
+
+/**
+ * Build the serving URL for a stored objectPath.
+ * The auth token is appended as a query param because media tags
+ * (<video>, <img>) cannot send Authorization headers.
+ */
+export function objectUrl(objectPath: string, diagnosticId?: string): string {
+  if (/^https?:\/\//.test(objectPath)) return objectPath;
+  const token = localStorage.getItem("tabyan_token");
+  const query = new URLSearchParams();
+  if (token) query.set("token", token);
+  if (diagnosticId) query.set("diag", diagnosticId);
+  const suffix = query.toString();
+  return `${BASE}/api/storage${objectPath}${suffix ? `?${suffix}` : ""}`;
+}
+
+/** Student-authorized stream for a published uploaded book. */
+export function bookFileUrl(bookId: string, inline = true): string {
+  const token = localStorage.getItem("tabyan_token");
+  const query = new URLSearchParams();
+  if (token) query.set("token", token);
+  if (inline) query.set("inline", "1");
+  return `${BASE}/api/storage/books/${encodeURIComponent(bookId)}/download${query.toString() ? `?${query}` : ""}`;
+}

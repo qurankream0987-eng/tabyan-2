@@ -1,0 +1,473 @@
+Source: https://arxiv.org/html/2604.18932v1
+Title: Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.
+Fetched: 2026-10-05T15:27:19.631Z
+
+Title:
+
+Content selection saved. Describe the issue below:
+
+Description:
+
+![](https://arxiv.org/static/base/1.0.1/images/icons/smileybones-small.svg)arXiv is now an independent nonprofit! [Learn more](https://info.arxiv.org/about) ×
+
+[License: CC BY-NC-SA 4.0](https://info.arxiv.org/help/license/index.html#licenses-available)
+
+arXiv:2604.18932v1 \[cs.SD\] 21 Apr 2026
+
+# Tadabur: A Large-Scale Quran Dataset ††footnotetext: Citation: Authors. Title. Pages…. DOI:000000/11111.
+
+Faisal Alherran
+Affiliation: Riyadh, Saudi Arabia
+Email: [alherranfaisal@gmail.com](mailto:alherranfaisal@gmail.com)
+
+###### Abstract
+
+Despite growing interest in Quranic data research, existing Quran datasets remain limited in both scale and diversity. To address this gap, we present Tadabur, a large-scale Quran audio dataset. Tadabur comprises more than 1400+ hours of recitation audio from over 600 distinct reciters, providing substantial variation in recitation styles, vocal characteristics, and recording conditions. This diversity makes Tadabur a comprehensive and representative resource for Quranic speech research and analysis. By significantly expanding both the total duration and variability of available Quran data, Tadabur aims to support future research and facilitate the development of standardized Quranic speech benchmarks.
+
+Tadabur: A Large-Scale Quran Audio Dataset
+
+Faisal Alherran
+
+Riyadh, Saudi Arabia
+
+alherranfaisal@gmail.com
+
+[Github](https://github.com/fherran/tadabur "") \| [![[Uncaptioned image]](https://arxiv.org/html/2604.18932v1/hf-logo.png) Huggingface](https://huggingface.co/datasets/FaisaI/tadabur "") \| [Tadabur Page](https://fherran.github.io/tadabur "")
+
+## 1 Introduction
+
+Audio understanding plays a central role in modern machine learning, yet Qur’anic audio—despite its global significance and unique acoustic properties—remains underrepresented in research. Existing Qur’anic speech datasets are limited in scale, reciter diversity, audio quality, and annotation depth, restricting progress in tasks such as Qur’anic automatic speech recognition (ASR), tajwīd-aware modeling, reciter identification, and prosodic analysis. As a result, current systems often fail to capture the rich stylistic variation, strict phonological rules, and melodic structures that characterize Qur’anic recitation.
+
+To address these limitations, we introduce Tadabur, a large and diverse Qur’anic audio dataset. Tadabur comprises more than 1400+ hours of audio from over 600 distinct reciters, with complete coverage of 113 surahs excluding Al-Fatiha and thousands of Qur’anic verses. The dataset spans a wide range of recitation styles (e.g., murattal, mujawwad), speaking rates, recording conditions, and acoustic qualities, and is accompanied by automatically derived metadata and precise temporal annotations.
+
+These characteristics make Tadabur one of the most comprehensive and representative resources available for Qur’anic speech research. The dataset enables advancements in ASR and speech modeling, large-scale speaker and style analysis, prosody and tajwīd research, and data-centric studies on robustness and transfer learning. By establishing a standardized and richly varied benchmark, Tadabur provides a strong foundation for future work in domain-adapted speech technologies.
+
+In summary, this work makes the following contributions:
+
+- •
+
+
+We introduce Tadabur, a large-scale Qur’anic speech dataset comprising more than 1400+ hours of audio from over 600 reciters.
+
+- •
+
+
+We propose an automated pipeline for large-scale Qur’an data curation that combines LLM-based metadata extraction, Whisper/WhisperX-based alignment, and ASR-driven content filtering to obtain high-quality, time-aligned annotations.
+
+- •
+
+
+We provide machine-readable word-level alignments and structured metadata for each verse-level audio file in a consistent JSON schema.
+
+
+## 2 Related Work
+
+### 2.1 Quran Dataset
+
+Several Quranic audio datasets have been introduced in recent years to support research in automatic speech recognition (ASR), pronunciation assessment, and computer-assisted Quran recitation. However, despite these efforts, most existing datasets remain limited in overall scale, reciter and speaker diversity, recording condition variability, and the richness of linguistic and phonetic annotations. The most notable publicly available datasets can be summarized as follows:
+
+- •
+
+
+Quran Recitations for Audio Classification \[ [1](https://arxiv.org/html/2604.18932v1#bib.bib1 "")\]:
+Sourced publicly from Kaggle, this dataset was originally curated for the task of reciter identification rather than speech recognition. It consists of a modest collection of 6,689 audio files attributed to 12 distinct reciters. While the audio samples capture different acoustic environments, the dataset lacks the fundamental linguistic annotations required for ASR training. Specifically, it does not include textual transcriptions or time-aligned metadata. Consequently, its utility is strictly limited to audio classification tasks (e.g., speaker identification) and it is unsuitable for training acoustic models to recognize Quranic content.
+
+- •
+
+
+Quran Speech to Text Dataset (SLR132) \[ [2](https://arxiv.org/html/2604.18932v1#bib.bib2 "")\]:
+As one of the standard benchmarks for Quranic ASR, the SLR132 corpus provides a structured collection of 226,129 audio-text pairs sourced from 30 renowned reciters. It aligns audio at the ayah (verse) level with corresponding Arabic text, making it a viable baseline for developing verse-level recognition systems. However, its limitation lies in its coarse granularity; the lack of word-level or phoneme-level timestamping restricts its application in more advanced tasks, such as misalignment detection or fine-grained pronunciation scoring. Furthermore, the reliance on a small set of professional reciters limits the acoustic diversity necessary for training models that generalize well to non-professional or diverse speakers.
+
+- •
+
+
+Buraaq (Quran Audio-Text Dataset) \[ [3](https://arxiv.org/html/2604.18932v1#bib.bib3 "")\]:
+Hosted on Hugging Face, the Buraaq dataset comprises approximately 187,080 samples derived from 30 reciters. It distinguishes itself by including rich metadata, such as translations and surah information, which supports multi-task learning scenarios.
+
+
+### 2.2 Automatic Speech Recognition (ASR)
+
+Automatic Speech Recognition (ASR) has progressed rapidly over the past decade, driven by advances in deep learning, large-scale datasets, and end-to-end modeling frameworks. Early ASR systems were predominantly based on hybrid Hidden Markov Model–Gaussian Mixture Model (HMM–GMM) architectures, which relied heavily on handcrafted acoustic features and complex modular pipelines. The transition to deep neural networks (DNNs), including convolutional neural networks (CNNs), recurrent neural networks (RNNs), and later Long Short-Term Memory (LSTM) and Gated Recurrent Unit (GRU) architectures, significantly improved acoustic modeling and recognition accuracy.
+
+The introduction of Connectionist Temporal Classification (CTC) enabled alignment-free sequence training, reducing reliance on frame-level annotations. This was followed by attention-based encoder–decoder architectures, which unified acoustic and language modeling into a single end-to-end framework. More recently, Transformer-based architectures have become the dominant paradigm due to their ability to model long-range dependencies and their scalability to massive datasets.
+
+A major shift in contemporary ASR research is the adoption of self-supervised representation learning. Models such as wav2vec 2.0, HuBERT, and Whisper leverage large amounts of unlabeled speech to learn rich and transferable acoustic representations, which can then be fine-tuned with limited labeled data. These methods have achieved state-of-the-art performance across diverse languages, acoustic conditions, and speaking styles, highlighting the central role of large and diverse datasets in achieving robust ASR systems.
+
+Despite these advances, several challenges remain, particularly for highly structured and stylistically rich speech domains. In the context of Qur’anic recitation, ASR systems must contend with prolonged phoneme durations, strict pronunciation rules (tajwīd), melodic articulation, speaker-dependent recitation styles, and significant acoustic variability across recording environments. Furthermore, most large-scale ASR benchmarks are based on conversational or read speech and do not adequately represent the linguistic and prosodic characteristics of Qur’anic audio.
+
+The availability of a large and highly variant Qur’an speech dataset therefore plays a critical role in advancing ASR performance in this domain. Such datasets enable robust modeling of reciter diversity, recitation styles, and pronunciation variability, while also supporting the development of domain-adapted self-supervised and end-to-end ASR systems. This work is directly motivated by these challenges and aims to bridge the gap between general-purpose ASR models and the unique characteristics of Qur’anic speech.
+
+## 3 Dataset Overview
+
+Tadabur dataset is a large-scale Qur’anic speech corpus compiled from a diverse collection of well-known public Qur’an audio publishers. It is designed to capture wide variation across reciters, recitation styles, chapters, acoustic environments, and recording qualities. Unlike conventional speech corpora that primarily focus on conversational or read speech, Tadabur targets a highly structured and prosodically rich domain governed by strict phonological and rhythmic rules. The dataset construction pipeline follows a multi-stage, fully automated process consisting of data collection, metadata extraction, verse-level alignment, automated content cleaning, and final validation to ensure both linguistic and acoustic integrity.
+
+### 3.1 Data Collection
+
+Audio data were collected from publicly accessible Qur’an repositories and online publishing platforms that host large-scale recitation archives from numerous reciters. The collection strategy was designed to maximize diversity across several critical dimensions, including reciter identity, recitation style (e.g., murattal, mujawwad), recording conditions, audio formats, and surah coverage. All recordings were standardized to a unified audio format and sampling rate to ensure consistency across the entire dataset. Long-form recordings that contain complete juz’, surahs, or full Qur’an recitations were preserved to enable both verse-level and continuous-speech modeling tasks.
+
+### 3.2 Metadata Extraction via Large Language Models
+
+Due to the absence of consistent and structured metadata across source platforms, we employ large language models (LLMs) to infer and normalize essential annotation fields from unstructured textual descriptions and file-level information.
+
+Titles, descriptions, and related textual attributes are provided to the LLM, which extracts standardized metadata such as surah name and reciter identity. When metadata is incomplete or noisy, the model performs semantic inference to produce the most plausible structured representation.
+
+The resulting normalized metadata enables consistent annotation and supports subsequent dataset curation. The metadata extraction stage employs Gemini 2.5 Flash\[ [4](https://arxiv.org/html/2604.18932v1#bib.bib15 "")\] as part of a multi-stage LLM pipeline, where the model is prompted with a structured classification instruction to determine whether a given audio file corresponds to a valid Qur’anic surah recitation and to extract normalized metadata fields such as surah name and reciter identity.
+
+### 3.3 Verse-Level Alignment Using Whisper and Quran API
+
+To obtain precise verse-level segmentation and word-level temporal annotations, we employed an automatic speech recognition (ASR)-driven alignment pipeline. All audio recordings were first processed using the Whisper Large v3 model in combination with WhisperX \[ [5](https://arxiv.org/html/2604.18932v1#bib.bib4 "")\], which enables accurate word-level timestamp extraction through forced alignment. The resulting transcriptions were subsequently aligned with the canonical Qur’anic text retrieved from the Quran API.111 [https://quranapi.pages.dev/](https://quranapi.pages.dev/ "")
+
+This process enables reliable extraction of verse-level audio segments from long-form recitations and produces temporally synchronized pairs of audio and ground-truth verse text. The complete alignment workflow constitutes the Ayah Alignment Module (AAM).
+
+![Refer to caption](https://arxiv.org/html/2604.18932v1/Iqraa_doc2.png)Figure 1: Overview of the verse-level alignment pipeline, illustrating the processing flow from audio input through WhisperX transcription to the Ayah Alignment Module, which generates synchronized verse-level audio segments and structured outputs.
+
+Within the Ayah Alignment Module, each verse (ayah) of a given surah is iteratively matched against the WhisperX transcription output using a semantic similarity-based approach. Specifically, verse text embeddings are generated using the SILMA AI embedding model \[ [6](https://arxiv.org/html/2604.18932v1#bib.bib5 "")\] and compared to embeddings derived from the corresponding transcription segments.
+
+Cosine similarity is computed between each verse embedding and candidate transcription segments. A verse is considered aligned when the similarity score exceeds a predefined threshold. Upon successful matching, the corresponding start and end timestamps are extracted from the WhisperX output, enabling precise temporal segmentation of the recitation at the verse level.
+
+![Refer to caption](https://arxiv.org/html/2604.18932v1/Iqraa_doc_alm2.png)Figure 2: Detailed architecture of the Ayah Alignment Module, illustrating the embedding-based similarity matching and timestamp extraction process.
+
+Finally, to maximize alignment precision and ensure that each cropped segment contains only the intended ayah, we incorporated a recitation stop segmentation stage. Following the approach proposed in \[ [7](https://arxiv.org/html/2604.18932v1#bib.bib6 "")\], a dedicated recitation-boundary detection model was applied to each preliminary cropped segment.
+
+To account for potential boundary underestimation, a temporal buffer of 5 seconds (empirically determined in our experiments) was appended to the end of each cropped audio segment prior to segmentation inference. The segmentation model was then used to detect the precise stopping point of the reciter.
+
+The detected recitation boundary was subsequently reconciled with the corresponding WhisperX timestamp output to refine the segment endpoint. This correction step ensures that the final audio segment terminates exactly at the natural stopping position of the reciter after the verse, eliminating residual speech from subsequent verses or unintended truncation.
+
+This refinement process produces a temporally accurate and semantically clean ayah-level audio segment, forming the final curated output of the alignment pipeline.
+
+![Refer to caption](https://arxiv.org/html/2604.18932v1/Iqraa_doc_recseg.png)Figure 3: Recitation stop segmentation and boundary correction module for precise ayah-level audio extraction through segmentation inference and timestamp refinement.
+
+### 3.4 Dataset Curation
+
+The final stage of the pipeline focuses on dataset curation to ensure validity and consistency. We apply three complementary mechanisms:
+
+- •
+
+
+LLM-based metadata curation: Semantic validation using structured metadata.
+
+- •
+
+
+ASR-based curation: Content verification through verse alignment with canonical Qur’anic text.
+
+- •
+
+
+Deduplication: Removal of duplicate or near-duplicate recordings.
+
+
+#### LLM-Based Curation from Metadata
+
+In the first approach, we leverage a Large Language Model (LLM) as a semantic data curator. The metadata collected during the initial data acquisition stage (e.g., title, description, tags, and other textual attributes) is provided as input to the LLM. The model is then tasked with classifying whether the corresponding audio sample represents a valid Qur’anic surah recitation or not.
+
+This step enables automated semantic validation based solely on contextual metadata, allowing us to filter out mislabeled, incomplete, or non-relevant recordings prior to downstream processing.
+
+![Refer to caption](https://arxiv.org/html/2604.18932v1/Iqraa_doc_dc_llm.png)Figure 4: LLM-based metadata classification pipeline for identifying valid surah recitations.
+
+#### ASR-Based Curation
+
+Our previously developed ASR-based verse alignment pipeline inherently performs content-level curation. Since alignment is conducted against canonical verses obtained from the Qur’an API, only recordings containing valid surah recitation can be successfully aligned.
+
+As a result, non-recitation content (e.g., sermons or other speech segments) naturally fails the alignment process and is excluded. Thus, verse-level alignment implicitly serves as an additional data curation mechanism.
+
+#### Deduplication
+
+Given the large-scale data collection process, duplicate recordings—particularly for the same reciter and verse (ayah)—are likely to occur. To ensure dataset integrity, we perform a dedicated deduplication step.
+
+We first group samples that share the same reciter and verse. For each group, we extract audio embeddings using the Efficient Audio Transformer (EAT) \[ [8](https://arxiv.org/html/2604.18932v1#bib.bib7 "")\]. We then compute pairwise cosine similarity between recordings within the same group. If the similarity exceeds a predefined threshold (0.9 in our experiments), the recordings are considered duplicates and merged accordingly.
+
+Inspired by \[ [9](https://arxiv.org/html/2604.18932v1#bib.bib8 "")\], we model duplicate relationships as a graph and extract connected components using a scalable disjoint-set (union–find) data structure. Each connected component corresponds to a duplicate group, from which we retain a single representative recording and discard the remaining samples.
+
+![Refer to caption](https://arxiv.org/html/2604.18932v1/Iqraa_doc_dc_dedup.png)Figure 5: Deduplication pipeline using EAT embeddings, cosine similarity, and connected component extraction.
+
+## 4 Pipeline Quality Evaluation
+
+A core component of the Tadabur construction pipeline is the Ayah Alignment Module (AAM), which is responsible for identifying and segmenting individual verse-level audio from long-form recitations. The quality of the resulting dataset is directly dependent on the reliability of this alignment stage. In this section, we evaluate two critical design dimensions of the AAM: (1) the alignment method used to match transcription outputs to canonical Qur’anic text, and (2) the ASR model used to generate transcriptions.
+
+### 4.1 Evaluation Setup
+
+We evaluate alignment coverage across five well-known reciters: Abd al-Basit Abd al-Samad, Abdulmohsen Al-Qasim, Abd al-Rahman al-Sudais, Saud Al-Shuraim, and Yasser Al-Dosari. Each reciter has a ground truth corresponding to complete Qur’an coverage across all surahs and ayahs. Importantly, the audio recordings used in this evaluation were not seen during fine-tuning of the Tadabur model, ensuring an unbiased assessment of the alignment pipeline on unseen data. We define alignment coverage as the percentage of ayahs successfully identified and segmented by the pipeline:
+
+|     |     |     |
+| --- | --- | --- |
+|  | Coverage=Aligned AyahsTotal Ayahs×100\\text{Coverage}=\\frac{\\text{Aligned Ayahs}}{\\text{Total Ayahs}}\\times 100 |  |
+
+The evaluation set for each reciter was curated specifically for this purpose: recordings were gathered independently, deduplicated, and cleaned to ensure that each ayah appears exactly once. Coverage, therefore, reflects the pipeline’s ability to correctly identify and segment unique ayahs, with no inflation from repeated recordings.
+
+We evaluate two alignment methods and three ASR models:
+
+1. 1.
+
+
+Alignment methods:
+
+
+
+1. (a)
+
+
+      SILMA Embedding — semantic similarity via the SILMA AI embedding model \[ [6](https://arxiv.org/html/2604.18932v1#bib.bib5 "")\]
+
+2. (b)
+
+
+      Fuzzy Matching — text-based string similarity baseline
+
+
+2. 2.
+
+
+ASR models:
+
+
+
+1. (a)
+
+
+      Tadabur fine-tuned model (ours)
+
+2. (b)
+
+
+      Whisper-Quran\[ [10](https://arxiv.org/html/2604.18932v1#bib.bib9 "")\] — an existing Whisper model fine-tuned on Qur’anic data
+
+3. (c)
+
+
+      Whisper Small — standard base model without domain adaptation
+
+
+### 4.2 Results
+
+Table [1](https://arxiv.org/html/2604.18932v1#S4.T1 "Table 1 ‣ 4.2 Results ‣ 4 Pipeline Quality Evaluation ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.") reports alignment coverage for each configuration. We additionally include the average coverage across all five reciters for a concise summary.
+
+| Alignment | ASR Model | Abd al-Basit | Al-Qasim | Al-Sudais | Al-Shuraim | Al-Dosari | Avg. |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| SILMA Emb. | Tadabur (Ours) | 95.61 | 97.73 | 94.47 | 98.14 | 97.18 | 96.63 |
+| SILMA Emb. | Whisper-Quran | 97.25 | 96.70 | 92.69 | 92.61 | 98.23 | 95.50 |
+| SILMA Emb. | Whisper Small | 79.67 | 82.35 | 76.34 | 86.95 | 87.56 | 82.57 |
+| Fuzzy Match | Tadabur (Ours) | 80.76 | 89.57 | 83.48 | 92.00 | 84.35 | 86.03 |
+| Fuzzy Match | Whisper-Quran | 87.29 | 91.42 | 83.33 | 84.41 | 89.68 | 87.23 |
+| Fuzzy Match | Whisper Small | 69.75 | 73.26 | 67.00 | 78.25 | 75.75 | 72.80 |
+
+Table 1: Ayah alignment coverage (%) across five reciters under different alignment methods and ASR models.
+
+### 4.3 Analysis
+
+#### Alignment Method.
+
+SILMA Embedding-based alignment consistently outperforms fuzzy text matching across all reciters and ASR models. With the Tadabur fine-tuned model, SILMA achieves an average coverage of 96.63%, compared to 86.03% for fuzzy matching — a gap of more than 10 percentage points. This advantage holds across all three ASR backbones, confirming that semantic-level matching is significantly more robust to the phonological variations, elongated phoneme durations, and recitation-specific disfluencies that characterize Qur’anic speech, which cause brittle surface-form text matching to fail.
+
+#### ASR Model.
+
+The choice of ASR model has a clear and consistent impact on alignment coverage. Whisper Small, without any domain adaptation, achieves the lowest coverage across both alignment methods: 82.57% under SILMA Embedding and 72.80% under Fuzzy Matching. This degradation reflects the model’s limited exposure to Qur’anic Arabic during pre-training, resulting in transcription errors that propagate into the alignment stage.
+
+Among domain-adapted models, the Tadabur fine-tuned model achieves the highest average coverage of 96.63% under SILMA Embedding, marginally outperforming Whisper-Quran \[ [10](https://arxiv.org/html/2604.18932v1#bib.bib9 "")\] (95.50%). Notably, under Fuzzy Matching, Whisper-Quran (87.23%) slightly exceeds Tadabur (86.03%), suggesting that both models are competitive and that the choice of alignment method plays a larger role than the specific ASR backbone when both are domain-adapted.
+
+#### Summary.
+
+These results validate the two core design choices of the AAM: the use of semantic embedding-based alignment over surface-form text matching, and the use of a domain-adapted Qur’anic ASR backbone. The adopted configuration — SILMA Embedding with the Tadabur fine-tuned model — achieves the highest alignment coverage and serves as the basis for the full Tadabur dataset construction pipeline.
+
+## 5 Dataset Statistics
+
+The Tadabur dataset provides one of the most extensive and diverse collections of Quranic recitation audio available to date. This section presents a quantitative overview of the dataset’s main characteristics. Note that the distribution of recordings is not uniform across reciters, as the dataset reflects the natural variability in the availability of audio sources during collection.
+
+### 5.1 Dataset Size
+
+The final dataset contains:
+
+- •
+
+
+More than 1400+ hours of verse-level annotated audio
+
+- •
+
+
+Over 600 distinct reciters spanning a wide range of ages, dialects, and recitation traditions
+
+- •
+
+
+Automatically generated word-level temporal alignments and structured metadata
+
+
+Compared to previously available Quranic datasets, Tadabur offers a substantially larger scale in both total audio duration and reciter diversity. Table [2](https://arxiv.org/html/2604.18932v1#S5.T2 "Table 2 ‣ 5.1 Dataset Size ‣ 5 Dataset Statistics ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.") provides a quantitative comparison between Tadabur and the most widely used publicly available Quranic datasets.
+
+| Dataset Name | Segments | Reciters | Transcription | Word-Level Align. |
+| --- | --- | --- | --- | --- |
+| Quran Recitations for Audio Classification | 6,689 | 12 | ×\\times | ×\\times |
+| Quran Speech-to-Text (SLR132) | 226,129 | 30 | ✓\\checkmark | ×\\times |
+| Buraaq Quran Audio–Text Dataset | 187,080 | 30 | ✓\\checkmark | ×\\times |
+| Tadabur (Ours) | 365,000+ | 600+ | ✓\\checkmark | ✓\\checkmark |
+
+Table 2: Comparison between Tadabur and existing publicly available Quran datasets.
+
+### 5.2 Reciter Diversity
+
+Reciter diversity is one of the defining strengths of the Tadabur dataset. In addition to covering a wide range of dialects and recitation traditions, the dataset includes multiple recordings of the same surah and ayah for many reciters. These natural variations arise from differences in recording sessions, recitation pace, melodic choices, and acoustic environments. As a result, Tadabur captures not only cross-reciter diversity but also within-reciter stylistic variation, providing a richer representation of real-world Quranic recitation. This diversity enables research on robustness to stylistic shifts, modeling recitation styles, multi-take variability, and speaker-specific prosodic patterns.
+
+Figure [6](https://arxiv.org/html/2604.18932v1#S5.F6 "Figure 6 ‣ 5.2 Reciter Diversity ‣ 5 Dataset Statistics ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.") illustrates how Tadabur compares to existing Quranic datasets in terms of the number of unique reciters.
+
+KaggleSLR132BuraaqTadabur (Ours)00200200400400600600121230303030600600Number of RecitersFigure 6: Number of reciters across major publicly available Quran datasets.
+
+## 6 Models Evaluation Against Tadabur
+
+To demonstrate the utility of Tadabur as a benchmark for Qur’anic ASR, we evaluate a diverse set of publicly available speech recognition models on the full dataset. The models span a range of architectures, parameter scales, and levels of Arabic or Qur’anic domain adaptation, providing a comprehensive baseline for future research.
+
+### 6.1 Models
+
+We evaluate the following eight models:
+
+- •
+
+
+Whisper-Quran\[ [10](https://arxiv.org/html/2604.18932v1#bib.bib9 "")\] — a Whisper Base model fine-tuned specifically on Qur’anic Arabic speech (74M parameters).
+
+- •
+
+
+Whisper Small\[ [11](https://arxiv.org/html/2604.18932v1#bib.bib10 "")\] — the standard OpenAI Whisper Small model without domain adaptation (244M parameters).
+
+- •
+
+
+Wav2Vec2 XLSR-53 Arabic\[ [12](https://arxiv.org/html/2604.18932v1#bib.bib16 "")\] — the XLSR-53 multilingual model fine-tuned on Arabic speech (300M parameters).
+
+- •
+
+
+MMS 1B\[ [13](https://arxiv.org/html/2604.18932v1#bib.bib11 "")\] — Meta’s Massively Multilingual Speech model, covering 1,000+ languages including Arabic (1B parameters).
+
+- •
+
+
+Qwen3-ASR-1.7B\[ [14](https://arxiv.org/html/2604.18932v1#bib.bib12 "")\] — Alibaba’s state-of-the-art multilingual ASR model supporting 52 languages (1.7B parameters).
+
+- •
+
+
+Cohere Transcribe\[ [15](https://arxiv.org/html/2604.18932v1#bib.bib14 "")\] — Cohere Labs’ dedicated ASR model achieving state-of-the-art on the Open ASR Leaderboard (2B parameters).
+
+- •
+
+
+Voxtral Mini\[ [16](https://arxiv.org/html/2604.18932v1#bib.bib17 "")\] — Mistral AI’s natively streaming multilingual ASR model supporting 13 languages (4B parameters).
+
+- •
+
+
+VibeVoice-ASR\[ [17](https://arxiv.org/html/2604.18932v1#bib.bib13 "")\] — Microsoft Research’s unified speech-to-text model supporting 50+ languages with long-form audio processing (7B parameters).
+
+
+### 6.2 Evaluation Metric
+
+We evaluate all models using Word Error Rate (WER) and Character Error Rate (CER), which are the standard metrics for ASR evaluation. Prior to computing both metrics, all predictions and labels were normalized by removing diacritics (tashkeel), Qur’anic punctuation marks (waqf signs), and orthographic variants specific to the Uthmani script, ensuring that error rates reflect lexical recognition accuracy rather than orthographic convention differences. Both are computed against the canonical Qur’anic text provided in each sample’s metadata. Lower values indicate better transcription accuracy.
+
+### 6.3 Results
+
+Table [3](https://arxiv.org/html/2604.18932v1#S6.T3 "Table 3 ‣ 6.3 Results ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.") reports WER and CER for all evaluated models on Tadabur, sorted by WER.
+
+| Model | Size | WER (%) ↓\\downarrow | CER (%) ↓\\downarrow |
+| --- | --- | --- | --- |
+| Whisper-Quran \[ [10](https://arxiv.org/html/2604.18932v1#bib.bib9 "")\] | 74M | 8.7 | 6.5 |
+| Cohere Transcribe \[ [15](https://arxiv.org/html/2604.18932v1#bib.bib14 "")\] | 2B | 11.2 | 8.1 |
+| Voxtral Mini \[ [16](https://arxiv.org/html/2604.18932v1#bib.bib17 "")\] | 4B | 15.1 | 11.2 |
+| VibeVoice-ASR \[ [17](https://arxiv.org/html/2604.18932v1#bib.bib13 "")\] | 7B | 24.3 | 14.0 |
+| Qwen3-ASR-1.7B \[ [14](https://arxiv.org/html/2604.18932v1#bib.bib12 "")\] | 1.7B | 25.2 | 9.9 |
+| Whisper Small \[ [11](https://arxiv.org/html/2604.18932v1#bib.bib10 "")\] | 244M | 29.2 | 16.1 |
+| MMS 1B \[ [13](https://arxiv.org/html/2604.18932v1#bib.bib11 "")\] | 1B | 51.1 | 16.6 |
+| Wav2Vec2 XLSR-53 Arabic \[ [12](https://arxiv.org/html/2604.18932v1#bib.bib16 "")\] | 300M | 57.4 | 21.9 |
+
+Table 3: ASR evaluation results on Tadabur. Models are sorted by WER. WER and CER are computed against the canonical Qur’anic text after normalization.
+
+### 6.4 Analysis
+
+The results reveal a clear pattern: domain adaptation outweighs model size in Qur’anic ASR. Whisper-Quran, despite being the smallest model at 74M parameters, achieves the best WER of 8.7% and CER of 6.5%, substantially outperforming much larger general-purpose models. Among those, Cohere Transcribe (11.2%) and Voxtral Mini (15.1%) perform most competitively — notably, Cohere Transcribe was not trained on any Qur’anic data, yet achieves strong results, reflecting the strength of its large-scale multilingual pre-training. In contrast, MMS 1B (51.1%) and Wav2Vec2 XLSR-53 Arabic (57.4%) perform poorly, confirming that neither multilingual nor Arabic-specific training generalizes reliably to the phonologically distinct domain of Qur’anic recitation.
+
+## 7 Licensing and Ethical Considerations
+
+Tadabur is published as an open-source dataset to support research in Arabic audio and speech technologies. The dataset is freely accessible to the research community and is intended to lower the barrier to working with large-scale, well-annotated Qur’anic speech data. Alongside the audio and annotations, we release metadata files to make it easier to explore, analyze, and build on the dataset.
+
+Given the central religious significance of the Qur’an, we emphasize that Tadabur is intended for respectful and beneficial use, particularly in educational, accessibility, and academic research contexts. Users are expected to avoid applications that would constitute mocking, distortion, or otherwise disrespectful manipulation of Qur’anic recitation, and to adhere to relevant cultural and religious norms in their work.
+
+## 8 Limitations
+
+Although Tadabur is the largest Quranic audio dataset to date, it has some limitations that future work can address.
+
+The first limitation is that some reciters do not have audio recordings for every ayah. This is either because a reciter had a small number of recordings available during data collection or because the processing pipeline failed to correctly match the audio to the right ayah, which was mostly caused by errors in the speech recognition step.
+
+The second limitation is that the word-level timestamps are not always precise. This is because the alignment model used was not originally built for Quranic audio and therefore struggles with the unique pronunciation and recitation style found in the Quran.
+
+## References
+
+- \[1\]M. Alrajeh (2023)Quran recitations for audio classification.
+Note: [https://www.kaggle.com/datasets/mohammedalrajeh/quran-recitations-for-audio-classification](https://www.kaggle.com/datasets/mohammedalrajeh/quran-recitations-for-audio-classification "") Accessed: 2026-01-24Cited by: [1st item](https://arxiv.org/html/2604.18932v1#S2.I1.i1.p1.1.1 "In 2.1 Quran Dataset ‣ 2 Related Work ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[2\] (n.d.)Quran speech to text dataset.
+Note: [https://www.openslr.org/132/](https://www.openslr.org/132/ "") OpenSLR SLR132Cited by: [2nd item](https://arxiv.org/html/2604.18932v1#S2.I1.i2.p1.1.1 "In 2.1 Quran Dataset ‣ 2 Related Work ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[3\]M. U. Salman, M. A. Qazi, and M. T. AlamQuran-md: a fine-grained multimodal dataset of the quran.
+In 5th Muslims in ML Workshop co-located with NeurIPS 2025,
+Cited by: [3rd item](https://arxiv.org/html/2604.18932v1#S2.I1.i3.p1.1.1 "In 2.1 Quran Dataset ‣ 2 Related Work ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[4\]Google DeepMind (2025)Gemini 2.5 flash.
+Note: [https://deepmind.google/models/gemini/flash/](https://deepmind.google/models/gemini/flash/ "")Cited by: [§3.2](https://arxiv.org/html/2604.18932v1#S3.SS2.p3.1 "3.2 Metadata Extraction via Large Language Models ‣ 3 Dataset Overview ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[5\]M. Bain, J. Huh, T. Han, and A. Zisserman (2023)WhisperX: time-accurate speech transcription of long-form audio.
+INTERSPEECH.
+Cited by: [§3.3](https://arxiv.org/html/2604.18932v1#S3.SS3.p1.1 "3.3 Verse-Level Alignment Using Whisper and Quran API ‣ 3 Dataset Overview ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[6\]A. B. Soliman, K. Ouda, and S. AI (2024)SILMA embedding matryoshka 0.1.
+Hugging Face.
+Note: [https://huggingface.co/silma-ai/silma-embedding-matryoshka-v0.1](https://huggingface.co/silma-ai/silma-embedding-matryoshka-v0.1 "")Cited by: [§3.3](https://arxiv.org/html/2604.18932v1#S3.SS3.p3.1 "3.3 Verse-Level Alignment Using Whisper and Quran API ‣ 3 Dataset Overview ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111."),
+[item 1.(a)](https://arxiv.org/html/2604.18932v1#S4.I1.i1.I1.i1.p1.1 "In item 1. ‣ 4.1 Evaluation Setup ‣ 4 Pipeline Quality Evaluation ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[7\]H. M. Abdullah Abdelfattah (2025)Automatic pronunciation error detection and correction of the holy quran’s learners using deep learning.
+arXiv preprint arXiv:2509.00094.
+Cited by: [§3.3](https://arxiv.org/html/2604.18932v1#S3.SS3.p5.1 "3.3 Verse-Level Alignment Using Whisper and Quran API ‣ 3 Dataset Overview ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[8\]W. Chen, Y. Liang, Z. Ma, Z. Zheng, and X. Chen (2024)EAT: self-supervised pre-training with efficient audio transformer.
+In IJCAI,
+Cited by: [§3.4](https://arxiv.org/html/2604.18932v1#S3.SS4.SSS0.Px3.p2.1 "Deduplication ‣ 3.4 Dataset Curation ‣ 3 Dataset Overview ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[9\]M. Oquab, T. Darcet, T. Moutakanni, H. V. Vo, M. Szafraniec, V. Khalidov, P. Fernandez, D. Haziza, F. Massa, A. El-Nouby, R. Howes, P. Huang, H. Xu, V. Sharma, S. Li, W. Galuba, M. Rabbat, M. Assran, N. Ballas, G. Synnaeve, I. Misra, H. Jegou, J. Mairal, P. Labatut, A. Joulin, and P. Bojanowski (2023)DINOv2: learning robust visual features without supervision.
+Cited by: [§3.4](https://arxiv.org/html/2604.18932v1#S3.SS4.SSS0.Px3.p3.1 "Deduplication ‣ 3.4 Dataset Curation ‣ 3 Dataset Overview ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[10\]Tarteel AI (2022)Whisper-base-ar-quran: whisper base fine-tuned on qur’anic arabic.
+Note: [https://huggingface.co/tarteel-ai/whisper-base-ar-quran](https://huggingface.co/tarteel-ai/whisper-base-ar-quran "")Cited by: [item 2.(b)](https://arxiv.org/html/2604.18932v1#S4.I1.i2.I1.i2.p1.1 "In item 2. ‣ 4.1 Evaluation Setup ‣ 4 Pipeline Quality Evaluation ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111."),
+[§4.3](https://arxiv.org/html/2604.18932v1#S4.SS3.SSS0.Px2.p2.1 "ASR Model. ‣ 4.3 Analysis ‣ 4 Pipeline Quality Evaluation ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111."),
+[1st item](https://arxiv.org/html/2604.18932v1#S6.I1.i1.p1.1 "In 6.1 Models ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111."),
+[Table 3](https://arxiv.org/html/2604.18932v1#S6.T3.2.2.1 "In 6.3 Results ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[11\]A. Radford, J. W. Kim, T. Xu, G. Brockman, C. McLeavey, and I. Sutskever (2023)Robust speech recognition via large-scale weak supervision.
+arXiv preprint arXiv:2212.04356.
+Cited by: [2nd item](https://arxiv.org/html/2604.18932v1#S6.I1.i2.p1.1 "In 6.1 Models ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111."),
+[Table 3](https://arxiv.org/html/2604.18932v1#S6.T3.2.7.1 "In 6.3 Results ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[12\]J. Grosman (2021)Fine-tuned XLSR-53 large model for speech recognition in Arabic.
+Note: [https://huggingface.co/jonatasgrosman/wav2vec2-large-xlsr-53-arabic](https://huggingface.co/jonatasgrosman/wav2vec2-large-xlsr-53-arabic "")Cited by: [3rd item](https://arxiv.org/html/2604.18932v1#S6.I1.i3.p1.1 "In 6.1 Models ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111."),
+[Table 3](https://arxiv.org/html/2604.18932v1#S6.T3.2.9.1 "In 6.3 Results ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[13\]V. Pratap, A. Tjandra, B. Shi, et al. (2023)Scaling speech technology to 1,000+ languages.
+arXiv preprint arXiv:2305.13516.
+Cited by: [4th item](https://arxiv.org/html/2604.18932v1#S6.I1.i4.p1.1 "In 6.1 Models ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111."),
+[Table 3](https://arxiv.org/html/2604.18932v1#S6.T3.2.8.1 "In 6.3 Results ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[14\]Qwen Team (2026)Qwen3-asr technical report.
+Note: [https://huggingface.co/Qwen/Qwen3-ASR-1.7B](https://huggingface.co/Qwen/Qwen3-ASR-1.7B "")Cited by: [5th item](https://arxiv.org/html/2604.18932v1#S6.I1.i5.p1.1 "In 6.1 Models ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111."),
+[Table 3](https://arxiv.org/html/2604.18932v1#S6.T3.2.6.1 "In 6.3 Results ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[15\]Cohere Labs (2026)Cohere transcribe: state-of-the-art speech recognition.
+Note: [https://huggingface.co/CohereLabs/cohere-transcribe-03-2026](https://huggingface.co/CohereLabs/cohere-transcribe-03-2026 "")Cited by: [6th item](https://arxiv.org/html/2604.18932v1#S6.I1.i6.p1.1 "In 6.1 Models ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111."),
+[Table 3](https://arxiv.org/html/2604.18932v1#S6.T3.2.3.1 "In 6.3 Results ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[16\]A. H. Liu, A. Ehrenberg, A. Lo, et al. (2026)Voxtral realtime.
+arXiv preprint arXiv:2602.11298.
+Cited by: [7th item](https://arxiv.org/html/2604.18932v1#S6.I1.i7.p1.1 "In 6.1 Models ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111."),
+[Table 3](https://arxiv.org/html/2604.18932v1#S6.T3.2.4.1 "In 6.3 Results ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
+
+- \[17\]Microsoft Research (2026)VibeVoice-asr technical report.
+Note: [https://huggingface.co/microsoft/VibeVoice-ASR](https://huggingface.co/microsoft/VibeVoice-ASR "")Cited by: [8th item](https://arxiv.org/html/2604.18932v1#S6.I1.i8.p1.1 "In 6.1 Models ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111."),
+[Table 3](https://arxiv.org/html/2604.18932v1#S6.T3.2.5.1 "In 6.3 Results ‣ 6 Models Evaluation Against Tadabur ‣ Tadabur: A Large-Scale Quran Dataset Citation: Authors. Title. Pages…. DOI:000000/11111.").
