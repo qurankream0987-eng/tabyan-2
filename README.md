@@ -8,10 +8,10 @@ Quran learning platform: web app, mobile app (Expo), and API, in one npm workspa
 | `artifacts/mobile` | Mobile app (Expo / React Native) |
 | `artifacts/api-server` | API server (Express + tRPC, WebSocket recitation) |
 | `artifacts/tabyan-staff-preview` | Staff preview web app |
-| `artifacts/mockup-sandbox` | Design mockup sandbox (not product) |
 | `lib/db` | PostgreSQL schema and access (Drizzle) |
 | `lib/tabyan-trpc` | API procedures (tRPC routers) |
 | `lib/tabyan-domain` | Shared product/domain content |
+| `lib/design-tokens` | Shared colors and design tokens |
 | `verification/scripts` | Verification and asset scripts |
 | `docs` | Living docs; old reports are in `docs/archive` |
 
