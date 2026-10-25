@@ -3,7 +3,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { db, sessions } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { createContext } from "@workspace/tabyan-trpc";
-import { logger } from "./lib/logger";
+import { logger } from "../lib/logger";
 
 /* إشارة WebRTC للحلقات المباشرة — ترحيل offer/answer/ICE بين المشاركين.
    الأمان: لا انضمام إلا بعد التحقق الخادمي من (1) رمز الجلسة (2) عضوية

@@ -4,9 +4,9 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { pool } from "@workspace/db";
-import { expectedPublicTables } from "./databaseSchemaExpectations";
-import { RailwayObjectStorageProvider } from "./lib/RailwayObjectStorageProvider";
-import { getStorageErrorDetails } from "./lib/storageErrorDetails";
+import { expectedPublicTables } from "../http/databaseSchemaExpectations";
+import { RailwayObjectStorageProvider } from "../storage/RailwayObjectStorageProvider";
+import { getStorageErrorDetails } from "../storage/storageErrorDetails";
 
 type TableRow = {
   table_schema: string;
@@ -25,7 +25,7 @@ type RowPresence = {
 };
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
-const repositoryRoot = path.resolve(scriptDirectory, "../../..");
+const repositoryRoot = path.resolve(scriptDirectory, "../../../..");
 const baselinePath = path.join(
   repositoryRoot,
   "packages/db/migrations/canonical/0000_ams_schema_baseline.sql",

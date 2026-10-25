@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import test from "node:test";
 import { WebSocket } from "ws";
-import { encodeMonoPcm16Wav } from "./recitation-providers/nabr-qrc-audio";
+import { encodeMonoPcm16Wav } from "../recitation-providers/nabr-qrc-audio";
 import { attachNabrQrcGateway } from "./nabrQrcGateway";
 import type {
   NabrQrcGatewayUpstream,

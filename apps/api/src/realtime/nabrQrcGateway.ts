@@ -8,19 +8,19 @@ import {
   type NabrQrcGatewayStart,
 } from "@workspace/tabyan-domain";
 import { createContext } from "@workspace/tabyan-trpc";
-import { logger } from "./lib/logger";
-import { NabrQrcTransport, type NabrQrcTransportState } from "./recitation-providers/NabrQrcTransport";
+import { logger } from "../lib/logger";
+import { NabrQrcTransport, type NabrQrcTransportState } from "../recitation-providers/NabrQrcTransport";
 import {
   parseNabrQrcConfig,
   readNabrQrcCredential,
-} from "./recitation-providers/nabr-qrc-config";
+} from "../recitation-providers/nabr-qrc-config";
 import {
   nabrQrcStartInputForSession,
   type NabrQrcSessionContext,
-} from "./recitation-providers/nabr-qrc-session";
-import { normalizeNabrQrcGatewayResult } from "./recitation-providers/nabr-qrc-gateway-normalizer";
-import { validateNabrQrcWavChunk } from "./recitation-providers/nabr-qrc-audio";
-import type { NabrQrcStartInput } from "./recitation-providers/nabr-qrc-config";
+} from "../recitation-providers/nabr-qrc-session";
+import { normalizeNabrQrcGatewayResult } from "../recitation-providers/nabr-qrc-gateway-normalizer";
+import { validateNabrQrcWavChunk } from "../recitation-providers/nabr-qrc-audio";
+import type { NabrQrcStartInput } from "../recitation-providers/nabr-qrc-config";
 
 type GatewayMode = "fake" | "live" | "disabled";
 type GatewayUser = { readonly id: string; readonly role: string };

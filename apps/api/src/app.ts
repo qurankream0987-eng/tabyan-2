@@ -4,9 +4,9 @@ import pinoHttp from "pino-http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { pool } from "@workspace/db";
 import { appRouter, createContext } from "@workspace/tabyan-trpc";
-import router from "./routes";
+import router from "./http/routes";
 import { logger } from "./lib/logger";
-import { expectedPublicTables } from "./databaseSchemaExpectations";
+import { expectedPublicTables } from "./http/databaseSchemaExpectations";
 
 const app: Express = express();
 const diagnosticRequestIdPattern = /^[A-Za-z0-9_-]{8,80}$/;

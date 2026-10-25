@@ -1,12 +1,12 @@
 import http from "node:http";
 import app from "./app";
 import { logger } from "./lib/logger";
-import { assertFfprobeAvailable, ffprobeRuntimePath } from "./lib/videoStructure";
-import { startSessionReminderScheduler } from "./scheduler/sessionReminder";
-import { startPrivateMediaCleanupScheduler } from "./scheduler/privateMediaCleanup";
-import { attachSessionCallSignaling } from "./signaling";
-import { attachRecitationRealtime } from "./recitationRealtime";
-import { attachNabrQrcGateway } from "./nabrQrcGateway";
+import { assertFfprobeAvailable, ffprobeRuntimePath } from "./media/videoStructure";
+import { startSessionReminderScheduler } from "./jobs/sessionReminder";
+import { startPrivateMediaCleanupScheduler } from "./jobs/privateMediaCleanup";
+import { attachSessionCallSignaling } from "./realtime/signaling";
+import { attachRecitationRealtime } from "./realtime/recitationRealtime";
+import { attachNabrQrcGateway } from "./realtime/nabrQrcGateway";
 import { stopTarteelWhisperWorker } from "./recitation-providers/TarteelWhisperWorker";
 
 /* فحص إقلاع: غياب ffprobe يعطّل التحقق الخادمي من سلامة الفيديو —

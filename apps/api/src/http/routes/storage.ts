@@ -19,9 +19,9 @@ import {
   type VideoAttachmentPurpose,
 } from "@workspace/tabyan-trpc";
 
-import { canAccessObject, canReadWithAclPolicy, ObjectPermission, parseObjectAclPolicy } from "../lib/objectAcl";
-import { ObjectNotFoundError, ObjectStorageService } from "../lib/objectStorage";
-import { objectStorageService } from "../lib/objectStorageRuntime";
+import { canAccessObject, canReadWithAclPolicy, ObjectPermission, parseObjectAclPolicy } from "../../storage/objectAcl";
+import { ObjectNotFoundError, ObjectStorageService } from "../../storage/objectStorage";
+import { objectStorageService } from "../../storage/objectStorageRuntime";
 import {
   createMediaPlaybackCapability,
   createPlacementPlaybackCapability,
@@ -33,14 +33,14 @@ import {
   PLACEMENT_PLAYBACK_TTL_SECONDS,
   type PlacementPlaybackCapabilityFailure,
   type PlaybackCapabilityPurpose,
-} from "../lib/placementPlayback";
+} from "../../media/placementPlayback";
 import {
   normalizePlacementPlaybackContentType,
   normalizeServedMediaContentType,
   parsePlacementPlaybackRange,
-} from "../lib/placementPlaybackHttp";
-import { FfprobeUnavailableError, probeVideoFileDetails, validateMp4Structure, validateWebmStructure } from "../lib/videoStructure";
-import { isSupportedVideoUpload } from "../lib/videoUploadPolicy";
+} from "../../media/placementPlaybackHttp";
+import { FfprobeUnavailableError, probeVideoFileDetails, validateMp4Structure, validateWebmStructure } from "../../media/videoStructure";
+import { isSupportedVideoUpload } from "../../media/videoUploadPolicy";
 
 const router: IRouter = Router();
 type DirectDiagnosticSession = {

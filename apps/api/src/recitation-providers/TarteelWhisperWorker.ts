@@ -76,7 +76,7 @@ class PythonTarteelTranscriber implements TarteelTranscriber {
 
     const scriptPath = [
       resolve(process.cwd(), "src/recitation-providers/tarteel_whisper_worker.py"),
-      resolve(process.cwd(), "../api-server/src/recitation-providers/tarteel_whisper_worker.py"),
+      resolve(process.cwd(), "../api/src/recitation-providers/tarteel_whisper_worker.py"),
       resolve(process.cwd(), "apps/api/src/recitation-providers/tarteel_whisper_worker.py"),
     ].find((candidate) => existsSync(candidate));
     if (!scriptPath) return Promise.reject(new Error("Tarteel worker script was not found from the current workspace path"));

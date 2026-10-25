@@ -3,34 +3,34 @@ import { WebSocket, WebSocketServer } from "ws";
 import { and, eq } from "drizzle-orm";
 import { db, recitationSessions } from "@workspace/db";
 import { createContext } from "@workspace/tabyan-trpc";
-import { logger } from "./lib/logger";
-import { NvidiaStreamingProvider, NVIDIA_ARABIC_SAMPLE_RATE_HZ } from "./recitation-providers/NvidiaStreamingProvider";
-import { OpenAiRealtimeProvider } from "./recitation-providers/OpenAiRealtimeProvider";
-import { SpeechmaticsStreamingProvider } from "./recitation-providers/SpeechmaticsStreamingProvider";
-import { TarteelWhisperProvider } from "./recitation-providers/TarteelWhisperProvider";
-import { tarteelTranscriber } from "./recitation-providers/TarteelWhisperWorker";
-import { NabrQrcSpeechProvider } from "./recitation-providers/NabrQrcSpeechProvider";
-import { NabrQrcOneShotTestGate } from "./recitation-providers/nabr-qrc-one-shot-test";
-import { qrcIntervalSummary } from "./recitation-providers/nabr-qrc-diagnostics";
+import { logger } from "../lib/logger";
+import { NvidiaStreamingProvider, NVIDIA_ARABIC_SAMPLE_RATE_HZ } from "../recitation-providers/NvidiaStreamingProvider";
+import { OpenAiRealtimeProvider } from "../recitation-providers/OpenAiRealtimeProvider";
+import { SpeechmaticsStreamingProvider } from "../recitation-providers/SpeechmaticsStreamingProvider";
+import { TarteelWhisperProvider } from "../recitation-providers/TarteelWhisperProvider";
+import { tarteelTranscriber } from "../recitation-providers/TarteelWhisperWorker";
+import { NabrQrcSpeechProvider } from "../recitation-providers/NabrQrcSpeechProvider";
+import { NabrQrcOneShotTestGate } from "../recitation-providers/nabr-qrc-one-shot-test";
+import { qrcIntervalSummary } from "../recitation-providers/nabr-qrc-diagnostics";
 import {
   parseNabrQrcConfig,
   readNabrQrcCredential,
-} from "./recitation-providers/nabr-qrc-config";
+} from "../recitation-providers/nabr-qrc-config";
 import {
   nabrQrcStartInputForSession,
   type NabrQrcSessionContext,
-} from "./recitation-providers/nabr-qrc-session";
-import { selectSpeechRecognitionProvider } from "./recitation-providers/providerSelection";
-import { classifyProviderError } from "./recitation-providers/provider-error-classification";
-import { normalizeTranscriptEvent } from "./recitation-providers/recitation-contracts";
+} from "../recitation-providers/nabr-qrc-session";
+import { selectSpeechRecognitionProvider } from "../recitation-providers/providerSelection";
+import { classifyProviderError } from "../recitation-providers/provider-error-classification";
+import { normalizeTranscriptEvent } from "../recitation-providers/recitation-contracts";
 import type { QrcStructuredObservation } from "@workspace/tabyan-domain";
-import { recitationSessionLeases, RECITATION_IDLE_MS, RECITATION_MAX_CONNECTION_MS } from "./recitation-providers/sessionLease";
+import { recitationSessionLeases, RECITATION_IDLE_MS, RECITATION_MAX_CONNECTION_MS } from "../recitation-providers/sessionLease";
 import type {
   AudioAcceptanceEvidence,
   CanonicalTranscriptEvent,
   NabrQrcDiagnosticPacket,
   SpeechRecognitionProvider,
-} from "./recitation-providers/types";
+} from "../recitation-providers/types";
 
 type ClientMessage =
   | { t: "auth"; token: string; sessionId: string; diagnosticClientId?: string }

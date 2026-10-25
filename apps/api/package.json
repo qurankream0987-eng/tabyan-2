@@ -7,8 +7,8 @@
     "dev": "export NODE_ENV=development && npm run build && npm run start",
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
-    "ams-schema-setup": "tsx src/amsMigrationPreflight.ts",
-    "ams-storage-smoke": "tsx src/amsStorageSmokeTest.ts",
+    "ams-schema-setup": "tsx src/ops/amsMigrationPreflight.ts",
+    "ams-storage-smoke": "tsx src/ops/amsStorageSmokeTest.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --import tsx --test \"src/**/*.test.ts\""
   },

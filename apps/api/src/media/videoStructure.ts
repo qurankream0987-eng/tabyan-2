@@ -27,7 +27,7 @@ export class FfprobeUnavailableError extends Error {
  */
 function resolveFfprobePath(): string {
   try {
-    const bundledPath = fileURLToPath(new URL("./bin/ffprobe", import.meta.url));
+    const bundledPath = fileURLToPath(new URL("../lib/bin/ffprobe", import.meta.url));
     if (existsSync(bundledPath)) return bundledPath;
   } catch {
     /* import.meta غير متاح — تابع */

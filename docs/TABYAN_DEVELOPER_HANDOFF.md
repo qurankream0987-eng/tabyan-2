@@ -183,7 +183,7 @@ Before any EAS or App Store work, read `docs/TABYAN_APPLE_IDENTITY_LOCK.md` and 
 
 ## I. Object Storage
 
-`apps/api/src/lib/objectStorageRuntime.ts` chooses the backend from `TABYAN_OBJECT_STORAGE_PROVIDER`:
+`apps/api/src/storage/objectStorageRuntime.ts` chooses the backend from `TABYAN_OBJECT_STORAGE_PROVIDER`:
 
 - `replit` (default): `ReplitObjectStorageProvider`. Works only on Replit (sidecar signing).
 - `railway`: `RailwayObjectStorageProvider` (S3-compatible, AWS SDK v3). Has unit tests in `RailwayObjectStorageProvider.test.ts`.
@@ -223,7 +223,7 @@ The Railway bucket's display name and its S3 contract are **different values**. 
 
 > ⚠️ **Code-level readiness blockers found during this audit (VERIFIED in source, not yet fixed):**
 >
-> 1. `apps/api/src/databaseSchemaExpectations.ts` lists **54** tables. The schema and production have **55**: `placement_attempts` is missing from the list (production has 2 rows in it). Against the restored database, `/readiness` will treat `placement_attempts` as an unexpected table and return **503**.
+> 1. `apps/api/src/http/databaseSchemaExpectations.ts` lists **54** tables. The schema and production have **55**: `placement_attempts` is missing from the list (production has 2 rows in it). Against the restored database, `/readiness` will treat `placement_attempts` as an unexpected table and return **503**.
 > 2. `/readiness` also returns 503 unless `drizzle.__drizzle_migrations` exists with at least one row. The source database had **no Drizzle ledger** (RECORDED), so a faithful restore has none either, unless one was created afterwards (**UNKNOWN**).
 > 3. Both failures make `/readiness` fail, which **keeps the schedulers stopped** (`index.ts` starts them only after readiness passes). `/health` still returns 200, so Railway will report the service healthy while readiness fails.
 > 4. `pnpm --filter @workspace/api-server run ams-schema-setup` (`amsMigrationPreflight.ts`) is an **empty-database baseline tool**. It hard-codes `publicTables=54` and refuses a non-empty target. In `verify-only` mode (`TABYAN_AMS_SCHEMA_MODE=verify-only`) it fails on the restored database for the same reasons. **Do not run it in `apply-empty-baseline` mode against the restored AMS database.**
@@ -284,7 +284,7 @@ The four QCF alignment exceptions:
 
 ## M. Nabr integration status
 
-- **Server gateway** `WS /api/ws/nabr-qrc-gateway` (`apps/api/src/nabrQrcGateway.ts`), **VERIFIED**:
+- **Server gateway** `WS /api/ws/nabr-qrc-gateway` (`apps/api/src/realtime/nabrQrcGateway.ts`), **VERIFIED**:
   - Tabyan-token `auth` message with a timeout. **Student role only**, one connection per user.
   - 64 KB maximum payload. Writes no DB rows. Never logs tokens, audio, or the QRC URL or key.
   - Transport: `NODE_ENV=development` uses the **fake** transport. Live requires `NABR_QRC_GATEWAY_LIVE_ENABLED=true`. Credentials stay server-side.

@@ -121,7 +121,7 @@
 - `apps/mobile/package.json` development script — يستخدم `REPLIT_EXPO_DEV_DOMAIN` و`REPLIT_DEV_DOMAIN`.
 - fallback variables في `apps/mobile/scripts/build.js` — Replit domains و`REPL_ID`.
 - `packages/trpc/src/routers/auth.ts` — يسمح بنطاقات Replit في development فقط.
-- `apps/api/src/lib/objectStorage.ts` — Replit Sidecar authentication/signing.
+- `apps/api/src/storage/objectStorage.ts` — Replit Sidecar authentication/signing.
 - روابط package firewall الموجودة داخل lockfiles للمختبرات المعزولة — metadata لمصدر تثبيت محلي وليست runtime dependency.
 
 ### FILES_THAT_MUST_NOT_BE_COMMITTED

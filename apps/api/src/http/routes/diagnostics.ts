@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { PLACEMENT_DIAGNOSTIC_VERSION } from "../lib/placementPlayback";
+import { PLACEMENT_DIAGNOSTIC_VERSION } from "../../media/placementPlayback";
 
 const router: IRouter = Router();
 

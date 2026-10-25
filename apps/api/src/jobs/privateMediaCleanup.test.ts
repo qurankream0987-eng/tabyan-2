@@ -9,7 +9,7 @@ import {
   deleteObjectIfPresent,
   runPrivateMediaCleanupJob,
 } from "./privateMediaCleanup";
-import { ObjectNotFoundError } from "../lib/objectStorage";
+import { ObjectNotFoundError } from "../storage/objectStorage";
 
 type TestJob = {
   id: string;

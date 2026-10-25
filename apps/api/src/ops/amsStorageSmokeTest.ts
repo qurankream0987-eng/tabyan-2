@@ -1,8 +1,8 @@
 import {
   RailwayObjectStorageProvider,
   readRailwayStorageConfig,
-} from "./lib/RailwayObjectStorageProvider";
-import { getStorageErrorDetails } from "./lib/storageErrorDetails";
+} from "../storage/RailwayObjectStorageProvider";
+import { getStorageErrorDetails } from "../storage/storageErrorDetails";
 
 const expected = {
   displayBucketName: "tabyan-objects-ams",

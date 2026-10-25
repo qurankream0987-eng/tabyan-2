@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { describe, expect, it } from 'vitest';
-import { attachNabrQrcGateway } from '../../apps/api/src/nabrQrcGateway';
+import { attachNabrQrcGateway } from '../../apps/api/src/realtime/nabrQrcGateway';
 import { NabrQrcProvider } from '../../apps/web/smart-mushaf-v3/src/providers/nabr/NabrQrcProvider';
 import { NabrLiveAdapter, type NabrTranslationPolicy } from '../../apps/web/smart-mushaf-v3/src/live/providers/NabrLiveAdapter';
 import { LiveRecitationController } from '../../apps/web/smart-mushaf-v3/src/live/LiveRecitationController';

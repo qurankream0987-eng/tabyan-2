@@ -14,8 +14,8 @@ import {
   type MediaDeletionReason,
 } from "@workspace/tabyan-trpc/media-deletion-policy";
 import { logger } from "../lib/logger";
-import { ObjectNotFoundError, ObjectStorageService } from "../lib/objectStorage";
-import { objectStorageService } from "../lib/objectStorageRuntime";
+import { ObjectNotFoundError, ObjectStorageService } from "../storage/objectStorage";
+import { objectStorageService } from "../storage/objectStorageRuntime";
 
 const storage = objectStorageService;
 const BATCH_SIZE = 25;

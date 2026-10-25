@@ -1,7 +1,7 @@
 /**
  * Video recovery audit & reconciliation — DRY RUN by default.
  *
- *   npm exec --workspace @workspace/api-server -- node --import tsx src/scripts/videoRecoveryAudit.ts
+ *   npm exec --workspace @workspace/api-server -- node --import tsx src/ops/videoRecoveryAudit.ts
  *     [--deep]                 full ffprobe decode of every video (downloads each object to tmp)
  *     [--report <file.json>]   write the full machine-readable report
  *     [--apply <planId>]       apply exactly the repair plan a dry run printed
@@ -20,9 +20,9 @@ import { join } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { pool } from "@workspace/db";
-import { objectStorageService } from "../lib/objectStorageRuntime";
-import { parseObjectAclPolicy } from "../lib/objectAcl";
-import { probeVideoFileDetails, validateMp4Structure, validateWebmStructure } from "../lib/videoStructure";
+import { objectStorageService } from "../storage/objectStorageRuntime";
+import { parseObjectAclPolicy } from "../storage/objectAcl";
+import { probeVideoFileDetails, validateMp4Structure, validateWebmStructure } from "../media/videoStructure";
 import {
   classifyVideoObjects,
   embeddedObjectPath,
@@ -30,7 +30,7 @@ import {
   type ObjectFacts,
   type OwnerFacts,
   type StoredReference,
-} from "../lib/videoRecovery";
+} from "../media/videoRecovery";
 
 const args = process.argv.slice(2);
 const flag = (name: string) => args.includes(name);
