@@ -7,6 +7,9 @@
     "apps/*"
   ],
   "scripts": {
+    "dev": "node tools/dev/dev.mjs",
+    "dev:mobile": "node tools/dev/dev.mjs --mobile",
+    "dev:db:stop": "node tools/dev/dev.mjs --stop-db",
     "build": "npm run typecheck && npm run verify:mushaf && npm run build --workspaces --if-present",
     "verify:contracts": "node tools/scripts/verify-contract-baseline.mjs",
     "verify:design-tokens": "node tools/scripts/verify-design-tokens.mjs",
@@ -16,6 +19,8 @@
     "app-store:preflight": "node tools/scripts/app-store-preflight-cleanup.mjs",
     "typecheck:libs": "tsc --build",
     "typecheck": "npm run typecheck:libs && npm run typecheck --workspace=apps --if-present",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test:parity": "vitest run --config tests/vitest.config.ts",
     "test:integration": "vitest run --config tests/vitest.integration.config.ts",
     "verify:mushaf": "node tools/scripts/verify-mushaf.mjs"
@@ -26,8 +31,13 @@
     "esbuild": "0.27.3"
   },
   "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.12.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
     "prettier": "^3.9.6",
     "typescript": "~5.9.3",
+    "typescript-eslint": "8.71.1",
     "vitest": "^4.1.10"
   }
 }

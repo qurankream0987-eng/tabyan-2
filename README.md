@@ -22,7 +22,9 @@ Quran learning platform: web app, mobile app (Expo), and API, in one npm workspa
 
 1. `npm install`
 2. Copy `.env.example` to `.env` and fill in the empty values.
-3. Follow [LOCAL_DEV.md](LOCAL_DEV.md) to start the database, file storage, API and web app.
+3. `npm run dev` starts the database, file storage, API and web app (`npm run dev:mobile` adds Metro).
+   Details and manual steps: [LOCAL_DEV.md](LOCAL_DEV.md).
+4. Before committing: `npm run typecheck` and `npm run lint`.
 
 Production still runs on Replit; the move to Railway is planned in
 [docs/TABYAN_REPLIT_EXIT_MIGRATION_PLAN.md](docs/TABYAN_REPLIT_EXIT_MIGRATION_PLAN.md).

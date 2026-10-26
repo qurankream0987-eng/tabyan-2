@@ -3,6 +3,21 @@
 Run these from Git Bash in this folder. Packages are managed with **npm workspaces**
 (`npm install` at the root installs every app and lib).
 
+## Quick start
+
+```bash
+npm install
+npm run dev          # Postgres :5433, S3 storage :9000, API :8080, web :5173
+npm run dev:mobile   # same, plus Metro :8082 and adb reverse for the Android emulator
+npm run dev:db:stop  # Postgres keeps running after Ctrl+C; this stops it
+```
+
+`npm run dev` skips any service whose port is already in use and prefixes each
+service's output with its name. Before committing: `npm run typecheck` and
+`npm run lint` (0 errors expected; warnings are known debt to work down).
+
+## Starting services by hand
+
 ```bash
 # 0. Install dependencies (once, or after package.json changes)
 npm install
