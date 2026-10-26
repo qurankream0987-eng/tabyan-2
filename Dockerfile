@@ -1,6 +1,6 @@
 # Production image: one service runs the API and serves the built web app
 # (/) and the staff preview (/tabyan-staff-preview/) on the same origin.
-FROM node:24.20.0-bookworm
+FROM node:24.20.0-bookworm-slim
 
 WORKDIR /app
 ENV CI=true
