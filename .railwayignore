@@ -1,0 +1,12 @@
+# Files `railway up` leaves out of the upload; the server image does not need them.
+# TTF Mushaf fonts are only used by apps/web/scripts/verify-mushaf.mjs; the site loads the woff2 set.
+apps/web/public/mushaf/fonts-ttf/
+# Fetched from the bucket during the Docker build (tools/scripts/build-assets.mjs).
+apps/web/public/mushaf/fonts/
+apps/web/public/mushaf/quran-words/
+docs/
+tests/
+tools/benchmarks/
+# The mobile app is built separately; npm ci only needs its package.json.
+apps/mobile/*
+!apps/mobile/package.json

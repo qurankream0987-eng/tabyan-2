@@ -18,6 +18,17 @@ COPY packages/design-tokens/package.json packages/design-tokens/
 RUN npm ci --no-audit --no-fund
 
 COPY . .
+
+# The Mushaf page fonts and word data are too large for Railway's upload limit;
+# they come from the object storage bucket (see tools/scripts/build-assets.mjs).
+# Railway passes these service variables in as build arguments.
+ARG RAILWAY_BUCKET_ENDPOINT
+ARG RAILWAY_BUCKET_S3_NAME
+ARG RAILWAY_BUCKET_ACCESS_KEY_ID
+ARG RAILWAY_BUCKET_SECRET_ACCESS_KEY
+ARG RAILWAY_BUCKET_URL_STYLE
+RUN node tools/scripts/build-assets.mjs fetch
+
 RUN PORT=5173 BASE_PATH=/ npm run build --workspace @workspace/tabyan \
  && PORT=5174 BASE_PATH=/tabyan-staff-preview/ npm run build --workspace @workspace/tabyan-staff-preview \
  && NODE_ENV=production npm run build --workspace @workspace/api-server

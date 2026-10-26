@@ -11,3 +11,4 @@ apps/mobile/static-build
 !.env.example
 .git
 docs
+apps/web/public/mushaf/fonts-ttf
