@@ -1,23 +1,14 @@
 # Production image: one service runs the API and serves the built web app
 # (/) and the staff preview (/tabyan-staff-preview/) on the same origin.
-FROM node:24.20.0-bookworm-slim
+FROM node:24.20.0-bookworm
 
 WORKDIR /app
 ENV CI=true
 
-# Install dependencies first so this layer is cached while only code changes.
-COPY package.json package-lock.json .npmrc ./
-COPY apps/api/package.json apps/api/
-COPY apps/web/package.json apps/web/
-COPY apps/staff-preview/package.json apps/staff-preview/
-COPY apps/mobile/package.json apps/mobile/
-COPY packages/db/package.json packages/db/
-COPY packages/trpc/package.json packages/trpc/
-COPY packages/domain/package.json packages/domain/
-COPY packages/design-tokens/package.json packages/design-tokens/
-RUN npm ci --no-audit --no-fund
-
+# One COPY: Railway's builder failed to mount the stack of per-package COPY
+# layers ("overlay ... invalid argument") before npm ci.
 COPY . .
+RUN npm ci --no-audit --no-fund
 
 # The Mushaf page fonts and word data are too large for Railway's upload limit;
 # they come from the object storage bucket (see tools/scripts/build-assets.mjs).
