@@ -7,3 +7,8 @@
 *.jpg binary
 *.mp3 binary
 *.mp4 binary
+
+# Migration hashes are taken over the exact bytes, so keep LF everywhere.
+*.sql text eol=lf
+Dockerfile text eol=lf
+*.sh text eol=lf
