@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
@@ -165,5 +167,38 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
 app.use("/api/trpc", createExpressMiddleware({ router: appRouter, createContext }));
+
+// In a single-service deployment the API also serves the built web apps, so
+// the site, its API and cookies share one origin. Unset in local development,
+// where Vite serves the web app and proxies /api here.
+function serveSpa(mountPath: string, distDir: string | undefined) {
+  if (!distDir) return;
+  const root = path.resolve(distDir);
+  const indexHtml = path.join(root, "index.html");
+  if (!existsSync(indexHtml)) {
+    logger.warn({ mountPath, root }, "Web build not found; not serving it");
+    return;
+  }
+  app.use(mountPath, express.static(root, {
+    index: false,
+    setHeaders(res, filePath) {
+      // Vite fingerprints everything under assets/, so it can be cached for good.
+      if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    },
+  }));
+  app.use(mountPath, (req, res, next) => {
+    if ((req.method !== "GET" && req.method !== "HEAD") || req.path.startsWith("/api/")) {
+      next();
+      return;
+    }
+    res.setHeader("Cache-Control", "no-cache");
+    res.sendFile(indexHtml);
+  });
+}
+
+serveSpa("/tabyan-staff-preview", process.env.TABYAN_STAFF_PREVIEW_DIST);
+serveSpa("/", process.env.TABYAN_WEB_DIST);
 
 export default app;

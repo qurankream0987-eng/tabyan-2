@@ -138,7 +138,7 @@ async function loadBaseline(): Promise<{
     tableNames.length !== expectedPublicTables.size ||
     tableNames.some((tableName) => !expectedPublicTables.has(tableName))
   ) {
-    throw new Error("baseline does not match the approved 54-table schema");
+    throw new Error("baseline does not match the approved schema tables");
   }
 
   for (const requiredTable of [
@@ -616,12 +616,12 @@ async function main(): Promise<void> {
       after.hasUnexpectedRelations,
       after.hasUnexpectedSchemas,
     ) ||
-    after.publicTableNames.length !== 54
+    after.publicTableNames.length !== expectedPublicTables.size
   ) {
     throw new Error("Amsterdam baseline post-migration verification failed");
   }
   console.log(
-    "AMS_SCHEMA_BASELINE_APPLIED; publicTables=54; DDL_only=true",
+    `AMS_SCHEMA_BASELINE_APPLIED; publicTables=${expectedPublicTables.size}; DDL_only=true`,
   );
 }
 

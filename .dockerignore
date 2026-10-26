@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+**/.expo
+apps/mobile/android
+apps/mobile/ios
+apps/mobile/static-build
+.local-pg
+.local-s3
+.env
+.env.*
+!.env.example
+.git
+docs
