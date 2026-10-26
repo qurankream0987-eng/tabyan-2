@@ -10,11 +10,6 @@ tools/benchmarks/
 # The mobile app is built separately; npm ci only needs its package.json.
 apps/mobile/*
 !apps/mobile/package.json
-# Railway's Docker builder fails on this service ("overlay ... invalid argument"),
-# so it builds with Railpack using the service's build/start commands. Without
-# these files Railpack sees a plain Node workspace (the Tarteel Python worker is
-# not used in production: TABYAN_AI_ASR_PROVIDER=openai).
-Dockerfile
-.dockerignore
+# The Tarteel Python worker is not used in production (TABYAN_AI_ASR_PROVIDER=openai).
 pyproject.toml
 uv.lock
