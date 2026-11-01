@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { useRouter } from "expo-router";
-import { Button, Card, Icon, Screen } from "../components/ui";
+import { useReducedMotion } from "react-native-reanimated";
+import { Button, Card, Icon, Screen, cardBorder } from "../components/ui";
 import SectionIcon, { type SectionIconName } from "../components/ui/section-icon";
 import { palette, useTheme } from "../lib/theme";
 import { useAuth } from "../lib/auth";
@@ -10,7 +11,7 @@ import NativeWelcomeHero from "../components/app/NativeWelcomeHero";
 type ExpandableProps = {
   title: string;
   description: string;
-  icon: string;
+  icon: SectionIconName;
   children: React.ReactNode;
   open: boolean;
   onPress: () => void;
@@ -36,27 +37,56 @@ const WHY_TABYAN_FEATURES = [
 ] as const;
 
 const TajweedLevels = [
-  ["المستوى الأول", "أحكام النون الساكنة والتنوين — أحكام الميم الساكنة — القلقلة"],
-  ["المستوى الثاني", "مخارج الحروف — صفات الحروف — المدود وأقسامها"],
-  ["المستوى الثالث", "الوقف والابتداء — الحذف والإثبات"],
+  ["المستوى الأول", "أحكام النون الساكنة والتنوين — أحكام الميم الساكنة — القلقلة", "wave1"],
+  ["المستوى الثاني", "مخارج الحروف — صفات الحروف — المدود وأقسامها", "wave2"],
+  ["المستوى الثالث", "الوقف والابتداء — الحذف والإثبات", "wave3"],
 ] as const;
+
+const ShariaSections = [
+  ["الفقه", "أحكام العبادات والمعاملات", "مستوى دراسي متكامل", "scale"],
+  ["العقيدة", "أصول الإيمان والتوحيد", "5 مستويات: ثلاثة الأصول — كشف الشبهات", "shield"],
+  ["السيرة النبوية", "حياة النبي ﷺ من الميلاد إلى الوفاة", "4 مستويات: بذرة — نور — هدى — يقين", "moon"],
+] as const;
+
+const FOOTER_LINKS: [string, string][] = [["سياسة الخصوصية", "/privacy"], ["الشروط والأحكام", "/terms"], ["الدعم والمساعدة", "/support"]];
+
+/** Web `.stagger-in`: fade and rise, one after another; instant for users who asked for less motion. */
+function Stagger({ delay, children, style }: { delay: number; children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
+  const reduceMotion = useReducedMotion();
+  const progress = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
+  useEffect(() => {
+    if (reduceMotion) { progress.setValue(1); return; }
+    const animation = Animated.timing(progress, { toValue: 1, duration: 420, delay, useNativeDriver: true });
+    animation.start();
+    return () => animation.stop();
+  }, [delay, progress, reduceMotion]);
+  return (
+    <Animated.View style={[style, { opacity: progress, transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
+      {children}
+    </Animated.View>
+  );
+}
 
 function Expandable({ title, description, icon, children, open, onPress }: ExpandableProps) {
   const { colors, isDark } = useTheme();
-  const borderColor = isDark ? `${palette.gold}24` : `${palette.burgundy}20`;
+  const borderColor = cardBorder(isDark);
   return (
     <View>
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
         onPress={onPress}
-        style={({ pressed }) => [styles.expandHeader, { backgroundColor: colors.card, borderColor, opacity: pressed ? 0.86 : 1 }]}
+        style={({ pressed }) => [
+          styles.expandHeader,
+          { backgroundColor: colors.card, borderColor, shadowColor: isDark ? "#000" : palette.burgundy, opacity: pressed ? 0.86 : 1 },
+          open ? styles.expandHeaderOpen : null,
+        ]}
       >
         <View style={[styles.expandIcon, { backgroundColor: isDark ? `${palette.gold}18` : `${palette.burgundy}0D` }]}>
-          <Icon name={icon} size={26} color={isDark ? palette.gold : palette.burgundy} />
+          <SectionIcon name={icon} size={26} />
         </View>
         <View style={styles.expandBody}>
-          <Text style={[styles.expandTitle, { color: colors.text }]}>{title}</Text>
+          <Text style={[styles.expandTitle, { color: isDark ? palette.gold : palette.burgundy }]}>{title}</Text>
           <Text style={[styles.expandDescription, { color: colors.muted }]}>{description}</Text>
         </View>
         <Icon name={open ? "chevron-up" : "chevron-down"} size={18} color={isDark ? palette.gold : palette.goldDark} />
@@ -185,138 +215,136 @@ export default function GuestHome() {
 
   const openRegister = () => router.push("/register");
   const openLogin = () => router.push("/login");
+  // Guests may read the mushaf without an account (app/student/_layout.tsx lets this route through).
+  const openMushaf = () => router.push("/student/mushaf" as never);
+  const lineColor = `${isDark ? palette.gold : palette.burgundy}2e`;
+  const rowBorder = isDark ? `${palette.gold}16` : `${palette.burgundy}10`;
 
   return (
     <Screen contentStyle={styles.screen}>
-      <NativeWelcomeHero onRegister={openRegister} />
+      <NativeWelcomeHero onRegister={openRegister} onLogin={openLogin} onBrowseMushaf={openMushaf} />
 
       <View style={[styles.divider, styles.heroDivider]}>
-        <View style={[styles.dividerLine, { backgroundColor: `${isDark ? palette.gold : palette.burgundy}2e` }]} />
+        <View style={[styles.dividerLine, { backgroundColor: lineColor }]} />
         <Text style={styles.diamond}>◆</Text>
-        <View style={[styles.dividerLine, { backgroundColor: `${isDark ? palette.gold : palette.burgundy}2e` }]} />
+        <View style={[styles.dividerLine, { backgroundColor: lineColor }]} />
       </View>
 
       <View style={styles.cards}>
-        <Expandable
-          title="القرآن الكريم"
-          description="حفظ ومراجعة • تصحيح تلاوة • القراءات"
-          icon="book-outline"
-          open={expanded === "quran"}
-          onPress={() => setExpanded(expanded === "quran" ? null : "quran")}
-        >
-          <QuranContent onRegister={openRegister} />
-        </Expandable>
+        <Stagger delay={0}>
+          <Expandable
+            title="القرآن الكريم"
+            description="حفظ ومراجعة • تصحيح تلاوة • القراءات"
+            icon="quran"
+            open={expanded === "quran"}
+            onPress={() => setExpanded(expanded === "quran" ? null : "quran")}
+          >
+            <QuranContent onRegister={openRegister} />
+          </Expandable>
+        </Stagger>
 
-        <Expandable
-          title="دروس التجويد"
-          description="أساسي — متوسط — متقدم"
-          icon="pulse-outline"
-          open={expanded === "tajweed"}
-          onPress={() => setExpanded(expanded === "tajweed" ? null : "tajweed")}
-        >
-          {TajweedLevels.map(([name, description], index) => (
-            <View
-              key={name}
-              style={[
-                styles.levelRow,
-                {
-                  borderBottomColor: isDark ? `${palette.gold}16` : `${palette.burgundy}10`,
-                  borderBottomWidth: index < TajweedLevels.length - 1 ? StyleSheet.hairlineWidth : 0,
-                },
-              ]}
-            >
-              <View style={[styles.levelIcon, { backgroundColor: isDark ? `${palette.gold}18` : `${palette.gold}20` }]}>
-                <Icon name="pulse-outline" size={20} color={isDark ? palette.gold : palette.goldDark} />
+        <Stagger delay={80}>
+          <Expandable
+            title="دروس التجويد"
+            description="أساسي — متوسط — متقدم"
+            icon="tajweed"
+            open={expanded === "tajweed"}
+            onPress={() => setExpanded(expanded === "tajweed" ? null : "tajweed")}
+          >
+            {TajweedLevels.map(([name, description, icon], index) => (
+              <View
+                key={name}
+                style={[styles.levelRow, { borderBottomColor: rowBorder, borderBottomWidth: index < TajweedLevels.length - 1 ? StyleSheet.hairlineWidth : 0 }]}
+              >
+                <View style={[styles.levelIcon, { backgroundColor: isDark ? `${palette.gold}18` : `${palette.gold}20` }]}>
+                  <SectionIcon name={icon} size={22} />
+                </View>
+                <View style={styles.levelBody}><Text style={[styles.levelName, { color: colors.text }]}>{name}</Text><Text style={[styles.levelText, { color: colors.muted }]}>{description}</Text></View>
               </View>
-              <View style={styles.levelBody}><Text style={[styles.levelName, { color: colors.text }]}>{name}</Text><Text style={[styles.levelText, { color: colors.muted }]}>{description}</Text></View>
+            ))}
+            <View style={[styles.noteBox, { backgroundColor: `${palette.gold}12`, borderColor: isDark ? `${palette.gold}2e` : `${palette.gold}30` }]}>
+              <SectionIcon name="sharia" size={18} />
+              <Text style={[styles.note, { color: colors.muted }]}>
+                متن <Text style={[styles.noteAccent, { color: isDark ? palette.gold : palette.goldDark }]}>تحفة الأطفال</Text>: مقرر مستوى الوارثون، وعنصر تقييم اختياري في اختبار القبول
+              </Text>
             </View>
-          ))}
-          <View style={[styles.noteBox, { backgroundColor: isDark ? `${palette.gold}12` : `${palette.gold}12`, borderColor: isDark ? `${palette.gold}2e` : `${palette.gold}30` }]}>
-            <SectionIcon name="sharia" size={18} />
-            <Text style={[styles.note, { color: colors.muted }]}>
-              متن <Text style={[styles.noteAccent, { color: isDark ? palette.gold : palette.goldDark }]}>تحفة الأطفال</Text>: مقرر مستوى الوارثون، وعنصر تقييم اختياري في اختبار القبول
-            </Text>
-          </View>
-          <RegisterCta onPress={openRegister} />
-        </Expandable>
+            <RegisterCta onPress={openRegister} />
+          </Expandable>
+        </Stagger>
 
-        <Expandable
-          title="الدروس الشرعية"
-          description="العقيدة — الفقه — السيرة النبوية"
-          icon="shield-checkmark-outline"
-          open={expanded === "sharia"}
-          onPress={() => setExpanded(expanded === "sharia" ? null : "sharia")}
-        >
-          {[
-            ["الفقه", "أحكام العبادات والمعاملات", "مستوى دراسي متكامل", "scale-outline"],
-            ["العقيدة", "أصول الإيمان والتوحيد", "5 مستويات: ثلاثة الأصول — كشف الشبهات", "shield-outline"],
-            ["السيرة النبوية", "حياة النبي ﷺ من الميلاد إلى الوفاة", "4 مستويات: بذرة — نور — هدى — يقين", "moon-outline"],
-          ].map(([name, description, levels, icon], index) => (
-            <View
-              key={name}
-              style={[
-                styles.levelRow,
-                styles.shariaRow,
-                {
-                  borderBottomColor: isDark ? `${palette.gold}16` : `${palette.burgundy}10`,
-                  borderBottomWidth: index < 2 ? StyleSheet.hairlineWidth : 0,
-                },
-              ]}
-            >
-              <View style={[styles.levelIcon, { backgroundColor: isDark ? `${palette.gold}18` : `${palette.burgundy}0D` }]}>
-                <Icon name={icon} size={20} color={isDark ? palette.gold : palette.burgundy} />
+        <Stagger delay={160}>
+          <Expandable
+            title="الدروس الشرعية"
+            description="العقيدة — الفقه — السيرة النبوية"
+            icon="sharia"
+            open={expanded === "sharia"}
+            onPress={() => setExpanded(expanded === "sharia" ? null : "sharia")}
+          >
+            {ShariaSections.map(([name, description, levels, icon], index) => (
+              <View
+                key={name}
+                style={[styles.levelRow, styles.shariaRow, { borderBottomColor: rowBorder, borderBottomWidth: index < ShariaSections.length - 1 ? StyleSheet.hairlineWidth : 0 }]}
+              >
+                <View style={[styles.levelIcon, { backgroundColor: isDark ? `${palette.gold}18` : `${palette.burgundy}0D` }]}>
+                  <SectionIcon name={icon} size={20} />
+                </View>
+                <View style={styles.levelBody}>
+                  <Text style={[styles.levelName, { color: colors.text }]}>{name}</Text>
+                  <Text style={[styles.levelText, { color: colors.muted }]}>{description}</Text>
+                  <Text style={[styles.requirement, { color: isDark ? palette.gold : palette.goldDark }]}>{levels}</Text>
+                </View>
               </View>
-              <View style={styles.levelBody}>
-                <Text style={[styles.levelName, { color: colors.text }]}>{name}</Text>
-                <Text style={[styles.levelText, { color: colors.muted }]}>{description}</Text>
-                <Text style={[styles.requirement, { color: isDark ? palette.gold : palette.goldDark }]}>{levels}</Text>
-              </View>
-            </View>
-          ))}
-          <RegisterCta onPress={openRegister} />
-        </Expandable>
-      </View>
-
-      <View style={styles.accountActions}>
-        <Text style={[styles.loginPrompt, { color: colors.muted }]}>لديك حساب بالفعل؟</Text>
-        <Button
-          testID="welcome-login"
-          label="تسجيل الدخول"
-          variant="secondary"
-          icon="person-outline"
-          onPress={openLogin}
-          style={styles.loginCta}
-        />
+            ))}
+            <RegisterCta onPress={openRegister} />
+          </Expandable>
+        </Stagger>
       </View>
 
       <View style={styles.why}>
         <View style={styles.divider}>
-          <View style={[styles.dividerLine, { backgroundColor: `${isDark ? palette.gold : palette.burgundy}2e` }]} />
-          <Text style={[styles.whyTitle, { color: colors.text }]}>لماذا تبيان؟</Text>
-          <View style={[styles.dividerLine, { backgroundColor: `${isDark ? palette.gold : palette.burgundy}2e` }]} />
+          <View style={[styles.dividerLine, { backgroundColor: lineColor }]} />
+          <Text style={[styles.whyTitle, { color: isDark ? palette.gold : palette.burgundy }]}>لماذا تبيان؟</Text>
+          <View style={[styles.dividerLine, { backgroundColor: lineColor }]} />
         </View>
         <View style={styles.trustPoints}>
-          {WHY_TABYAN_FEATURES.map((feature) => {
+          {WHY_TABYAN_FEATURES.map((feature, index) => {
             const sectionIcon = "sectionIcon" in feature ? feature.sectionIcon : null;
             const icon = "icon" in feature ? feature.icon : null;
             return (
-              <View key={feature.title} style={[styles.trustPoint, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <View style={[styles.trustIcon, { backgroundColor: isDark ? `${palette.gold}18` : `${palette.burgundy}0D` }]}>
-                  {sectionIcon
-                    ? <SectionIcon name={sectionIcon} size={20} />
-                    : icon ? <Icon name={icon} size={20} color={isDark ? palette.gold : palette.burgundy} /> : null}
+              <Stagger key={feature.title} delay={index * 90}>
+                <View style={[styles.trustPoint, { backgroundColor: colors.card, borderColor: cardBorder(isDark), shadowColor: isDark ? "#000" : palette.burgundy }]}>
+                  <View style={[styles.trustIcon, { backgroundColor: isDark ? `${palette.gold}18` : `${palette.burgundy}0D` }]}>
+                    {sectionIcon
+                      ? <SectionIcon name={sectionIcon} size={22} />
+                      : icon ? <Icon name={icon} size={22} color={isDark ? palette.gold : palette.goldDark} /> : null}
+                  </View>
+                  <Text style={[styles.trustText, { color: isDark ? colors.text : palette.burgundy }]}>{feature.title}</Text>
                 </View>
-                <Text style={[styles.trustText, { color: colors.text }]}>{feature.title}</Text>
-              </View>
+              </Stagger>
             );
           })}
         </View>
       </View>
 
-      <View style={styles.footer}>
-        <View style={styles.footerLine} />
-        <Text style={[styles.hadith, { color: colors.muted }]}>﴿ خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ ﴾</Text>
+      <View style={styles.hadith}>
+        <View style={styles.hadithRule}>
+          <View style={[styles.hadithLine, { backgroundColor: `${palette.gold}80` }]} />
+          <Text style={[styles.diamond, { color: palette.gold, fontSize: 16 }]}>◆</Text>
+          <View style={[styles.hadithLine, { backgroundColor: `${palette.gold}80` }]} />
+        </View>
+        <Text style={[styles.hadithText, { color: colors.muted }]}>﴿ خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ ﴾</Text>
         <Text style={[styles.source, { color: colors.muted }]}>— صحيح البخاري</Text>
+      </View>
+
+      <View style={[styles.footer, { borderTopColor: lineColor }]}>
+        <View style={styles.footerLinks} accessibilityLabel="روابط السياسات">
+          {FOOTER_LINKS.map(([label, href]) => (
+            <Pressable key={href} accessibilityRole="link" onPress={() => router.push(href as never)} hitSlop={6} style={styles.footerLink}>
+              <Text style={[styles.footerLinkText, { color: colors.muted }]}>{label}</Text>
+            </Pressable>
+          ))}
+        </View>
+        <Text style={[styles.copyright, { color: colors.muted }]}>© تبيان</Text>
       </View>
       <Button label="التسجيل كمعلم" variant="quiet" icon="school-outline" onPress={() => router.push("/teacher-register" as never)} style={styles.teacherCta} />
     </Screen>
@@ -325,30 +353,32 @@ export default function GuestHome() {
 
 const styles = StyleSheet.create({
   screen: { paddingTop: 4, paddingBottom: 16 },
-  teacherCta: { width: "100%", marginTop: 6 },
+  teacherCta: { width: "100%", marginTop: 4 },
   divider: { flexDirection: "row", alignItems: "center", gap: 10, marginVertical: 8 },
-  heroDivider: { marginVertical: 5 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: `${palette.burgundy}2E` },
+  heroDivider: { marginTop: 14, marginBottom: 10 },
+  dividerLine: { flex: 1, height: 1 },
   diamond: { color: `${palette.gold}AA`, fontSize: 13 },
-  cards: { gap: 6 },
-  expandHeader: { minHeight: 56, borderRadius: 18, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 6, flexDirection: "row", alignItems: "center", gap: 10 },
-  expandIcon: { width: 36, height: 36, borderRadius: 13, alignItems: "center", justifyContent: "center" },
+  cards: { gap: 12 },
+  // Web GlassCard row: a 56px icon bubble, Amiri title, soft burgundy shadow.
+  expandHeader: { minHeight: 84, borderRadius: 22, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 14, shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
+  expandHeaderOpen: { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, shadowOpacity: 0, elevation: 0 },
+  expandIcon: { width: 56, height: 56, borderRadius: 18, alignItems: "center", justifyContent: "center" },
   expandBody: { flex: 1, alignItems: "flex-end" },
-  expandTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 17, textAlign: "right" },
-  expandDescription: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 18, textAlign: "right", marginTop: 1 },
-  expandContent: { marginTop: -12, paddingTop: 20, paddingBottom: 12, borderTopLeftRadius: 0, borderTopRightRadius: 0, borderColor: `${palette.burgundy}20` },
+  expandTitle: { fontFamily: "Amiri_700Bold", fontSize: 21, lineHeight: 30, textAlign: "right" },
+  expandDescription: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13, lineHeight: 19, textAlign: "right", marginTop: 1 },
+  expandContent: { marginTop: -1, paddingTop: 10, paddingBottom: 12, borderTopLeftRadius: 0, borderTopRightRadius: 0, marginBottom: 0 },
   subSection: { borderTopWidth: StyleSheet.hairlineWidth },
   subHeader: { minHeight: 68, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 8, paddingVertical: 11 },
   subIcon: { width: 40, height: 40, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   subContent: { paddingHorizontal: 8, paddingTop: 4, paddingBottom: 6 },
-  levelRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: `${palette.burgundy}14` },
+  levelRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth },
   levelIcon: { width: 36, height: 36, borderRadius: 13, alignItems: "center", justifyContent: "center" },
   levelBody: { flex: 1, alignItems: "flex-end" },
-  levelName: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right" },
+  levelName: { fontFamily: "Amiri_700Bold", fontSize: 17, lineHeight: 25, textAlign: "right" },
   levelText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 20, textAlign: "right" },
   requirement: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 10, textAlign: "right", marginTop: 2 },
   inlineCta: { marginVertical: 12 },
-  subTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right" },
+  subTitle: { fontFamily: "Amiri_700Bold", fontSize: 17, lineHeight: 25, textAlign: "right" },
   subDescription: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 19, textAlign: "right", marginTop: 2 },
   bulletList: { gap: 6, paddingTop: 8, paddingHorizontal: 8 },
   bullet: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 22, textAlign: "right" },
@@ -356,17 +386,20 @@ const styles = StyleSheet.create({
   note: { flex: 1, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 20, textAlign: "right" },
   noteAccent: { fontFamily: "IBMPlexSansArabic_700Bold" },
   shariaRow: { paddingVertical: 14 },
-  accountActions: { alignItems: "center", gap: 4, marginTop: 2 },
-  loginPrompt: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "center" },
-  loginCta: { width: "100%", minHeight: 42, borderRadius: 999, borderColor: `${palette.burgundy}20` },
-  why: { marginTop: 8 },
-  whyTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16 },
-  trustPoints: { width: "100%", gap: 8 },
-  trustPoint: { width: "100%", minHeight: 58, flexDirection: "row-reverse", alignItems: "center", gap: 12, borderWidth: 1, borderRadius: 18, paddingHorizontal: 12, paddingVertical: 10 },
-  trustIcon: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  trustText: { flex: 1, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 13, lineHeight: 21, textAlign: "right" },
-  footer: { alignItems: "center", marginTop: 24, marginBottom: 8 },
-  footerLine: { width: 100, height: 1, backgroundColor: `${palette.gold}80`, marginBottom: 14 },
-  hadith: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 18, lineHeight: 31, textAlign: "center" },
-  source: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, marginTop: 3 },
+  why: { marginTop: 24 },
+  whyTitle: { fontFamily: "Amiri_700Bold", fontSize: 24, lineHeight: 36 },
+  trustPoints: { width: "100%", gap: 10, marginTop: 6 },
+  trustPoint: { width: "100%", minHeight: 64, flexDirection: "row-reverse", alignItems: "center", gap: 14, borderWidth: 1, borderRadius: 22, paddingHorizontal: 14, paddingVertical: 12, shadowOpacity: 0.1, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  trustIcon: { width: 48, height: 48, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  trustText: { flex: 1, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 14, lineHeight: 24, textAlign: "right" },
+  hadith: { alignItems: "center", marginTop: 32, marginBottom: 8 },
+  hadithRule: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 },
+  hadithLine: { width: 48, height: 1 },
+  hadithText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 20, lineHeight: 36, textAlign: "center", paddingHorizontal: 8 },
+  source: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, marginTop: 4, opacity: 0.7 },
+  footer: { borderTopWidth: 1, marginTop: 24, paddingTop: 18, paddingBottom: 4, alignItems: "center", gap: 10 },
+  footerLinks: { flexDirection: "row-reverse", flexWrap: "wrap", justifyContent: "center", columnGap: 22, rowGap: 6 },
+  footerLink: { minHeight: 32, justifyContent: "center" },
+  footerLinkText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13 },
+  copyright: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, opacity: 0.7 },
 });

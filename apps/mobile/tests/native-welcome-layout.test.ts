@@ -35,7 +35,7 @@ for (const device of devices) {
   });
 }
 
-test("Native welcome omits the external Mushaf link and preserves splash handoff", () => {
+test("Native welcome stacks the three web calls to action and preserves splash handoff", () => {
   const source = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
   const hero = source("../components/app/NativeWelcomeHero.tsx");
   const guest = source("../app/guest.tsx");
@@ -47,18 +47,23 @@ test("Native welcome omits the external Mushaf link and preserves splash handoff
   assert.ok(hero.includes("TABYAN_WELCOME_GREETING"));
   assert.ok(hero.includes("IOSWelcomeLogoVisible"));
   assert.ok(hero.includes('resizeMode="contain"'));
-  assert.ok(hero.includes('testID="welcome-register"'));
-  assert.ok(!hero.includes('testID="welcome-open-mushaf"'));
+  // Web order: register, login, then the in-app mushaf reader (no external link).
+  const register = hero.indexOf('testID="welcome-register"');
+  const login = hero.indexOf('testID="welcome-login"');
+  const mushaf = hero.indexOf('testID="welcome-open-mushaf"');
+  assert.ok(register >= 0 && login > register && mushaf > login);
+  assert.ok(hero.includes("useReducedMotion"));
   assert.ok(!hero.includes("Platform.OS"));
-  assert.ok(!/minHeight: layout\\.usableHeight|flexGrow: 1|translateY/.test(hero));
+  assert.ok(!/minHeight: layout\\.usableHeight|flexGrow: 1/.test(hero));
 
-  assert.ok(guest.includes("<NativeWelcomeHero onRegister={openRegister} />"));
+  assert.ok(guest.includes("<NativeWelcomeHero onRegister={openRegister} onLogin={openLogin} onBrowseMushaf={openMushaf} />"));
+  assert.ok(guest.includes('router.push("/student/mushaf"'));
   assert.ok(!guest.includes("MUSHAF_URL"));
-  assert.ok(!guest.includes("openMushaf"));
   assert.ok(!guest.includes("Linking.openURL"));
   assert.ok(!guest.includes("Platform.OS ==="));
-  assert.ok(guest.indexOf("<View style={styles.cards}>") < guest.indexOf("<View style={styles.accountActions}>"));
-  assert.ok(guest.includes('testID="welcome-login"'));
+  assert.ok(guest.indexOf("<View style={styles.cards}>") < guest.indexOf("<View style={styles.why}>"));
+  assert.ok(guest.indexOf("<View style={styles.why}>") < guest.indexOf("<View style={[styles.footer"));
+  for (const href of ["/privacy", "/terms", "/support"]) assert.ok(guest.includes(`"${href}"`));
   assert.ok(root.includes('showStartupSplash || isDark ? "light" : "dark"'));
   assert.ok(root.includes("IOSWelcomeLogoVisible.Provider value={!showStartupSplash}"));
   assert.ok(splash.includes("callbacks.current.fadeLogoFirst ? Animated.sequence("));

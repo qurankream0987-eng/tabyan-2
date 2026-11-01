@@ -3,7 +3,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Button, Card, Icon, Screen } from "../../components/ui";
-import { useTheme, palette } from "../../lib/theme";
+import { useTheme } from "../../lib/theme";
 import { trpc } from "../../lib/trpc";
 import { useAuth } from "../../lib/auth";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
@@ -126,7 +126,7 @@ export default function Login() {
             <View style={[styles.check, { borderColor: rememberMe ? colors.primary : colors.border, backgroundColor: rememberMe ? colors.primary : "transparent" }]}>
               {rememberMe ? <Icon name="checkmark" size={14} color={colors.primaryText} /> : null}
             </View>
-            <Text numberOfLines={1} style={[styles.rememberText, { color: colors.muted }]}>تذكرني على هذا الجهاز</Text>
+            <Text style={[styles.rememberText, { color: colors.muted }]}>تذكرني على هذا الجهاز</Text>
           </Pressable>
           {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
           <Button
@@ -156,15 +156,16 @@ const styles = StyleSheet.create({
   screen: { flexGrow: 1, paddingTop: 20, paddingBottom: 24, alignItems: "center", justifyContent: "center" },
   form: { width: "100%", maxWidth: 440, paddingHorizontal: 20, paddingTop: 46, paddingBottom: 20, borderRadius: 22, alignItems: "stretch" },
   closeButton: { position: "absolute", top: 12, left: 12, zIndex: 1, width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  logo: { width: 48, height: 42, alignSelf: "center", marginBottom: 8 },
-  title: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 23, textAlign: "center" },
+  logo: { width: 56, height: 48, alignSelf: "center", marginBottom: 8 },
+  title: { fontFamily: "Amiri_700Bold", fontSize: 27, lineHeight: 40, textAlign: "center" },
   description: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 21, textAlign: "center", marginTop: 4, marginBottom: 17 },
   notice: { flexDirection: "row-reverse", alignItems: "flex-start", gap: 8, borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 14 },
   noticeText: { flex: 1, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12, lineHeight: 20, textAlign: "right" },
   input: { minHeight: 50, paddingVertical: 8, borderRadius: 14, borderWidth: 1, paddingHorizontal: 15, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 14, marginBottom: 11 },
-  remember: { flexDirection: "row-reverse", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 1, marginBottom: 5 },
-  check: { width: 22, height: 22, borderRadius: 7, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  rememberText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12 },
+  remember: { flexDirection: "row-reverse", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 1, marginBottom: 5, paddingHorizontal: 4 },
+  check: { width: 22, height: 22, borderRadius: 7, borderWidth: 1, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  // Wraps on narrow phones instead of truncating.
+  rememberText: { flexShrink: 1, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 13, lineHeight: 20, textAlign: "right" },
   error: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12, textAlign: "center", lineHeight: 20, marginVertical: 8 },
   submit: { minHeight: 50, borderRadius: 999, marginTop: 10 },
   register: { minHeight: 48, borderRadius: 999, borderWidth: 1, justifyContent: "center", alignItems: "center" },

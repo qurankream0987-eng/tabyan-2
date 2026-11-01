@@ -5,13 +5,12 @@ import { Button, Card, Header, Screen } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { normalizeNationalPhoneInput, toE164, validatePhoneNumber } from "@workspace/tabyan-domain/countries";
 import { trpc } from "../../lib/trpc";
-import { useTheme, palette } from "../../lib/theme";
+import { useTheme } from "../../lib/theme";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 import { validateRegistrationPassword } from "../../lib/account/registration-validation";
 import { isValidPersonName, normalizePersonName } from "@workspace/tabyan-domain/input-normalization";
-import { CountryPicker } from "./register";
-
-type Step = "name" | "phone" | "password";
+import { CountryPicker, RegistrationProgress } from "./register";
+import { TEACHER_REGISTRATION_FLOW, registrationProgress, type TeacherRegistrationStep as Step } from "../../lib/account/registration-steps";
 
 function StepHeader({ title, subtitle }: { title: string; subtitle: string }) {
   const { colors } = useTheme();
@@ -32,7 +31,7 @@ export default function TeacherRegister() {
   const checkPhone = trpc.auth.checkPhone.useMutation();
   const completeProfile = trpc.auth.completeProfile.useMutation();
   const busy = checkPhone.isPending || completeProfile.isPending;
-  const stepIndex = step === "name" ? 1 : step === "phone" ? 2 : 3;
+  const progress = registrationProgress(TEACHER_REGISTRATION_FLOW, step);
 
   const next = async () => {
     setError("");
@@ -106,11 +105,7 @@ export default function TeacherRegister() {
       <Screen scroll scrollStyle={{ flex: 1 }} contentStyle={styles.screen}>
           <Image source={isDark ? require("../../assets/images/logo-dark.png") : require("../../assets/images/logo-light.png")} resizeMode="contain" style={styles.logo} accessibilityLabel="تبيان" />
         <Card style={styles.card}>
-          <View style={styles.progressHeader}>
-            <Text style={[styles.progress, { color: colors.muted }]}>الخطوة {stepIndex} من 3</Text>
-            <Text style={[styles.progress, { color: colors.primary }]}>{Math.round((stepIndex / 3) * 100)}%</Text>
-          </View>
-          <View style={[styles.progressTrack, { backgroundColor: colors.input }]}><View style={[styles.progressFill, { backgroundColor: colors.primary, width: `${(stepIndex / 3) * 100}%` }]} /></View>
+          <RegistrationProgress {...progress} />
 
           {step === "name" ? (
             <>
@@ -150,10 +145,6 @@ const styles = StyleSheet.create({
   screen: { paddingTop: 3 },
   logo: { width: 128, height: 128, alignSelf: "center", marginBottom: 4 },
   card: { padding: 20 },
-  progressHeader: { flexDirection: "row-reverse", justifyContent: "space-between", marginBottom: 7 },
-  progress: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11 },
-  progressTrack: { height: 7, borderRadius: 7, overflow: "hidden", marginBottom: 24 },
-  progressFill: { height: 7, borderRadius: 7 },
   stepHeader: { marginBottom: 18 },
   stepTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 21, textAlign: "right" },
   stepSubtitle: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 21, textAlign: "right", marginTop: 5 },

@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import {
   FlatList,
   AccessibilityInfo,
@@ -20,6 +21,9 @@ import { useAuth } from "../../lib/auth";
 import { COUNTRIES, normalizeNationalPhoneInput, toE164, validatePhoneNumber } from "@workspace/tabyan-domain/countries";
 import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 import { userFacingErrorDetails } from "../../lib/user-facing-error";
+import { toast } from "../../lib/toast";
+import { detectCountry } from "../../lib/account/detect-country";
+import { registrationProgress, studentRegistrationFlow } from "../../lib/account/registration-steps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   getStudentRegistrationAge,
@@ -46,6 +50,39 @@ const GRADES: Record<SchoolStage, string[]> = {
   middle: ["الصف السادس", "الصف السابع", "الصف الثامن", "الصف التاسع"],
   high: ["الصف العاشر", "الصف الحادي عشر", "الصف الثاني عشر"],
 };
+
+/** Web StudentRegisterFlow ProgressBar: «الخطوة X من Y», the percentage, and a burgundy→gold fill. */
+export function RegistrationProgress({ number, total, percent }: { number: number; total: number; percent: number }) {
+  const { colors, isDark } = useTheme();
+  const [width, setWidth] = useState(0);
+  const gradientId = useId();
+  const fillWidth = Math.round((width * percent) / 100);
+  return (
+    <>
+      <View style={styles.progressHeader}>
+        <Text style={[styles.progressText, { color: colors.muted }]}>الخطوة {number} من {total}</Text>
+        <Text style={[styles.progressText, { color: isDark ? palette.gold : palette.goldDark }]}>{percent}%</Text>
+      </View>
+      <View
+        style={[styles.progressTrack, { backgroundColor: isDark ? `${palette.gold}1A` : `${palette.burgundy}1A` }]}
+        onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+      >
+        {width > 0 && fillWidth > 0 ? (
+          <Svg width={width} height={8} style={styles.progressSvg}>
+            <Defs>
+              <LinearGradient id={`reg-${gradientId}`} x1="0" y1="0" x2={width} y2="0" gradientUnits="userSpaceOnUse">
+                {/* Fill grows from the right (RTL): gold at the start, burgundy at the far end. */}
+                <Stop offset="0" stopColor={palette.burgundy} />
+                <Stop offset="1" stopColor={palette.gold} />
+              </LinearGradient>
+            </Defs>
+            <Rect x={width - fillWidth} y={0} width={fillWidth} height={8} rx={4} fill={`url(#reg-${gradientId})`} />
+          </Svg>
+        ) : null}
+      </View>
+    </>
+  );
+}
 
 function StepHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   const { colors } = useTheme();
@@ -163,6 +200,7 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [locating, setLocating] = useState(false);
   const registrationFieldRefs = useRef<Partial<Record<StudentRegistrationField, TextInput | View | null>>>({});
   const dateMonthRef = useRef<TextInput | null>(null);
   const dateYearRef = useRef<TextInput | null>(null);
@@ -188,8 +226,9 @@ export default function Register() {
   };
   const serverError = completeProfile.error ? userFacingErrorDetails(completeProfile.error, "تعذر إنشاء الحساب. حاول مرة أخرى.") : null;
   const visibleError = error || serverError?.message || "";
-  const totalSteps = inSchool ? 8 : 6;
-  const stepIndex: Record<Step, number> = { choice: 0, name: 1, birthdate: 2, phone: 3, school: 4, level: 5, grade: 6, password: inSchool ? 7 : 5, email: inSchool ? 8 : 6 };
+  // The web flow ends at a biometric (WebAuthn) step; there is no equivalent here without a native module, so registration ends at the email step.
+  const flow = studentRegistrationFlow(inSchool);
+  const progress = step === "choice" ? null : registrationProgress(flow, step);
 
   const clearError = () => {
     setError("");
@@ -229,6 +268,27 @@ export default function Register() {
     else if (step === "password") setStep(inSchool ? "grade" : "school");
     else if (step === "email") setStep("password");
     else router.back();
+  };
+
+  /** Web `detectLocation`: pick the country from the device position, with the same notices. */
+  const locateCountry = async () => {
+    if (locating) return;
+    setLocating(true);
+    try {
+      const country = await detectCountry();
+      if (!country) { toast("تعذر تحديد الدولة تلقائيًا، اختر الدولة يدويًا.", "info"); return; }
+      setDial(country.dial);
+      clearErrorWhenStepIsValid("phone", {
+        phoneError: phoneHasInvalidCharacters
+          ? "رقم الهاتف غير صحيح، يرجى التأكد من الرقم وإعادة المحاولة."
+          : validatePhoneNumber(country.dial, normalizeNationalPhoneInput(country.dial, phone)),
+      });
+      toast(`تم تحديد الدولة: ${country.name}`, "success");
+    } catch {
+      toast("تعذر تحديد الدولة تلقائيًا، اختر الدولة يدويًا.", "info");
+    } finally {
+      setLocating(false);
+    }
   };
 
   const submitRegistration = async () => {
@@ -352,17 +412,7 @@ export default function Register() {
           <Image source={isDark ? require("../../assets/images/logo-dark.png") : require("../../assets/images/logo-light.png")} resizeMode="contain" style={styles.logo} accessibilityLabel="تبيان" />
         </View>
         <Card style={styles.card}>
-          {step !== "choice" ? (
-            <>
-              <View style={styles.progressHeader}>
-                <Text style={[styles.progressText, { color: colors.muted }]}>الخطوة {stepIndex[step]} من {totalSteps}</Text>
-                <Text style={[styles.progressText, { color: colors.primary }]}>{Math.round((stepIndex[step] / totalSteps) * 100)}%</Text>
-              </View>
-              <View style={[styles.progressTrack, { backgroundColor: colors.input }]}>
-                <View style={[styles.progressFill, { backgroundColor: palette.gold, width: `${(stepIndex[step] / totalSteps) * 100}%` }]} />
-              </View>
-            </>
-          ) : null}
+          {progress ? <RegistrationProgress {...progress} /> : null}
 
           {step === "choice" ? (
             <>
@@ -507,6 +557,15 @@ export default function Register() {
                   maxLength={15}
                 />
               </View>
+              <Button
+                testID="register-detect-country"
+                label={locating ? "جارٍ تحديد موقعك…" : "استخدم موقعي لتحديد الدولة تلقائياً"}
+                variant="quiet"
+                icon="location-outline"
+                loading={locating}
+                onPress={() => void locateCountry()}
+                style={styles.locateButton}
+              />
               {visibleError ? <Text style={[styles.error, { color: colors.danger }]}>{visibleError}</Text> : null}
               {actions(checkPhone.isPending ? "جارٍ التحقق…" : "التالي", next, checkPhone.isPending)}
             </>
@@ -642,8 +701,9 @@ const styles = StyleSheet.create({
   card: { marginTop: 16, padding: 20 },
   progressHeader: { flexDirection: "row-reverse", justifyContent: "space-between", marginBottom: 7 },
   progressText: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11 },
-  progressTrack: { height: 7, borderRadius: 7, overflow: "hidden", marginBottom: 24 },
-  progressFill: { height: 7, borderRadius: 7 },
+  progressTrack: { height: 8, borderRadius: 8, overflow: "hidden", marginBottom: 24 },
+  progressSvg: { position: "absolute", top: 0, left: 0 },
+  locateButton: { alignSelf: "center", minHeight: 40, marginTop: -2, marginBottom: 4 },
   stepHeader: { marginBottom: 18 },
   stepTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 21, textAlign: "right" },
   stepSubtitle: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 21, textAlign: "right", marginTop: 5 },
