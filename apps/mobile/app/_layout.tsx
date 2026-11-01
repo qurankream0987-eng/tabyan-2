@@ -24,6 +24,7 @@ import IOSStartupFailure from "../components/app/IOSStartupFailure";
 import { iosDestinationReady, iosSplashMotion } from "../lib/platform/ios-splash-lifecycle";
 import { IOSWelcomeLogoVisible } from "../lib/platform/ios-welcome-visibility";
 import { splashColors } from "../constants/splash";
+import { MUSHAF_COLORS } from "../components/mushaf/mushaf-page";
 
 // Screens lay out right-to-left by hand (row-reverse, textAlign "right"), so the
 // native layout must never mirror them for an Arabic device language. The setting
@@ -106,7 +107,8 @@ function AppShell({ onStartupComplete, onStartupFailure }: { onStartupComplete: 
     <View style={{ flex: 1, backgroundColor: Platform.OS === "ios"
       ? colors.background
       : showStartupSplash ? splashColors.background : colors.background }}>
-      <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
+      {/* The Mushaf reader is printed paper edge to edge: its cream runs under the status bar too. */}
+      <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: pathname === "/student/mushaf" ? MUSHAF_COLORS.paper : undefined }}>
         <StatusBar style={showStartupSplash || isDark ? "light" : "dark"} />
         {Platform.OS === "ios" ? <IOSWelcomeLogoVisible.Provider value={!showStartupSplash}><View
           style={{ flex: 1 }}

@@ -1,8 +1,10 @@
 import { memo, useMemo, useState } from "react";
-import { StyleSheet, Text, View, type NativeSyntheticEvent, type TextLayoutEventData } from "react-native";
+import { Image, StyleSheet, Text, View, type NativeSyntheticEvent, type TextLayoutEventData } from "react-native";
+import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
 import { buildPageLines, type LineWord, type MushafPageData } from "@workspace/tabyan-domain/mushaf-page-data";
 import { computePageLayout, LINE_COUNT, maxFontSizeFor, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
 import { pageFontFamily } from "../../lib/mushaf/mushaf-assets";
+import { JUZ_LIST } from "../../lib/mushaf/juz";
 import type { NativeWordFeedback } from "../../lib/recitation/native-recitation";
 
 /** Width/height of a printed Madinah Mushaf page. */
@@ -10,12 +12,19 @@ export const PAGE_ASPECT = 622 / 917;
 /** Glyph size used to measure the widest line before fitting it to the page. */
 const MEASURE_SIZE = 100;
 const BASMALAH_TEXT = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ";
+/** The web surah ornament (932×154): an empty cartouche between two medallions. */
+const SURAH_ORNAMENT = require("../../assets/mushaf/surah-header-tabyan.png");
+const ORNAMENT_ASPECT = 154 / 932;
+const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+const toArabicDigits = (value: number) => String(value).replace(/\d/g, (digit) => ARABIC_DIGITS[Number(digit)]);
 
 /** The page keeps its printed ink and paper in both app themes, as on the web. */
 export const MUSHAF_COLORS = {
-  paper: "#FFFCF3",
+  paper: "#F6F1E3",
   frame: "#D9C9A3",
   ink: "#1B1410",
+  /** Medallion captions on the surah ornament (web --hdr-green). */
+  ornament: "#788567",
   outOfRange: "rgba(27, 20, 16, 0.25)",
   current: "#7A1F35",
   correct: "#2F4A3A",
@@ -44,7 +53,7 @@ export interface MushafRecitationState {
 export type MushafHideMode = "progressive_reveal" | "first_word" | "full_hide" | "visible_review";
 
 // Paper-coloured ink: Android drops a fully transparent colour on nested text.
-const HIDDEN = { color: "#FFFCF3" } as const;
+const HIDDEN = { color: MUSHAF_COLORS.paper } as const;
 
 function wordStyle(word: LineWord, recitation: MushafRecitationState | undefined, highlightVerseKey: string | null | undefined) {
   if (!recitation) return word.verseKey === highlightVerseKey ? styles.highlighted : null;
@@ -88,23 +97,32 @@ function wordStyle(word: LineWord, recitation: MushafRecitationState | undefined
  * like the web reader. During recitation each word is coloured by the shared
  * mistake engine; colour and underline only, so the page geometry never moves.
  * The caller loads the page font (ensurePageFont) before rendering.
+ * With `height` the paper fills that box edge to edge like a printed page: the juz and
+ * the surah of the last ayah in the top margin, the page number in the bottom one, and
+ * the 15 line boxes spread over the height between them.
  */
 function MushafPage({
   data,
   width,
+  height: fillHeight,
   recitation,
   highlightVerseKey,
   onPressVerse,
 }: {
   data: MushafPageData;
   width: number;
+  /** Full-bleed paper height; omitted, the paper keeps the printed aspect as a framed card. */
+  height?: number;
   recitation?: MushafRecitationState;
   /** Reading mode: the ayah to highlight (playing audio or picked). */
   highlightVerseKey?: string | null;
   /** Reading mode: a word was tapped. */
   onPressVerse?: (verseKey: string) => void;
 }) {
-  const height = width / PAGE_ASPECT;
+  const paperH = fillHeight ?? width / PAGE_ASPECT;
+  // Printed margins carry the labels; the line grid takes the height between them.
+  const marginH = fillHeight ? Math.min(40, Math.max(26, paperH * 0.04)) : 0;
+  const height = paperH - marginH * 2;
   const family = pageFontFamily(data.p);
   const lines = useMemo(() => buildPageLines(data), [data]);
   const wordLines = lines.filter((line) => line.kind === "words");
@@ -112,6 +130,8 @@ function MushafPage({
   const variant: PageVariant = data.p === 1 || data.p === 2 ? "opening" : "standard";
   const layout = useMemo(() => computePageLayout(lines, rowCount, height, variant), [lines, rowCount, height, variant]);
   const titleRowH = height / LINE_COUNT;
+  const lastVerse = data.v[data.v.length - 1];
+  const marginFont = Math.min(16, marginH * 0.48);
   // Widths are per page; a new page starts unmeasured.
   const [measuredPage, setMeasuredPage] = useState({ page: data.p, widths: new Map<number, number>() });
   const lineWidths = measuredPage.page === data.p ? measuredPage.widths : new Map<number, number>();
@@ -133,7 +153,20 @@ function MushafPage({
   }
 
   return (
-    <View style={[styles.paper, { width, height: layout.paperH }]}>
+    <View style={[styles.paper, fillHeight ? null : styles.paperCard, { width, height: paperH }]}>
+      {marginH > 0 && fontSize > 0 ? (
+        <>
+          <View style={[styles.marginRow, { top: 0, height: marginH }]} pointerEvents="none">
+            <Text style={[styles.marginText, { fontSize: marginFont }]} numberOfLines={1}>{JUZ_LIST[data.j - 1]?.name ?? ""}</Text>
+            <Text style={[styles.marginText, { fontSize: marginFont }]} numberOfLines={1}>
+              {lastVerse ? `سُورَةُ ${SURAHS[lastVerse.c - 1]?.name ?? ""}` : ""}
+            </Text>
+          </View>
+          <View style={[styles.marginRow, styles.marginFooter, { bottom: 0, height: marginH }]} pointerEvents="none">
+            <Text style={[styles.marginText, { fontSize: marginFont }]}>{toArabicDigits(data.p)}</Text>
+          </View>
+        </>
+      ) : null}
       {!measured ? (
         <View style={styles.measureBox} pointerEvents="none">
           {wordLines.map((line) => (
@@ -148,15 +181,11 @@ function MushafPage({
         </View>
       ) : null}
       {fontSize > 0 ? lines.map((line) => {
-        const top = layout.tops.get(line.line) ?? 0;
+        const top = marginH + (layout.tops.get(line.line) ?? 0);
         if (line.kind === "surah-header") {
           return (
             <View key={`h-${line.line}`} style={[styles.row, { top, height: titleRowH }]}>
-              <View style={[styles.surahBand, { height: titleRowH * 0.8 }]}>
-                <Text style={[styles.surahTitle, { fontSize: titleRowH * 0.42 }]} numberOfLines={1}>
-                  سُورَةُ {line.surahName}
-                </Text>
-              </View>
+              <SurahBanner name={line.surahName ?? ""} number={line.surahNumber} ayahs={line.ayahCount} width={width * 0.94} rowH={titleRowH} />
             </View>
           );
         }
@@ -191,29 +220,47 @@ function MushafPage({
 
 export default memo(MushafPage);
 
+/**
+ * The web SurahHeaderFrame: the ornament stretched over the title row, the surah name
+ * in the cartouche and its order / ayah count in the two medallions (right / left).
+ */
+function SurahBanner({ name, number, ayahs, width, rowH }: { name: string; number?: number; ayahs?: number; width: number; rowH: number }) {
+  const bandH = Math.min(rowH * 0.92, width * ORNAMENT_ASPECT);
+  const medallionW = width * 0.12;
+  const medallion = (value: number | undefined, caption: string, centerX: number) => value === undefined ? null : (
+    <View style={[styles.medallion, { left: width * centerX - medallionW / 2, width: medallionW }]}>
+      <Text style={[styles.medallionCaption, { fontSize: bandH * 0.17 }]} numberOfLines={1}>{caption}</Text>
+      <Text style={[styles.medallionValue, { fontSize: bandH * 0.3 }]} numberOfLines={1}>{toArabicDigits(value)}</Text>
+    </View>
+  );
+  return (
+    <View style={[styles.surahBand, { width, height: bandH }]}>
+      <Image source={SURAH_ORNAMENT} resizeMode="stretch" style={{ position: "absolute", top: 0, left: 0, width, height: bandH }} accessible={false} />
+      <Text style={[styles.surahTitle, { fontSize: bandH * 0.5, width: width * 0.48 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+        سُورَةُ {name}
+      </Text>
+      {medallion(number, "ترتيبها", 812 / 932)}
+      {medallion(ayahs, "آياتها", 120 / 932)}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  paper: {
-    alignSelf: "center",
-    backgroundColor: MUSHAF_COLORS.paper,
-    borderColor: MUSHAF_COLORS.frame,
-    borderWidth: 1,
-    borderRadius: 6,
-    overflow: "hidden",
-  },
+  paper: { alignSelf: "center", backgroundColor: MUSHAF_COLORS.paper, overflow: "hidden" },
+  paperCard: { borderColor: MUSHAF_COLORS.frame, borderWidth: 1, borderRadius: 6 },
+  marginRow: { position: "absolute", left: 0, right: 0, flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center", paddingHorizontal: "4%" },
+  marginFooter: { justifyContent: "center" },
+  marginText: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false },
   // Lines are laid out unconstrained so onTextLayout reports their natural width.
   measureBox: { position: "absolute", top: 0, left: 0, width: 100_000, opacity: 0 },
   measureText: { alignSelf: "flex-start", includeFontPadding: false },
   row: { position: "absolute", left: 0, right: 0, alignItems: "center", justifyContent: "center" },
   wordLine: { color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center" },
-  surahBand: {
-    width: "88%",
-    borderColor: MUSHAF_COLORS.frame,
-    borderWidth: 1.5,
-    borderRadius: 4,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  surahTitle: { fontFamily: "Amiri_700Bold", color: MUSHAF_COLORS.current, includeFontPadding: false },
+  surahBand: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  surahTitle: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center" },
+  medallion: { position: "absolute", top: 0, bottom: 0, alignItems: "center", justifyContent: "center" },
+  medallionCaption: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ornament, includeFontPadding: false },
+  medallionValue: { fontFamily: "Amiri_700Bold", color: MUSHAF_COLORS.ink, includeFontPadding: false },
   basmalah: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false },
   mistake: { color: MUSHAF_COLORS.mistake, textDecorationLine: "underline" },
   skipped: { color: MUSHAF_COLORS.skipped, textDecorationLine: "underline" },

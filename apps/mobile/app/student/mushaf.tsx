@@ -1,25 +1,25 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
   KeyboardAvoidingView,
   Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
   type ViewToken,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQuery } from "@tanstack/react-query";
 import { SURAHS, TOTAL_PAGES } from "@workspace/tabyan-domain/quran-surahs";
 import { PAGE_FIRST_VERSE, pageOfAyah } from "@workspace/tabyan-domain/mushaf-page-index";
 import { searchQuran, type QuranSearchResult } from "@workspace/tabyan-domain/quran-search";
-import { StudentScreen } from "../../components/student/student-screen";
-import { Button, Icon, LoadingState } from "../../components/ui";
-import MushafPage, { PAGE_ASPECT } from "../../components/mushaf/mushaf-page";
+import { Button, Header, Icon, LoadingState } from "../../components/ui";
+import MushafPage, { MUSHAF_COLORS, PAGE_ASPECT } from "../../components/mushaf/mushaf-page";
 import { ensurePageFont, loadMushafPage, loadSearchIndex } from "../../lib/mushaf/mushaf-assets";
 import { JUZ_START_PAGES, juzOfPage } from "../../lib/mushaf/juz";
 import { AyahAudioPlayer, DEFAULT_RECITER, RECITERS, type AyahRef, type ReciterId } from "../../lib/mushaf/ayah-audio";
@@ -50,13 +50,14 @@ function surahOfPage(page: number) {
   return SURAHS[Number(PAGE_FIRST_VERSE[page - 1].split(":")[0]) - 1];
 }
 
-/** One page of the pager: loads its data and font, and fits the paper to the space. */
+/** One page of the pager: loads its data and font, and fills the screen with the paper. */
 function PagerPage({
   page,
   width,
   height,
   highlightVerseKey,
   onPressVerse,
+  onPressPaper,
   colors,
 }: {
   page: number;
@@ -64,6 +65,8 @@ function PagerPage({
   height: number;
   highlightVerseKey: string | null;
   onPressVerse: (verseKey: string) => void;
+  /** A tap beside the words: toggles the app chrome. */
+  onPressPaper: () => void;
   colors: Colors;
 }) {
   const query = useQuery({
@@ -74,12 +77,12 @@ function PagerPage({
     },
     staleTime: Infinity,
   });
-  // Fit the whole page on screen when it is tall; otherwise use the width and scroll.
-  const paperWidth = Math.min(width - 16, height * PAGE_ASPECT);
+  // Edge to edge on a phone; on a wide screen the paper stays no squatter than 1.3× the print.
+  const paperWidth = Math.min(width, height * PAGE_ASPECT * 1.3);
   return (
-    <ScrollView style={{ width }} contentContainerStyle={styles.pageScroll}>
+    <Pressable style={[styles.pageHost, { width }]} onPress={onPressPaper} accessible={false}>
       {query.data ? (
-        <MushafPage data={query.data} width={paperWidth} highlightVerseKey={highlightVerseKey} onPressVerse={onPressVerse} />
+        <MushafPage data={query.data} width={paperWidth} height={height} highlightVerseKey={highlightVerseKey} onPressVerse={onPressVerse} />
       ) : query.error ? (
         <View style={styles.pageMessage}>
           <Text style={[styles.messageText, { color: colors.danger }]}>تعذر تحميل الصفحة {page}.</Text>
@@ -88,7 +91,7 @@ function PagerPage({
       ) : (
         <View style={styles.pageMessage}><LoadingState label={`جارٍ تحميل الصفحة ${page}…`} /></View>
       )}
-    </ScrollView>
+    </Pressable>
   );
 }
 
@@ -96,9 +99,15 @@ export default function MushafReaderScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ page?: string; surah?: string }>();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<number>>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [page, setPage] = useState<number | null>(null);
+  // App chrome (header, meta line, toolbar) overlays the paper; a tap on the paper toggles it.
+  const [chrome, setChrome] = useState(false);
+  // Dark status-bar icons over the cream paper only while this screen is in front.
+  const [focused, setFocused] = useState(false);
+  useFocusEffect(useCallback(() => { setFocused(true); return () => setFocused(false); }, []));
   const [selectedVerse, setSelectedVerse] = useState<string | null>(null);
   const [playingAyah, setPlayingAyah] = useState<AyahRef | null>(null);
   const [audioError, setAudioError] = useState(false);
@@ -165,6 +174,8 @@ export default function MushafReaderScreen() {
     if (typeof visible === "number") setPage(visible);
   }).current;
 
+  const toggleChrome = useCallback(() => setChrome((shown) => !shown), []);
+
   function goToPage(target: number, animated = false) {
     const clamped = Math.max(1, Math.min(TOTAL_PAGES, target));
     setPage(clamped);
@@ -190,17 +201,9 @@ export default function MushafReaderScreen() {
   const reciterName = RECITERS.find((item) => item.id === reciter)?.name ?? "";
 
   return (
-    <StudentScreen title="المصحف" subtitle="مصحف المدينة النبوية" cameraMode>
-      <View style={styles.root}>
-        <View style={[styles.infoBar, { borderBottomColor: colors.border }]}>
-          <Text style={[styles.infoText, { color: colors.primary }]} numberOfLines={1}>
-            {currentSurah ? `سورة ${currentSurah.name}` : ""}
-          </Text>
-          <Text style={[styles.infoText, { color: colors.muted }]} numberOfLines={1}>
-            {page ? `الجزء ${juzOfPage(page)} · صفحة ${page}` : ""}
-          </Text>
-        </View>
-
+    <>
+      {focused ? <StatusBar style="dark" /> : null}
+      <View style={[styles.root, { paddingBottom: insets.bottom }]}>
         <View style={styles.pager} onLayout={(event) => setSize({ width: event.nativeEvent.layout.width, height: event.nativeEvent.layout.height })}>
           {size.width > 0 && page !== null ? (
             <FlatList
@@ -226,6 +229,7 @@ export default function MushafReaderScreen() {
                   height={size.height}
                   highlightVerseKey={highlightVerseKey}
                   onPressVerse={setSelectedVerse}
+                  onPressPaper={toggleChrome}
                   colors={colors}
                 />
               )}
@@ -233,6 +237,24 @@ export default function MushafReaderScreen() {
           ) : <LoadingState label="جارٍ فتح المصحف…" />}
         </View>
 
+        {chrome ? (
+          <View style={[styles.topChrome, { backgroundColor: colors.background }]}>
+            <Header title="المصحف" back />
+            <View style={[styles.infoBar, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.infoText, { color: colors.primary }]} numberOfLines={1}>
+                {currentSurah ? `سورة ${currentSurah.name}` : ""}
+              </Text>
+              <Text style={[styles.infoText, { color: colors.muted }]} numberOfLines={1}>
+                {page ? `الجزء ${juzOfPage(page)} · صفحة ${page}` : ""}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
+        <View
+          style={[styles.bottomChrome, { paddingBottom: insets.bottom, backgroundColor: chrome || selected || playingAyah || audioError ? colors.card : "transparent" }]}
+          pointerEvents="box-none"
+        >
         {selected ? (
           <View style={[styles.panel, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
             <View style={styles.panelHeader}>
@@ -273,7 +295,7 @@ export default function MushafReaderScreen() {
           </View>
         ) : null}
 
-        <View style={[styles.toolbar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+        {chrome ? <View style={[styles.toolbar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
           <ToolbarButton icon="clipboard" label="الفهرس" onPress={() => setSheet("index")} colors={colors} />
           <ToolbarButton icon="search" label="بحث" onPress={() => setSheet("search")} colors={colors} />
           <ToolbarButton
@@ -303,6 +325,7 @@ export default function MushafReaderScreen() {
             }}
             colors={colors}
           />
+        </View> : null}
         </View>
       </View>
 
@@ -327,7 +350,7 @@ export default function MushafReaderScreen() {
           <ListRow key={item.id} title={item.name} selected={item.id === reciter} onPress={() => chooseReciter(item.id)} colors={colors} />
         ))}
       </SheetModal>
-    </StudentScreen>
+    </>
   );
 }
 
@@ -481,8 +504,11 @@ function SearchSheet({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  // Printed paper in both themes; the chrome floats over it.
+  root: { flex: 1, backgroundColor: MUSHAF_COLORS.paper },
   flex: { flex: 1 },
+  topChrome: { position: "absolute", top: 0, left: 0, right: 0 },
+  bottomChrome: { position: "absolute", bottom: 0, left: 0, right: 0 },
   infoBar: {
     flexDirection: "row-reverse",
     justifyContent: "space-between",
@@ -494,7 +520,7 @@ const styles = StyleSheet.create({
   },
   infoText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 13, flexShrink: 1 },
   pager: { flex: 1 },
-  pageScroll: { flexGrow: 1, alignItems: "center", justifyContent: "center", paddingVertical: 8 },
+  pageHost: { flex: 1, alignItems: "center", justifyContent: "center" },
   pageMessage: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 24 },
   messageText: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 13, textAlign: "center", marginVertical: 8 },
   panel: { borderTopWidth: StyleSheet.hairlineWidth, padding: 12, gap: 10 },
