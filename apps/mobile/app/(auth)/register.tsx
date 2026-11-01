@@ -433,7 +433,7 @@ export default function Register() {
                     clearErrorWhenStepIsValid("birthdate", { birthDate: nextDate });
                   }}
                   placeholder="اليوم" placeholderTextColor={colors.muted} keyboardType="number-pad"
-                  style={[inputStyle(), { flex: 1 }]} textAlign="center" returnKeyType="next"
+                  style={[inputStyle(), styles.dateInput]} textAlign="center" returnKeyType="next"
                   onSubmitEditing={() => dateMonthRef.current?.focus()}
                 />
                 <TextInput
@@ -446,7 +446,7 @@ export default function Register() {
                     clearErrorWhenStepIsValid("birthdate", { birthDate: nextDate });
                   }}
                   placeholder="الشهر" placeholderTextColor={colors.muted} keyboardType="number-pad"
-                  style={[inputStyle(), { flex: 1 }]} textAlign="center" returnKeyType="next"
+                  style={[inputStyle(), styles.dateInput]} textAlign="center" returnKeyType="next"
                   onSubmitEditing={() => dateYearRef.current?.focus()}
                 />
                 <TextInput
@@ -459,7 +459,7 @@ export default function Register() {
                     clearErrorWhenStepIsValid("birthdate", { birthDate: nextDate });
                   }}
                   placeholder="السنة" placeholderTextColor={colors.muted} keyboardType="number-pad"
-                  style={[inputStyle(), { flex: 1 }]} textAlign="center" returnKeyType="next"
+                  style={[inputStyle(), styles.dateInput]} textAlign="center" returnKeyType="next"
                   onSubmitEditing={() => void next()}
                 />
               </View>
@@ -647,11 +647,13 @@ const styles = StyleSheet.create({
   stepHeader: { marginBottom: 18 },
   stepTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 21, textAlign: "right" },
   stepSubtitle: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 21, textAlign: "right", marginTop: 5 },
-  input: { height: 52, flexShrink: 0, borderRadius: 16, borderWidth: 1, paddingHorizontal: 15, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 14, marginBottom: 10 },
+  input: { minHeight: 52, paddingVertical: 8, flexShrink: 0, borderRadius: 16, borderWidth: 1, paddingHorizontal: 15, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 14, marginBottom: 10 },
   choiceButton: { minHeight: 50, borderRadius: 999, borderWidth: 1, paddingHorizontal: 14, alignItems: "center", justifyContent: "center", marginTop: 8 },
   choiceSecondary: { marginTop: 0 },
   choiceButtonText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 13, textAlign: "center" },
   dateRow: { flexDirection: "row-reverse", gap: 8 },
+  // Narrow fields: keep side padding small so a four-digit year fits at large font sizes.
+  dateInput: { flex: 1, paddingHorizontal: 4 },
   ageHint: { fontFamily: "IBMPlexSansArabic_600SemiBold", textAlign: "center", fontSize: 12, marginBottom: 5 },
   countryButton: { minHeight: 52, borderRadius: 16, borderWidth: 1, paddingHorizontal: 14, flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
   countryButtonText: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 13 },

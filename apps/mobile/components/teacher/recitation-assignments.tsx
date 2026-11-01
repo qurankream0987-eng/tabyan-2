@@ -343,7 +343,7 @@ function Field({ label, value, onChange, colors }: { label: string; value: strin
 
 function formatDate(value: unknown) {
   const date = new Date(String(value ?? ""));
-  return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("ar-SA");
+  return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("ar-SA-u-nu-latn");
 }
 
 const styles = StyleSheet.create({

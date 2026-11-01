@@ -17,7 +17,13 @@ describe("Native Tabyan password login routing", () => {
     expect(resolveNativeLoginMethod("student", "studentname")).toBe("invalid-student-identifier");
   });
 
-  it.each(["teacher", "admin"])("routes %s username to account password auth", (role) => {
+  it.each(["teacher", "admin"] as const)("routes %s username to account password auth", (role) => {
     expect(resolveNativeLoginMethod(role, "teachername")).toBe("account");
+  });
+
+  it("lets the general login screen take a phone, an email or a username", () => {
+    expect(resolveNativeLoginMethod("any", "+965 55667788")).toBe("student");
+    expect(resolveNativeLoginMethod("any", "teacher@example.com")).toBe("student");
+    expect(resolveNativeLoginMethod("any", "test_teacher")).toBe("account");
   });
 });

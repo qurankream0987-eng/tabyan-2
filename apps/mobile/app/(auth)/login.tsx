@@ -8,7 +8,7 @@ import { trpc } from "../../lib/trpc";
 import { useAuth } from "../../lib/auth";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
-import { resolveNativeLoginMethod } from "../../lib/account/native-login-method";
+import { resolveNativeLoginMethod, type NativeLoginRole } from "../../lib/account/native-login-method";
 
 function errorMessage(error: unknown) {
   return userFacingErrorMessage(error, "تعذر تسجيل الدخول. تحقق من بياناتك.");
@@ -26,7 +26,10 @@ export default function Login() {
   const [identifier, setIdentifier] = useState(() => String(params.identifier ?? ""));
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
-  const loginRole = params.role ?? "student";
+  // Without a role the screen signs in anyone: phone or email for students and
+  // teachers, a username for teachers and admins.
+  const loginRole: NativeLoginRole = params.role ?? "any";
+  const staffLogin = loginRole === "teacher" || loginRole === "admin";
   const [error, setError] = useState("");
   const studentLogin = trpc.auth.studentPasswordLogin.useMutation();
   const accountLogin = trpc.auth.passwordLogin.useMutation();
@@ -35,9 +38,9 @@ export default function Login() {
   const submitLogin = async () => {
     setError("");
     const rawValue = identifier.trim();
-    const value = loginRole === "student" && !rawValue.includes("@") ? normalizeDigits(rawValue) : rawValue;
+    const value = !staffLogin && !rawValue.includes("@") ? normalizeDigits(rawValue) : rawValue;
     if (!value || !password) {
-      setError(loginRole === "student" ? "أدخل رقم الهاتف أو البريد الإلكتروني وكلمة السر" : "أدخل اسم المستخدم وكلمة السر");
+      setError(staffLogin ? "أدخل اسم المستخدم وكلمة السر" : "أدخل رقم الهاتف أو البريد الإلكتروني وكلمة السر");
       return;
     }
     try {
@@ -54,7 +57,6 @@ export default function Login() {
         const roleName = params.role === "teacher" ? "معلم" : params.role === "admin" ? "مشرف" : "طالب";
         throw new Error(`هذا الحساب ليس حساب ${roleName}`);
       }
-      if (loginMethod === "student" && result.role !== "student") throw new Error("هذا الحساب ليس حساب طالب");
 
       await signIn(result.token, result.role, result.name);
       router.replace(result.role === "teacher" ? "/teacher" : result.role === "admin" ? "/admin" : "/student/home");
@@ -81,11 +83,11 @@ export default function Login() {
             {loginRole === "teacher" ? "دخول المعلم" : loginRole === "admin" ? "دخول المشرف" : "تسجيل الدخول"}
           </Text>
           <Text style={[styles.description, { color: colors.muted }]}>
-            {loginRole === "student"
+            {!staffLogin
               ? "استخدم رقم الهاتف أو البريد الإلكتروني مع كلمة السر"
               : "استخدم اسم المستخدم وكلمة السر"}
           </Text>
-          {params.reason === "existing-account" && loginRole === "student" ? (
+          {params.reason === "existing-account" && !staffLogin ? (
             <View style={[styles.notice, { backgroundColor: colors.input, borderColor: colors.border }]}>
               <Icon name="information-circle-outline" size={18} color={colors.primary} />
               <Text style={[styles.noticeText, { color: colors.text }]}>
@@ -96,7 +98,7 @@ export default function Login() {
           <TextInput
             value={identifier}
             onChangeText={(value) => { setIdentifier(value); setError(""); }}
-            placeholder={loginRole === "student" ? "الهاتف أو البريد الإلكتروني" : "اسم المستخدم"}
+            placeholder={!staffLogin ? "الهاتف أو البريد الإلكتروني" : "اسم المستخدم"}
             placeholderTextColor={colors.muted}
             autoCapitalize="none"
             keyboardType="default"
@@ -129,13 +131,13 @@ export default function Login() {
           {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
           <Button
             testID="login-submit"
-            label={loading ? "جارٍ الدخول…" : loginRole === "student" ? "تسجيل الدخول" : "دخول"}
+            label={loading ? "جارٍ الدخول…" : !staffLogin ? "تسجيل الدخول" : "دخول"}
             onPress={() => void submitLogin()}
             loading={loading}
             disabled={!identifier.trim() || !password}
             style={styles.submit}
           />
-          {loginRole === "student" ? (
+          {!staffLogin ? (
             <Pressable
               testID="login-register-new-account"
               onPress={() => router.push("/register")}
@@ -159,7 +161,7 @@ const styles = StyleSheet.create({
   description: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 21, textAlign: "center", marginTop: 4, marginBottom: 17 },
   notice: { flexDirection: "row-reverse", alignItems: "flex-start", gap: 8, borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 14 },
   noticeText: { flex: 1, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12, lineHeight: 20, textAlign: "right" },
-  input: { height: 50, borderRadius: 14, borderWidth: 1, paddingHorizontal: 15, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 14, marginBottom: 11 },
+  input: { minHeight: 50, paddingVertical: 8, borderRadius: 14, borderWidth: 1, paddingHorizontal: 15, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 14, marginBottom: 11 },
   remember: { flexDirection: "row-reverse", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 1, marginBottom: 5 },
   check: { width: 22, height: 22, borderRadius: 7, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   rememberText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12 },

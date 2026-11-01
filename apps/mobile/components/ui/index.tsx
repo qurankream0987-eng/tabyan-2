@@ -84,8 +84,10 @@ export function Screen({ children, scroll = true, scrollEnabled = true, contentS
 export function Header({ title, subtitle, back = false, right, menu, home = false, nativeHeaderSurface = "default" }: {
   title: string; subtitle?: string; back?: boolean; right?: React.ReactNode; menu?: Role; home?: boolean; nativeHeaderSurface?: "default" | "page";
 }) {
-  const [sideWidths, setSideWidths] = useState({ start: 44, end: 44 });
-  const titleInset = Math.max(sideWidths.start, sideWidths.end) + 24;
+  // Both sides take the wider side's width so the title stays centred on the
+  // screen while the header still grows with a two-line subtitle.
+  const [sideWidth, setSideWidth] = useState(44);
+  const measureSide = (width: number) => setSideWidth((current) => Math.max(current, Math.ceil(width)));
   const { colors, isDark } = useTheme();
   const { role } = useAuth();
   const router = useRouter();
@@ -112,7 +114,7 @@ export function Header({ title, subtitle, back = false, right, menu, home = fals
           borderBottomColor: Platform.OS === "web" ? colors.border : "transparent",
         },
       ]}>
-      <View style={styles.headerActions} onLayout={(event) => { const width = event.nativeEvent.layout.width; setSideWidths((current) => current.end === width ? current : { ...current, end: width }); }}>
+      <View style={[styles.headerActions, { minWidth: sideWidth }]} onLayout={(event) => measureSide(event.nativeEvent.layout.width)}>
         {notificationPath ? (
           <SoftPressable
             accessibilityLabel="الإشعارات"
@@ -129,17 +131,17 @@ export function Header({ title, subtitle, back = false, right, menu, home = fals
         ) : null}
         {right}
       </View>
-      <View pointerEvents="none" style={[styles.headerTitle, { left: titleInset, right: titleInset }]}>
+      <View pointerEvents="none" style={styles.headerTitle}>
         {home ? (
           <Image source={isDark ? require("../../assets/images/logo-dark.png") : require("../../assets/images/logo-light.png")} resizeMode="contain" style={styles.headerLogo} accessibilityLabel="تبيان" />
         ) : (
           <>
-            <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>{title}</Text>
-            {subtitle ? <Text numberOfLines={1} style={[styles.headerSubtitle, { color: colors.muted }]}>{subtitle}</Text> : null}
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={[styles.headerText, { color: colors.text }]}>{title}</Text>
+            {subtitle ? <Text numberOfLines={2} style={[styles.headerSubtitle, { color: colors.muted }]}>{subtitle}</Text> : null}
           </>
         )}
       </View>
-      <View style={styles.headerSide} onLayout={(event) => { const width = event.nativeEvent.layout.width; setSideWidths((current) => current.start === width ? current : { ...current, start: width }); }}>
+      <View style={[styles.headerSide, { minWidth: sideWidth }]} onLayout={(event) => measureSide(event.nativeEvent.layout.width)}>
         {menu ? (
           <SoftPressable accessibilityLabel="القائمة" onPress={() => setMenuOpen(true)} style={[styles.iconButton, headerActionSurface]}>
             <Icon name="menu-outline" color={colors.primary} />
@@ -277,7 +279,7 @@ const styles = StyleSheet.create({
   headerActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 6 },
   headerLogo: { width: 48, height: 48 },
   headerActionBare: { backgroundColor: "transparent", borderColor: "transparent", borderWidth: 0 },
-  headerTitle: { position: "absolute", top: 0, bottom: 0, alignItems: "center", justifyContent: "center" },
+  headerTitle: { flex: 1, minWidth: 0, paddingHorizontal: 8, alignItems: "center", justifyContent: "center" },
   headerText: { alignSelf: "stretch", fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 18, textAlign: "center" },
   headerSubtitle: { alignSelf: "stretch", fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, marginTop: 1, textAlign: "center" },
   iconButton: { width: 44, height: 44, borderRadius: 15, borderWidth: 1, alignItems: "center", justifyContent: "center" },

@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   heroTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 25 },
   heroSubtitle: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "center", marginTop: 3 },
   search: { minHeight: 52, borderRadius: 16, borderWidth: 1, paddingHorizontal: 13, flexDirection: "row-reverse", alignItems: "center", gap: 8, marginBottom: 13 },
-  searchInput: { flex: 1, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13, height: 48 },
+  searchInput: { flex: 1, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13, minHeight: 48, paddingVertical: 8 },
   sectionTabs: { flexDirection: "row-reverse", gap: 7, marginBottom: 16 },
   sectionTab: { minHeight: 38, borderRadius: 999, borderWidth: 1, paddingHorizontal: 12, flexDirection: "row-reverse", alignItems: "center", gap: 5 },
   sectionTabText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 11 },
