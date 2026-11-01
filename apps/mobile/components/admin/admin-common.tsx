@@ -1,4 +1,5 @@
-import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
 import { usePathname, useRouter } from "expo-router";
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
@@ -37,7 +38,7 @@ export function AdminFrame({ title, right, children }: { title: string; right?: 
   const pathname = usePathname();
   const wide = useSidebarLayout();
   const page = <><Header title={title} right={right} menu={wide ? undefined : "admin"} home={pathname === "/admin"} /><Screen>{wide ? null : <View style={styles.nav}><Pressable onPress={() => router.replace("/admin")}><Text style={[styles.home, { color: colors.primary }]}>لوحة المشرف</Text></Pressable></View>}{children}</Screen></>;
-  return wide ? <SidebarLayout role="admin">{page}</SidebarLayout> : page;
+  return <SidebarLayout role="admin" wide={wide}>{page}</SidebarLayout>;
 }
 
 /** KYC decision shared by the dedicated review screen and the generic workflow. */
@@ -61,18 +62,20 @@ export function useKycReview(onDone?: () => void) {
   return { review, pending: mutation.isPending, decision: mutation.variables?.decision };
 }
 
-/** Opens a certificate (object path or URL) in the system viewer; reports failures through the toast. */
+/**
+ * Opens a certificate in the in-app browser: the capability URL carries the
+ * session token, so it must not reach the system browser's history.
+ */
 export function useCertificateOpener() {
   const { token } = useAuth();
   return async (value: unknown) => {
     const raw = typeof value === "string" ? value.trim() : "";
-    const target = raw ? resolveLibraryAsset(raw, token) : "";
+    const target = raw && token ? resolveLibraryAsset(raw, token) : "";
     try {
       if (!target) throw new Error("missing certificate");
       const parsed = new URL(target);
       if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error("invalid certificate");
-      if (!(await Linking.canOpenURL(target))) throw new Error("unsupported certificate");
-      await Linking.openURL(target);
+      await WebBrowser.openBrowserAsync(target);
     } catch {
       toast("تعذر فتح الشهادة. تحقق من الاتصال وحاول مرة أخرى.", "error");
     }
@@ -165,13 +168,12 @@ export function AdminWorkflow({ title, kind }: { title: string; kind: "placement
     const raw = typeof value === "string" ? value.trim() : "";
     setCertificateOpenPath(raw || null);
     setCertificateOpenError("");
-    const target = raw ? resolveLibraryAsset(raw, token) : "";
+    const target = raw && token ? resolveLibraryAsset(raw, token) : "";
     try {
       if (!target) throw new Error("missing certificate");
       const parsed = new URL(target);
       if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error("invalid certificate");
-      if (!(await Linking.canOpenURL(target))) throw new Error("unsupported certificate");
-      await Linking.openURL(target);
+      await WebBrowser.openBrowserAsync(target);
       setCertificateOpenPath(null);
     } catch {
       setCertificateOpenError("تعذر فتح الشهادة. تحقق من الاتصال وحاول مرة أخرى.");

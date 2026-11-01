@@ -132,7 +132,7 @@ export function RoleSidebar({ role }: { role: Role }) {
           return (
             <View key={`${item.href}:${item.label}`}>
               {separator ? <View style={[styles.separator, { backgroundColor: colors.border }]} /> : null}
-              <Pressable accessibilityRole="button" accessibilityState={{ selected: active }} onPress={() => router.push(item.href as never)}
+              <Pressable accessibilityRole="button" accessibilityState={{ selected: active }} onPress={() => { if (!active) router.navigate(item.href as never); }}
                 style={({ pressed }) => [styles.menuItem, { backgroundColor: active ? activeBackground : "transparent", opacity: pressed ? 0.82 : 1 }]}>
                 <MenuIcon name={item.icon} size={19} color={active ? activeForeground : colors.muted} />
                 <Text style={[styles.menuText, { color: active ? activeForeground : colors.text }]}>{item.label}</Text>
@@ -151,12 +151,16 @@ export function RoleSidebar({ role }: { role: Role }) {
   );
 }
 
-/** Wide layout: the sidebar sits at the right (reading start) and the page fills the rest. */
-export function SidebarLayout({ role, children }: { role: Role; children: React.ReactNode }) {
+/**
+ * Wide layout: the sidebar sits at the right (reading start) and the page fills
+ * the rest. Always mounted so the page keeps its state when a tablet rotates
+ * across the breakpoint; the sidebar itself appears only when `wide`.
+ */
+export function SidebarLayout({ role, wide, children }: { role: Role; wide: boolean; children: React.ReactNode }) {
   const { colors } = useTheme();
   return (
     <View style={[styles.sidebarLayout, { backgroundColor: colors.background }]}>
-      <RoleSidebar role={role} />
+      {wide ? <RoleSidebar role={role} /> : null}
       <View style={styles.sidebarPage}>{children}</View>
     </View>
   );
@@ -183,9 +187,10 @@ export function NavigationMenu({ role, visible, onClose }: { role: Role; visible
   const activeBackground = isDark ? palette.gold : colors.primary;
   const activeForeground = isDark ? palette.night : "#FFFFFF";
 
-  const navigate = (href: string) => {
+  // navigate (not push) so the same screen is never stacked twice from the menu.
+  const navigate = (href: string, active: boolean) => {
     onClose();
-    router.push(href as never);
+    if (!active) router.navigate(href as never);
   };
 
   const logout = async () => {
@@ -236,7 +241,7 @@ export function NavigationMenu({ role, visible, onClose }: { role: Role; visible
                   <Pressable
                     accessibilityRole="button"
                     accessibilityState={{ selected: active }}
-                    onPress={() => navigate(item.href)}
+                    onPress={() => navigate(item.href, active)}
                     style={({ pressed }) => [
                       styles.menuItem,
                       { backgroundColor: active ? activeBackground : "transparent", opacity: pressed ? 0.82 : 1 },

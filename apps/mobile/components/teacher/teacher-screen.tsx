@@ -8,7 +8,7 @@ export function TeacherScreen({ title, right, children, loading, error, retry, b
   const wide = useSidebarLayout();
   const body = loading ? <LoadingState /> : error ? <ErrorState onRetry={retry} /> : children;
   const page = <><Header title={title} right={right} back={back} home={home} menu={back || wide ? undefined : "teacher"} /><Screen>{body}</Screen></>;
-  return wide ? <SidebarLayout role="teacher">{page}</SidebarLayout> : page;
+  return <SidebarLayout role="teacher" wide={wide}>{page}</SidebarLayout>;
 }
 export function OfflineNotice() { const { colors } = useTheme(); return <Card style={[styles.offline, { borderColor: `${palette.gold}88`, backgroundColor: `${palette.gold}12` }]}><Text style={[styles.text, { color: colors.muted }]}>قد تكون البيانات غير محدثة — تحقق من الاتصال بالإنترنت.</Text></Card>; }
 export function Row({ title, detail }: { title: string; detail?: string }) { const { colors } = useTheme(); return <Card><Text style={[styles.title, { color: colors.text }]}>{title}</Text>{detail ? <Text style={[styles.text, { color: colors.muted }]}>{detail}</Text> : null}</Card>; }

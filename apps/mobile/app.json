@@ -17,7 +17,7 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "يستخدم تبيان الكاميرا عند بدء تسجيل اختبار تحديد المستوى أو التحقق المهني، وعند الانضمام إلى حلقة مرئية.",
         "NSMicrophoneUsageDescription": "يستخدم تبيان الميكروفون عند بدء تسجيل اختبار أو تحقق مهني، وعند استخدام التصحيح الصوتي أو الحلقات المباشرة.",
-        "NSLocationWhenInUseUsageDescription": "يستخدم تبيان موقعك عند فتح مواقيت الصلاة أو القبلة، ولا يتتبعه في الخلفية."
+        "NSLocationWhenInUseUsageDescription": "يستخدم تبيان موقعك لعرض مواقيت الصلاة واتجاه القبلة ولاقتراح بلدك عند التسجيل، ولا يتتبعه في الخلفية."
       },
       "bitcode": false
     },
@@ -88,7 +88,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "يستخدم تبيان موقعك عند فتح مواقيت الصلاة أو القبلة، ولا يتتبعه في الخلفية.",
+          "locationWhenInUsePermission": "يستخدم تبيان موقعك لعرض مواقيت الصلاة واتجاه القبلة ولاقتراح بلدك عند التسجيل، ولا يتتبعه في الخلفية.",
           "locationAlwaysAndWhenInUsePermission": false,
           "locationAlwaysPermission": false
         }
