@@ -1,76 +1,95 @@
-import { Tabs } from "expo-router";
-import { Platform } from "react-native";
-import { Icon } from "../../../components/ui";
-import { useTheme } from "../../../lib/theme";
+import { Tabs, useRouter } from "expo-router";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SvgIcon, type SvgIconName } from "../../../components/ui";
+import { palette, useTheme } from "../../../lib/theme";
 
-const tabs = {
-  home: ["home-outline", "الرئيسية"],
-  schedule: ["calendar-outline", "جدولي"],
-  recordings: ["videocam-outline", "حلقاتي"],
-  library: ["library-outline", "المكتبة"],
-  fatwa: ["scale-outline", "الفتاوى"],
-  account: ["person-outline", "حسابي"],
-} as const;
+// Same seven tabs as the web StudentBottomNav, with its icons.
+const TABS: Record<string, [SvgIconName, string]> = {
+  home: ["home", "الرئيسية"],
+  schedule: ["calendar", "جدولي"],
+  recordings: ["video", "حلقاتي"],
+  library: ["library", "المكتبة"],
+  fatwa: ["scale", "الفتاوى"],
+  mushaf: ["quran", "المصحف"],
+  account: ["user", "حسابي"],
+};
 
 export default function StudentTabsLayout() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const isWeb = Platform.OS === "web";
-  const tabBarHeight = 72 + insets.bottom;
+  const router = useRouter();
+  const active = isDark ? palette.gold : palette.burgundy;
+  const barBottom = Math.max(10, insets.bottom + 6);
+  const barHeight = 70;
   const common = {
     headerShown: false,
     // A light slide-and-fade between tabs.
     animation: "shift",
     tabBarHideOnKeyboard: true,
-    tabBarActiveTintColor: colors.primary,
+    tabBarActiveTintColor: active,
     tabBarInactiveTintColor: colors.muted,
+    // Web: a floating glass pill with a burgundy-tinted shadow.
     tabBarStyle: {
-      height: tabBarHeight,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      paddingBottom: Math.max(8, insets.bottom + 4),
-      paddingTop: 6,
-      paddingHorizontal: 8,
-      backgroundColor: colors.card,
-      borderTopColor: isWeb ? colors.border : "transparent",
-      borderTopWidth: isWeb ? 1 : 0,
       position: "absolute",
-      ...(isWeb
-        ? {
-            shadowColor: "#2B0D12",
-            shadowOpacity: 0.055,
-            shadowRadius: 10,
-            shadowOffset: { width: 0, height: -3 },
-            elevation: 5,
-          }
-        : {
-            shadowColor: "transparent",
-            shadowOpacity: 0,
-            shadowRadius: 0,
-            shadowOffset: { width: 0, height: 0 },
-            elevation: 0,
-            boxShadow: "none",
-          }),
+      left: 10,
+      right: 10,
+      bottom: barBottom,
+      height: barHeight,
+      borderRadius: 32,
+      borderTopWidth: 0,
+      borderWidth: 1,
+      borderColor: isDark ? "rgba(212,175,55,0.15)" : "rgba(128,0,32,0.12)",
+      backgroundColor: isDark ? "#3F111D" : "#FEFBF4",
+      paddingHorizontal: 6,
+      paddingTop: 0,
+      paddingBottom: 0,
+      shadowColor: isDark ? "#000" : palette.burgundy,
+      shadowOpacity: isDark ? 0.5 : 0.16,
+      shadowRadius: 20,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 8,
       display: "flex",
     },
-    // The library paints the active background on an inner view with no radius; clip it here.
-    tabBarItemStyle: { borderRadius: 15, overflow: "hidden", marginHorizontal: 3, marginVertical: 5 },
-    tabBarActiveBackgroundColor: `${colors.primary}14`,
-    tabBarLabelStyle: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 10, lineHeight: 14 },
+    tabBarItemStyle: { borderRadius: 24, overflow: "hidden", marginHorizontal: 0, marginVertical: 6, paddingTop: 4, paddingBottom: 2, paddingHorizontal: 0 },
+    tabBarActiveBackgroundColor: isDark ? "rgba(212,175,55,0.12)" : "rgba(128,0,32,0.10)",
+    tabBarLabelStyle: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 9.5, lineHeight: 13 },
   } as const;
-  const icon = (name: string) => ({ color, size }: { color: string; size: number }) => <Icon name={name} size={size - 1} color={color} />;
+  const options = (key: string) => ({
+    title: TABS[key][1],
+    tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
+      <View style={[styles.icon, focused ? styles.iconLifted : null]}>
+        <SvgIcon name={TABS[key][0]} size={23} color={color} />
+        {focused ? <View style={styles.activeBar} /> : null}
+      </View>
+    ),
+    tabBarLabel: ({ color, focused }: { color: string; focused: boolean }) => (
+      <Text numberOfLines={1} style={[styles.label, { color, fontFamily: focused ? "IBMPlexSansArabic_700Bold" : "IBMPlexSansArabic_500Medium" }]}>{TABS[key][1]}</Text>
+    ),
+  });
   // Listed left to right on screen: the layout never mirrors (see app/_layout.tsx),
   // so home goes last to sit on the right.
   return (
     <Tabs screenOptions={common} initialRouteName="home">
-      <Tabs.Screen name="account" options={{ title: tabs.account[1], tabBarIcon: icon(tabs.account[0]) }} />
-      <Tabs.Screen name="fatwa" options={{ title: tabs.fatwa[1], tabBarIcon: icon(tabs.fatwa[0]) }} />
-      <Tabs.Screen name="library" options={{ title: tabs.library[1], tabBarIcon: icon(tabs.library[0]) }} />
-      <Tabs.Screen name="recordings" options={{ title: tabs.recordings[1], tabBarIcon: icon(tabs.recordings[0]) }} />
-      <Tabs.Screen name="schedule" options={{ title: tabs.schedule[1], tabBarIcon: icon(tabs.schedule[0]) }} />
-      <Tabs.Screen name="home" options={{ title: tabs.home[1], tabBarIcon: icon(tabs.home[0]) }} />
+      <Tabs.Screen name="account" options={options("account")} />
+      <Tabs.Screen
+        name="mushaf"
+        options={options("mushaf")}
+        // The reader is a full-screen stack route; the tab only opens it.
+        listeners={{ tabPress: (event) => { event.preventDefault(); router.push("/student/mushaf"); } }}
+      />
+      <Tabs.Screen name="fatwa" options={options("fatwa")} />
+      <Tabs.Screen name="library" options={options("library")} />
+      <Tabs.Screen name="recordings" options={options("recordings")} />
+      <Tabs.Screen name="schedule" options={options("schedule")} />
+      <Tabs.Screen name="home" options={options("home")} />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  icon: { alignItems: "center", justifyContent: "flex-start", height: 30, paddingTop: 1 },
+  iconLifted: { paddingTop: 0 },
+  activeBar: { position: "absolute", bottom: 1, width: 18, height: 3, borderRadius: 2, backgroundColor: palette.gold },
+  label: { fontSize: 9, lineHeight: 13, textAlign: "center", marginTop: Platform.OS === "ios" ? 0 : 1, paddingBottom: 1 },
+});

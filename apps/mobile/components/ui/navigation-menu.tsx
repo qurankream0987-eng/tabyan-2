@@ -1,4 +1,5 @@
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { navigateToWelcome, useAuth, type Role } from "../../lib/auth";
@@ -29,11 +30,10 @@ const MENUS: Record<Role, MenuItem[]> = {
     { href: "/student/library", label: "مكتبتي", icon: "library-outline", section: "main" },
     { href: "/student/fatwa", label: "فتاواي", icon: "scale-outline", section: "main" },
     { href: "/student/ijazat", label: "إجازاتي", icon: "ribbon-outline", section: "main" },
-    { href: "/student/prayer-times", label: "مواقيت الصلاة", icon: "time-outline", section: "main" },
-    { href: "/student/qibla", label: "اتجاه القبلة", icon: "compass-outline", section: "main" },
     { href: "/student/settings", label: "الإعدادات", icon: "settings-outline", section: "secondary" },
     { href: "/student/notifications", label: "الإشعارات", icon: "notifications-outline", section: "secondary" },
-    { href: "/student/help", label: "المساعدة والدعم", icon: "help-circle-outline", section: "secondary" },
+    { href: "/support", label: "فريق دعم تبيان", icon: "help-circle-outline", section: "secondary" },
+    { href: "/privacy", label: "سياسة الخصوصية", icon: "shield-checkmark-outline", section: "secondary" },
     { href: "/teacher-register", label: "التسجيل كمعلم", icon: "clipboard-outline", section: "access" },
     { href: "/login?role=admin", label: "بوابة الإشراف", icon: "shield-outline", section: "access" },
   ],
@@ -85,32 +85,29 @@ export function NavigationMenu({ role, visible, onClose }: { role: Role; visible
   const router = useRouter();
   const pathname = usePathname();
   const teacherCapability = trpc.teacher.kycStatus.useQuery(undefined, { enabled: role === "teacher", retry: false });
-  const roleItems = [...MENUS[role], { href: "/terms", label: "الشروط والأحكام", icon: "document-text-outline", section: "secondary" as const }];
-  const platformItems = Platform.OS !== "ios" ? roleItems : role === "student"
-    ? roleItems.flatMap((item) => item.href === "/student/help"
-      ? [
-          { href: "/support", label: "فريق دعم تبيان", icon: "help-circle-outline", section: "secondary" as const },
-          { href: "/privacy", label: "سياسة الخصوصية", icon: "shield-checkmark-outline", section: "secondary" as const },
-        ]
-      : [item])
-    : role === "teacher"
-      ? roleItems.flatMap((item) => item.href === "/teacher/settings"
-        ? [
-            item,
-            { href: "/support", label: "فريق دعم تبيان", icon: "help-circle-outline", section: "main" as const },
-            { href: "/privacy", label: "سياسة الخصوصية", icon: "shield-checkmark-outline", section: "main" as const },
-          ]
-        : [item])
-      : roleItems.flatMap((item) => item.href === "/admin/settings"
-        ? [
-            item,
-            { href: "/support", label: "فريق دعم تبيان", icon: "help-circle-outline" },
-            { href: "/privacy", label: "سياسة الخصوصية", icon: "shield-checkmark-outline" },
-          ]
-        : [item]);
+  // Support and privacy follow the settings entry on every role, like the web shells.
+  const roleItems = role === "student" ? MENUS[role] : MENUS[role].flatMap((item) => item.href === `/${role}/settings`
+    ? [
+        item,
+        { href: "/support", label: "فريق دعم تبيان", icon: "help-circle-outline", section: item.section },
+        { href: "/privacy", label: "سياسة الخصوصية", icon: "shield-checkmark-outline", section: item.section },
+      ]
+    : [item]);
   const items = role === "teacher" && teacherCapability.data?.isMufti !== true
-    ? platformItems.filter((item) => item.href !== "/teacher/fatwas")
-    : platformItems;
+    ? roleItems.filter((item) => item.href !== "/teacher/fatwas")
+    : roleItems;
+
+  // Slide in from the right edge, like the web drawer; the modal stays mounted
+  // until the slide-out finishes.
+  const [mounted, setMounted] = useState(visible);
+  const progress = useRef(new Animated.Value(visible ? 1 : 0)).current;
+  useEffect(() => {
+    if (visible) setMounted(true);
+    Animated.timing(progress, { toValue: visible ? 1 : 0, duration: reduceMotion ? 0 : visible ? 240 : 200, easing: visible ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic), useNativeDriver: true })
+      .start(({ finished }) => { if (finished && !visible) setMounted(false); });
+  }, [progress, reduceMotion, visible]);
+  const activeBackground = isDark ? palette.gold : colors.primary;
+  const activeForeground = isDark ? palette.night : "#FFFFFF";
 
   const navigate = (href: string) => {
     onClose();
@@ -125,16 +122,18 @@ export function NavigationMenu({ role, visible, onClose }: { role: Role; visible
 
   return (
     <Modal
-      visible={visible}
+      visible={mounted}
       transparent
-      animationType={reduceMotion ? "none" : "fade"}
+      animationType="none"
       onRequestClose={onClose}
       statusBarTranslucent
       accessibilityViewIsModal
     >
       <View style={styles.overlay}>
-        <Pressable accessibilityLabel="إغلاق القائمة" onPress={onClose} style={styles.backdrop} />
-        <View style={[styles.panel, { backgroundColor: colors.card, borderLeftColor: colors.border, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <Animated.View style={[styles.backdrop, { opacity: progress }]}>
+          <Pressable accessibilityLabel="إغلاق القائمة" onPress={onClose} style={StyleSheet.absoluteFill} />
+        </Animated.View>
+        <Animated.View style={[styles.panel, { backgroundColor: colors.card, borderLeftColor: colors.border, paddingTop: insets.top, paddingBottom: insets.bottom, transform: [{ translateX: progress.interpolate({ inputRange: [0, 1], outputRange: [360, 0] }) }] }]}>
           <View style={[styles.panelHeader, { borderBottomColor: colors.border }]}>
             <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
               <Text style={[styles.avatarText, { color: colors.primaryText }]}>{(name ?? "ت").slice(0, 1)}</Text>
@@ -166,12 +165,11 @@ export function NavigationMenu({ role, visible, onClose }: { role: Role; visible
                     onPress={() => navigate(item.href)}
                     style={({ pressed }) => [
                       styles.menuItem,
-                      { backgroundColor: active ? (isDark ? `${palette.gold}25` : `${colors.primary}12`) : "transparent", opacity: pressed ? 0.82 : 1 },
+                      { backgroundColor: active ? activeBackground : "transparent", opacity: pressed ? 0.82 : 1 },
                     ]}
                   >
-                    <MenuIcon name={item.icon} size={19} color={active ? colors.primary : colors.muted} />
-                    <Text style={[styles.menuText, { color: active ? colors.primary : colors.text }]}>{item.label}</Text>
-                    {active ? <View style={[styles.activeDot, { backgroundColor: palette.gold }]} /> : null}
+                    <MenuIcon name={item.icon} size={19} color={active ? activeForeground : colors.muted} />
+                    <Text style={[styles.menuText, { color: active ? activeForeground : colors.text }]}>{item.label}</Text>
                   </Pressable>
                 </View>
               );
@@ -189,7 +187,7 @@ export function NavigationMenu({ role, visible, onClose }: { role: Role; visible
               <Text style={[styles.logoutText, { color: colors.danger }]}>تسجيل الخروج</Text>
             </Pressable>
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -203,7 +201,7 @@ const styles = StyleSheet.create({
   avatar: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" },
   avatarText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 20 },
   identity: { flex: 1, minWidth: 0, alignItems: "flex-end" },
-  name: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 15, maxWidth: "100%" },
+  name: { fontFamily: "Amiri_700Bold", fontSize: 18, lineHeight: 26, maxWidth: "100%" },
   role: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, marginTop: 3 },
   closeButton: { width: 44, height: 44, borderRadius: 15, alignItems: "center", justifyContent: "center" },
   menuScroll: { flex: 1 },
@@ -212,7 +210,7 @@ const styles = StyleSheet.create({
   separator: { height: StyleSheet.hairlineWidth, marginVertical: 8 },
   menuItem: { minHeight: 48, borderRadius: 16, paddingHorizontal: 14, flexDirection: "row-reverse", alignItems: "center", gap: 11 },
   menuText: { flex: 1, fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 13, textAlign: "right" },
-  activeDot: { width: 6, height: 6, borderRadius: 3 },
+
   footer: { padding: 12, borderTopWidth: StyleSheet.hairlineWidth },
   logout: { minHeight: 48, borderRadius: 16, paddingHorizontal: 14, flexDirection: "row-reverse", alignItems: "center", gap: 11 },
   logoutText: { flex: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, textAlign: "right" },

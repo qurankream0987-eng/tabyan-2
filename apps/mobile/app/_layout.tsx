@@ -10,6 +10,7 @@ import { IBMPlexSansArabic_600SemiBold } from "@expo-google-fonts/ibm-plex-sans-
 import { IBMPlexSansArabic_700Bold } from "@expo-google-fonts/ibm-plex-sans-arabic/700Bold";
 import { Amiri_400Regular } from "@expo-google-fonts/amiri/400Regular";
 import { Amiri_700Bold } from "@expo-google-fonts/amiri/700Bold";
+import { ToastProvider } from "../lib/toast";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -157,5 +158,5 @@ export default function RootLayout() {
 
   if (Platform.OS === "ios" && (startupFailed || fontError)) return <IOSStartupFailure />;
   if (!ready) return <View style={{ flex: 1, backgroundColor: splashColors.background }} />;
-  return <SafeAreaProvider><ThemeProvider><TRPCProvider><AuthProvider><AppShell onStartupComplete={completeStartup} onStartupFailure={failStartup} /></AuthProvider></TRPCProvider></ThemeProvider></SafeAreaProvider>;
+  return <SafeAreaProvider><ThemeProvider><TRPCProvider><AuthProvider><ToastProvider><AppShell onStartupComplete={completeStartup} onStartupFailure={failStartup} /></ToastProvider></AuthProvider></TRPCProvider></ThemeProvider></SafeAreaProvider>;
 }

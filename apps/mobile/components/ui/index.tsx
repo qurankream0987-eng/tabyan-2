@@ -10,8 +10,26 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SoftPressable } from "./soft-pressable";
 import { useKeyboardFrame } from "../../lib/keyboard";
 import designTokens from "../../constants/colors";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
+import { GlowBackground } from "./glow";
+import { PageSkeleton } from "./skeleton";
+
+export { SvgIcon, type IconName as SvgIconName } from "./svg-icon";
+export { PageHero } from "./page-hero";
+export { Skeleton, PageSkeleton } from "./skeleton";
 
 type IconName = keyof typeof Ionicons.glyphMap;
+
+/** First letter of the first two words, like the web InitialsAvatar. */
+export function initials(name: string | null | undefined) {
+  const letters = (name ?? "").trim().split(/\s+/).filter(Boolean).slice(0, 2).map((word) => word[0]).join("");
+  return letters || "ت";
+}
+
+/** Web `.btn-primary-bubble`: burgundy gradient by day, gold by night. */
+const PRIMARY_GRADIENT = { light: ["#A02040", "#800020", "#6B0018"], dark: ["#EBCB5C", "#D4AF37", "#B8962A"] } as const;
+/** Web `.card-bubble` / `.glass` border: thin burgundy by day, gold by night. */
+export const cardBorder = (isDark: boolean) => (isDark ? "rgba(212,175,55,0.28)" : "rgba(128,0,32,0.18)");
 
 export function Icon({ name, size = 22, color, style }: { name: string; size?: number; color?: string; style?: StyleProp<TextStyle> }) {
   const { colors } = useTheme();
@@ -50,7 +68,7 @@ export function Screen({ children, scroll = true, scrollEnabled = true, contentS
     }, 120);
     return () => clearTimeout(timer);
   }, [keyboardInset, scroll]);
-  const body = <View style={[styles.content, { backgroundColor: colors.background }, contentStyle]}>{children}</View>;
+  const body = <View style={[styles.content, contentStyle]}>{children}</View>;
   const pathname = usePathname();
   const tabTitles: Record<string, string> = {
     "/student/home": "الرئيسية",
@@ -63,13 +81,16 @@ export function Screen({ children, scroll = true, scrollEnabled = true, contentS
   const studentTabTitle = tabTitles[pathname];
   const isStudentTabs = !!studentTabTitle;
   const content = scroll
-     ? <ScrollView ref={scrollRef} onScroll={(event) => { scrollY.current = event.nativeEvent.contentOffset.y; }} scrollEventThrottle={16} automaticallyAdjustKeyboardInsets scrollEnabled={scrollEnabled} style={[{ backgroundColor: colors.background }, scrollStyle]} contentContainerStyle={[styles.scrollContent, isStudentTabs ? styles.tabScrollContent : undefined, { paddingBottom: Math.max(isStudentTabs ? 120 : 40, insets.bottom + 24) }, scrollContentStyle]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">{body}</ScrollView>
+     ? <ScrollView ref={scrollRef} onScroll={(event) => { scrollY.current = event.nativeEvent.contentOffset.y; }} scrollEventThrottle={16} automaticallyAdjustKeyboardInsets scrollEnabled={scrollEnabled} style={[styles.transparent, scrollStyle]} contentContainerStyle={[styles.scrollContent, isStudentTabs ? styles.tabScrollContent : undefined, { paddingBottom: Math.max(isStudentTabs ? 120 : 40, insets.bottom + 24) }, scrollContentStyle]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">{body}</ScrollView>
     : body;
   return (
     <>
       {studentTabTitle ? <Header title={studentTabTitle} menu="student" home={pathname === "/student/home"} /> : null}
       {/* Always wrapped: swapping the tree when the keyboard opens would remount the field and close it. */}
-      <View ref={keyboardAreaRef} style={[styles.keyboardArea, { paddingBottom: keyboardInset }]}>{content}</View>
+      <View ref={keyboardAreaRef} style={[styles.keyboardArea, { paddingBottom: keyboardInset, backgroundColor: colors.background }]}>
+        {Platform.OS === "web" ? null : <GlowBackground />}
+        {content}
+      </View>
     </>
   );
 }
@@ -89,9 +110,10 @@ export function Header({ title, subtitle, back = false, right, menu, home = fals
   const [sideWidth, setSideWidth] = useState(44);
   const measureSide = (width: number) => setSideWidth((current) => Math.max(current, Math.ceil(width)));
   const { colors, isDark } = useTheme();
-  const { role } = useAuth();
+  const { role, name } = useAuth();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const profilePath = role === "student" ? "/student/account" : role === "teacher" ? "/teacher/settings" : role === "admin" ? "/admin/settings" : null;
   const useNativePageSurface = Platform.OS !== "web" && nativeHeaderSurface === "page";
   const headerActionSurface = useNativePageSurface
     ? styles.headerActionBare
@@ -130,13 +152,18 @@ export function Header({ title, subtitle, back = false, right, menu, home = fals
           </SoftPressable>
         ) : null}
         {right}
+        {profilePath && !right ? (
+          <SoftPressable accessibilityLabel="حسابي" onPress={() => router.push(profilePath as never)} style={[styles.avatar, { backgroundColor: colors.primary, borderColor: palette.gold }]}>
+            <Text style={[styles.avatarText, { color: colors.primaryText }]}>{initials(name)}</Text>
+          </SoftPressable>
+        ) : null}
       </View>
       <View pointerEvents="none" style={styles.headerTitle}>
         {home ? (
           <Image source={isDark ? require("../../assets/images/logo-dark.png") : require("../../assets/images/logo-light.png")} resizeMode="contain" style={styles.headerLogo} accessibilityLabel="تبيان" />
         ) : (
           <>
-            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={[styles.headerText, { color: colors.text }]}>{title}</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={[styles.headerText, { color: isDark ? palette.gold : palette.burgundy }]}>{title}</Text>
             {subtitle ? <Text numberOfLines={2} style={[styles.headerSubtitle, { color: colors.muted }]}>{subtitle}</Text> : null}
           </>
         )}
@@ -159,25 +186,50 @@ export function Header({ title, subtitle, back = false, right, menu, home = fals
 }
 
 export function Card({ children, style, accent = false }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; accent?: boolean }) {
-  const { colors } = useTheme();
-  // ظل خافت جداً يحافظ على فصل البطاقة عن الخلفية من دون مظهر عائم.
+  const { colors, isDark } = useTheme();
+  // Web `.card-bubble`: a burgundy-tinted shadow lifts the card off the page.
   return <View style={[styles.card, {
     backgroundColor: colors.card,
-    borderColor: accent ? `${palette.gold}88` : colors.border,
+    borderColor: accent ? `${palette.gold}88` : cardBorder(isDark),
+    shadowColor: isDark ? "#000" : palette.burgundy,
   }, style]}>{children}</View>;
 }
 
 export function Button({ label, onPress, variant = "primary", icon, disabled = false, loading = false, testID, style }: {
   label: string; onPress?: () => void; variant?: "primary" | "secondary" | "quiet" | "danger"; icon?: string; disabled?: boolean; loading?: boolean; testID?: string; style?: StyleProp<ViewStyle>;
 }) {
-  const { colors, mode } = useTheme();
-  const background = variant === "primary" ? colors.primary : variant === "danger" ? colors.danger : variant === "secondary" ? colors.input : "transparent";
-  const foreground = variant === "danger" ? designTokens.modes[mode].destructiveForeground : variant === "primary" ? colors.primaryText : colors.text;
+  const { colors, mode, isDark } = useTheme();
+  // Web `.btn-bubble`: a full pill; primary carries a gradient, secondary a tinted fill with a 1.5px border.
+  const tint = isDark ? "212,175,55" : "128,0,32";
+  const background = variant === "primary" ? PRIMARY_GRADIENT[mode][1] : variant === "danger" ? colors.danger : variant === "secondary" ? `rgba(${tint},${isDark ? 0.09 : 0.07})` : "transparent";
+  const foreground = variant === "danger" ? designTokens.modes[mode].destructiveForeground : variant === "primary" ? (isDark ? palette.night : "#FFFFFF") : colors.primary;
+  const borderColor = variant === "secondary" ? `rgba(${tint},${isDark ? 0.28 : 0.22})` : variant === "quiet" ? "transparent" : background;
+  // The gradient needs real pixel sizes; percentages inside the Svg do not track the pill.
+  const [size, setSize] = useState({ width: 0, height: 0 });
   return (
-    <SoftPressable testID={testID} accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, busy: loading }} disabled={disabled || loading} onPress={onPress} style={[
-      styles.button, { backgroundColor: background, borderColor: variant === "secondary" ? colors.border : background, ...(disabled ? { opacity: 0.5 } : {}) },
-      style,
-    ]}>
+    <SoftPressable testID={testID} accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, busy: loading }} disabled={disabled || loading} onPress={onPress}
+      onLayout={variant === "primary" ? (event) => { const { width, height } = event.nativeEvent.layout; setSize((current) => (current.width === width && current.height === height ? current : { width, height })); } : undefined}
+      style={[
+        styles.button, { backgroundColor: background, borderColor, shadowColor: isDark ? "#000" : palette.burgundy, ...(variant === "primary" ? styles.buttonLift : null), ...(disabled ? { opacity: 0.52 } : {}) },
+        style,
+      ]}>
+      {variant === "primary" && size.width > 0 ? (
+        <Svg pointerEvents="none" style={StyleSheet.absoluteFill} width={size.width} height={size.height}>
+          <Defs>
+            <LinearGradient id="btn" x1="0" y1="0" x2={size.width} y2={size.height * 0.6} gradientUnits="userSpaceOnUse">
+              <Stop offset="0" stopColor={PRIMARY_GRADIENT[mode][0]} />
+              <Stop offset="0.52" stopColor={PRIMARY_GRADIENT[mode][1]} />
+              <Stop offset="1" stopColor={PRIMARY_GRADIENT[mode][2]} />
+            </LinearGradient>
+            <LinearGradient id="sheen" x1="0" y1="0" x2="0" y2={size.height} gradientUnits="userSpaceOnUse">
+              <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.26} />
+              <Stop offset="0.5" stopColor="#FFFFFF" stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+          <Rect x={0} y={0} width={size.width} height={size.height} fill="url(#btn)" />
+          <Rect x={0} y={0} width={size.width} height={size.height} fill="url(#sheen)" />
+        </Svg>
+      ) : null}
       {loading ? <ActivityIndicator color={foreground} /> : null}
       {icon && !loading ? <Icon name={icon} size={18} color={foreground} /> : null}
       <Text numberOfLines={1} style={[styles.buttonText, { color: foreground }]}>{label}</Text>
@@ -220,10 +272,10 @@ export function ThemePreferencePicker() {
 }
 
 export function SectionTitle({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   return (
     <View style={styles.sectionTitle}>
-      <Text style={[styles.sectionText, { color: colors.text }]}>{title}</Text>
+      <Text style={[styles.sectionText, { color: isDark ? palette.gold : palette.burgundy }]}>{title}</Text>
       {action ? <Pressable accessibilityRole="button" onPress={onAction} style={styles.sectionAction}><Text style={[styles.actionText, { color: colors.primary }]}>{action}</Text></Pressable> : null}
     </View>
   );
@@ -240,14 +292,24 @@ export function ProgressBar({ value, label }: { value: number; label?: string })
   );
 }
 
-export function LoadingState({ label = "جارٍ التحميل…" }: { label?: string }) {
+/** Placeholder blocks in the page's shape while data loads (web skeletons); `spinner` keeps the old wheel. */
+export function LoadingState({ label = "جارٍ التحميل…", spinner = false }: { label?: string; spinner?: boolean }) {
   const { colors } = useTheme();
+  if (!spinner) return <View accessibilityLabel={label}><PageSkeleton /></View>;
   return <View style={styles.state}><ActivityIndicator color={colors.primary} size="large" /><Text style={[styles.stateText, { color: colors.muted }]}>{label}</Text></View>;
 }
 
+/** Web EmptyState: a bare gold diamond in a soft glow, an Amiri title, no card. */
 export function EmptyState({ title, description, action, onAction, icon = "diamond-outline" }: { title: string; description?: string; action?: string; onAction?: () => void; icon?: string }) {
-  const { colors } = useTheme();
-  return <Card style={styles.empty}><Icon name={icon} size={38} color={palette.gold} /><Text style={[styles.emptyTitle, { color: colors.text }]}>{title}</Text>{description ? <Text style={[styles.emptyDescription, { color: colors.muted }]}>{description}</Text> : null}{action ? <Button label={action} onPress={onAction} variant="secondary" /> : null}</Card>;
+  const { colors, isDark } = useTheme();
+  return (
+    <View style={styles.empty}>
+      <View style={[styles.emptyGlow, { backgroundColor: `${palette.gold}${isDark ? "26" : "1F"}` }]}><Icon name={icon} size={40} color={palette.gold} /></View>
+      <Text style={[styles.emptyTitle, { color: isDark ? palette.gold : palette.burgundy }]}>{title}</Text>
+      {description ? <Text style={[styles.emptyDescription, { color: colors.muted }]}>{description}</Text> : null}
+      {action ? <Button label={action} onPress={onAction} variant="secondary" /> : null}
+    </View>
+  );
 }
 
 export function ErrorState({ onRetry, message = "تعذر الوصول إلى البيانات. تحقق من الاتصال وحاول مرة أخرى." }: { onRetry?: () => void; message?: string }) {
@@ -255,22 +317,38 @@ export function ErrorState({ onRetry, message = "تعذر الوصول إلى ا
   return <Card style={styles.empty}><Icon name="cloud-offline-outline" size={38} color={colors.danger} /><Text style={[styles.emptyTitle, { color: colors.text }]}>حدث خطأ مؤقت</Text><Text style={[styles.emptyDescription, { color: colors.muted }]}>{message}</Text>{onRetry ? <Button label="إعادة المحاولة" onPress={onRetry} variant="secondary" icon="refresh-outline" /> : null}</Card>;
 }
 
-export function Badge({ label, tone = "gold", style }: { label: string; tone?: "gold" | "success" | "danger" | "muted"; style?: StyleProp<ViewStyle> }) {
-  const { colors } = useTheme();
-  const bg = tone === "success" ? `${colors.success}22` : tone === "danger" ? `${colors.danger}22` : tone === "muted" ? colors.input : `${palette.gold}25`;
-  const fg = tone === "success" ? colors.success : tone === "danger" ? colors.danger : tone === "muted" ? colors.muted : colors.primary;
+export type BadgeTone = "gold" | "success" | "danger" | "muted" | "info" | "warning" | "live";
+
+/** Web StatusBadge palette: green / amber / red / blue, gold for brand states, solid burgundy for "live". */
+export function Badge({ label, tone = "gold", style }: { label: string; tone?: BadgeTone; style?: StyleProp<ViewStyle> }) {
+  const { colors, isDark } = useTheme();
+  const palettes: Record<BadgeTone, { bg: string; fg: string }> = {
+    gold: { bg: `${palette.gold}25`, fg: colors.primary },
+    success: { bg: isDark ? "rgba(74,222,128,0.18)" : "#DCFCE7", fg: isDark ? "#86EFAC" : "#166534" },
+    warning: { bg: isDark ? "rgba(250,204,21,0.18)" : "#FEF9C3", fg: isDark ? "#FDE047" : "#854D0E" },
+    danger: { bg: isDark ? "rgba(248,113,113,0.18)" : "#FEE2E2", fg: isDark ? "#FCA5A5" : "#991B1B" },
+    info: { bg: isDark ? "rgba(96,165,250,0.18)" : "#DBEAFE", fg: isDark ? "#93C5FD" : "#1E40AF" },
+    muted: { bg: colors.input, fg: colors.muted },
+    live: { bg: colors.primary, fg: colors.primaryText },
+  };
+  const { bg, fg } = palettes[tone];
   return <View style={[styles.badge, { backgroundColor: bg }, style]}><Text numberOfLines={1} style={[styles.badgeText, { color: fg }]}>{label}</Text></View>;
 }
 
 export function FeatureTile({ title, description, icon, onPress, accent = false, style }: { title: string; description?: string; icon: string; onPress: () => void; accent?: boolean; style?: StyleProp<ViewStyle> }) {
-  const { colors } = useTheme();
-  return <SoftPressable accessibilityRole="button" onPress={onPress} style={[styles.tile, { backgroundColor: colors.card, borderColor: accent ? `${palette.gold}88` : colors.border }, style]}><View style={[styles.tileIcon, { backgroundColor: accent ? `${palette.gold}22` : colors.input }]}><Icon name={icon} size={25} color={accent ? palette.gold : colors.primary} /></View><View style={styles.tileBody}><Text style={[styles.tileTitle, { color: colors.text }]}>{title}</Text>{description ? <Text numberOfLines={2} style={[styles.tileDescription, { color: colors.muted }]}>{description}</Text> : null}</View><Icon name="chevron-back" size={18} color={colors.muted} /></SoftPressable>;
+  const { colors, isDark } = useTheme();
+  return <SoftPressable accessibilityRole="button" onPress={onPress} style={[styles.tile, { backgroundColor: colors.card, borderColor: accent ? `${palette.gold}88` : cardBorder(isDark), shadowColor: isDark ? "#000" : palette.burgundy }, style]}><View style={[styles.tileIcon, { backgroundColor: accent ? `${palette.gold}22` : colors.input }]}><Icon name={icon} size={25} color={accent ? palette.gold : colors.primary} /></View><View style={styles.tileBody}><Text style={[styles.tileTitle, { color: colors.text }]}>{title}</Text>{description ? <Text numberOfLines={2} style={[styles.tileDescription, { color: colors.muted }]}>{description}</Text> : null}</View><Icon name="chevron-back" size={18} color={colors.muted} /></SoftPressable>;
 }
 
 const styles = StyleSheet.create({
   content: { flex: 1, width: "100%", maxWidth: 820, alignSelf: "center", paddingHorizontal: 18, paddingTop: 12 },
   scrollContent: { paddingBottom: 40 },
   keyboardArea: { flex: 1 },
+  transparent: { backgroundColor: "transparent" },
+  avatar: { width: 40, height: 40, borderRadius: 20, borderWidth: 2, alignItems: "center", justifyContent: "center" },
+  avatarText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, lineHeight: 18 },
+  buttonLift: { shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 3 },
+  emptyGlow: { width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", marginBottom: 2 },
   tabScrollContent: { paddingBottom: 104 },
   header: { minHeight: 68, paddingHorizontal: 16, paddingVertical: 9, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   headerNativeFlat: { borderBottomWidth: 0, shadowColor: "transparent", shadowOpacity: 0, shadowRadius: 0, shadowOffset: { width: 0, height: 0 }, elevation: 0, boxShadow: "none" },
@@ -280,13 +358,13 @@ const styles = StyleSheet.create({
   headerLogo: { width: 48, height: 48 },
   headerActionBare: { backgroundColor: "transparent", borderColor: "transparent", borderWidth: 0 },
   headerTitle: { flex: 1, minWidth: 0, paddingHorizontal: 8, alignItems: "center", justifyContent: "center" },
-  headerText: { alignSelf: "stretch", fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 18, textAlign: "center" },
+  headerText: { alignSelf: "stretch", fontFamily: "Amiri_700Bold", fontSize: 22, lineHeight: 32, textAlign: "center" },
   headerSubtitle: { alignSelf: "stretch", fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, marginTop: 1, textAlign: "center" },
   iconButton: { width: 44, height: 44, borderRadius: 15, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   notificationBadge: { position: "absolute", top: 1, left: 1, minWidth: 17, height: 17, paddingHorizontal: 3, borderRadius: 9, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#FFF" },
   notificationBadgeText: { color: "#FFF", fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 9, lineHeight: 12, textAlign: "center" },
-  card: { borderRadius: 20, borderWidth: 1, padding: 16, marginBottom: 12, overflow: "hidden", shadowColor: "#2B0D12", shadowOpacity: 0.035, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 1 },
-  button: { minHeight: 48, borderRadius: 16, borderWidth: 1, paddingHorizontal: 20, flexDirection: "row", gap: 8, justifyContent: "center", alignItems: "center" },
+  card: { borderRadius: 22, borderWidth: 1, padding: 16, marginBottom: 12, shadowOpacity: 0.14, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 3 },
+  button: { minHeight: 46, borderRadius: 999, borderWidth: 1.5, paddingHorizontal: 20, flexDirection: "row", gap: 8, justifyContent: "center", alignItems: "center", overflow: "hidden" },
   buttonText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, lineHeight: 23, flexShrink: 1, textAlign: "center", paddingVertical: 8 },
   themePicker: { gap: 6 },
   themePickerTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 15, textAlign: "right" },
@@ -296,7 +374,7 @@ const styles = StyleSheet.create({
   themeOptionText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 13 },
   sectionAction: { minHeight: 44, justifyContent: "center", paddingHorizontal: 8 },
   sectionTitle: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", marginTop: 16, marginBottom: 10 },
-  sectionText: { flex: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 17, lineHeight: 26, textAlign: "right" },
+  sectionText: { flex: 1, fontFamily: "Amiri_700Bold", fontSize: 21, lineHeight: 30, textAlign: "right" },
   actionText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 13 },
   smallText: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 13, lineHeight: 20 },
   progressLabel: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
@@ -304,12 +382,12 @@ const styles = StyleSheet.create({
   progressFill: { height: 8, borderRadius: 8 },
   state: { minHeight: 168, alignItems: "center", justifyContent: "center", gap: 12, paddingHorizontal: 20 },
   stateText: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 14 },
-  empty: { alignItems: "center", gap: 10, paddingVertical: 28 },
-  emptyTitle: { fontFamily: "Amiri_700Bold", fontSize: 19, textAlign: "center" },
+  empty: { alignItems: "center", gap: 10, paddingVertical: 28, paddingHorizontal: 16 },
+  emptyTitle: { fontFamily: "Amiri_700Bold", fontSize: 22, lineHeight: 34, textAlign: "center" },
   emptyDescription: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13, lineHeight: 23, textAlign: "center", marginBottom: 4 },
   badge: { paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999, alignSelf: "flex-start" },
   badgeText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 11 },
-  tile: { minHeight: 76, borderRadius: 18, borderWidth: 1, padding: 14, marginBottom: 10, flexDirection: "row-reverse", alignItems: "center", gap: 12 },
+  tile: { minHeight: 76, borderRadius: 22, borderWidth: 1, padding: 14, marginBottom: 10, flexDirection: "row-reverse", alignItems: "center", gap: 12, shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
   tileIcon: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   tileBody: { flex: 1, minWidth: 0 },
   tileTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 15, lineHeight: 23, textAlign: "right" },

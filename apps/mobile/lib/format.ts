@@ -21,6 +21,10 @@ const SESSION_STATUS_LABELS: Record<string, string> = {
   completed: "مكتملة",
   cancelled: "ملغاة",
   no_show: "لم يحضر",
+  // recitation sessions
+  listening: "جارٍ الاستماع",
+  paused: "متوقفة مؤقتًا",
+  failed: "لم تكتمل",
 };
 
 export function sessionStatusLabel(status: unknown) {
@@ -29,7 +33,7 @@ export function sessionStatusLabel(status: unknown) {
 
 export function sessionStatusTone(status: unknown): "gold" | "success" | "danger" | "muted" {
   if (status === "completed" || status === "confirmed" || status === "in_progress") return "success";
-  if (status === "cancelled" || status === "no_show") return "danger";
+  if (status === "cancelled" || status === "no_show" || status === "failed") return "danger";
   return "gold";
 }
 
@@ -40,8 +44,9 @@ const FATWA_STATUS_LABELS: Record<string, string> = {
   pending_review: "بانتظار المراجعة",
   published_public: "منشورة للعموم",
   published_private: "أُرسلت للسائل",
+  published: "منشورة",
   rejected: "مرفوضة",
-  closed: "مغلقة",
+  cancelled: "ملغاة",
 };
 
 export function fatwaStatusLabel(status: unknown) {

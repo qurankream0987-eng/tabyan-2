@@ -1,5 +1,6 @@
 import { Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { sessionStatusLabel } from "../../../lib/format";
+import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
+import { formatDate, sessionStatusLabel } from "../../../lib/format";
 import * as DocumentPicker from "expo-document-picker";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -155,7 +156,7 @@ export default function StudentDetail() {
 
           <Section title="جلسات التسميع التعليمية" colors={colors}>
             {recitations.isLoading ? <Text style={[styles.muted, { color: colors.muted }]}>جارٍ تحميل الجلسات…</Text> : recitations.isError ? <Text style={[styles.error, { color: colors.danger }]}>تعذر تحميل جلسات التسميع.</Text> : recitations.data?.length ? recitations.data.map((session: any) => (
-              <Row key={session.id} colors={colors} title={session.surahName ?? `سورة #${session.surahId}`} detail={`${sessionStatusLabel(session.status) || "—"} · ${formatDate(session.createdAt)}`} />
+              <Row key={session.id} colors={colors} title={session.surahName ?? (SURAHS[session.surahId - 1] ? `سورة ${SURAHS[session.surahId - 1].name}` : `سورة #${session.surahId}`)} detail={`${sessionStatusLabel(session.status) || "—"} · ${formatDate(session.createdAt)}`} />
             )) : <Text style={[styles.muted, { color: colors.muted }]}>لا جلسات تسميع تعليمي بعد</Text>}
           </Section>
 
@@ -226,10 +227,6 @@ function Row({ title, detail, colors }: { title: string; detail: string; colors:
   );
 }
 
-function formatDate(value: unknown) {
-  const date = new Date(String(value ?? ""));
-  return Number.isNaN(date.getTime()) ? String(value ?? "") : date.toLocaleDateString("ar-SA");
-}
 
 const styles = StyleSheet.create({
   headerCard: { alignItems: "center" },
