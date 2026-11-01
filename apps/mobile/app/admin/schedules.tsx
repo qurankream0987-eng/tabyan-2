@@ -2,9 +2,10 @@ import { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { AdminDateTimeField, AdminFrame, AdminSelect, ConfirmButton, safeError } from "../../components/admin/admin-common";
 import { AdminSheet, FormError, HeaderAction, ListSkeleton, SheetFooter, useAdminFeedback, useDirtyState } from "../../components/admin/admin-ui";
-import { Button, Card, EmptyState, ErrorState, LoadingState } from "../../components/ui";
+import { Badge, Button, Card, EmptyState, ErrorState } from "../../components/ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
+import { formatDateTime, sessionStatusLabel, sessionStatusTone } from "../../lib/format";
 import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
 const SESSION_TYPES = [
@@ -102,8 +103,16 @@ export default function Schedules() {
 
   return (
     <AdminFrame title="الجداول والحجوزات" right={<HeaderAction label="إضافة" accessibilityLabel="إنشاء جدول" onPress={() => setCreating(true)} />}>
+      <Text style={[styles.rule, { color: colors.muted }]}>القاعدة الذهبية: المشرف فقط ينشئ الجداول</Text>
       <View style={styles.tabs}><Button label="الجداول الأسبوعية" variant={tab === "schedules" ? "primary" : "secondary"} onPress={() => setTab("schedules")} style={styles.tab} /><Button label="الحجوزات" variant={tab === "bookings" ? "primary" : "secondary"} onPress={() => setTab("bookings")} style={styles.tab} /></View>
-      {tab === "bookings" ? booked.length ? booked.map((booking) => <Card key={booking.id}><Text style={[styles.title, { color: colors.text }]}>{booking.typeLabel ?? "حجز"} · {booking.studentName ?? "طالب"}</Text><Text style={[styles.hint, { color: colors.muted }]}>{booking.teacherName ?? "—"} · {String(booking.scheduledAt ?? "—")} · {booking.status}</Text>{!["cancelled", "completed"].includes(booking.status) ? <ConfirmButton label="إلغاء الحجز" danger disabled={pendingId === String(booking.id)} loading={cancel.isPending && pendingId === String(booking.id)} title="إلغاء هذا الحجز؟" itemName={`${booking.studentName ?? "طالب"} — ${String(booking.scheduledAt ?? "")}`} impact="سيُلغى الحجز ويُبلَّغ الطالب والمعلم." onConfirm={() => cancel.mutate({ id: booking.id })} /> : null}</Card>) : <EmptyState title="لا حجوزات" /> : <>
+      {tab === "bookings" ? booked.length ? booked.map((booking) => (
+        <Card key={booking.id}>
+          <View style={styles.titleRow}><Text style={[styles.title, styles.flex, { color: colors.text }]} numberOfLines={2}>{booking.studentName ?? "طالب"}</Text><Badge label={sessionStatusLabel(booking.status)} tone={sessionStatusTone(booking.status)} /></View>
+          <Text style={[styles.hint, { color: colors.muted }]}>{booking.typeLabel ?? "حجز"} · {booking.teacherName ?? "—"}</Text>
+          <Text style={[styles.hint, { color: colors.text }]}>{formatDateTime(booking.scheduledAt) || "—"}</Text>
+          {!["cancelled", "completed"].includes(booking.status) ? <ConfirmButton label="إلغاء الحجز" danger disabled={pendingId === String(booking.id)} loading={cancel.isPending && pendingId === String(booking.id)} title="إلغاء هذا الحجز؟" itemName={`${booking.studentName ?? "طالب"} — ${formatDateTime(booking.scheduledAt)}`} impact="سيُلغى الحجز ويُبلَّغ الطالب والمعلم." onConfirm={() => cancel.mutate({ id: booking.id })} /> : null}
+        </Card>
+      )) : <EmptyState title="لا حجوزات" /> : <>
       <AdminSheet visible={creating} title="إنشاء جدول أسبوعي" subtitle="يظهر للمعلم فور إنشائه" onClose={() => { setCreating(false); setFormError(null); }} dirty={createDirty} busy={create.isPending}
         footer={(requestClose) => <SheetFooter onSecondary={requestClose} primaryLabel="إنشاء الجدول" loading={create.isPending} disabled={createDisabled}
           onPrimary={() => { if (!createDisabled && !create.isPending) create.mutate({ teacherId, sessionType: type as any, levelId: levelId ? Number(levelId) : undefined, sessionMode: mode as any, maxStudents: maxNumber, availableDays: days as any, availableTimes: slots.map((slot) => `${slot.start}-${slot.end}`), durationMinutes: durationNumber } as any); }} />}>
@@ -140,11 +149,13 @@ export default function Schedules() {
          </View> : <View><AdminInputLike value={duration} onChange={(value) => setDuration(normalizeDigits(value).replace(/\D/g, ""))} label="المدة بالدقائق (15-180)" colors={colors} keyboardType="number-pad" /></View>}
       </AdminSheet>
 
-      {!rows.length ? <EmptyState title="لا توجد جداول" description="ستظهر الجداول الأسبوعية هنا بعد إنشائها." icon="calendar-outline" /> : rows.map((schedule) => (
+      {!rows.length ? <EmptyState title="لا جداول بعد" description="أنشئ أول جدول لمعلميك." action="إنشاء جدول" onAction={() => setCreating(true)} /> : rows.map((schedule) => (
         <Card key={schedule.id}>
-          <Text style={[styles.title, { color: colors.text }]}>{schedule.typeLabel ?? schedule.sessionType} · {schedule.teacherName ?? schedule.teacherId}</Text>
-          <Text style={[styles.hint, { color: colors.muted }]}>{(schedule.availableDays ?? []).map((day: string) => DAYS.find(([key]) => key === day)?.[1] ?? day).join("، ")} · {(schedule.availableTimes ?? []).join(" · ")} · {schedule.durationMinutes} دقيقة</Text>
-          <Text style={[styles.hint, { color: colors.muted }]}>{schedule.levelName ? `المستوى: ${schedule.levelName} · ` : ""}{schedule.sessionMode === "group" ? `جماعية (${schedule.maxStudents})` : "فردية"} · {schedule.isActive === false ? "موقوف" : "نشط"} · {schedule.isAcceptingBookings === false ? "التسجيل مغلق" : "التسجيل مفتوح"}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{schedule.typeLabel ?? SESSION_TYPES.find(([key]) => key === schedule.sessionType)?.[1] ?? "حصة"} — {schedule.teacherName ?? "معلم"}</Text>
+          {schedule.isActive === false || schedule.isAcceptingBookings === false ? <View style={styles.badges}>{schedule.isActive === false ? <Badge label="معطّل" tone="muted" /> : null}{schedule.isAcceptingBookings === false ? <Badge label="التسجيل مغلق" tone="danger" /> : null}</View> : null}
+          <Text style={[styles.hint, { color: colors.muted }]}>{schedule.levelName ? `المستوى: ${schedule.levelName} · ` : ""}{schedule.sessionMode === "group" ? `جماعية (${schedule.maxStudents})` : "فردية"} · {schedule.durationMinutes} دقيقة</Text>
+          <Text style={[styles.hint, { color: colors.text }]}>{(schedule.availableDays ?? []).map((day: string) => DAYS.find(([key]) => key === day)?.[1] ?? day).join("، ")}</Text>
+          <Text style={[styles.hint, styles.ltr, { color: colors.muted }]}>{(schedule.availableTimes ?? []).join(" · ")}</Text>
           <View style={styles.actions}>
             <Button label={schedule.isActive === false ? "تفعيل الجدول" : "تعطيل الجدول"} variant="secondary" disabled={pendingId === String(schedule.id)} loading={toggle.isPending && pendingId === String(schedule.id)} onPress={() => toggle.mutate({ scheduleId: schedule.id, active: schedule.isActive === false })} />
             <Button label={schedule.isAcceptingBookings === false ? "فتح التسجيل" : "إغلاق التسجيل"} variant="secondary" disabled={pendingId === String(schedule.id)} loading={bookToggle.isPending && pendingId === String(schedule.id)} onPress={() => bookToggle.mutate({ scheduleId: schedule.id, accepting: schedule.isAcceptingBookings === false })} />
@@ -164,6 +175,10 @@ function AdminInputLike({ value, onChange, label, colors, keyboardType }: { valu
 
 const styles = StyleSheet.create({
   title: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right", marginBottom: 9 },
+  titleRow: { flexDirection: "row-reverse", alignItems: "center", gap: 8 },
+  badges: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 6, marginBottom: 8 },
+  rule: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, lineHeight: 17, textAlign: "right", marginBottom: 8 },
+  ltr: { writingDirection: "ltr" },
   label: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 11, textAlign: "right", marginTop: 9, marginBottom: 5 },
   hint: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right", lineHeight: 19, marginBottom: 9 },
   input: { minHeight: 46, borderWidth: 1, borderRadius: 13, paddingHorizontal: 12, textAlign: "right", fontFamily: "IBMPlexSansArabic_400Regular" },

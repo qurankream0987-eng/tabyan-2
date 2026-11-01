@@ -1,8 +1,8 @@
-import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useState } from "react";
 import { usePathname, useRouter } from "expo-router";
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
-import { Badge, Button, Card, EmptyState, ErrorState, Header, Icon, LoadingState, Screen, SectionTitle } from "../ui";
+import { Badge, Button, Card, EmptyState, ErrorState, Header, LoadingState, Screen, SectionTitle } from "../ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
@@ -10,6 +10,8 @@ import { LibraryMediaPlayer } from "../library/library-media-player";
 import { useAuth } from "../../lib/auth";
 import { resolveLibraryAsset } from "../../lib/media/library-media";
 import { AdminSheet, ConfirmAction, useAdminFeedback } from "./admin-ui";
+import { SidebarLayout, useSidebarLayout } from "../ui/navigation-menu";
+import { toast } from "../../lib/toast";
 import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 import {
   isPlacementVideoAbOriginal,
@@ -33,8 +35,54 @@ export function AdminFrame({ title, right, children }: { title: string; right?: 
   const router = useRouter();
   const { colors } = useTheme();
   const pathname = usePathname();
-  return <><Header title={title} right={right} menu="admin" home={pathname === "/admin"} /><Screen><View style={styles.nav}><Pressable onPress={() => router.replace("/admin")}><Text style={[styles.home, { color: colors.primary }]}>لوحة المشرف</Text></Pressable></View>{children}</Screen></>;
+  const wide = useSidebarLayout();
+  const page = <><Header title={title} right={right} menu={wide ? undefined : "admin"} home={pathname === "/admin"} /><Screen>{wide ? null : <View style={styles.nav}><Pressable onPress={() => router.replace("/admin")}><Text style={[styles.home, { color: colors.primary }]}>لوحة المشرف</Text></Pressable></View>}{children}</Screen></>;
+  return wide ? <SidebarLayout role="admin">{page}</SidebarLayout> : page;
 }
+
+/** KYC decision shared by the dedicated review screen and the generic workflow. */
+export function useKycReview(onDone?: () => void) {
+  const utils = trpc.useUtils();
+  const mutation = trpc.admin.kycReview.useMutation();
+  const review = async (teacherId: string, decision: "approve" | "reject" | "request_info", notes: string) => {
+    if (mutation.isPending) return false;
+    if (decision === "request_info" && !notes.trim()) { toast("اكتب الملاحظات التي توضّح المطلوب من المعلم", "error"); return false; }
+    try {
+      await mutation.mutateAsync({ teacherId, decision, notes: notes.trim() || undefined });
+      toast("تمت المراجعة", "success");
+      void utils.admin.kycList.invalidate(); void utils.admin.kpis.invalidate();
+      onDone?.();
+      return true;
+    } catch (e) {
+      toast(userFacingErrorMessage(e, "تعذر تنفيذ المراجعة، حاول مرة أخرى."), "error");
+      return false;
+    }
+  };
+  return { review, pending: mutation.isPending, decision: mutation.variables?.decision };
+}
+
+/** Opens a certificate (object path or URL) in the system viewer; reports failures through the toast. */
+export function useCertificateOpener() {
+  const { token } = useAuth();
+  return async (value: unknown) => {
+    const raw = typeof value === "string" ? value.trim() : "";
+    const target = raw ? resolveLibraryAsset(raw, token) : "";
+    try {
+      if (!target) throw new Error("missing certificate");
+      const parsed = new URL(target);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error("invalid certificate");
+      if (!(await Linking.canOpenURL(target))) throw new Error("unsupported certificate");
+      await Linking.openURL(target);
+    } catch {
+      toast("تعذر فتح الشهادة. تحقق من الاتصال وحاول مرة أخرى.", "error");
+    }
+  };
+}
+
+export const KYC_CONFIRM = {
+  approve: { title: "هل تريد اعتماد المعلم؟", impact: "سيُعتمد حساب المعلم ويمكنه استقبال الحلقات فوراً.", label: "اعتماد" },
+  reject: { title: "رفض طلب المعلم؟", impact: "سيُبلَّغ المعلم برفض طلبه مع الملاحظات المكتوبة.", label: "رفض الطلب" },
+} as const;
 
 export function AdminList({ title, procedure = "kpis", icon = "shield-checkmark-outline" }: { title: string; procedure?: string; icon?: string }) {
   // The procedure name is deliberately selected from the server's admin router;
@@ -106,11 +154,12 @@ export function AdminWorkflow({ title, kind }: { title: string; kind: "placement
   const q = queries[kind]; const [selected, setSelected] = useState<any>(null); const [note, setNote] = useState(""); const [category, setCategory] = useState(""); const [selectedMuftiId, setSelectedMuftiId] = useState(""); const [resultLevelId, setResultLevelId] = useState<number | undefined>(); const [feedback, setFeedback] = useState(""); const [certificateOpenPath, setCertificateOpenPath] = useState<string | null>(null); const [certificateOpenError, setCertificateOpenError] = useState("");
   const placementPath = selected?.pathType === "tajweed_correction" ? "tajweed_correction" : "quran";
   const levelsQ = trpc.admin.placementLevelThresholds.useQuery({ path: placementPath }, { enabled: kind === "placement" && !!selected });
-  const placement = trpc.admin.placementReview.useMutation(); const kyc = trpc.admin.kycReview.useMutation(); const qiraat = trpc.admin.qiraatReview.useMutation(); const promotion = trpc.admin.promotionReview.useMutation();
+  const placement = trpc.admin.placementReview.useMutation(); const qiraat = trpc.admin.qiraatReview.useMutation(); const promotion = trpc.admin.promotionReview.useMutation();
   const fatwaAssign = trpc.admin.fatwaAssign.useMutation(); const fatwaCategory = trpc.admin.fatwaUpdateCategory.useMutation(); const fatwaReject = trpc.admin.fatwaRejectQuestion.useMutation(); const muftiUnassign = trpc.admin.muftiUnassign.useMutation(); const muftisQ = trpc.admin.muftisList.useQuery(undefined, { enabled: kind === "fatwa" });
-  const pending = placement.isPending || kyc.isPending || qiraat.isPending || promotion.isPending || fatwaAssign.isPending || fatwaCategory.isPending || fatwaReject.isPending || muftiUnassign.isPending;
   const [confirmState, setConfirmState] = useState<{ title: string; itemName?: string; fn: () => void } | null>(null);
   const close = () => { setSelected(null); setConfirmState(null); setNote(""); setSelectedMuftiId(""); setResultLevelId(undefined); setCertificateOpenPath(null); setCertificateOpenError(""); setFeedback(""); };
+  const kycReview = useKycReview(() => { close(); void q.refetch(); });
+  const pending = placement.isPending || kycReview.pending || qiraat.isPending || promotion.isPending || fatwaAssign.isPending || fatwaCategory.isPending || fatwaReject.isPending || muftiUnassign.isPending;
   const run = async (fn: () => Promise<unknown>, invalidate?: () => void) => { try { await fn(); close(); notify("تمت المراجعة"); void q.refetch(); void utils.admin.kpis.invalidate(); invalidate?.(); } catch (e) { setFeedback(userFacingErrorMessage(e, "تعذر تنفيذ العملية. حاول مرة أخرى.")); } };
   const openCertificate = async (value: unknown) => {
     const raw = typeof value === "string" ? value.trim() : "";
@@ -157,10 +206,7 @@ export function AdminWorkflow({ title, kind }: { title: string; kind: "placement
   const answers = Array.isArray(selected?.answers) ? selected.answers : [];
   // The protected endpoint owns the eligible level list, exactly as on Web.
   const placementLevels = Array.isArray(levelsQ.data) ? levelsQ.data : [];
-  const reviewTeacher = (decision: "approve" | "reject" | "request_info") => {
-    if (!selected || pending || (decision === "request_info" && !note.trim())) return;
-    void run(() => kyc.mutateAsync({ teacherId: selected.teacherId, decision, notes: note.trim() || undefined }), () => void utils.admin.kycList.invalidate());
-  };
+  const reviewTeacher = (decision: "approve" | "reject" | "request_info") => { if (selected && !pending) void kycReview.review(selected.teacherId, decision, note); };
   return <AdminFrame title={title}>
      {!rows.length ? <EmptyState title="لا توجد عناصر معلقة" description="ستظهر البيانات هنا عند توفرها." /> : rows.map((r, i) => <Card key={String(r.id ?? r.teacherId ?? r.userId ?? i)}>
        <Text style={[styles.value, { color: colors.text }]} numberOfLines={3}>{label(r)}</Text>
@@ -180,9 +226,9 @@ export function AdminWorkflow({ title, kind }: { title: string; kind: "placement
               impact="سيُبلَّغ الطالب برفض الاختبار ويمكنه إعادة المحاولة وفق إعدادات المنصة."
               onConfirm={() => { if (selected) void run(() => placement.mutateAsync({ studentId: selected.userId, approve: false }), () => void utils.admin.placementList.invalidate()); }} />
           </> : <>
-            <ConfirmButton primary label="اعتماد" disabled={pending} loading={kyc.isPending} title="هل تريد اعتماد المعلم؟" itemName={selected ? String(label(selected)) : undefined} impact={WORKFLOW_IMPACT["هل تريد اعتماد المعلم؟"]} onConfirm={() => reviewTeacher("approve")} />
-            <ConfirmButton danger label="رفض" disabled={pending} loading={kyc.isPending} title="رفض طلب المعلم؟" itemName={selected ? String(label(selected)) : undefined} impact="سيُرفض طلب القبول ويُبلَّغ المعلم بالنتيجة." onConfirm={() => reviewTeacher("reject")} />
-            <Button label="طلب معلومات" variant="secondary" disabled={pending || !note.trim()} loading={kyc.isPending} onPress={() => reviewTeacher("request_info")} />
+            <ConfirmButton primary label="اعتماد" disabled={pending} loading={kycReview.pending} title={KYC_CONFIRM.approve.title} itemName={selected ? String(label(selected)) : undefined} impact={KYC_CONFIRM.approve.impact} onConfirm={() => reviewTeacher("approve")} />
+            <ConfirmButton danger label="رفض" disabled={pending} loading={kycReview.pending} title={KYC_CONFIRM.reject.title} itemName={selected ? String(label(selected)) : undefined} impact={KYC_CONFIRM.reject.impact} onConfirm={() => reviewTeacher("reject")} />
+            <Button label="طلب معلومات" variant="secondary" disabled={pending || !note.trim()} loading={kycReview.pending} onPress={() => reviewTeacher("request_info")} />
           </>}
         </View> : undefined}>
         {feedback ? <Text accessibilityRole="alert" style={[styles.note, { color: colors.danger }]}>{feedback}</Text> : null}

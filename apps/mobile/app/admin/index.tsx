@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AdminFrame, adminRoutes } from "../../components/admin/admin-common";
-import { ErrorState, FeatureTile, Card, Icon, LoadingState, SectionTitle } from "../../components/ui";
+import { ErrorState, FeatureTile, Card, Icon, LoadingState, PageHero, SectionTitle } from "../../components/ui";
 import { useTheme, palette } from "../../lib/theme";
 import { trpc } from "../../lib/trpc";
 import { ListSkeleton } from "../../components/admin/admin-ui";
@@ -10,7 +10,7 @@ import { ListSkeleton } from "../../components/admin/admin-ui";
 //    «لوحة التحكم المركزية» → 4 مؤشرات KPI → «يحتاج تدخّلك الآن» (6 عناصر) → مسارات الإدارة — كل البيانات من admin.kpis
 export default function AdminHome() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const q = trpc.admin.kpis.useQuery(undefined, { refetchInterval: 30_000 });
   const admins = trpc.admin.activeAdmins.useQuery(undefined, { retry: false });
   if (q.isLoading) return <AdminFrame title="لوحة التحكم المركزية"><ListSkeleton rows={4} /></AdminFrame>;
@@ -35,9 +35,11 @@ export default function AdminHome() {
 
   // COUNT(*) may arrive as a string; each queue is a distinct status, so the total is their sum.
   const counted = urgentItems.map((it) => ({ ...it, count: Number(it.count) || 0 }));
-  const activeQueue = counted.filter((it) => it.count > 0).sort((a, b) => b.count - a.count);
-  const idleQueue = counted.filter((it) => it.count === 0);
+  // Pending queues first (most urgent on top), cleared ones after with a green dot.
+  const queue = [...counted].sort((a, b) => b.count - a.count);
+  const hasPending = queue.some((it) => it.count > 0);
   const totalPending = counted.reduce((sum, it) => sum + it.count, 0);
+  const accent = isDark ? palette.gold : palette.burgundy;
   const shortcuts = [
     { label: "إضافة كتاب", to: "/admin/library", icon: "library-outline" },
     { label: "إنشاء جدول", to: "/admin/schedules", icon: "calendar-outline" },
@@ -48,38 +50,44 @@ export default function AdminHome() {
 
   return (
     <AdminFrame title="لوحة التحكم المركزية">
-      <Text style={[styles.summary, { color: colors.muted }]}>{totalPending > 0 ? `${totalPending} مهمة بانتظار مراجعتك` : "لا مهام معلّقة الآن"}</Text>
+      {/* رأس الصفحة: درع في فقاعة + تحية + ملخص المهام المعلّقة */}
+      <PageHero icon="shield-outline" title="لوحة التحكم المركزية" subtitle={totalPending > 0 ? `${totalPending} مهمة بانتظار مراجعتك` : "لا مهام معلّقة الآن"} />
 
-      {/* يحتاج تدخّلك الآن — الأكثر إلحاحاً أولاً */}
+      {/* يحتاج تدخّلك الآن — شبكة من عمودين، الأكثر إلحاحاً أولاً */}
       <Card>
         <View style={styles.urgentHead}>
-          <View style={[styles.urgentDot, { backgroundColor: activeQueue.length ? colors.danger : colors.success }]} />
-          <Text style={[styles.urgentTitle, { color: colors.primary }]}>يحتاج تدخّلك الآن</Text>
+          <View style={[styles.urgentDot, { backgroundColor: hasPending ? colors.danger : colors.success }]} />
+          <Text style={[styles.urgentTitle, { color: accent }]}>يحتاج تدخّلك الآن</Text>
         </View>
-        {activeQueue.length ? (
-          <View style={styles.urgentList}>
-            {activeQueue.map((it) => (
+        {!hasPending ? <Text style={[styles.activeEmpty, { color: colors.muted }]}>أنجزت كل المراجعات المعلّقة.</Text> : null}
+        <View style={styles.urgentGrid}>
+          {queue.map((it) => {
+            const pending = it.count > 0;
+            return (
               <Pressable key={it.label} accessibilityRole="button" accessibilityLabel={`${it.label}: ${it.count}`} onPress={() => router.push(it.to as never)}
-                style={({ pressed }) => [styles.urgentCell, { backgroundColor: `${palette.gold}1f`, borderColor: `${palette.gold}40`, opacity: pressed ? 0.85 : 1 }]}>
-                <Icon name={it.icon} size={18} color={palette.goldDark} />
-                <Text style={[styles.urgentLabel, { color: colors.text }]} numberOfLines={2}>{it.label}</Text>
-                <Text style={[styles.urgentCount, { color: palette.goldDark }]}>{it.count}</Text>
-                <Icon name="chevron-back" size={16} color={colors.muted} />
+                style={({ pressed }) => [styles.urgentTile, pending
+                  ? { backgroundColor: `${palette.gold}${isDark ? "29" : "1F"}`, borderColor: `${palette.gold}40` }
+                  : { backgroundColor: colors.input, borderColor: colors.border, opacity: 0.8 }, pressed && { opacity: 0.85 }]}>
+                <View style={styles.urgentTileHead}>
+                  <Icon name={it.icon} size={18} color={pending ? accent : colors.muted} />
+                  <View style={[styles.tileDot, { backgroundColor: pending ? colors.danger : colors.success }]} />
+                </View>
+                <Text style={[styles.urgentCount, { color: pending ? accent : colors.muted }]}>{it.count}</Text>
+                <Text style={[styles.urgentLabel, { color: pending ? colors.text : colors.muted }]} numberOfLines={2}>{it.label}</Text>
               </Pressable>
-            ))}
-          </View>
-        ) : <Text style={[styles.activeEmpty, { color: colors.muted }]}>أنجزت كل المراجعات المعلّقة.</Text>}
-        {activeQueue.length && idleQueue.length ? <Text style={[styles.idle, { color: colors.muted }]}>لا شيء معلّق في: {idleQueue.map((it) => it.label).join("، ")}</Text> : null}
+            );
+          })}
+        </View>
       </Card>
 
-      {/* مؤشرات KPI (قيم حقيقية من admin.kpis) */}
+      {/* مؤشرات KPI (قيم حقيقية من admin.kpis) — بطاقات زجاجية كما في الموقع */}
       <View style={styles.kpiGrid}>
         {kpiCards.map((s) => (
           <View key={s.l} style={styles.kpiWrap}>
             <Card style={styles.kpiCell}>
-              <Icon name={s.icon} size={17} color={palette.goldDark} />
-              <Text style={[styles.kpiValue, { color: colors.primary }]} numberOfLines={1}>{s.v ?? "—"}</Text>
-              <Text style={[styles.kpiLabel, { color: colors.muted }]}>{s.l}</Text>
+              <Icon name={s.icon} size={22} color={palette.gold} />
+              <Text style={[styles.kpiValue, { color: accent }]} numberOfLines={1}>{s.v ?? "—"}</Text>
+              <Text style={[styles.kpiLabel, { color: colors.muted }]} numberOfLines={2}>{s.l}</Text>
             </Card>
           </View>
         ))}
@@ -89,15 +97,15 @@ export default function AdminHome() {
       <View style={styles.shortcuts}>
         {shortcuts.map((it) => (
           <Pressable key={it.to} accessibilityRole="button" onPress={() => router.push(it.to as never)}
-            style={({ pressed }) => [styles.shortcut, { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.85 : 1 }]}>
-            <Icon name={it.icon} size={19} color={colors.primary} />
-            <Text style={[styles.shortcutText, { color: colors.primary }]} numberOfLines={1}>{it.label}</Text>
+            style={({ pressed }) => [styles.shortcut, { backgroundColor: colors.card, borderColor: isDark ? `${palette.gold}26` : `${palette.burgundy}1A`, opacity: pressed ? 0.85 : 1 }]}>
+            <Icon name={it.icon} size={18} color={accent} />
+            <Text style={[styles.shortcutText, { color: accent }]} numberOfLines={1}>{it.label}</Text>
           </Pressable>
         ))}
       </View>
 
       <Card>
-        <Text style={[styles.activeTitle, { color: colors.primary }]}>المشرفون النشطون</Text>
+        <Text style={[styles.activeTitle, { color: accent }]}>المشرفون النشطون</Text>
         {admins.isLoading ? (
           <LoadingState label="جارٍ تحميل المشرفين النشطين…" />
         ) : admins.error ? (
@@ -117,7 +125,7 @@ export default function AdminHome() {
                   <Text style={[styles.activeName, { color: colors.text }]} numberOfLines={1}>{admin.fullName}</Text>
                   <Text style={[styles.activePhone, { color: colors.muted }]} numberOfLines={1}>{admin.phone ?? "—"}</Text>
                 </View>
-                <Text style={[styles.activeSince, { color: colors.muted }]}>{hoursSince(admin.lastActivity)} س</Text>
+                <Text style={[styles.activeSince, { color: colors.muted }]}>منذ {hoursSince(admin.lastActivity)} س</Text>
               </View>
             ))}
           </View>
@@ -132,20 +140,20 @@ export default function AdminHome() {
 }
 
 const styles = StyleSheet.create({
-  kpiGrid: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 8 },
-  kpiWrap: { flexBasis: "48%", flexGrow: 1 },
-  kpiCell: { alignItems: "flex-end", gap: 5, paddingVertical: 14 },
-  kpiValue: { fontFamily: "Amiri_700Bold", fontSize: 23 },
-  kpiLabel: { alignSelf: "stretch", fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right" },
+  kpiGrid: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 10 },
+  kpiWrap: { flexBasis: "47%", flexGrow: 1, minWidth: 0 },
+  kpiCell: { alignItems: "flex-end", gap: 4, paddingVertical: 16, marginBottom: 0, minHeight: 112 },
+  kpiValue: { fontFamily: "Amiri_700Bold", fontSize: 26, lineHeight: 38, marginTop: 2 },
+  kpiLabel: { alignSelf: "stretch", fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, lineHeight: 17, textAlign: "right" },
   urgentHead: { flexDirection: "row-reverse", alignItems: "center", gap: 8, marginBottom: 12 },
   urgentDot: { width: 8, height: 8, borderRadius: 4 },
-  urgentTitle: { fontFamily: "Amiri_700Bold", fontSize: 19 },
-  summary: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 13, textAlign: "right", marginBottom: 10 },
-  urgentList: { gap: 8 },
-  urgentCell: { flexDirection: "row-reverse", alignItems: "center", gap: 10, borderRadius: 14, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10, minHeight: 56 },
-  urgentLabel: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, flex: 1, textAlign: "right" },
-  urgentCount: { fontFamily: "Amiri_700Bold", fontSize: 22 },
-  idle: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, lineHeight: 18, textAlign: "right", marginTop: 10 },
+  urgentTitle: { fontFamily: "Amiri_700Bold", fontSize: 20, lineHeight: 30 },
+  urgentGrid: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 8 },
+  urgentTile: { flexBasis: "47%", flexGrow: 1, minWidth: 0, minHeight: 96, borderRadius: 16, borderWidth: 1, padding: 12, alignItems: "flex-end", gap: 2 },
+  urgentTileHead: { alignSelf: "stretch", flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between" },
+  tileDot: { width: 8, height: 8, borderRadius: 4 },
+  urgentLabel: { alignSelf: "stretch", fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 12, lineHeight: 18, textAlign: "right" },
+  urgentCount: { fontFamily: "Amiri_700Bold", fontSize: 24, lineHeight: 34 },
   shortcuts: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 8, marginBottom: 12 },
   shortcut: { flexBasis: "47%", flexGrow: 1, minHeight: 52, flexDirection: "row-reverse", alignItems: "center", gap: 8, borderRadius: 16, borderWidth: 1, paddingHorizontal: 12 },
   shortcutText: { flex: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, textAlign: "right" },

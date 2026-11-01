@@ -11,12 +11,13 @@
  * inside that Modal's children (e.g. a confirm inside its sheet). To replace
  * one sheet with another, use `useSheetChain` so the second waits for dismissal.
  */
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, Animated, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type KeyboardTypeOptions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Icon } from "../ui";
 import { palette, useTheme } from "../../lib/theme";
 import { SoftPressable } from "../ui/soft-pressable";
+import { toast } from "../../lib/toast";
 
 const FONT = { regular: "IBMPlexSansArabic_400Regular", medium: "IBMPlexSansArabic_500Medium", semibold: "IBMPlexSansArabic_600SemiBold", bold: "IBMPlexSansArabic_700Bold" } as const;
 
@@ -101,9 +102,13 @@ export function AdminFeedbackProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/** Lightweight, non-blocking success / error feedback visible at any scroll depth. */
+/**
+ * Lightweight, non-blocking success / error feedback visible at any scroll depth.
+ * Routed through the shared top toast (like the web ToastHost) so every admin
+ * screen reports success the same way; the snackbar provider stays for layouts.
+ */
 export function useAdminFeedback() {
-  return useContext(FeedbackContext);
+  return useCallback((message: string, tone: Tone = "success") => toast(message, tone), []);
 }
 
 /* ───────────────────────── buttons ───────────────────────── */
