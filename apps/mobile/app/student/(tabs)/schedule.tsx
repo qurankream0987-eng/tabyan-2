@@ -4,7 +4,6 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Badge, Button, Card, ErrorState, Icon, LoadingState, PageHero, Screen, SoftPressable } from "../../../components/ui";
 import { useAuth } from "../../../lib/auth";
-import { confirmAr } from "../../../lib/confirm";
 import { DAY_AR, sessionStatusLabel, sessionStatusTone } from "../../../lib/format";
 import { palette, useTheme } from "../../../lib/theme";
 import { toast } from "../../../lib/toast";
@@ -132,7 +131,7 @@ export default function Schedule() {
             <Text style={[styles.modalTitle, { color: colors.text }]}>تأكيد الإلغاء</Text>
             <Text style={[styles.modalText, { color: colors.muted }]}>هل أنت متأكد من رغبتك في إلغاء هذا الحجز الأسبوعي؟ لا يمكن التراجع عن هذا الإجراء إلا بطلب جديد.</Text>
             <View style={styles.modalActions}>
-              <Button style={styles.flex} label="تأكيد الإلغاء" variant="danger" loading={requestCancel.isPending} disabled={requestCancel.isPending} onPress={() => void confirmAr("تأكيد الإلغاء", "سيتم إرسال طلب الإلغاء للمعلم.").then((ok) => { if (ok && cancelId) requestCancel.mutate({ sessionId: cancelId, requestedNewTime: null, reason: "cancel" }); })} />
+              <Button style={styles.flex} label="تأكيد الإلغاء" variant="danger" loading={requestCancel.isPending} disabled={requestCancel.isPending} onPress={() => { if (cancelId) requestCancel.mutate({ sessionId: cancelId, requestedNewTime: null, reason: "cancel" }); }} />
               <Button style={styles.flex} label="تراجع" variant="secondary" onPress={() => setCancelId(null)} />
             </View>
           </SafeAreaView>

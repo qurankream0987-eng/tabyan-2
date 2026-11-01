@@ -38,7 +38,8 @@ export default function MushafTab() {
     return () => { active = false; };
   }, []));
 
-  const openPage = (page: number) => router.push(`/student/mushaf?page=${page}` as never);
+  // navigate reuses the reader already on the stack instead of stacking a new one per tap.
+  const openPage = (page: number) => router.navigate(`/student/mushaf?page=${page}` as never);
   const removeBookmark = async (page: number) => setBookmarks(await mushafStorage.toggleBookmark(page));
 
   const rows = useMemo<Row[]>(() => {

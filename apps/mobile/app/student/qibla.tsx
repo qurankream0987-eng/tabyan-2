@@ -110,6 +110,7 @@ export default function Qibla() {
   const dialRotate = useMemo(() => dialAnim.interpolate({ inputRange: [0, 360], outputRange: ["0deg", "360deg"] }), [dialAnim]);
   const dialValue = useRef(0);
 
+  const disposed = useRef(false);
   const attachSensors = useCallback(() => {
     if (headingSub.current) return;
     Location.watchHeadingAsync(({ trueHeading, magHeading, accuracy }) => {
@@ -118,7 +119,10 @@ export default function Qibla() {
       setHeading(((h % 360) + 360) % 360);
       setSensorActive(true);
       setCalibrate(accuracy >= 0 && accuracy < 2);
-    }).then((sub) => { headingSub.current = sub; }).catch(() => {});
+    }).then((sub) => {
+      // The screen may be gone before the sensor answers (permission prompt); drop it then.
+      if (disposed.current) sub.remove(); else headingSub.current = sub;
+    }).catch(() => {});
   }, []);
 
   const locate = useCallback(async () => {
@@ -145,12 +149,12 @@ export default function Qibla() {
       if (cancelled) return;
       if (p.granted) void locate(); else setNeedsPermission(true);
     }).catch(() => { if (!cancelled) setNeedsPermission(true); });
-    return () => { cancelled = true; headingSub.current?.remove(); headingSub.current = null; };
+    return () => { cancelled = true; disposed.current = true; headingSub.current?.remove(); headingSub.current = null; };
   }, [locate]);
 
   useEffect(() => {
     const target = -heading;
-    const delta = ((target - (dialValue.current % 360) + 540) % 360) - 180;
+    const delta = ((((target - (dialValue.current % 360)) % 360) + 540) % 360) - 180;
     dialValue.current += delta;
     Animated.timing(dialAnim, { toValue: dialValue.current, duration: 150, easing: Easing.linear, useNativeDriver: true }).start();
   }, [heading, dialAnim]);
