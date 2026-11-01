@@ -406,8 +406,8 @@ export default function Register() {
 
   return (
     <View style={{ flex: 1 }}>
+      <Header title={step === "choice" ? "ابدأ رحلتك" : "حساب جديد"} back />
       <Screen scroll scrollStyle={{ flex: 1 }} contentStyle={styles.screen}>
-        <Header title={step === "choice" ? "ابدأ رحلتك" : "حساب جديد"} back />
         <View style={styles.brand}>
           <Image source={isDark ? require("../../assets/images/logo-dark.png") : require("../../assets/images/logo-light.png")} resizeMode="contain" style={styles.logo} accessibilityLabel="تبيان" />
         </View>

@@ -28,7 +28,7 @@ export default function TeacherHome() {
     { v: d.weekCount, l: "حصص الأسبوع", icon: "calendar-outline" },
     { v: d.studentsCount, l: "طلابي", icon: "person-outline" },
     { v: summary.pendingEvaluations, l: "تقييمات", icon: "school-outline" },
-    { v: summary.avgRating, l: "تقييمي", icon: "star-outline" },
+    { v: summary.avgRating, l: "تقييمي", icon: "diamond-outline" },
   ];
 
   return (
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   heroLogo: { width: 96, height: 48, marginBottom: 10 },
   heroTitle: { fontFamily: "Amiri_700Bold", fontSize: 23 },
   heroSub: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11.5, marginTop: 3 },
-  statsGrid: { flexDirection: "row", gap: 7, marginTop: 16, alignSelf: "stretch" },
+  statsGrid: { flexDirection: "row-reverse", gap: 7, marginTop: 16, alignSelf: "stretch" },
   statCell: { flex: 1, borderRadius: 14, borderWidth: 1, paddingVertical: 10, alignItems: "center", gap: 3 },
   statValue: { fontFamily: "Amiri_700Bold", fontSize: 18 },
   statLabel: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 9.5, textAlign: "center" },
@@ -166,11 +166,11 @@ const styles = StyleSheet.create({
   nextMeta: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right", marginTop: 3 },
   enterBtn: { borderRadius: 999, paddingVertical: 11, alignItems: "center", marginTop: 14 },
   enterBtnText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13.5, color: palette.gold },
-  weekGrid: { flexDirection: "row", gap: 7 },
+  weekGrid: { flexDirection: "row-reverse", gap: 7 },
   weekCell: { flex: 1, borderRadius: 14, borderWidth: 1, paddingVertical: 13, alignItems: "center", gap: 4 },
   weekValue: { fontFamily: "Amiri_700Bold", fontSize: 20 },
   weekLabel: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 10, lineHeight: 15, alignSelf: "stretch", textAlign: "center" },
-  quickGrid: { flexDirection: "row", gap: 10 },
+  quickGrid: { flexDirection: "row-reverse", gap: 10 },
   quickCellWrap: { flex: 1 },
   quickCell: { alignItems: "center", gap: 6, paddingVertical: 16 },
   quickTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, textAlign: "center" },

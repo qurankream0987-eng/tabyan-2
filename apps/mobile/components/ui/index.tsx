@@ -305,12 +305,14 @@ export function LoadingState({ label = "جارٍ التحميل…", spinner = f
 }
 
 /** Web EmptyState diamond: an outlined square turned 45° around a filled dot. */
-function EmptyDiamond() {
+function EmptyDiamond({ isDark }: { isDark: boolean }) {
+  // Dark mode: the inner shape goes light gold; burgundy would vanish on the maroon page.
+  const inner = isDark ? palette.goldLight : palette.burgundy;
   return (
     <Svg width={44} height={44} viewBox="0 0 44 44" fill="none">
       <Rect x={10} y={10} width={24} height={24} rx={2} stroke={palette.gold} strokeWidth={1.6} transform="rotate(45 22 22)" />
-      <Rect x={15} y={15} width={14} height={14} rx={1} stroke={palette.burgundy} strokeWidth={1.4} transform="rotate(45 22 22)" />
-      <Circle cx={22} cy={22} r={3} fill={palette.burgundy} />
+      <Rect x={15} y={15} width={14} height={14} rx={1} stroke={inner} strokeWidth={1.4} transform="rotate(45 22 22)" />
+      <Circle cx={22} cy={22} r={3} fill={inner} />
     </Svg>
   );
 }
@@ -320,7 +322,7 @@ export function EmptyState({ title, description, action, onAction }: { title: st
   const { colors, isDark } = useTheme();
   return (
     <View style={styles.empty}>
-      <View style={[styles.emptyGlow, { backgroundColor: `${palette.gold}${isDark ? "26" : "1F"}` }]}><EmptyDiamond /></View>
+      <View style={[styles.emptyGlow, { backgroundColor: `${palette.gold}${isDark ? "26" : "1F"}` }]}><EmptyDiamond isDark={isDark} /></View>
       <Text style={[styles.emptyTitle, { color: isDark ? palette.gold : palette.burgundy }]}>{title}</Text>
       {description ? <Text style={[styles.emptyDescription, { color: colors.muted }]}>{description}</Text> : null}
       {action ? <Button label={action} onPress={onAction} variant="secondary" /> : null}
