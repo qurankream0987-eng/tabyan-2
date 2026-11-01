@@ -1,6 +1,6 @@
 import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useState } from "react";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { Badge, Button, Card, EmptyState, ErrorState, Header, Icon, LoadingState, Screen, SectionTitle } from "../ui";
 import { trpc } from "../../lib/trpc";
@@ -32,7 +32,8 @@ export const adminRoutes = [
 export function AdminFrame({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
   const router = useRouter();
   const { colors } = useTheme();
-  return <><Header title={title} right={right} menu="admin" /><Screen><View style={styles.nav}><Pressable onPress={() => router.replace("/admin")}><Text style={[styles.home, { color: colors.primary }]}>لوحة المشرف</Text></Pressable></View>{children}</Screen></>;
+  const pathname = usePathname();
+  return <><Header title={title} right={right} menu="admin" home={pathname === "/admin"} /><Screen><View style={styles.nav}><Pressable onPress={() => router.replace("/admin")}><Text style={[styles.home, { color: colors.primary }]}>لوحة المشرف</Text></Pressable></View>{children}</Screen></>;
 }
 
 export function AdminList({ title, procedure = "kpis", icon = "shield-checkmark-outline" }: { title: string; procedure?: string; icon?: string }) {
@@ -252,7 +253,7 @@ export function AdminSelect({
         <Text style={[styles.selectChevron, { color: colors.muted }]}>⌄</Text>
       </Pressable>
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.pickerBackdrop}>
+        <KeyboardAvoidingView behavior="padding" style={styles.pickerBackdrop}>
           <ScrollView keyboardShouldPersistTaps="handled" style={[styles.pickerSheet, { backgroundColor: colors.card, borderColor: colors.border }]} contentContainerStyle={styles.pickerContent}>
             <View style={styles.pickerHeader}>
               <Text style={[styles.pickerTitle, { color: colors.text }]}>{label}</Text>

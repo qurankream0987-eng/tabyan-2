@@ -1,15 +1,19 @@
 import { strict as assert } from "node:assert";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { initialThemeMode, nativeWelcomeLayout } from "../lib/platform/native-welcome-layout";
+import { nativeWelcomeLayout } from "../lib/platform/native-welcome-layout";
+import { isThemePreference, resolveThemeMode } from "../lib/platform/theme-preference";
 
-test("Native first appearance is light, while web still follows the system theme", () => {
+test("The theme follows the device until the user picks light or dark in settings", () => {
+  assert.equal(resolveThemeMode("system", "dark"), "dark");
+  assert.equal(resolveThemeMode("system", "light"), "light");
+  assert.equal(resolveThemeMode("system", null), "light");
   for (const system of ["dark", "light", null]) {
-    assert.equal(initialThemeMode("ios", system), "light");
-    assert.equal(initialThemeMode("android", system), "light");
+    assert.equal(resolveThemeMode("light", system), "light");
+    assert.equal(resolveThemeMode("dark", system), "dark");
   }
-  assert.equal(initialThemeMode("web", "dark"), "dark");
-  assert.equal(initialThemeMode("web", "light"), "light");
+  assert.equal(isThemePreference("system"), true);
+  assert.equal(isThemePreference("auto"), false);
 });
 
 const devices = [
@@ -58,5 +62,5 @@ test("Native welcome omits the external Mushaf link and preserves splash handoff
   assert.ok(root.includes('showStartupSplash || isDark ? "light" : "dark"'));
   assert.ok(root.includes("IOSWelcomeLogoVisible.Provider value={!showStartupSplash}"));
   assert.ok(splash.includes("callbacks.current.fadeLogoFirst ? Animated.sequence("));
-  assert.ok(theme.includes('if (saved === "light" || saved === "dark") setMode(saved)'));
+  assert.ok(theme.includes("if (isThemePreference(saved))"));
 });

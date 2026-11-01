@@ -184,7 +184,7 @@ export function AdminSheet({ visible, title, subtitle, onClose, dirty = false, b
   );
   return (
     <Modal visible={visible} transparent={!fullScreen} animationType="slide" presentationStyle={fullScreen ? "fullScreen" : "overFullScreen"} statusBarTranslucent onRequestClose={requestClose} onDismiss={iosDismiss}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={[styles.flex, !fullScreen && styles.backdrop]}>
+      <KeyboardAvoidingView behavior="padding" style={[styles.flex, !fullScreen && styles.backdrop]}>
         {!fullScreen ? <Pressable accessibilityLabel="إغلاق" style={StyleSheet.absoluteFill} onPress={requestClose} /> : null}
         {panel}
       </KeyboardAvoidingView>

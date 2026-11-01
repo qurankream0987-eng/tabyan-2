@@ -13,5 +13,5 @@ export default function TeacherLayout() {
   if (!token) return <Redirect href="/login?role=teacher" />;
   if (role !== "teacher") return <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}><Text>هذا القسم مخصص للحسابات المعتمدة للمعلمين.</Text></View>;
   if (!isOnboarding && kyc.data && (kyc.data as any).kycStatus !== "approved") return <Redirect href="/teacher/onboarding" />;
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return <Stack screenOptions={{ headerShown: false, animation: "slide_from_left" }} />;
 }

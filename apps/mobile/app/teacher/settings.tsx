@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Badge, Button, Card } from "../../components/ui";
+import { Badge, Button, Card, ThemePreferencePicker } from "../../components/ui";
 import { navigateToWelcome, useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
 import { useTheme, palette } from "../../lib/theme";
@@ -32,7 +32,7 @@ type TeacherSettingsData = {
 export default function Settings() {
   const { token, signOut } = useAuth();
   const router = useRouter();
-  const { colors, isDark, toggleTheme } = useTheme();
+  const { colors } = useTheme();
   const me = trpc.auth.me.useQuery(undefined, { enabled: !!token, retry: false });
   const settingsQuery = trpc.teacher.settings.useQuery(undefined, { enabled: !!token, retry: false });
   const kyc = trpc.teacher.kycStatus.useQuery(undefined, { enabled: !!token, retry: false });
@@ -132,10 +132,7 @@ export default function Settings() {
 
       <Card>
         <Text style={[styles.sectionHeading, { color: colors.primary }]}>الإشعارات والمظهر</Text>
-        <Pressable onPress={toggleTheme} style={styles.themeRow}>
-          <Text style={[styles.value, { color: colors.muted }]}>{isDark ? "مفعّل" : "معطّل"}</Text>
-          <Text style={[styles.label, { color: colors.text }]}>الوضع الليلي</Text>
-        </Pressable>
+        <ThemePreferencePicker />
         <Toggle label="الإشعارات" value={settings.notificationsEnabled ?? true} pending={pendingKey === "notificationsEnabled"} onChange={(value) => void saveSetting("notificationsEnabled", value)} />
         <Toggle label="الصوت" value={settings.soundEnabled ?? true} pending={pendingKey === "soundEnabled"} onChange={(value) => void saveSetting("soundEnabled", value)} />
         <Toggle label="الاهتزاز" value={settings.vibrationEnabled ?? true} pending={pendingKey === "vibrationEnabled"} onChange={(value) => void saveSetting("vibrationEnabled", value)} />
@@ -193,6 +190,5 @@ const styles = StyleSheet.create({
   options: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 7, marginTop: 7 },
   option: { minHeight: 38, borderWidth: 1, borderRadius: 13, paddingHorizontal: 10, alignItems: "center", justifyContent: "center", flexGrow: 1 },
   optionText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 11 },
-  themeRow: { minHeight: 48, flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", borderBottomWidth: StyleSheet.hairlineWidth, marginBottom: 3 },
   value: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11 },
 });

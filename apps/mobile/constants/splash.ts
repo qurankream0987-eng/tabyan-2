@@ -42,3 +42,18 @@ export const splashTiming = {
   fadeDuration: 550,
   total: 2800,
 } as const;
+/**
+ * Native timing: the logo first settles from the system
+ * splash position, then each line of text gets time to be read.
+ */
+export const nativeSplashTiming = {
+  ...splashTiming,
+  logoDelay: 350,
+  logoDuration: 700,
+  verseIn: 1100,
+  verseOut: 2500,
+  homeIn: 2650,
+  dots: [120, 1100, 2500] as const,
+  fadeStart: 3700,
+  total: 4250,
+} as const;

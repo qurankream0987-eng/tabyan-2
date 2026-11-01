@@ -5,6 +5,7 @@ import { navigateToWelcome, useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
 import { Button } from "../../components/ui";
 import { StudentScreen, LoadingState, ErrorState, Card } from "../../components/student/student-screen";
+import { ThemePreferencePicker } from "../../components/ui";
 import { useTheme } from "../../lib/theme";
 
 export default function Settings() {
@@ -72,6 +73,9 @@ export default function Settings() {
 
   return (
     <StudentScreen title={focus === "delete" ? "حذف الحساب" : "الإعدادات"}>
+      <Card>
+        <ThemePreferencePicker />
+      </Card>
       <Card>
         <Text style={[styles.heading, { color: colors.text }]}>تفضيلات الحساب</Text>
         {preferences.map(([key, label, description, fallback]) => {

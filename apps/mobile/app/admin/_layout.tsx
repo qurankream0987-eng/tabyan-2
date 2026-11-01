@@ -6,5 +6,5 @@ export default function AdminLayout() {
   const { ready, token, role } = useAuth();
   if (!ready) return null;
   if (!token || role !== "admin") return <Redirect href="/login?role=admin" />;
-  return <AdminFeedbackProvider><Stack screenOptions={{ headerShown: false, animation: "fade" }} /></AdminFeedbackProvider>;
+  return <AdminFeedbackProvider><Stack screenOptions={{ headerShown: false, animation: "slide_from_left" }} /></AdminFeedbackProvider>;
 }

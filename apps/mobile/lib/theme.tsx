@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { Appearance, Platform, useColorScheme } from "react-native";
 import { storage } from "./storage";
 import designTokens from "../constants/colors";
-import { initialThemeMode } from "./platform/native-welcome-layout";
+import { isThemePreference, resolveThemeMode, type ThemeMode, type ThemePreference } from "./platform/theme-preference";
 
 export const palette = {
   burgundy: designTokens.brand.burgundy,
@@ -16,7 +16,7 @@ export const palette = {
   night: "#2B0D12",
 } as const;
 
-export type ThemeMode = "light" | "dark";
+export type { ThemeMode, ThemePreference };
 export type ThemeColors = {
   background: string;
   card: string;
@@ -93,35 +93,42 @@ type ThemeContextValue = {
   categories: CategoryColors;
   isDark: boolean;
   ready: boolean;
-  toggleTheme: () => void;
+  /** What the user chose in settings; "system" follows the device. */
+  preference: ThemePreference;
+  setPreference: (preference: ThemePreference) => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const system = useColorScheme();
-  const [mode, setMode] = useState<ThemeMode>(initialThemeMode(Platform.OS, system));
+  const [preference, setPreferenceState] = useState<ThemePreference>("system");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     storage.getTheme().then((saved) => {
-      if (saved === "light" || saved === "dark") setMode(saved);
+      if (isThemePreference(saved)) {
+        setPreferenceState(saved);
+        // Native views (alerts, pickers) follow the same choice; null hands it back to the device.
+        Appearance.setColorScheme?.(saved === "system" ? null : saved);
+      }
     }).catch(() => {}).finally(() => setReady(true));
   }, []);
 
+  const mode = resolveThemeMode(preference, system);
   const value = useMemo(() => ({
     mode,
     ready,
+    preference,
     colors: mode === "dark" ? dark : light,
     categories: mode === "dark" ? categoriesDark : categoriesLight,
     isDark: mode === "dark",
-    toggleTheme: () => {
-      const next = mode === "dark" ? "light" : "dark";
-      setMode(next);
+    setPreference: (next: ThemePreference) => {
+      setPreferenceState(next);
       void storage.setTheme(next);
-      Appearance.setColorScheme?.(next);
+      Appearance.setColorScheme?.(next === "system" ? null : next);
     },
-  }), [mode, ready]);
+  }), [mode, preference, ready]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

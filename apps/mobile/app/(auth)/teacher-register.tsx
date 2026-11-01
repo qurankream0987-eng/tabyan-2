@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Image, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, Keyboard, StyleSheet, Text, TextInput, View } from "react-native";
 import { Button, Card, Header, Screen } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { normalizeNationalPhoneInput, toE164, validatePhoneNumber } from "@workspace/tabyan-domain/countries";
@@ -101,7 +101,7 @@ export default function TeacherRegister() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={0}>
+    <View style={{ flex: 1 }}>
       <Header title="حساب معلم" back />
       <Screen scroll scrollStyle={{ flex: 1 }} contentStyle={styles.screen}>
           <Image source={isDark ? require("../../assets/images/logo-dark.png") : require("../../assets/images/logo-light.png")} resizeMode="contain" style={styles.logo} accessibilityLabel="تبيان" />
@@ -142,7 +142,7 @@ export default function TeacherRegister() {
           <Button label="لدي حساب معلم — تسجيل الدخول" variant="quiet" onPress={() => router.replace({ pathname: "/login", params: { role: "teacher" } })} />
         </Card>
       </Screen>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

@@ -1,13 +1,14 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { usePathname, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
-import { useTheme, palette } from "../../lib/theme";
+import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
+import { useTheme, palette, type ThemePreference } from "../../lib/theme";
 import { NavigationMenu } from "./navigation-menu";
 import { useAuth, type Role } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SoftPressable } from "./soft-pressable";
+import { useKeyboardFrame } from "../../lib/keyboard";
 import designTokens from "../../constants/colors";
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -21,9 +22,34 @@ export function Screen({ children, scroll = true, scrollEnabled = true, contentS
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
+  const scrollY = useRef(0);
+  const keyboardAreaRef = useRef<View>(null);
   useEffect(() => {
     if (!scrollEnabled) scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [scrollEnabled]);
+  // Android no longer shrinks the window for the keyboard (edge to edge), so
+  // the screen ends at the keyboard and scrolls the focused field above it.
+  const keyboard = useKeyboardFrame();
+  const keyboardInset = Platform.OS === "android" ? keyboard.height : 0;
+  useEffect(() => {
+    if (!keyboardInset || !scroll) return;
+    // Wait for the shortened layout; scrolling earlier is clamped to the old height.
+    const timer = setTimeout(() => {
+      const input = TextInput.State.currentlyFocusedInput();
+      const area = keyboardAreaRef.current;
+      if (!input || !area) return;
+      // Measure both in the same coordinates: the keyboard event reports screen
+      // positions, which are offset from the window on edge-to-edge Android.
+      area.measureInWindow((_areaX, areaY, _areaWidth, areaHeight) => {
+        const visibleBottom = areaY + areaHeight - keyboardInset;
+        input.measureInWindow((_x, y, _width, height) => {
+          const overlap = y + height + 24 - visibleBottom;
+          if (overlap > 0) scrollRef.current?.scrollTo({ y: scrollY.current + overlap, animated: true });
+        });
+      });
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [keyboardInset, scroll]);
   const body = <View style={[styles.content, { backgroundColor: colors.background }, contentStyle]}>{children}</View>;
   const pathname = usePathname();
   const tabTitles: Record<string, string> = {
@@ -37,20 +63,30 @@ export function Screen({ children, scroll = true, scrollEnabled = true, contentS
   const studentTabTitle = tabTitles[pathname];
   const isStudentTabs = !!studentTabTitle;
   const content = scroll
-     ? <ScrollView ref={scrollRef} scrollEnabled={scrollEnabled} style={[{ backgroundColor: colors.background }, scrollStyle]} contentContainerStyle={[styles.scrollContent, isStudentTabs ? styles.tabScrollContent : undefined, { paddingBottom: Math.max(isStudentTabs ? 120 : 40, insets.bottom + 24) }, scrollContentStyle]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">{body}</ScrollView>
+     ? <ScrollView ref={scrollRef} onScroll={(event) => { scrollY.current = event.nativeEvent.contentOffset.y; }} scrollEventThrottle={16} automaticallyAdjustKeyboardInsets scrollEnabled={scrollEnabled} style={[{ backgroundColor: colors.background }, scrollStyle]} contentContainerStyle={[styles.scrollContent, isStudentTabs ? styles.tabScrollContent : undefined, { paddingBottom: Math.max(isStudentTabs ? 120 : 40, insets.bottom + 24) }, scrollContentStyle]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">{body}</ScrollView>
     : body;
   return (
     <>
-      {studentTabTitle ? <Header title={studentTabTitle} menu="student" /> : null}
-      {content}
+      {studentTabTitle ? <Header title={studentTabTitle} menu="student" home={pathname === "/student/home"} /> : null}
+      {/* Always wrapped: swapping the tree when the keyboard opens would remount the field and close it. */}
+      <View ref={keyboardAreaRef} style={[styles.keyboardArea, { paddingBottom: keyboardInset }]}>{content}</View>
     </>
   );
 }
 
-export function Header({ title, subtitle, back = false, right, menu, nativeHeaderSurface = "default" }: {
-  title: string; subtitle?: string; back?: boolean; right?: React.ReactNode; menu?: Role; nativeHeaderSurface?: "default" | "page";
+/**
+ * Screen header. The menu (or back) button sits at the right, where Arabic
+ * reading starts; notifications and any screen action sit at the left. The
+ * light/dark choice lives in settings.
+ * The title is centred on the screen, clear of whichever side is wider. Home
+ * screens show the logo in place of a title.
+ */
+export function Header({ title, subtitle, back = false, right, menu, home = false, nativeHeaderSurface = "default" }: {
+  title: string; subtitle?: string; back?: boolean; right?: React.ReactNode; menu?: Role; home?: boolean; nativeHeaderSurface?: "default" | "page";
 }) {
-  const { colors, isDark, toggleTheme } = useTheme();
+  const [sideWidths, setSideWidths] = useState({ start: 44, end: 44 });
+  const titleInset = Math.max(sideWidths.start, sideWidths.end) + 24;
+  const { colors, isDark } = useTheme();
   const { role } = useAuth();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -76,26 +112,7 @@ export function Header({ title, subtitle, back = false, right, menu, nativeHeade
           borderBottomColor: Platform.OS === "web" ? colors.border : "transparent",
         },
       ]}>
-      <View style={styles.headerSide}>
-        {menu ? (
-          <SoftPressable accessibilityLabel="القائمة" onPress={() => setMenuOpen(true)} style={[styles.iconButton, headerActionSurface]}>
-            <Icon name="menu-outline" color={colors.primary} />
-          </SoftPressable>
-        ) : back ? (
-          <SoftPressable accessibilityLabel="رجوع" onPress={() => router.canGoBack() ? router.back() : router.replace("/")} style={[styles.iconButton, headerActionSurface]}>
-            <Icon name="arrow-forward" color={colors.primary} />
-          </SoftPressable>
-        ) : !role ? (
-          <SoftPressable accessibilityLabel="تغيير المظهر" onPress={toggleTheme} style={[styles.iconButton, headerActionSurface]}>
-            <Icon name={isDark ? "sunny-outline" : "moon-outline"} color={colors.primary} />
-          </SoftPressable>
-        ) : null}
-      </View>
-      <View style={styles.headerTitle}>
-        <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>{title}</Text>
-        {subtitle ? <Text style={[styles.headerSubtitle, { color: colors.muted }]}>{subtitle}</Text> : null}
-      </View>
-      <View style={styles.headerActions}>
+      <View style={styles.headerActions} onLayout={(event) => { const width = event.nativeEvent.layout.width; setSideWidths((current) => current.end === width ? current : { ...current, end: width }); }}>
         {notificationPath ? (
           <SoftPressable
             accessibilityLabel="الإشعارات"
@@ -110,12 +127,28 @@ export function Header({ title, subtitle, back = false, right, menu, nativeHeade
             ) : null}
           </SoftPressable>
         ) : null}
-        {role ? (
-          <SoftPressable accessibilityLabel="تغيير المظهر" onPress={toggleTheme} style={[styles.iconButton, headerActionSurface]}>
-            <Icon name={isDark ? "sunny-outline" : "moon-outline"} color={colors.primary} />
+        {right}
+      </View>
+      <View pointerEvents="none" style={[styles.headerTitle, { left: titleInset, right: titleInset }]}>
+        {home ? (
+          <Image source={isDark ? require("../../assets/images/logo-dark.png") : require("../../assets/images/logo-light.png")} resizeMode="contain" style={styles.headerLogo} accessibilityLabel="تبيان" />
+        ) : (
+          <>
+            <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>{title}</Text>
+            {subtitle ? <Text numberOfLines={1} style={[styles.headerSubtitle, { color: colors.muted }]}>{subtitle}</Text> : null}
+          </>
+        )}
+      </View>
+      <View style={styles.headerSide} onLayout={(event) => { const width = event.nativeEvent.layout.width; setSideWidths((current) => current.start === width ? current : { ...current, start: width }); }}>
+        {menu ? (
+          <SoftPressable accessibilityLabel="القائمة" onPress={() => setMenuOpen(true)} style={[styles.iconButton, headerActionSurface]}>
+            <Icon name="menu-outline" color={colors.primary} />
+          </SoftPressable>
+        ) : back ? (
+          <SoftPressable accessibilityLabel="رجوع" onPress={() => router.canGoBack() ? router.back() : router.replace("/")} style={[styles.iconButton, headerActionSurface]}>
+            <Icon name="arrow-forward" color={colors.primary} />
           </SoftPressable>
         ) : null}
-        {right ?? <Image source={isDark ? require("../../assets/images/logo-dark.png") : require("../../assets/images/logo-light.png")} resizeMode="contain" style={styles.headerLogo} accessibilityLabel="تبيان" />}
       </View>
       </View>
       {menu ? <NavigationMenu role={menu} visible={menuOpen} onClose={() => setMenuOpen(false)} /> : null}
@@ -147,6 +180,40 @@ export function Button({ label, onPress, variant = "primary", icon, disabled = f
       {icon && !loading ? <Icon name={icon} size={18} color={foreground} /> : null}
       <Text numberOfLines={1} style={[styles.buttonText, { color: foreground }]}>{label}</Text>
     </SoftPressable>
+  );
+}
+
+const THEME_OPTIONS: { value: ThemePreference; label: string; icon: string }[] = [
+  { value: "system", label: "تلقائي", icon: "phone-portrait-outline" },
+  { value: "light", label: "فاتح", icon: "sunny-outline" },
+  { value: "dark", label: "داكن", icon: "moon-outline" },
+];
+
+/** Light/dark choice for settings screens; "تلقائي" follows the device. */
+export function ThemePreferencePicker() {
+  const { colors, preference, setPreference } = useTheme();
+  return (
+    <View style={styles.themePicker}>
+      <Text style={[styles.themePickerTitle, { color: colors.text }]}>المظهر</Text>
+      <Text style={[styles.themePickerHint, { color: colors.muted }]}>«تلقائي» يتبع إعداد الوضع الليلي في جهازك.</Text>
+      <View style={styles.themeOptions}>
+        {THEME_OPTIONS.map((option) => {
+          const selected = preference === option.value;
+          return (
+            <SoftPressable
+              key={option.value}
+              accessibilityRole="radio"
+              accessibilityState={{ selected }}
+              onPress={() => setPreference(option.value)}
+              style={[styles.themeOption, { backgroundColor: selected ? colors.primary : colors.input, borderColor: selected ? colors.primary : colors.border }]}
+            >
+              <Icon name={option.icon} size={18} color={selected ? colors.primaryText : colors.primary} />
+              <Text style={[styles.themeOptionText, { color: selected ? colors.primaryText : colors.text }]}>{option.label}</Text>
+            </SoftPressable>
+          );
+        })}
+      </View>
+    </View>
   );
 }
 
@@ -201,15 +268,16 @@ export function FeatureTile({ title, description, icon, onPress, accent = false,
 const styles = StyleSheet.create({
   content: { flex: 1, width: "100%", maxWidth: 820, alignSelf: "center", paddingHorizontal: 18, paddingTop: 12 },
   scrollContent: { paddingBottom: 40 },
+  keyboardArea: { flex: 1 },
   tabScrollContent: { paddingBottom: 104 },
-  header: { minHeight: 68, paddingHorizontal: 16, paddingVertical: 9, flexDirection: "row", alignItems: "center" },
+  header: { minHeight: 68, paddingHorizontal: 16, paddingVertical: 9, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   headerNativeFlat: { borderBottomWidth: 0, shadowColor: "transparent", shadowOpacity: 0, shadowRadius: 0, shadowOffset: { width: 0, height: 0 }, elevation: 0, boxShadow: "none" },
   headerWebDepth: { borderBottomWidth: StyleSheet.hairlineWidth, shadowColor: "#2B0D12", shadowOpacity: 0.035, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
-  headerSide: { width: 44, alignItems: "flex-start" },
-  headerActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 6 },
-  headerLogo: { width: 42, height: 42 },
+  headerSide: { minWidth: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end" },
+  headerActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 6 },
+  headerLogo: { width: 48, height: 48 },
   headerActionBare: { backgroundColor: "transparent", borderColor: "transparent", borderWidth: 0 },
-  headerTitle: { flex: 1, minWidth: 0, paddingHorizontal: 4, alignItems: "center" },
+  headerTitle: { position: "absolute", top: 0, bottom: 0, alignItems: "center", justifyContent: "center" },
   headerText: { alignSelf: "stretch", fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 18, textAlign: "center" },
   headerSubtitle: { alignSelf: "stretch", fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, marginTop: 1, textAlign: "center" },
   iconButton: { width: 44, height: 44, borderRadius: 15, borderWidth: 1, alignItems: "center", justifyContent: "center" },
@@ -218,6 +286,12 @@ const styles = StyleSheet.create({
   card: { borderRadius: 20, borderWidth: 1, padding: 16, marginBottom: 12, overflow: "hidden", shadowColor: "#2B0D12", shadowOpacity: 0.035, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 1 },
   button: { minHeight: 48, borderRadius: 16, borderWidth: 1, paddingHorizontal: 20, flexDirection: "row", gap: 8, justifyContent: "center", alignItems: "center" },
   buttonText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, lineHeight: 23, flexShrink: 1, textAlign: "center", paddingVertical: 8 },
+  themePicker: { gap: 6 },
+  themePickerTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 15, textAlign: "right" },
+  themePickerHint: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 20, textAlign: "right" },
+  themeOptions: { flexDirection: "row-reverse", gap: 8, marginTop: 4 },
+  themeOption: { flex: 1, minHeight: 44, borderRadius: 14, borderWidth: 1, flexDirection: "row-reverse", alignItems: "center", justifyContent: "center", gap: 6 },
+  themeOptionText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 13 },
   sectionAction: { minHeight: 44, justifyContent: "center", paddingHorizontal: 8 },
   sectionTitle: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", marginTop: 16, marginBottom: 10 },
   sectionText: { flex: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 17, lineHeight: 26, textAlign: "right" },

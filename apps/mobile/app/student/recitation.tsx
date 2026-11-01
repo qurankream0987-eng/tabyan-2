@@ -666,18 +666,20 @@ export default function NativeRecitationScreen() {
             )}
           </Card>
           {errorText ? <Text style={[styles.inlineError, { color: colors.danger }]}>{errorText}</Text> : null}
-          <View style={styles.controlRow}>
-            {phase === "listening" ? (
-              <Button label="إيقاف مؤقت" variant="secondary" icon="pause-outline" loading={pauseMutation.isPending} onPress={() => void pauseSession()} />
-            ) : (
-              <Button label="استئناف" variant="secondary" icon="play-outline" loading={resumeMutation.isPending} onPress={() => void resumeSession()} />
-            )}
-            <Button label="إنهاء التسميع" variant="primary" icon="stop-outline" onPress={() => void endSession()} />
+          <View style={styles.controls}>
+            <View style={styles.controlRow}>
+              {phase === "listening" ? (
+                <Button label="إيقاف مؤقت" variant="secondary" icon="pause-outline" loading={pauseMutation.isPending} onPress={() => void pauseSession()} />
+              ) : (
+                <Button label="استئناف" variant="secondary" icon="play-outline" loading={resumeMutation.isPending} onPress={() => void resumeSession()} />
+              )}
+              <Button label="إنهاء التسميع" variant="primary" icon="stop-outline" onPress={() => void endSession()} />
+            </View>
+            {hideMode !== "visible_review" ? (
+              <Button label="تلميح: أظهر الكلمة التالية" variant="secondary" icon="bulb-outline" disabled={phase !== "listening"} onPress={showHint} />
+            ) : null}
+            <Button label="إلغاء دون احتساب إكمال" variant="quiet" onPress={() => void cancelSession()} />
           </View>
-          {hideMode !== "visible_review" ? (
-            <Button label="تلميح: أظهر الكلمة التالية" variant="secondary" icon="bulb-outline" disabled={phase !== "listening"} onPress={showHint} />
-          ) : null}
-          <Button label="إلغاء دون احتساب إكمال" variant="quiet" onPress={() => void cancelSession()} />
         </>
       ) : null}
 
@@ -908,6 +910,7 @@ const styles = StyleSheet.create({
   statusRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
   positionText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 18, lineHeight: 30, textAlign: "right" },
   currentWord: { fontFamily: "Amiri_700Bold", fontSize: 30, textAlign: "center", lineHeight: 45, marginVertical: 4 },
+  controls: { gap: 10 },
   controlRow: { flexDirection: "row", gap: 10 },
   finishedCard: { alignItems: "stretch", gap: 12 },
   underlined: { textDecorationLine: "underline" },

@@ -20,6 +20,8 @@ export default function StudentTabsLayout() {
   const tabBarHeight = 72 + insets.bottom;
   const common = {
     headerShown: false,
+    // A light slide-and-fade between tabs.
+    animation: "shift",
     tabBarHideOnKeyboard: true,
     tabBarActiveTintColor: colors.primary,
     tabBarInactiveTintColor: colors.muted,
@@ -30,6 +32,7 @@ export default function StudentTabsLayout() {
       bottom: 0,
       paddingBottom: Math.max(8, insets.bottom + 4),
       paddingTop: 6,
+      paddingHorizontal: 8,
       backgroundColor: colors.card,
       borderTopColor: isWeb ? colors.border : "transparent",
       borderTopWidth: isWeb ? 1 : 0,
@@ -52,7 +55,8 @@ export default function StudentTabsLayout() {
           }),
       display: "flex",
     },
-    tabBarItemStyle: { borderRadius: 15, marginHorizontal: 3, marginVertical: 5 },
+    // The library paints the active background on an inner view with no radius; clip it here.
+    tabBarItemStyle: { borderRadius: 15, overflow: "hidden", marginHorizontal: 3, marginVertical: 5 },
     tabBarActiveBackgroundColor: `${colors.primary}14`,
     tabBarLabelStyle: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 10, lineHeight: 14 },
   } as const;

@@ -2,7 +2,7 @@ import { PRIVACY_INTRO, PRIVACY_POLICY_SECTIONS, PRIVACY_REVIEW_NOTES, PRIVACY_U
 import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, KeyboardAvoidingView, Linking, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Linking, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Button, Card, Header, Icon, Screen } from "../components/ui";
 import { privacySectionMatchesQuery } from "@workspace/tabyan-domain";
 import { useAuth } from "../lib/auth";
@@ -51,7 +51,7 @@ export default function PrivacyScreen() {
   return (
     <>
       <Header title="سياسة الخصوصية" back />
-      <KeyboardAvoidingView style={styles.keyboardArea} behavior="padding">
+      <View style={styles.keyboardArea}>
         <Screen contentStyle={styles.screenContent}>
           <Card accent style={styles.introCard}>
             <Text style={[styles.eyebrow, { color: colors.muted }]}>تبيان · وثائق الخدمة</Text>
@@ -207,7 +207,7 @@ export default function PrivacyScreen() {
 
           <Text style={[styles.footer, { color: colors.muted }]}>تبيان · {PRIVACY_UPDATED_AT}</Text>
         </Screen>
-      </KeyboardAvoidingView>
+      </View>
     </>
   );
 }

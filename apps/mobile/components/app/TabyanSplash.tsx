@@ -20,7 +20,10 @@ import {
   Svg,
 } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { splashColors, splashLayout, splashTiming } from "../../constants/splash";
+import { nativeSplashTiming, splashColors, splashLayout, splashTiming as webSplashTiming } from "../../constants/splash";
+
+const isWeb = Platform.OS === "web";
+const splashTiming = isWeb ? webSplashTiming : nativeSplashTiming;
 
 const goldLogo = require("../../assets/images/logo-splash.png");
 
@@ -225,9 +228,12 @@ export default function TabyanSplash({ active, onFinish, onLayout }: Props) {
         }),
       ]),
     ]));
-    schedule(splashTiming.shineDelay, () => keep(shineLoop));
+    // The shine band and the float are web-only: on Android the clipped
+    // gradient shows as a line and a pale box, and the native-driven float
+    // restarts from a stale offset, so the logo jumps.
+    if (isWeb) schedule(splashTiming.shineDelay, () => keep(shineLoop));
 
-    schedule(splashTiming.logoFloatDelay, () => {
+    if (isWeb) schedule(splashTiming.logoFloatDelay, () => {
       const floatLoop = Animated.loop(Animated.sequence([
         Animated.timing(logoOffset, {
           toValue: -9,
@@ -327,52 +333,54 @@ export default function TabyanSplash({ active, onFinish, onLayout }: Props) {
           ]}
         >
           <Image source={goldLogo} resizeMode="contain" style={styles.logoImage} />
-          <View
-            pointerEvents="none"
-            style={[
-              styles.shineClip,
-              {
-                borderRadius: 0,
-                width: logoWidth,
-                height: logoHeight,
-              },
-            ]}
-          >
-            <Animated.View
+          {isWeb ? (
+            <View
+              pointerEvents="none"
               style={[
-                styles.shineBand,
+                styles.shineClip,
                 {
-                  width: logoWidth * 0.4,
-                  height: logoHeight * 1.8,
-                  top: -logoHeight * 0.4,
-                  left: -logoWidth * 0.6,
-                  opacity: shineOpacity,
-                  transform: [{ translateX: shineX }],
+                  borderRadius: 0,
+                  width: logoWidth,
+                  height: logoHeight,
                 },
               ]}
             >
-              <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <Defs>
-                  <LinearGradient
-                    id="tabyan-splash-logo-shine"
-                    x1="0%"
-                    y1="100%"
-                    x2="100%"
-                    y2="0%"
-                  >
-                    <Stop offset="0%" stopColor={splashColors.shineColor} stopOpacity={0} />
-                    <Stop
-                      offset="50%"
-                      stopColor={splashColors.shineColor}
-                      stopOpacity={splashColors.shineOpacity}
-                    />
-                    <Stop offset="100%" stopColor={splashColors.shineColor} stopOpacity={0} />
-                  </LinearGradient>
-                </Defs>
-                <Rect width="100" height="100" fill="url(#tabyan-splash-logo-shine)" />
-              </Svg>
-            </Animated.View>
-          </View>
+              <Animated.View
+                style={[
+                  styles.shineBand,
+                  {
+                    width: logoWidth * 0.4,
+                    height: logoHeight * 1.8,
+                    top: -logoHeight * 0.4,
+                    left: -logoWidth * 0.6,
+                    opacity: shineOpacity,
+                    transform: [{ translateX: shineX }],
+                  },
+                ]}
+              >
+                <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <Defs>
+                    <LinearGradient
+                      id="tabyan-splash-logo-shine"
+                      x1="0%"
+                      y1="100%"
+                      x2="100%"
+                      y2="0%"
+                    >
+                      <Stop offset="0%" stopColor={splashColors.shineColor} stopOpacity={0} />
+                      <Stop
+                        offset="50%"
+                        stopColor={splashColors.shineColor}
+                        stopOpacity={splashColors.shineOpacity}
+                      />
+                      <Stop offset="100%" stopColor={splashColors.shineColor} stopOpacity={0} />
+                    </LinearGradient>
+                  </Defs>
+                  <Rect width="100" height="100" fill="url(#tabyan-splash-logo-shine)" />
+                </Svg>
+              </Animated.View>
+            </View>
+          ) : null}
         </Animated.View>
 
         <View style={styles.textStage}>

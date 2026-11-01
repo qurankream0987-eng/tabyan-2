@@ -1,10 +1,9 @@
 import { useRouter } from "expo-router";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Button, Card, Icon, Screen } from "../../components/ui";
 import { useTheme, palette } from "../../lib/theme";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { trpc } from "../../lib/trpc";
 import { useAuth } from "../../lib/auth";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
@@ -17,7 +16,6 @@ function errorMessage(error: unknown) {
 
 export default function Login() {
   const { colors, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
   const { signIn } = useAuth();
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -66,7 +64,7 @@ export default function Login() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={insets.top}>
+    <View style={{ flex: 1 }}>
       <Screen contentStyle={styles.screen}>
         <Card style={styles.form}>
           <Pressable
@@ -148,7 +146,7 @@ export default function Login() {
           ) : null}
         </Card>
       </Screen>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

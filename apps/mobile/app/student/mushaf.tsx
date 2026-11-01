@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
+  KeyboardAvoidingView,
   Modal,
   Pressable,
   ScrollView,
@@ -327,16 +328,19 @@ function SheetModal({
 }) {
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} />
-      <View style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.border }]}>
-        <View style={styles.panelHeader}>
-          <Text style={[styles.sheetTitle, { color: colors.text }]}>{title}</Text>
-          <Pressable accessibilityLabel="إغلاق" onPress={onClose} hitSlop={10}>
-            <Icon name="close" size={24} color={colors.muted} />
-          </Pressable>
+      {/* A modal window does not resize for the keyboard; lift the sheet above it. */}
+      <KeyboardAvoidingView behavior="padding" style={styles.sheetHost}>
+        <Pressable style={styles.backdrop} onPress={onClose} />
+        <View style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.border }]}>
+          <View style={styles.panelHeader}>
+            <Text style={[styles.sheetTitle, { color: colors.text }]}>{title}</Text>
+            <Pressable accessibilityLabel="إغلاق" onPress={onClose} hitSlop={10}>
+              <Icon name="close" size={24} color={colors.muted} />
+            </Pressable>
+          </View>
+          {children}
         </View>
-        {children}
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -482,6 +486,7 @@ const styles = StyleSheet.create({
   toolbar: { flexDirection: "row-reverse", borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 6 },
   toolbarButton: { flex: 1, alignItems: "center", gap: 2, paddingVertical: 4 },
   toolbarLabel: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11 },
+  sheetHost: { flex: 1 },
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)" },
   sheet: { maxHeight: "80%", borderTopLeftRadius: 20, borderTopRightRadius: 20, borderWidth: StyleSheet.hairlineWidth, padding: 16, gap: 12 },
   sheetTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 17 },

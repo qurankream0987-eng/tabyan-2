@@ -2,7 +2,7 @@ import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { AdminFrame, safeError } from "../../components/admin/admin-common";
-import { Button, Card, EmptyState, ErrorState } from "../../components/ui";
+import { Button, Card, EmptyState, ErrorState, ThemePreferencePicker } from "../../components/ui";
 import { AdminRow, AdminSheet, ConfirmAction, FormError, FormInput, IconAction, ListSkeleton, SheetFooter, useAdminFeedback, useDirtyState } from "../../components/admin/admin-ui";
 import { trpc } from "../../lib/trpc";
 import { useTheme } from "../../lib/theme";
@@ -75,6 +75,10 @@ export default function Settings() {
       <AdminRow title="كلمة المرور الرئيسية" subtitle="تغييرها يُنهي جلسات جميع المشرفين" leadingIcon="key-outline"
         onPress={() => setPasswordForm({ current: "", next: "" })}
         actions={<IconAction icon="create-outline" label="تغيير كلمة المرور الرئيسية" onPress={() => setPasswordForm({ current: "", next: "" })} />} />
+
+      <Card>
+        <ThemePreferencePicker />
+      </Card>
 
       <Text style={[styles.section, { color: colors.text }]}>آية اليوم</Text>
       <Card>

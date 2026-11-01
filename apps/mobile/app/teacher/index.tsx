@@ -42,7 +42,7 @@ export default function TeacherHome() {
   ];
 
   return (
-    <TeacherScreen title="لوحة المعلم" loading={q.isLoading} error={!!q.error && !q.data} retry={() => void q.refetch()}>
+    <TeacherScreen title="لوحة المعلم" home loading={q.isLoading} error={!!q.error && !q.data} retry={() => void q.refetch()}>
       {q.isError ? <OfflineNotice /> : null}
 
       {/* ترحيب + مؤشرات */}

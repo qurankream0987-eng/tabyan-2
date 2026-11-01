@@ -5,9 +5,7 @@ import {
   AccessibilityInfo,
   Image,
   Keyboard,
-  KeyboardAvoidingView,
   Modal as NativeModal,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -347,7 +345,7 @@ export default function Register() {
   );
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={0}>
+    <View style={{ flex: 1 }}>
       <Screen scroll scrollStyle={{ flex: 1 }} contentStyle={styles.screen}>
         <Header title={step === "choice" ? "ابدأ رحلتك" : "حساب جديد"} back />
         <View style={styles.brand}>
@@ -633,7 +631,7 @@ export default function Register() {
           ) : null}
         </Card>
       </Screen>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

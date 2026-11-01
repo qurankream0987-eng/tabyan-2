@@ -66,7 +66,7 @@ export default function Fatwas() {
       {answered.map((fatwa) => <Card key={fatwa.id}><Text style={[styles.category, { color: colors.primary }]}>{categoryLabels[fatwa.category] ?? fatwa.category} · {fatwa.answerStatus ?? fatwa.status}</Text><Text style={[styles.question, { color: colors.text }]} numberOfLines={2}>{fatwa.questionText}</Text></Card>)}
 
       <Modal visible={!!selected} transparent animationType="slide" onRequestClose={() => setSelected(null)}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.backdrop}>
+        <KeyboardAvoidingView behavior="padding" style={styles.backdrop}>
           <View style={[styles.modal, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 12, paddingBottom: 24 }}>
               <View style={[styles.questionBox, { backgroundColor: colors.input }]}><Text style={[styles.detail, { color: colors.muted }]}>{selected?.studentName ?? "السائل"} · {categoryLabels[selected?.category ?? ""] ?? selected?.category}</Text><Text style={[styles.question, { color: colors.text }]}>{selected?.questionText}</Text></View>

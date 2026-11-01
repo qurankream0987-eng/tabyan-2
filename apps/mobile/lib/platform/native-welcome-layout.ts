@@ -1,7 +1,3 @@
-export function initialThemeMode(platform: string, system: string | null | undefined): "light" | "dark" {
-  return platform === "ios" || platform === "android" ? "light" : system === "dark" ? "dark" : "light";
-}
-
 export function nativeWelcomeLayout(width: number, height: number, top: number, bottom: number) {
   const usableHeight = Math.max(0, height - top - bottom);
   const compact = usableHeight < 700 || width < 360;

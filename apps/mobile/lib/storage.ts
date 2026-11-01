@@ -46,5 +46,5 @@ export const storage = {
     return () => { sessionInvalidationListeners.delete(listener); };
   },
   async getTheme() { return get(THEME_KEY); },
-  async setTheme(value: "light" | "dark") { return set(THEME_KEY, value); },
+  async setTheme(value: "system" | "light" | "dark") { return set(THEME_KEY, value); },
 };
