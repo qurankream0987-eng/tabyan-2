@@ -58,16 +58,22 @@ export default function Muftis() {
     value: String(teacher.teacherId),
     label: String(teacher.name ?? teacher.fullName ?? teacher.teacherId),
   }));
-  const statRows = Array.isArray(stats.data)
-    ? stats.data
-    : Object.entries((stats.data ?? {}) as Record<string, unknown>).map(([label, value]) => ({ label, value }));
+  // Same five figures and labels as the web (AdminMuftis).
+  const statData = (stats.data ?? {}) as Record<string, unknown>;
+  const statRows = stats.data ? [
+    { label: "مفتٍ معتمد", value: statData.totalMuftis },
+    { label: "بلا إسناد", value: statData.unassigned },
+    { label: "قيد الإجابة", value: statData.pending },
+    { label: "متوسط التقييم", value: statData.avgStars },
+    { label: "متوسط زمن الإجابة", value: statData.avgAnswerHours == null ? undefined : `${statData.avgAnswerHours}س` },
+  ] : [];
 
   return <AdminFrame title="المفتون">
     <Text style={[styles.feedback, { color: colors.primary }]}>{feedback}</Text>
     <Card>
       <Text style={[styles.heading, { color: colors.text }]}>إحصاءات المفتين</Text>
       {statRows.length
-        ? statRows.slice(0, 4).map((row: any) => (
+        ? statRows.map((row: any) => (
           <View key={String(row.label ?? row.key)} style={styles.statRow}>
             <Text style={[styles.muted, { color: colors.muted }]}>{String(row.label ?? row.key)}</Text>
             <Text style={[styles.statValue, { color: colors.primary }]}>{String(row.value ?? row.count ?? 0)}</Text>
@@ -103,6 +109,7 @@ export default function Muftis() {
           </Pressable>
         ))}
       </View>
+      <Text style={[styles.muted, { color: colors.muted }]}>الحد الأقصى للأسئلة المعلقة</Text>
       <AdminInput
         value={max}
         onChangeText={(value) => setMax(normalizeDigits(value).replace(/\D/g, ""))}
@@ -147,6 +154,6 @@ const styles = StyleSheet.create({
   category: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 5, marginVertical: 8 },
   chip: { paddingHorizontal: 10, paddingVertical: 7, borderRadius: 14 },
   feedback: { textAlign: "right", marginBottom: 8, fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 12 },
-  statRow: { flexDirection: "row-reverse", justifyContent: "space-between", paddingVertical: 7 },
+  statRow: { flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center", paddingVertical: 7 },
   statValue: { fontFamily: "Amiri_700Bold", fontSize: 20 },
 });

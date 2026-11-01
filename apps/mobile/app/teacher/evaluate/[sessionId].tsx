@@ -63,7 +63,7 @@ export default function Evaluate() {
   const canSubmit = !!sessionId && notes.length <= 500 && !evaluate.isPending;
 
   return (
-    <TeacherScreen title="تقييم الحصة" loading={q.isLoading} error={!!q.error} retry={() => void q.refetch()}>
+    <TeacherScreen title="تقييم الحصة" back loading={q.isLoading} error={!!q.error} retry={() => void q.refetch()}>
       {session ? (
         <View>
           <Card accent>

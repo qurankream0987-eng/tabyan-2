@@ -40,11 +40,15 @@ export type RecitationStartRequest =
     }
   | {
       mode: "educational";
+      /** EDUCATIONAL يبدأ فقط من واجب تسميع؛ النطاق يجب أن يطابق الواجب تماماً. */
+      assignmentId: string;
       localRange: RecitationRange;
       expectedRange: ExpectedRecitationRange;
     };
 
 export interface SessionResult {
+  /** جلسة الخادم المنتهية — يحتاجها تسليم واجب التسميع. */
+  sessionId: string;
   surahName: string;
   startAyah: number;
   endAyah: number;
@@ -169,20 +173,25 @@ export function useRecitationSession() {
     setSt(s => ({ ...s, phase: "idle" }));
   }, []);
 
-  /** بدء جلسة: GENERAL يرسل سياق البداية فقط، وEDUCATIONAL يرسل expectedRange صريحاً. */
-  const startSession = useCallback(async (request: RecitationStartRequest, hideMode: HideMode) => {
+  /**
+   * بدء جلسة: GENERAL يرسل سياق البداية فقط، وEDUCATIONAL يرسل الواجب ونطاقه.
+   * وضع العرض الفعلي هو ما يعيده الخادم (يفرض وضع الواجب في EDUCATIONAL).
+   */
+  const startSession = useCallback(async (request: RecitationStartRequest, requestedHideMode: HideMode) => {
     const response = request.mode === "general"
       ? await startMut.mutateAsync({
           mode: "general",
           startContext: request.startContext,
-          hideMode,
+          hideMode: requestedHideMode,
         })
       : await startMut.mutateAsync({
           mode: "educational",
+          assignmentId: request.assignmentId,
           expectedRange: request.expectedRange,
-          hideMode,
+          hideMode: requestedHideMode,
         });
     const { sessionId } = response;
+    const hideMode: HideMode = response.hideMode ?? requestedHideMode;
     const range = request.localRange;
     const mode = request.mode;
     const now = Date.now();
@@ -302,6 +311,7 @@ export function useRecitationSession() {
         startTs: null,
         accumulatedSecs: 0,
         result: {
+          sessionId,
           surahName: range.surahName,
           startAyah: range.startAyah,
           endAyah: range.endAyah,

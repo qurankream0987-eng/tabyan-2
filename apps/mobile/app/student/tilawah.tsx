@@ -25,7 +25,7 @@ export default function Tilawah() {
         {["وجه واحد في الحلقة", "حصتان أسبوعياً"].map((item) => (
           <View key={item} style={styles.bulletRow}>
             <View style={styles.bullet} />
-            <Text style={[styles.text, { color: colors.text }]}>{item}</Text>
+            <Text style={[styles.text, styles.bulletText, { color: colors.text }]}>{item}</Text>
           </View>
         ))}
       </Card>
@@ -45,7 +45,8 @@ const styles = StyleSheet.create({
   heroTitle: { fontFamily: "Amiri_700Bold", fontSize: 22, textAlign: "center", marginBottom: 6 },
   sectionTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, textAlign: "right", marginBottom: 12 },
   text: { fontFamily: "IBMPlexSansArabic_400Regular", textAlign: "right", lineHeight: 24 },
-  bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginTop: 8 },
+  bulletText: { flex: 1 },
+  bulletRow: { flexDirection: "row-reverse", alignItems: "flex-start", gap: 10, marginTop: 8 },
   bullet: { width: 8, height: 8, marginTop: 8, borderRadius: 2, backgroundColor: "#D4AF37", transform: [{ rotate: "45deg" }] },
   button: { marginTop: 18 },
 });

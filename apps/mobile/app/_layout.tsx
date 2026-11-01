@@ -24,6 +24,14 @@ import { iosDestinationReady, iosSplashMotion } from "../lib/platform/ios-splash
 import { IOSWelcomeLogoVisible } from "../lib/platform/ios-welcome-visibility";
 import { splashColors } from "../constants/splash";
 
+// Screens lay out right-to-left by hand (row-reverse, textAlign "right"), so the
+// native layout must never mirror them for an Arabic device language. The setting
+// persists for the next launch; plugins/with-fixed-layout-direction covers the first.
+if (Platform.OS !== "web") {
+  I18nManager.allowRTL(false);
+  I18nManager.forceRTL(false);
+}
+
 if (Platform.OS === "ios") {
   SplashScreen.setOptions({ fade: true, duration: iosSplashMotion.nativeFade });
   void SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -146,10 +154,6 @@ export default function RootLayout() {
     Amiri_700Bold,
   });
   const ready = Platform.OS === "web" || loaded || !!fontError;
-
-  useEffect(() => {
-    if (Platform.OS !== "web" && !I18nManager.isRTL) I18nManager.allowRTL(true);
-  }, []);
 
   if (Platform.OS === "ios" && (startupFailed || fontError)) return <IOSStartupFailure />;
   if (!ready) return <View style={{ flex: 1, backgroundColor: splashColors.background }} />;

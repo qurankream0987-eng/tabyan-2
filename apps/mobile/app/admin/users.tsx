@@ -125,7 +125,7 @@ export default function Users() {
     };
     const header = ["الاسم", "الهاتف", "الدور", "الحالة", "تاريخ التسجيل"];
     const csv = "\uFEFF" + [header, ...rows.map((u) => [
-      u.fullName, u.phone, u.role === "student" ? "طالب" : "معلم",
+      u.fullName, u.phone, roleLabel(u.role),
       u.isActive === false ? "موقوف" : "نشط", dateLabel(u.createdAt),
     ])].map((row) => row.map(esc).join(",")).join("\n");
     try {
@@ -147,18 +147,18 @@ export default function Users() {
     {q.isLoading ? <LoadingState label="جارٍ تحميل المستخدمين…" /> : q.error ? <ErrorState message={safeError(q.error, "تعذر تحميل المستخدمين. حاول مرة أخرى.")} onRetry={() => void q.refetch()} /> : !rows.length ? <EmptyState title="لا نتائج" description="لا يوجد مستخدمون مطابقون للبحث." icon="people-outline" /> : rows.map((user) => (
       <Card key={user.id}>
         <Text style={[styles.name, { color: colors.text }]}>{user.fullName ?? "مستخدم"}</Text>
-        <Text style={[styles.muted, { color: colors.muted }]}>{user.phone ?? "—"} · {user.role === "student" ? "طالب" : "معلم"} · {statusLabel(user)}</Text>
+        <Text style={[styles.muted, { color: colors.muted }]}>{user.phone ?? "—"} · {roleLabel(user.role)} · {statusLabel(user)}</Text>
         <Text style={[styles.muted, { color: colors.muted }]}>
           {user.role === "student" ? `${user.levelName ?? "—"} · ${user.totalJuz ?? 0} جزء` : `التقييم ${user.avgRating ?? "—"}${user.isMufti ? " · مفتٍ" : ""} · ${user.kycStatus === "approved" ? "موثّق" : user.kycStatus ? stateLabel(user.kycStatus) : "—"}`}
         </Text>
         <View style={styles.actions}>
-          <Button label="التفاصيل" variant="secondary" disabled={pending} onPress={() => openAction(user, "")} />
-          <Button label="رسالة" variant="secondary" disabled={pending} onPress={() => openAction(user, "message")} />
-          <Button label="تحذير" variant="secondary" disabled={pending} onPress={() => openAction(user, "warn")} />
-          <Button label="حظر" variant="danger" disabled={pending} onPress={() => openAction(user, "ban")} />
+          <Button label="التفاصيل" variant="secondary" style={styles.action} disabled={pending} onPress={() => openAction(user, "")} />
+          <Button label="رسالة" variant="secondary" style={styles.action} disabled={pending} onPress={() => openAction(user, "message")} />
+          <Button label="تحذير" variant="secondary" style={styles.action} disabled={pending} onPress={() => openAction(user, "warn")} />
+          <Button label="حظر" variant="danger" style={styles.action} disabled={pending} onPress={() => openAction(user, "ban")} />
           {user.role === "teacher"
-            ? <Button label="تعطيل" variant="danger" disabled={pending} onPress={() => openAction(user, "soft")} />
-            : <Button label="حذف" variant="danger" disabled={pending} onPress={() => openAction(user, "delete")} />}
+            ? <Button label="تعطيل" variant="danger" style={styles.action} disabled={pending} onPress={() => openAction(user, "soft")} />
+            : <Button label="حذف" variant="danger" style={styles.action} disabled={pending} onPress={() => openAction(user, "delete")} />}
         </View>
       </Card>
     ))}
@@ -220,10 +220,16 @@ export default function Users() {
   </AdminFrame>;
 }
 
+function roleLabel(role: unknown) {
+  return role === "student" ? "طالب" : role === "admin" ? "مشرف" : "معلم";
+}
+
 const styles = StyleSheet.create({
   name: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right" },
   muted: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "right", marginVertical: 4 },
-  actions: { gap: 7 },
+  // Two or three compact buttons per line instead of a tall stack of five.
+  actions: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 7 },
+  action: { flexGrow: 1, flexBasis: "30%" },
   filters: { flexDirection: "row-reverse", gap: 6, marginBottom: 10, flexWrap: "wrap" },
   detailHeader: { gap: 4 },
   detailRow: { paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },

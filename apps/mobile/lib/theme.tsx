@@ -29,6 +29,7 @@ export type ThemeColors = {
   input: string;
   success: string;
   danger: string;
+  /** Opaque tint behind primary-coloured icons and text (badges, notices). */
   selected: string;
   disabled: string;
   overlay: string;
@@ -46,8 +47,11 @@ const categoriesDark: CategoryColors = designTokens.categories.dark;
 export const spacing = designTokens.spacing;
 export const radius = designTokens.radius;
 
-const glassLight = "rgba(255,252,245,0.90)";
-const glassDark = "rgba(66,18,31,0.84)";
+// Android draws a card's elevation shadow through a translucent fill, which shows
+// as a hard-edged rectangle inside the rounded card. Native gets the same colour
+// pre-blended over the page background.
+const glassLight = Platform.OS === "web" ? "rgba(255,252,245,0.90)" : "#FEFBF4";
+const glassDark = Platform.OS === "web" ? "rgba(66,18,31,0.84)" : "#3F111D";
 
 const light: ThemeColors = {
   background: designTokens.modes.light.background,
@@ -61,7 +65,7 @@ const light: ThemeColors = {
   input: designTokens.modes.light.input,
   success: designTokens.modes.light.success,
   danger: designTokens.modes.light.destructive,
-  selected: designTokens.modes.light.burgundyBackground,
+  selected: "#F4E7E3",
   disabled: `rgba(128,0,32,${1 - designTokens.buttonStates.disabledOpacity})`,
   overlay: designTokens.modes.light.overlay,
 };
@@ -78,7 +82,7 @@ const dark: ThemeColors = {
   input: designTokens.modes.dark.input,
   success: designTokens.modes.dark.success,
   danger: designTokens.modes.dark.destructive,
-  selected: designTokens.modes.dark.burgundyBackground,
+  selected: "#5A1A2B",
   disabled: `rgba(212,175,55,${1 - designTokens.buttonStates.disabledOpacity})`,
   overlay: designTokens.modes.dark.overlay,
 };

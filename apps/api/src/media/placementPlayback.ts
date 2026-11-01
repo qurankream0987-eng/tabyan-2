@@ -34,7 +34,7 @@ export type PlacementPlaybackCapabilityPayload = {
 
 const placementObjectPathSchema = z.string().regex(/^\/objects\/uploads\/(?!.*\.\.)[\w-]+$/);
 /** Media objects may live in the dedicated recording/book prefixes. */
-export const mediaObjectPathSchema = z.string().regex(/^\/objects\/uploads\/(?:(?:live-session-recordings|books)\/)?[\w-]+$/);
+export const mediaObjectPathSchema = z.string().regex(/^\/objects\/uploads\/(?:(?:live-session-recordings|books|recitation-audio)\/)?[\w-]+$/);
 const capabilityPayloadSchema = z.object({
   version: z.literal(1),
   objectPath: mediaObjectPathSchema,

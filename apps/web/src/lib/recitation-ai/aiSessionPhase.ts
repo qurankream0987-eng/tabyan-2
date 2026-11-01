@@ -83,3 +83,14 @@ export function shouldAutoReconnect(failure: TransportFailure | null, attempts: 
     && (failure === "transport" || failure === "timeout")
     && attempts < RECONNECT_DELAYS_MS.length;
 }
+
+/**
+ * Gateway errors a fresh connection can recover from: a provider stream that
+ * broke or closed, and the gateway's idle cleanup. Everything else (auth,
+ * forbidden session, replaced socket, disabled feature) is final.
+ */
+const RETRYABLE_GATEWAY_ERRORS: ReadonlySet<string> = new Set(["PROVIDER_STREAM_ERROR", "PROVIDER_CLOSED", "SESSION_IDLE"]);
+
+export function gatewayErrorFailure(code: string | null | undefined): TransportFailure {
+  return code && RETRYABLE_GATEWAY_ERRORS.has(code) ? "transport" : "server";
+}

@@ -50,7 +50,7 @@ export interface SpeechRecognitionProviderEvents {
  * Provider credentials never cross this boundary to the Native client.
  */
 export interface SpeechRecognitionProvider {
-  readonly name: "openai" | "nvidia" | "speechmatics" | "tarteel" | "nabr";
+  readonly name: "openai" | "nvidia" | "speechmatics" | "tarteel" | "tilawi" | "nabr";
   /** Start provider setup; readiness and failures arrive through events. */
   connect(): void;
   /** Accept one base64 audio chunk from the authenticated gateway. */

@@ -1,34 +1,68 @@
+import {
+  QuranLiveMatcher,
+  type CanonicalQuranWord,
+  type LiveMatch,
+} from "@workspace/tabyan-domain/quran-live-matcher";
+import {
+  RecitationStateEngine,
+  type RecitationWordState,
+} from "@workspace/tabyan-domain/recitation-state-engine";
 import { normalizeQuranText } from "./quran-normalizer";
 
-export interface CanonicalQuranWord {
-  surah: number;
-  ayah: number;
-  verseKey: string;
-  position: number;
-  page?: number;
-  line?: number;
-  displayText: string;
-  normalizedText: string;
-}
+export type { CanonicalQuranWord };
 
 export interface NativeMatcherDiagnostics {
   mode: "tracking" | "recovery";
-  underRunWords: number;
-  overRunWords: number;
   repeatedPosition: boolean;
   skippedRegionWords: number;
   unmatchedTokenCount: number;
   unmatched: boolean;
 }
 
+/**
+ * What the screen may show for a recited word. Deviations stay "pending" until
+ * the shared state engine confirms them; they never come from raw ASR text.
+ */
+export type NativeWordFeedback = "correct" | "pending" | "mistake" | "skipped" | "corrected" | "peeked";
+
+export interface NativeWordStateChange {
+  key: string;
+  state: RecitationWordState;
+}
+
 export interface NativeRecitationMatch {
   current: CanonicalQuranWord | null;
+  /**
+   * The word being recited now, for the on-screen pointer: it follows partial
+   * transcripts forward and never falls back to the last final while the
+   * reciter keeps going; a final transcript sets it to what was committed.
+   */
+  reading: CanonicalQuranWord | null;
+  /** Words of the range up to and including `reading` (position, not accuracy). */
+  readingWords: number;
   revealedWords: Map<string, number>;
+  /** `verseKey:position` of every word a final alignment confirmed; never raw ASR text. */
+  confirmedWordKeys: ReadonlySet<string>;
+  /** Display state per `verseKey:position`, from the shared recitation state engine. */
+  wordFeedback: ReadonlyMap<string, NativeWordFeedback>;
+  /** Engine states that changed in this event (for mistake/correction cues). */
+  changedWordStates: readonly NativeWordStateChange[];
   confidence: number;
   stable: boolean;
   progressionWords: number;
   totalWords: number;
   diagnostics: NativeMatcherDiagnostics;
+}
+
+/** Local, on-device summary of a general session; not an evaluation. */
+export interface NativeRecitationSummary {
+  wordsRecited: number;
+  totalWords: number;
+  confirmedMistakes: number;
+  skippedWords: number;
+  correctedWords: number;
+  /** Words revealed by a hint; neither correct nor a mistake. */
+  peekedWords: number;
 }
 
 export type NativeRecitationState =
@@ -44,280 +78,243 @@ export interface NativeRecitationCallbacks {
   onMatch?: (match: NativeRecitationMatch) => void;
 }
 
-export interface NativeMatcherOptions {
-  trackingForwardWindow?: number;
-  trackingBackwardWindow?: number;
-  recoveryMismatchLimit?: number;
-  commitStability?: number;
-  confidenceThreshold?: number;
-  generalPositionFollowing?: boolean;
-  ignoreOptionalBasmala?: boolean;
+const CONFIDENCE_THRESHOLD = 0.68;
+/**
+ * The recognizer often drops a short word ("في", "من") that was recited, which
+ * the matcher reads as an omission. Only a run of this many consecutive omitted
+ * words is shown and counted as skipped; a shorter gap is treated as not heard.
+ */
+const MIN_SHOWN_OMISSION_RUN = 3;
+
+export function confirmedWordKey(word: Pick<CanonicalQuranWord, "verseKey" | "position">) {
+  return `${word.verseKey}:${word.position}`;
 }
 
-interface Alignment {
-  start: number;
-  end: number;
-  confidence: number;
-}
-
-const BASMALA_TOKENS = ["بسم", "الله", "الرحمن", "الرحيم"];
-const EMPTY_DIAGNOSTICS: NativeMatcherDiagnostics = {
-  mode: "tracking",
-  underRunWords: 0,
-  overRunWords: 0,
-  repeatedPosition: false,
-  skippedRegionWords: 0,
-  unmatchedTokenCount: 0,
-  unmatched: true,
-};
-
-function tokens(text: string) {
-  return normalizeQuranText(text).split(" ").filter(Boolean);
-}
-
-function similarity(heard: string, expected: string) {
-  if (!heard || !expected) return 0;
-  if (heard === expected) return 1;
-  const rows = Array.from({ length: heard.length + 1 }, () => new Array<number>(expected.length + 1).fill(0));
-  for (let i = 0; i <= heard.length; i += 1) rows[i][0] = i;
-  for (let j = 0; j <= expected.length; j += 1) rows[0][j] = j;
-  for (let i = 1; i <= heard.length; i += 1) {
-    for (let j = 1; j <= expected.length; j += 1) {
-      rows[i][j] = Math.min(
-        rows[i - 1][j] + 1,
-        rows[i][j - 1] + 1,
-        rows[i - 1][j - 1] + (heard[i - 1] === expected[j - 1] ? 0 : 1),
-      );
-    }
-  }
-  return Math.max(0, 1 - rows[heard.length][expected.length] / Math.max(heard.length, expected.length, 1));
-}
-
-function tokenCost(heard: string, expected: string) {
-  if (heard === expected) return 0;
-  const distance = 1 - similarity(heard, expected);
-  return distance <= 0.25 ? 0.35 + distance : 1;
-}
-
-function sequenceCost(heard: string[], expected: string[]) {
-  const dp = Array.from({ length: heard.length + 1 }, () => new Array<number>(expected.length + 1).fill(0));
-  for (let i = 0; i <= heard.length; i += 1) dp[i][0] = i * 0.9;
-  for (let j = 0; j <= expected.length; j += 1) dp[0][j] = j * 0.9;
-  for (let i = 1; i <= heard.length; i += 1) {
-    for (let j = 1; j <= expected.length; j += 1) {
-      dp[i][j] = Math.min(
-        dp[i - 1][j] + 0.9,
-        dp[i][j - 1] + 0.9,
-        dp[i - 1][j - 1] + tokenCost(heard[i - 1], expected[j - 1]),
-      );
-    }
-  }
-  return dp[heard.length][expected.length];
+function tokenCount(text: string) {
+  return normalizeQuranText(text).split(" ").filter(Boolean).length;
 }
 
 /**
- * Native live matcher. It tracks canonical word positions only; confidence and
- * diagnostics are internal alignment data, not a recitation score.
+ * Native live matcher: the shared web matcher and mistake engine behind the
+ * controller's `feed(text, itemId, isFinal)` contract. Partials only move the
+ * provisional pointer; words are committed and judged from final transcripts.
  */
 export class NativeQuranLiveMatcher {
-  private committed = 0;
-  private committedCurrent: CanonicalQuranWord | null = null;
-  private provisional: CanonicalQuranWord | null = null;
-  private pendingStart = -1;
-  private pendingEnd = -1;
-  private stability = 0;
-  private lastEvent = "";
+  private readonly matcher: QuranLiveMatcher;
+  private readonly engine: RecitationStateEngine;
+  private readonly indexByKey = new Map<string, number>();
   private readonly confirmedIndices = new Set<number>();
-  private mode: "tracking" | "recovery" = "tracking";
-  private mismatchCount = 0;
-  private lastDiagnostics = EMPTY_DIAGNOSTICS;
-  private readonly options: Required<NativeMatcherOptions>;
-  private readonly tokensByItem = new Map<string, string[]>();
+  private readingIndex = -1;
+  private lastEvent = "";
+  private lastResult: NativeRecitationMatch | null = null;
 
-  constructor(private words: CanonicalQuranWord[], options: NativeMatcherOptions = {}) {
-    this.options = {
-      trackingForwardWindow: options.trackingForwardWindow ?? 16,
-      trackingBackwardWindow: options.trackingBackwardWindow ?? 3,
-      recoveryMismatchLimit: options.recoveryMismatchLimit ?? 3,
-      commitStability: options.commitStability ?? 2,
-      confidenceThreshold: options.confidenceThreshold ?? 0.68,
-      generalPositionFollowing: options.generalPositionFollowing ?? true,
-      ignoreOptionalBasmala: options.ignoreOptionalBasmala ?? true,
-    };
+  constructor(private readonly words: CanonicalQuranWord[]) {
+    this.matcher = new QuranLiveMatcher(words, {
+      generalPositionFollowing: true,
+      ignoreOptionalBasmala: true,
+      confidenceThreshold: CONFIDENCE_THRESHOLD,
+      commitPartials: false,
+    });
+    this.engine = new RecitationStateEngine({ wordAt: (index) => this.matcher.wordAt(index) });
+    this.indexWords();
   }
 
   appendWords(nextWords: CanonicalQuranWord[]) {
-    const known = new Set(this.words.map((word) => `${word.verseKey}:${word.position}`));
-    for (const word of nextWords) {
-      const key = `${word.verseKey}:${word.position}`;
-      if (!known.has(key)) {
-        this.words.push(word);
-        known.add(key);
-      }
-    }
+    this.matcher.appendWords(nextWords);
+    this.indexWords();
   }
 
   setStartPosition(position: { verseKey: string; wordPosition?: number }) {
-    const index = this.words.findIndex((word) =>
-      word.verseKey === position.verseKey
-      && (position.wordPosition === undefined || word.position >= position.wordPosition),
-    );
-    if (index < 0) return false;
-    this.committed = index;
-    this.committedCurrent = index > 0 ? this.words[index - 1] : null;
-    this.provisional = null;
-    this.pendingStart = index;
-    this.pendingEnd = index;
-    this.stability = 0;
-    this.lastEvent = "";
+    if (!this.matcher.setStartPosition(position)) return false;
+    this.engine.setStart(this.matcher.committedIndex());
     this.confirmedIndices.clear();
-    this.mode = "tracking";
-    this.mismatchCount = 0;
-    this.tokensByItem.clear();
-    this.lastDiagnostics = { ...EMPTY_DIAGNOSTICS, mode: this.mode };
+    this.readingIndex = this.matcher.committedIndex() - 1;
+    this.lastEvent = "";
+    this.lastResult = null;
     return true;
-  }
-
-  private optionalBasmalaIsAhead() {
-    if (!this.options.ignoreOptionalBasmala) return false;
-    const nearby = this.words.slice(
-      Math.max(0, this.committed - 1),
-      Math.min(this.words.length, this.committed + this.options.trackingForwardWindow + 5),
-    );
-    return nearby.some((word) =>
-      word.ayah === 1
-      && word.position === 1
-      && word.surah !== 1
-      && word.surah !== 9
-      && word.normalizedText !== "بسم",
-    );
-  }
-
-  private eventWithoutOptionalBasmala(text: string) {
-    if (!this.optionalBasmalaIsAhead()) return text;
-    const heard = tokens(text);
-    let prefixLength = 0;
-    while (
-      prefixLength < heard.length
-      && prefixLength < BASMALA_TOKENS.length
-      && heard[prefixLength] === BASMALA_TOKENS[prefixLength]
-    ) {
-      prefixLength += 1;
-    }
-    return prefixLength ? heard.slice(prefixLength).join(" ") : text;
-  }
-
-  private findAlignment(heard: string[]): Alignment | null {
-    if (!heard.length) return null;
-    const anchor = this.committed;
-    let first = Math.max(0, anchor - this.options.trackingBackwardWindow);
-    let last = Math.min(this.words.length - 1, anchor + this.options.trackingForwardWindow);
-    if (this.mode === "recovery") {
-      first = Math.max(0, anchor - this.options.trackingBackwardWindow);
-      last = Math.min(this.words.length - 1, anchor + (this.options.generalPositionFollowing ? 48 : 24));
-    }
-    let best: Alignment | null = null;
-    for (let start = first; start <= last; start += 1) {
-      for (let length = Math.max(1, heard.length - 1); length <= heard.length + 2; length += 1) {
-        const end = start + length;
-        if (end > this.words.length) continue;
-        const expected = this.words.slice(start, end).map((word) => word.normalizedText);
-        const confidence = 1 - sequenceCost(heard, expected) / Math.max(heard.length, expected.length, 1);
-        const adjusted = confidence - Math.abs(start - this.committed) * 0.006;
-        if (!best || adjusted > best.confidence) best = { start, end, confidence: adjusted };
-      }
-    }
-    return best;
-  }
-
-  private revealMap() {
-    const revealed = new Map<string, number>();
-    for (const index of this.confirmedIndices) {
-      const word = this.words[index];
-      revealed.set(word.verseKey, (revealed.get(word.verseKey) ?? 0) + 1);
-    }
-    return revealed;
-  }
-
-  private usefulTokens(text: string, itemId: string, isFinal: boolean) {
-    const next = tokens(text);
-    const previous = this.tokensByItem.get(itemId);
-    if (isFinal) {
-      this.tokensByItem.delete(itemId);
-      return next;
-    }
-    this.tokensByItem.set(itemId, next);
-    if (!previous || next.length <= previous.length) return next;
-    const isExtension = previous.every((token, index) => next[index] === token);
-    return isExtension ? next.slice(previous.length) : next;
   }
 
   feed(text: string, itemId: string, isFinal: boolean): NativeRecitationMatch {
     const eventKey = `${itemId}:${isFinal}:${text}`;
-    if (eventKey === this.lastEvent) return this.result(0, false, this.lastDiagnostics);
+    if (eventKey === this.lastEvent && this.lastResult) {
+      return { ...this.lastResult, stable: false, changedWordStates: [] };
+    }
     this.lastEvent = eventKey;
-    const canonicalText = this.eventWithoutOptionalBasmala(text);
-    const heard = this.usefulTokens(canonicalText, itemId, isFinal);
-    if (!heard.length && canonicalText !== text) {
-      return this.result(1, false, { ...EMPTY_DIAGNOSTICS, mode: this.mode, unmatched: false });
+    const committedBefore = this.matcher.committedIndex();
+    const live = this.matcher.feed({ text, itemId, isFinal });
+    const update = this.engine.apply(live);
+    // A partial that does not align (a half-heard word, noise) keeps the
+    // pointer where it is instead of snapping back to the last final.
+    if (isFinal && live.stable) this.readingIndex = live.committedIndex - 1;
+    else this.readingIndex = Math.max(this.readingIndex, live.provisionalIndex, live.committedIndex - 1);
+    for (const op of [...live.committedOps, ...live.revisitOps]) {
+      if (op.kind === "match" || op.kind === "substitution") this.confirmedIndices.add(op.index);
     }
-    const alignment = this.findAlignment(heard);
-    if (!alignment || alignment.confidence < this.options.confidenceThreshold) {
-      this.mismatchCount += 1;
-      this.provisional = null;
-      if (this.mode === "tracking" && this.mismatchCount >= this.options.recoveryMismatchLimit) this.mode = "recovery";
-      return this.result(alignment?.confidence ?? 0, false, {
-        ...EMPTY_DIAGNOSTICS,
-        mode: this.mode,
-        unmatchedTokenCount: heard.length,
-      });
+    const changedWordStates: NativeWordStateChange[] = [];
+    for (const index of update.changed) {
+      const word = this.matcher.wordAt(index);
+      // No mistake cue for a gap that is not shown.
+      if (word && !this.isUnheardGap(index)) changedWordStates.push({ key: confirmedWordKey(word), state: this.engine.stateAt(index) });
     }
-    this.mismatchCount = 0;
-    this.mode = "tracking";
-    const previousCommitted = this.committed;
-    if (alignment.start === this.pendingStart && alignment.end >= this.pendingEnd) this.stability += 1;
-    else this.stability = 1;
-    this.pendingStart = alignment.start;
-    this.pendingEnd = alignment.end;
-    this.provisional = this.words[alignment.end - 1] ?? null;
-    // Partials may move the provisional pointer, never permanently reveal words.
-    const stable = isFinal;
-    if (stable) {
-      for (let index = alignment.start; index < alignment.end; index += 1) {
-        this.confirmedIndices.add(index);
-      }
-    }
-    if (stable && alignment.end > this.committed) {
-      this.committed = alignment.end;
-      this.committedCurrent = this.words[this.committed - 1] ?? null;
-      this.provisional = null;
-    }
-    const spanWords = alignment.end - alignment.start;
-    return this.result(alignment.confidence, stable, {
-      mode: this.mode,
-      underRunWords: Math.max(0, previousCommitted - alignment.end),
-      overRunWords: Math.max(0, alignment.start - previousCommitted - heard.length),
-      repeatedPosition: alignment.end <= previousCommitted,
-      skippedRegionWords: Math.max(0, alignment.start - previousCommitted),
-      unmatchedTokenCount: Math.max(0, heard.length - spanWords),
-      unmatched: false,
-    });
-  }
-
-  private result(
-    confidence: number,
-    stable: boolean,
-    diagnostics: NativeMatcherDiagnostics,
-  ): NativeRecitationMatch {
-    this.lastDiagnostics = diagnostics;
-    return {
-      current: this.provisional ?? this.committedCurrent,
-      revealedWords: this.revealMap(),
-      confidence,
-      stable,
+    this.lastResult = {
+      current: live.current,
+      reading: this.matcher.wordAt(this.readingIndex) ?? null,
+      readingWords: this.readingIndex + 1,
+      revealedWords: live.revealedWords,
+      confirmedWordKeys: this.confirmedKeys(),
+      wordFeedback: this.wordFeedback(),
+      changedWordStates,
+      confidence: live.confidence,
+      stable: live.stable,
       progressionWords: this.confirmedIndices.size,
       totalWords: this.words.length,
-      diagnostics,
+      diagnostics: this.diagnostics(live, text, committedBefore),
+    };
+    return this.lastResult;
+  }
+
+  /**
+   * Hint for a reciter who is stuck: reveals the word after the reading pointer
+   * (level 1), the next three words (2) or the rest of that ayah (3). Hinted
+   * words are recorded as peeks, never as correct words or mistakes.
+   */
+  peek(level: 1 | 2 | 3): NativeRecitationMatch | null {
+    const start = Math.max(this.readingIndex + 1, this.matcher.committedIndex());
+    const first = this.matcher.wordAt(start);
+    if (!first) return null;
+    const indices: number[] = [];
+    const limit = level === 1 ? 1 : level === 2 ? 3 : Number.POSITIVE_INFINITY;
+    for (let index = start; indices.length < limit; index += 1) {
+      const word = this.matcher.wordAt(index);
+      if (!word || (level === 3 && word.verseKey !== first.verseKey)) break;
+      indices.push(index);
+    }
+    this.engine.peekIndices(indices);
+    const base = this.lastResult ?? this.emptyResult();
+    this.lastResult = { ...base, wordFeedback: this.wordFeedback(), changedWordStates: [], stable: false };
+    return this.lastResult;
+  }
+
+  /**
+   * Ends the local session: unconfirmed deviations are dropped (never counted as
+   * mistakes) and the summary reflects exactly what the screen showed.
+   */
+  finish(): NativeRecitationSummary {
+    this.engine.finalize();
+    const summary: NativeRecitationSummary = {
+      wordsRecited: this.confirmedIndices.size,
+      totalWords: this.words.length,
+      confirmedMistakes: 0,
+      skippedWords: 0,
+      correctedWords: 0,
+      peekedWords: 0,
+    };
+    for (const feedback of this.wordFeedback().values()) {
+      if (feedback === "mistake") summary.confirmedMistakes += 1;
+      else if (feedback === "skipped") summary.skippedWords += 1;
+      else if (feedback === "corrected") summary.correctedWords += 1;
+      else if (feedback === "peeked") summary.peekedWords += 1;
+    }
+    return summary;
+  }
+
+  /** Words the engine flagged, for a submitted assignment; call after finish(). */
+  flaggedWords(): { key: string; kind: Exclude<NativeWordFeedback, "correct" | "pending"> }[] {
+    const flagged: { key: string; kind: Exclude<NativeWordFeedback, "correct" | "pending"> }[] = [];
+    for (const [key, feedback] of this.wordFeedback()) {
+      if (feedback !== "correct" && feedback !== "pending") flagged.push({ key, kind: feedback });
+    }
+    return flagged;
+  }
+
+  private indexWords() {
+    this.words.forEach((word, index) => this.indexByKey.set(confirmedWordKey(word), index));
+  }
+
+  private confirmedKeys() {
+    const keys = new Set<string>();
+    for (const index of this.confirmedIndices) {
+      const word = this.matcher.wordAt(index);
+      if (word) keys.add(confirmedWordKey(word));
+    }
+    return keys;
+  }
+
+  private wordFeedback() {
+    const feedback = new Map<string, NativeWordFeedback>();
+    for (const [key, state] of this.engine.visibleStates(true)) {
+      const index = this.indexByKey.get(key);
+      if (index === undefined) continue;
+      const value = this.feedbackFor(index, state);
+      if (value) feedback.set(key, value);
+    }
+    return feedback;
+  }
+
+  private feedbackFor(index: number, state: RecitationWordState): NativeWordFeedback | null {
+    // A short gap is never shown as a mistake; once re-read it is simply correct.
+    if (this.isUnheardGap(index)) return state === "CORRECTED" ? "correct" : null;
+    switch (state) {
+      case "CORRECT":
+        return "correct";
+      case "CORRECTED":
+        return "corrected";
+      case "PEEKED":
+        return "peeked";
+      case "POSSIBLE_ERROR":
+        return "pending";
+      case "CONFIRMED_ERROR":
+        return this.engine.mistakeAt(index)?.kind === "OMISSION" ? "skipped" : "mistake";
+      case "SKIPPED": {
+        // A long skipped run records one mistake at its first word; show the run
+        // only once that mistake is confirmed.
+        let start = index;
+        while (start > 0 && this.engine.stateAt(start - 1) === "SKIPPED") start -= 1;
+        return this.engine.mistakeAt(start)?.status === "confirmed" ? "skipped" : null;
+      }
+      default:
+        return null;
+    }
+  }
+
+  private emptyResult(): NativeRecitationMatch {
+    return {
+      current: null,
+      reading: this.matcher.wordAt(this.readingIndex) ?? null,
+      readingWords: this.readingIndex + 1,
+      revealedWords: new Map(),
+      confirmedWordKeys: this.confirmedKeys(),
+      wordFeedback: this.wordFeedback(),
+      changedWordStates: [],
+      confidence: 0,
+      stable: false,
+      progressionWords: this.confirmedIndices.size,
+      totalWords: this.words.length,
+      diagnostics: { mode: "tracking", repeatedPosition: false, skippedRegionWords: 0, unmatchedTokenCount: 0, unmatched: false },
+    };
+  }
+
+  /** A short run of omissions, more likely missed by the recognizer than skipped. */
+  private isUnheardGap(index: number) {
+    const isOmission = (at: number) => this.engine.mistakeAt(at)?.kind === "OMISSION";
+    if (!isOmission(index)) return false;
+    let start = index;
+    while (start > 0 && isOmission(start - 1)) start -= 1;
+    let end = index;
+    while (isOmission(end + 1)) end += 1;
+    return end - start + 1 < MIN_SHOWN_OMISSION_RUN;
+  }
+
+  private diagnostics(live: LiveMatch, text: string, committedBefore: number): NativeMatcherDiagnostics {
+    const unmatched = live.confidence < CONFIDENCE_THRESHOLD;
+    return {
+      mode: live.mode,
+      repeatedPosition: live.stable && live.committedIndex <= committedBefore && live.revisitOps.length > 0,
+      skippedRegionWords: live.committedOps.filter((op) => op.kind === "skip").length,
+      unmatchedTokenCount: unmatched
+        ? tokenCount(text)
+        : live.committedOps.filter((op) => op.kind === "extra").length,
+      unmatched,
     };
   }
 }

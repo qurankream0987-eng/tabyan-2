@@ -188,7 +188,7 @@ function OptionButton({ label, icon, active, disabled, loading, onPress }: { lab
 }
 
 const styles = StyleSheet.create({
-  backLink: { alignSelf: "flex-start", paddingVertical: 4, marginBottom: 4 },
+  backLink: { alignSelf: "flex-end", paddingVertical: 4, marginBottom: 4 },
   backText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13 },
   feedback: { fontFamily: "IBMPlexSansArabic_600SemiBold", textAlign: "right", fontSize: 12, marginBottom: 4 },
   groupLabel: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 12, textAlign: "right", marginBottom: 9 },

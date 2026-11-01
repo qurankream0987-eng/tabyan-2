@@ -7,6 +7,7 @@ import { authStore } from "@/lib/auth";
 import { fmtDateTime } from "@/lib/format";
 import { DEMO_DASHBOARD } from "@/lib/demo/teacher";
 import Icon from "@/components/Icon";
+import { ReviewQueueSection } from "@/components/recitation-assignments/TeacherAssignments";
 
 export default function TeacherHome() {
   const DEMO = authStore.isDemo;
@@ -111,6 +112,9 @@ export default function TeacherHome() {
           </GlassCard>
         )}
       </section>
+
+      {/* ── واجبات التسميع التي سلّمها الطلاب ── */}
+      {!DEMO && <ReviewQueueSection />}
 
       {/* ── Week summary ── */}
       <GlassCard hover={false} className="p-5">

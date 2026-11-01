@@ -21,7 +21,7 @@ export default function SessionsMonitoring() {
           <Text style={[styles.title, { color: colors.text }]}>{String(s.typeLabel ?? "حلقة")}{s.topic ? ` — ${String(s.topic)}` : ""}</Text>
           <View style={styles.meta}><Badge label={isLive ? "جارية الآن" : "قادمة"} tone={isLive ? "success" : "gold"} /><Text style={[styles.small, { color: colors.muted }]}>{s.type === "group" ? "جماعية" : "فردية"}</Text></View>
           <Text style={[styles.small, { color: colors.muted }]}>الطالب: {String(s.studentName ?? "غير محدد")} · المعلم: {String(s.teacherName ?? "غير محدد")}</Text>
-          <Text style={[styles.small, { color: colors.muted }]}>{s.levelName ? `المستوى: ${String(s.levelName)} · ` : ""}{String(s.scheduledAt ?? "موعد غير محدد")} · {String(s.durationMinutes ?? "—")} دقيقة</Text>
+          <Text style={[styles.small, { color: colors.muted }]}>{s.levelName ? `المستوى: ${String(s.levelName)} · ` : ""}{s.scheduledAt ? formatDateTime(s.scheduledAt) : "موعد غير محدد"} · {String(s.durationMinutes ?? "—")} دقيقة</Text>
         </View><View style={[styles.join, { backgroundColor: isLive ? colors.primary : colors.input }]}><Icon name={isLive ? "videocam-outline" : "time-outline"} size={18} color={isLive ? colors.primaryText : colors.muted} /></View></View>
         {!isLive ? <Text style={[styles.small, { color: colors.muted }]}>لم تبدأ الحلقة بعد</Text> : null}
       </Card>
@@ -32,4 +32,10 @@ export default function SessionsMonitoring() {
     <Text style={[styles.section, { color: colors.text }]}>قادمة ({upcoming.length})</Text>{upcoming.length ? upcoming.map((s) => render(s, false)) : <EmptyState title="لا توجد حلقات قادمة" icon="calendar-outline" />}
   </AdminFrame>;
 }
+function formatDateTime(value: unknown) {
+  const date = new Date(String(value ?? ""));
+  if (Number.isNaN(date.getTime())) return String(value ?? "");
+  return `${date.toLocaleDateString("ar-SA-u-nu-latn", { day: "numeric", month: "long" })} — ${date.toLocaleTimeString("ar-SA-u-nu-latn", { hour: "2-digit", minute: "2-digit" })}`;
+}
+
 const styles = StyleSheet.create({ card: { padding: 14 }, row: { flexDirection: "row-reverse", gap: 10, alignItems: "center" }, main: { flex: 1, gap: 5 }, heading: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 19, textAlign: "right" }, title: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 15, textAlign: "right" }, small: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "right", lineHeight: 20 }, meta: { flexDirection: "row-reverse", alignItems: "center", gap: 8 }, join: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" }, section: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 17, textAlign: "right", marginTop: 12, marginBottom: 8 } });

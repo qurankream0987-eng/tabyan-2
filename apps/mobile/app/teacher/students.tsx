@@ -27,7 +27,7 @@ export default function Students() {
               <Text style={[styles.name, { color: colors.text }]}>{s.name}</Text>
               <Text style={[styles.level, { color: colors.muted }]}>المستوى: {s.levelName || "—"}</Text>
               <View style={[styles.footer, { borderTopColor: colors.border }]}>
-                <Text style={[styles.footerText, { color: colors.muted }]}><Icon name="books-outline" size={12} color={colors.muted} /> {s.totalJuz ?? 0} أجزاء</Text>
+                <Text style={[styles.footerText, { color: colors.muted }]}><Icon name="library-outline" size={12} color={colors.muted} /> {s.totalJuz ?? 0} أجزاء</Text>
                 <Text style={[styles.footerText, { color: s.nextSessionAt ? colors.primary : colors.muted }]}><Icon name="time-outline" size={12} color={s.nextSessionAt ? colors.primary : colors.muted} /> {s.nextSessionAt ? "موعد قادم" : "لا يوجد"}</Text>
               </View>
             </Card>
@@ -41,11 +41,11 @@ export default function Students() {
 const styles = StyleSheet.create({
   count: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "right", marginBottom: 12 },
   card: { marginBottom: 12 },
-  cardTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
+  cardTop: { flexDirection: "row-reverse", alignItems: "flex-start", justifyContent: "space-between" },
   avatar: { width: 48, height: 48, borderRadius: 24, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   avatarText: { fontFamily: "Amiri_700Bold", fontSize: 21 },
   name: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, textAlign: "right", marginTop: 12 },
   level: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right", marginTop: 3 },
-  footer: { borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row", justifyContent: "space-between", marginTop: 12, paddingTop: 10 },
+  footer: { borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row-reverse", justifyContent: "space-between", marginTop: 12, paddingTop: 10 },
   footerText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11 },
 });

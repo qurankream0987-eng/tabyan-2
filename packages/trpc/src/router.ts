@@ -10,6 +10,7 @@ import { notificationsRouter } from "./routers/notifications";
 import { shariaRouter } from "./routers/sharia";
 import { dailyVerseRouter } from "./routers/daily-verse";
 import { recitationRouter } from "./routers/recitation";
+import { recitationAssignmentsRouter } from "./routers/recitation-assignments";
 import { quranFoundationRouter } from "./routers/quran-foundation";
 
 export const appRouter = createRouter({
@@ -24,6 +25,7 @@ export const appRouter = createRouter({
   sharia: shariaRouter,
   dailyVerse: dailyVerseRouter,
   recitation: recitationRouter,
+  recitationAssignments: recitationAssignmentsRouter,
   quranFoundation: quranFoundationRouter,
 });
 

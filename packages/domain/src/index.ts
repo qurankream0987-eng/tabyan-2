@@ -19,9 +19,13 @@ export {
   type NabrQrcGatewayStart,
 } from "./nabr-qrc-gateway-contract";
 export {
+  RECITATION_GATEWAY_SILENCE_TIMEOUT_MS,
+  RECITATION_KEEPALIVE_INTERVAL_MS,
   RECITATION_PROVIDERS,
   NormalizedTranscriptMatcherBridge,
   normalizeProviderObservation,
+  providerAcknowledgesFinalization,
+  providerFinalizationTimeoutMs,
   type ConfirmedTabyanRecitationEvent,
   type MatcherTranscriptInput,
   type NormalizedMistakeType,

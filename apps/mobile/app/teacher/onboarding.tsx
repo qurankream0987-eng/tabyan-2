@@ -223,7 +223,7 @@ export default function Onboarding() {
   if (hasError) return <TeacherScreen title="اعتماد المعلم"><ErrorState message="تعذر تحميل حالة الاعتماد." onRetry={() => void kyc.refetch()} /></TeacherScreen>;
 
   if (status?.kycStatus === "approved") {
-    return <TeacherScreen title="اعتماد المعلم"><Card style={styles.center}><Icon name="checkmark-circle" size={52} color={colors.success} /><Text style={[styles.heading, { color: colors.primary }]}>تم قبول طلبك</Text><Text style={[styles.body, { color: colors.muted }]}>أنت معلم معتمد في منصة تبيان.</Text>{status.isMufti ? <Badge label="مفتٍ معتمد" tone="gold" /> : null}<Button label="إلى لوحة المعلم" onPress={() => router.replace("/teacher" as never)} /></Card></TeacherScreen>;
+    return <TeacherScreen title="اعتماد المعلم"><Card style={styles.center}><Icon name="checkmark-circle" size={52} color={colors.success} /><Text style={[styles.heading, { color: colors.primary }]}>تم قبول طلبك</Text><Text style={[styles.body, { color: colors.muted }]}>أنت معلم معتمد في منصة تبيان.</Text>{status.isMufti ? <Badge label="مفتٍ معتمد" tone="gold" style={styles.centerBadge} /> : null}<Button label="إلى لوحة المعلم" onPress={() => router.replace("/teacher" as never)} /></Card></TeacherScreen>;
   }
 
   if (status?.kycStatus === "awaiting_assessment") {
@@ -272,6 +272,7 @@ function Certificates({ certificates, loading, error, title, onTitleChange, onPi
 
 const styles = StyleSheet.create({
   center: { alignItems: "center", gap: 8 },
+  centerBadge: { alignSelf: "center" },
   heading: { fontFamily: "Amiri_700Bold", fontSize: 24, textAlign: "center" },
   sectionTitle: { fontFamily: "Amiri_700Bold", fontSize: 19, textAlign: "right", marginBottom: 8 },
   body: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 22, textAlign: "right" },

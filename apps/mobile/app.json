@@ -100,6 +100,8 @@
         }
       ],
       "@config-plugins/react-native-webrtc",
+      "./plugins/with-fixed-layout-direction",
+      "./plugins/with-windows-android-build",
       [
         "expo-secure-store",
         {

@@ -31,7 +31,7 @@ test("Tarteel is opt-in for development only", () => {
 });
 
 test("existing provider selection remains unchanged", () => {
-  for (const provider of ["openai", "nvidia", "speechmatics"] as const) {
+  for (const provider of ["openai", "nvidia", "speechmatics", "tilawi"] as const) {
     assert.equal(selectSpeechRecognitionProvider({
       provider,
       nodeEnv: "production",

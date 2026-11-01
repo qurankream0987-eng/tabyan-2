@@ -3,6 +3,7 @@ export type ProviderErrorCategory =
   | "authorization"
   | "rate_limited"
   | "audio_format"
+  | "configuration"
   | "network"
   | "provider_error";
 
@@ -21,6 +22,7 @@ export function classifyProviderError(message: string): ProviderErrorCategory {
   }
   if (/rate.?limit|too many requests|\b429\b/.test(value)) return "rate_limited";
   if (/audio.?format|invalid.?pcm|sample.?rate|encoding/.test(value)) return "audio_format";
+  if (/invalid.?model|model parameter|unknown parameter|invalid.?request/.test(value)) return "configuration";
   if (/timeout|timed out|connection|socket|network|unavailable/.test(value)) return "network";
   return "provider_error";
 }

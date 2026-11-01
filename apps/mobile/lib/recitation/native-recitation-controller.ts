@@ -1,3 +1,11 @@
+import { AutoGain } from "./auto-gain";
+import { SpeechFilter } from "./speech-filter";
+import {
+  providerAcknowledgesFinalization,
+  providerFinalizationTimeoutMs,
+  RECITATION_GATEWAY_SILENCE_TIMEOUT_MS,
+  RECITATION_KEEPALIVE_INTERVAL_MS,
+} from "@workspace/tabyan-domain";
 import type {
   NativeQuranLiveMatcher,
   NativeRecitationCallbacks,
@@ -44,6 +52,10 @@ export interface NativeRecitationRuntime {
   disposeAudio?(): void;
   readyTimeoutMs?: number;
   finalTimeoutMs?: number;
+  keepaliveIntervalMs?: number;
+  gatewaySilenceTimeoutMs?: number;
+  /** Band-limit and raise quiet microphone audio before streaming (default on). */
+  conditionAudio?: boolean;
 }
 
 export interface NativeMatcherLike {
@@ -51,6 +63,8 @@ export interface NativeMatcherLike {
 }
 
 const SOCKET_OPEN = 1;
+/** Audio captured before the provider is ready is kept up to this long. */
+const MAX_PENDING_AUDIO_SECONDS = 10;
 
 function resampleMono(channels: Float32Array[], sourceRate: number, targetRate: number) {
   const sourceLength = channels[0]?.length ?? 0;
@@ -114,6 +128,13 @@ export class NativeRecitationControllerCore {
   private readyReject: ((error: Error) => void) | null = null;
   private readyTimer: ReturnType<typeof setTimeout> | null = null;
   private commitTimer: ReturnType<typeof setInterval> | null = null;
+  private keepaliveTimer: ReturnType<typeof setInterval> | null = null;
+  private lastGatewayMessageAt = 0;
+  private streaming = false;
+  private pendingAudio: { samples: Float32Array; sampleRate: number }[] = [];
+  /** Speech-band filter then automatic gain, on mono audio at the device rate. */
+  private readonly condition: (samples: Float32Array, sampleRate: number) => Float32Array;
+  private pendingAudioSeconds = 0;
   private stopFlight: Promise<boolean> | null = null;
   private stopping = false;
   private provider = "openai";
@@ -131,7 +152,15 @@ export class NativeRecitationControllerCore {
     private readonly matcher: NativeMatcherLike,
     private readonly callbacks: NativeRecitationCallbacks,
     private readonly runtime: NativeRecitationRuntime,
-  ) {}
+  ) {
+    if (this.runtime.conditionAudio === false) {
+      this.condition = (samples) => samples;
+    } else {
+      const filter = new SpeechFilter();
+      const gain = new AutoGain();
+      this.condition = (samples, sampleRate) => gain.apply(filter.apply(samples, sampleRate));
+    }
+  }
 
   async start(token: string, sessionId: string) {
     if (this.hasStarted) throw new Error("Create a new controller for another session");
@@ -146,7 +175,7 @@ export class NativeRecitationControllerCore {
         throw new Error("Microphone permission was not granted");
       }
       if (this.closed) throw new Error("Recitation session was stopped");
-      await new Promise<void>((resolve, reject) => {
+      const ready = new Promise<void>((resolve, reject) => {
         this.readyResolve = resolve;
         this.readyReject = reject;
         this.readyTimer = setTimeout(() => this.fail(new Error("Live provider readiness timed out")), this.runtime.readyTimeoutMs ?? 15_000);
@@ -161,8 +190,13 @@ export class NativeRecitationControllerCore {
           if (!this.closed) this.fail(new Error("Live recitation connection closed"));
         };
       });
+      // Capture starts with the connection so the first words, spoken while
+      // the provider is still connecting, are buffered instead of lost.
+      const recording = this.startRecorder();
+      void recording.catch(() => {});
+      await Promise.all([ready, recording]);
       if (this.closed) throw new Error("Recitation session was stopped");
-      await this.startRecorder();
+      this.beginStreaming();
     } catch (error) {
       if (!this.closed) this.fail(safeError(error));
       throw safeError(error);
@@ -178,7 +212,8 @@ export class NativeRecitationControllerCore {
     } catch {
       return;
     }
-    if (message.t === "authenticated") return;
+    this.lastGatewayMessageAt = Date.now();
+    if (message.t === "authenticated" || message.t === "pong") return;
     if (message.t === "ready") {
       if (!this.readyResolve || this.closed) return;
       if (this.readyTimer) clearTimeout(this.readyTimer);
@@ -233,21 +268,18 @@ export class NativeRecitationControllerCore {
     const callbackResult = recorder.onAudioReady(
       { sampleRate: 24_000, bufferLength: 2_400, channelCount: 1 },
       ({ buffer }) => {
-        if (this.closed || !this.socket || this.socket.readyState !== SOCKET_OPEN) return;
+        if (this.closed) return;
         const channels = Array.from(
           { length: buffer.numberOfChannels },
           (_, channel) => buffer.getChannelData(channel),
         );
-        const samples = resampleMono(channels, buffer.sampleRate, this.targetSampleRate);
-        if (!samples.length) return;
-        this.audioSinceCommit = true;
-        try {
-          this.socket.send(JSON.stringify({
-            t: "audio",
-            audio: pcm16leBase64(samples),
-            timing: { audioChunkCreatedAt: Date.now(), audioChunkSentAt: Date.now() },
-          }));
-        } catch (error) { this.fail(safeError(error)); }
+        // Mixing to mono copies the samples out of the reused native buffer.
+        const mono = this.condition(resampleMono(channels, buffer.sampleRate, buffer.sampleRate), buffer.sampleRate);
+        if (!this.streaming) {
+          this.bufferAudio(mono, buffer.sampleRate);
+          return;
+        }
+        this.sendAudio(resampleMono([mono], buffer.sampleRate, this.targetSampleRate));
       },
     );
     if (callbackResult.status === "error") throw new Error(callbackResult.message ?? "Audio recorder setup failed");
@@ -258,6 +290,53 @@ export class NativeRecitationControllerCore {
       throw new Error("Recitation session was stopped");
     }
     this.recorderStarted = true;
+  }
+
+  private bufferAudio(samples: Float32Array, sampleRate: number) {
+    if (!samples.length) return;
+    this.pendingAudio.push({ samples, sampleRate });
+    this.pendingAudioSeconds += samples.length / sampleRate;
+    while (this.pendingAudioSeconds > MAX_PENDING_AUDIO_SECONDS && this.pendingAudio.length > 1) {
+      const dropped = this.pendingAudio.shift()!;
+      this.pendingAudioSeconds -= dropped.samples.length / dropped.sampleRate;
+    }
+  }
+
+  private sendAudio(samples: Float32Array) {
+    if (!samples.length || !this.socket || this.socket.readyState !== SOCKET_OPEN) return;
+    this.audioSinceCommit = true;
+    try {
+      this.socket.send(JSON.stringify({
+        t: "audio",
+        audio: pcm16leBase64(samples),
+        timing: { audioChunkCreatedAt: Date.now(), audioChunkSentAt: Date.now() },
+      }));
+    } catch (error) { this.fail(safeError(error)); }
+  }
+
+  /** Provider ready and microphone running: flush buffered audio, then stream live. */
+  private beginStreaming() {
+    const pending = this.pendingAudio;
+    this.pendingAudio = [];
+    this.pendingAudioSeconds = 0;
+    for (const chunk of pending) {
+      if (this.closed) return;
+      this.sendAudio(resampleMono([chunk.samples], chunk.sampleRate, this.targetSampleRate));
+    }
+    this.streaming = true;
+    this.lastGatewayMessageAt = Date.now();
+    // Keepalive also runs while paused, so a thinking pause never idles out.
+    this.keepaliveTimer = setInterval(() => {
+      if (this.closed) return;
+      const silenceMs = this.runtime.gatewaySilenceTimeoutMs ?? RECITATION_GATEWAY_SILENCE_TIMEOUT_MS;
+      if (Date.now() - this.lastGatewayMessageAt > silenceMs) {
+        this.fail(new Error("Live recitation connection stopped responding"));
+        return;
+      }
+      try {
+        this.socket?.send(JSON.stringify({ t: "ping" }));
+      } catch (error) { this.fail(safeError(error)); }
+    }, this.runtime.keepaliveIntervalMs ?? RECITATION_KEEPALIVE_INTERVAL_MS);
     // Bound uninterrupted provider buffers without creating an automatic retry.
     this.commitTimer = setInterval(() => {
       if (this.closed || this.stopping || this.paused || !this.audioSinceCommit) return;
@@ -307,7 +386,7 @@ export class NativeRecitationControllerCore {
 
   private async finalize(): Promise<boolean> {
     const socket = this.socket;
-    if (this.closed || !this.recorderStarted || socket?.readyState !== SOCKET_OPEN) {
+    if (this.closed || !this.recorderStarted || !this.streaming || socket?.readyState !== SOCKET_OPEN) {
       this.abort();
       return false;
     }
@@ -327,7 +406,7 @@ export class NativeRecitationControllerCore {
       this.recorderStarted = false;
       if (this.closed || socket.readyState !== SOCKET_OPEN) throw new Error("Transport closed before finalization");
       // Unchanged providers without a drain acknowledgement fail closed here.
-      if (this.provider !== "openai" && this.provider !== "tarteel") {
+      if (!providerAcknowledgesFinalization(this.provider)) {
         throw new Error("Provider finalization acknowledgement unavailable");
       }
       this.finalCommitId = `native-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -335,7 +414,7 @@ export class NativeRecitationControllerCore {
         this.finalResolve = resolve;
         this.finalReject = reject;
         timer = setTimeout(() => reject(new Error("Final audio acknowledgement timed out")),
-          this.runtime.finalTimeoutMs ?? (this.provider === "tarteel" ? 120_000 : 10_000));
+          this.runtime.finalTimeoutMs ?? providerFinalizationTimeoutMs(this.provider));
       });
       // A synchronous send failure must not leave an unobserved rejected waiter.
       void drained.catch(() => {});
@@ -344,9 +423,13 @@ export class NativeRecitationControllerCore {
       clearTimeout(timer);
       if (this.closed) throw new Error("Finalization cancelled");
       this.closed = true;
+      if (this.keepaliveTimer) clearInterval(this.keepaliveTimer);
+      this.keepaliveTimer = null;
       const disconnected = new Promise<void>((resolve, reject) => {
+        // The final audio is already acknowledged, so an error while closing
+        // loses nothing; Android reports the server's close this way at times.
         socket.onclose = () => resolve();
-        socket.onerror = () => reject(new Error("Transport close failed"));
+        socket.onerror = () => resolve();
         timer = setTimeout(() => reject(new Error("Transport close timed out")), 3_000);
       });
       void disconnected.catch(() => {});
@@ -406,8 +489,13 @@ export class NativeRecitationControllerCore {
     this.closed = true;
     if (this.readyTimer) clearTimeout(this.readyTimer);
     if (this.commitTimer) clearInterval(this.commitTimer);
+    if (this.keepaliveTimer) clearInterval(this.keepaliveTimer);
     this.readyTimer = null;
     this.commitTimer = null;
+    this.keepaliveTimer = null;
+    this.streaming = false;
+    this.pendingAudio = [];
+    this.pendingAudioSeconds = 0;
     this.readyReject?.(new Error("Recitation session stopped"));
     this.readyResolve = null;
     this.readyReject = null;

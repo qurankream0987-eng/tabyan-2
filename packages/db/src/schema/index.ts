@@ -835,5 +835,53 @@ export const recitationSessions = pgTable("recitation_sessions", {
   endedAt: timestamp("ended_at"),
   durationSeconds: integer("duration_seconds"),  // صافي وقت التسميع النشط (بالثواني)
   // accuracyScore varchar(10) — محجوز للمرحلة 1B (NULL دائماً في 1A)
+  // EDUCATIONAL: الواجب الذي بدأت منه الجلسة (recitation_assignments.id).
+  assignmentId: varchar("assignment_id", { length: 36 }),
   createdAt: createdAt(),
-});
+}, (t) => [index("idx_recitation_sessions_assignment").on(t.assignmentId)]);
+
+/** نتيجة واجب التسميع كما حسبها محرك الأخطاء على جهاز الطالب؛ يراجعها المعلم ويقيّم بنفسه. */
+export interface RecitationAssignmentResult {
+  wordsRecited: number;
+  totalWords: number;
+  confirmedMistakes: number;
+  skippedWords: number;
+  correctedWords: number;
+  peekedWords: number;
+  durationSeconds: number;
+  /** الكلمات التي علّمها المحرك ("سورة:آية:كلمة")، ليعرف المعلم مواضعها. */
+  flaggedWords: { key: string; kind: "mistake" | "skipped" | "corrected" | "peeked" }[];
+}
+
+/**
+ * واجب تسميع: يحدده المعلم لطالب بعينه (سورة ونطاق آيات). التسميع التعليمي
+ * لا يبدأ إلا من واجب، ونتيجته تُرسل للمعلم ليراجعها ويقيّمها بنفسه.
+ */
+export const recitationAssignments = pgTable("recitation_assignments", {
+  id: id(),
+  teacherId: varchar("teacher_id", { length: 36 }).references(() => teachers.userId, { onDelete: "set null" }),
+  studentId: varchar("student_id", { length: 36 }).notNull().references(() => students.userId, { onDelete: "cascade" }),
+  surahId: integer("surah_id").notNull(),
+  startAyah: integer("start_ayah").notNull(),
+  endAyah: integer("end_ayah").notNull(),
+  hideMode: varchar("hide_mode", { length: 30 })
+    .$type<"full_hide" | "first_word" | "progressive_reveal" | "visible_review">()
+    .notNull().default("progressive_reveal"),
+  note: varchar("note", { length: 500 }),
+  dueAt: timestamp("due_at"),
+  // assigned → submitted (الطالب سلّم، ويمكنه إعادة التسليم) → reviewed (قيّمه المعلم) | cancelled
+  status: varchar("status", { length: 20 })
+    .$type<"assigned" | "submitted" | "reviewed" | "cancelled">()
+    .notNull().default("assigned"),
+  sessionId: varchar("session_id", { length: 36 }).references(() => recitationSessions.id, { onDelete: "set null" }),
+  result: jsonb("result").$type<RecitationAssignmentResult>(),
+  submittedAt: timestamp("submitted_at"),
+  teacherScore: integer("teacher_score"), // /100، يضعه المعلم
+  teacherFeedback: varchar("teacher_feedback", { length: 1000 }),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (t) => [
+  index("idx_recitation_assignments_student").on(t.studentId, t.status),
+  index("idx_recitation_assignments_teacher").on(t.teacherId, t.status),
+]);

@@ -13,6 +13,7 @@ import Icon from "@/components/Icon";
 import { uploadFile } from "@/lib/upload";
 import PrivateMediaPlayer from "@/components/app/PrivateMediaPlayer";
 import { HIDE_MODE_LABELS, formatDuration, type HideMode } from "@/lib/recitation-types";
+import { StudentAssignmentsSection } from "@/components/recitation-assignments/TeacherAssignments";
 
 /** قسم جلسات التسميع التعليمي — يظهر في ملف الطالب عند المعلم */
 function RecitationSessionsSection({ studentId }: { studentId: string }) {
@@ -289,6 +290,9 @@ export default function StudentProfile() {
           </div>
         )}
       </GlassCard>
+
+      {/* ── واجبات التسميع: إنشاء ومراجعة وتقييم ── */}
+      {!DEMO && <StudentAssignmentsSection studentId={id} />}
 
       {/* ── جلسات التسميع التعليمي ── */}
       <RecitationSessionsSection studentId={id} />

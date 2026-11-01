@@ -13,28 +13,17 @@
 import { Fragment, memo, useLayoutEffect, useMemo, useState } from "react";
 import SurahHeaderFrame from "./SurahHeaderFrame";
 import footerReference from "../../assets/mushaf/surah-footer-tabyan-burgundy.png";
-import { SURAHS } from "@/lib/quran-data";
 import { PAGE_ASPECT } from "@/lib/mushaf/pages";
 import { computePageLayout, LINE_COUNT, maxFontSizeFor, type PageVariant } from "@/lib/mushaf/page-layout";
 import { pageFontFamily } from "@/lib/mushaf/fonts";
 import { toArabicDigits } from "@/lib/mushaf/format";
-import type { MushafPageData, LineWord } from "@/lib/mushaf/types";
+import { buildPageLines, type MushafPageData, type LineWord } from "@/lib/mushaf/types";
 import { getWordPresentationStyle, type WordFeedbackState } from "@/lib/mushaf/word-presentation";
 import type { HideMode } from "@/lib/recitation-types";
 
 const BASMALAH_TEXT = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ";
 /** حبر أسود وورق عاجي ثابتان — لون فقط، دون تغيير هندسة الصفحة. */
 const INK = "var(--mushaf-ink, #000)";
-
-interface LineModel {
-  line: number;
-  kind: "words" | "surah-header" | "basmalah";
-  words?: LineWord[];
-  surahName?: string;
-  surahNumber?: number;
-  ayahCount?: number;
-  centered?: boolean;
-}
 
 /** حالة التسميع الممرَّرة من MushafReader */
 export interface RecitationPageProps {
@@ -49,40 +38,6 @@ export interface RecitationPageProps {
   hideAyahMarkers?: boolean;
   /** اختبار الحفظ: إخفاء ترويسات السور والبسملة (opacity) كي لا تكشف الموضع. */
   maskHeaders?: boolean;
-}
-
-function buildLines(data: MushafPageData): LineModel[] {
-  const wordLines = new Map<number, LineWord[]>();
-  const models: LineModel[] = [];
-  for (const v of data.v) {
-    for (const w of v.w) {
-      const lw: LineWord = {
-        verseKey: v.k, chapter: v.c, verseNum: v.n,
-        position: w[0], type: w[2], code: w[3],
-      };
-      const arr = wordLines.get(w[1]) ?? [];
-      arr.push(lw);
-      wordLines.set(w[1], arr);
-    }
-    if (v.n === 1 && v.w.length > 0) {
-      const firstLine = v.w[0][1];
-      const isFatiha  = v.c === 1;
-      const isTawbah  = v.c === 9;
-      const headerLine = firstLine - (isFatiha || isTawbah ? 1 : 2);
-      if (headerLine >= 1) {
-        const meta = SURAHS[v.c - 1];
-        models.push({ line: headerLine, kind: "surah-header", surahName: meta?.name ?? "", surahNumber: meta?.n, ayahCount: meta?.ayahs });
-        if (!isFatiha && !isTawbah) models.push({ line: headerLine + 1, kind: "basmalah" });
-      }
-    }
-  }
-  for (const [line, words] of wordLines) {
-    const centered = words.some(
-      (w) => w.type === 1 && SURAHS[w.chapter - 1] && w.verseNum === SURAHS[w.chapter - 1].ayahs
-    );
-    models.push({ line, kind: "words", words, centered });
-  }
-  return models.sort((a, b) => a.line - b.line);
 }
 
 /** حساب opacity كلمة في وضع تسميع (بنطاق) */
@@ -151,7 +106,7 @@ function MushafPage({
 }) {
   const height = heightProp ?? width / PAGE_ASPECT;
   const family = pageFontFamily(data.p);
-  const lines = useMemo(() => buildLines(data), [data]);
+  const lines = useMemo(() => buildPageLines(data), [data]);
   const rowCount = Math.max(1, ...lines.map((line) => line.line));
   const pageVariant: PageVariant = data.p === 1 || data.p === 2 ? "opening" : "standard";
   const titleRowH = height / LINE_COUNT;

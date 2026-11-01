@@ -74,7 +74,7 @@ export default function SessionRoom() {
   };
 
   return (
-    <TeacherScreen title="غرفة الحصة" loading={q.isLoading} error={!!q.error} retry={() => void q.refetch()}>
+    <TeacherScreen title="غرفة الحصة" back loading={q.isLoading} error={!!q.error} retry={() => void q.refetch()}>
       {s ? (
         <>
           <Card accent>

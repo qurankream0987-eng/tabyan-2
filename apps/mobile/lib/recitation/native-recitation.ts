@@ -12,13 +12,16 @@ import {
   type NativeRecitationCallbacks,
 } from "./native-recitation-matcher";
 
-export { NativeQuranLiveMatcher } from "./native-recitation-matcher";
+export { confirmedWordKey, NativeQuranLiveMatcher } from "./native-recitation-matcher";
 export type {
   CanonicalQuranWord,
   NativeMatcherDiagnostics,
   NativeRecitationCallbacks,
   NativeRecitationMatch,
   NativeRecitationState,
+  NativeRecitationSummary,
+  NativeWordFeedback,
+  NativeWordStateChange,
 } from "./native-recitation-matcher";
 
 function recitationWebSocketUrl() {

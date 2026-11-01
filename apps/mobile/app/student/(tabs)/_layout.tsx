@@ -57,14 +57,16 @@ export default function StudentTabsLayout() {
     tabBarLabelStyle: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 10, lineHeight: 14 },
   } as const;
   const icon = (name: string) => ({ color, size }: { color: string; size: number }) => <Icon name={name} size={size - 1} color={color} />;
+  // Listed left to right on screen: the layout never mirrors (see app/_layout.tsx),
+  // so home goes last to sit on the right.
   return (
-    <Tabs screenOptions={common}>
-      <Tabs.Screen name="home" options={{ title: tabs.home[1], tabBarIcon: icon(tabs.home[0]) }} />
-      <Tabs.Screen name="schedule" options={{ title: tabs.schedule[1], tabBarIcon: icon(tabs.schedule[0]) }} />
-      <Tabs.Screen name="recordings" options={{ title: tabs.recordings[1], tabBarIcon: icon(tabs.recordings[0]) }} />
-      <Tabs.Screen name="library" options={{ title: tabs.library[1], tabBarIcon: icon(tabs.library[0]) }} />
-      <Tabs.Screen name="fatwa" options={{ title: tabs.fatwa[1], tabBarIcon: icon(tabs.fatwa[0]) }} />
+    <Tabs screenOptions={common} initialRouteName="home">
       <Tabs.Screen name="account" options={{ title: tabs.account[1], tabBarIcon: icon(tabs.account[0]) }} />
+      <Tabs.Screen name="fatwa" options={{ title: tabs.fatwa[1], tabBarIcon: icon(tabs.fatwa[0]) }} />
+      <Tabs.Screen name="library" options={{ title: tabs.library[1], tabBarIcon: icon(tabs.library[0]) }} />
+      <Tabs.Screen name="recordings" options={{ title: tabs.recordings[1], tabBarIcon: icon(tabs.recordings[0]) }} />
+      <Tabs.Screen name="schedule" options={{ title: tabs.schedule[1], tabBarIcon: icon(tabs.schedule[0]) }} />
+      <Tabs.Screen name="home" options={{ title: tabs.home[1], tabBarIcon: icon(tabs.home[0]) }} />
     </Tabs>
   );
 }

@@ -25,7 +25,7 @@ export function selectSpeechRecognitionProvider(
       ? "nabr"
       : null;
   }
-  return provider === "openai" || provider === "nvidia" || provider === "speechmatics"
+  return provider === "openai" || provider === "nvidia" || provider === "speechmatics" || provider === "tilawi"
     ? provider
     : null;
 }

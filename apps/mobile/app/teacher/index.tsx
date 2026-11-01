@@ -1,10 +1,11 @@
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Card, FeatureTile, Icon } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
 import { TeacherScreen, OfflineNotice } from "../../components/teacher/teacher-screen";
+import { assignmentRange } from "../../components/teacher/recitation-assignments";
 import { useTheme, palette } from "../../lib/theme";
 
 const TEACHER_DESTINATIONS = [
@@ -24,6 +25,10 @@ export default function TeacherHome() {
   const { colors } = useTheme();
   const router = useRouter();
   const q = trpc.teacher.dashboard.useQuery(undefined, { enabled: !!token });
+  const reviewQueue = trpc.recitationAssignments.reviewQueue.useQuery(undefined, { enabled: !!token });
+  // Students submit while this screen is in the background; reload the queue whenever it is shown again.
+  const refetchQueue = reviewQueue.refetch;
+  useFocusEffect(useCallback(() => { if (token) void refetchQueue(); }, [token, refetchQueue]));
   const d = (q.data ?? {}) as any;
   const summary = d.summary ?? {};
   const isMufti = d.teacher?.isMufti === true;
@@ -81,6 +86,28 @@ export default function TeacherHome() {
         </Card>
       )}
 
+      {/* واجبات تسميع سلّمها الطلاب وتنتظر تقييم المعلم */}
+      {reviewQueue.data?.length ? (
+        <Card>
+          <Text style={[styles.sectionTitle, { color: colors.primary, marginBottom: 8 }]}>تسميعات بانتظار مراجعتك</Text>
+          {reviewQueue.data.map(({ assignment, studentName }) => (
+            <Pressable
+              key={assignment.id}
+              accessibilityRole="button"
+              onPress={() => router.push(`/teacher/students/${assignment.studentId}` as never)}
+              style={({ pressed }) => [styles.reviewRow, { backgroundColor: `${colors.primary}0c`, opacity: pressed ? 0.85 : 1 }]}
+            >
+              <Icon name="mic-outline" size={18} color={colors.primary} />
+              <View style={styles.reviewText}>
+                <Text style={[styles.reviewTitle, { color: colors.text }]} numberOfLines={1}>{studentName}</Text>
+                <Text style={[styles.reviewDetail, { color: colors.muted }]} numberOfLines={1}>{assignmentRange(assignment)}</Text>
+              </View>
+              <Icon name="chevron-back" size={16} color={colors.muted} />
+            </Pressable>
+          ))}
+        </Card>
+      ) : null}
+
       {/* ملخص الأسبوع */}
       <Card>
         <Text style={[styles.sectionTitle, { color: colors.primary, marginBottom: 12 }]}>ملخص الأسبوع</Text>
@@ -132,6 +159,10 @@ export default function TeacherHome() {
 }
 
 const styles = StyleSheet.create({
+  reviewRow: { flexDirection: "row-reverse", alignItems: "center", gap: 10, borderRadius: 12, padding: 10, marginTop: 6 },
+  reviewText: { flex: 1, minWidth: 0 },
+  reviewTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, textAlign: "right" },
+  reviewDetail: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right" },
   hero: { alignItems: "center", paddingVertical: 20 },
   heroTitle: { fontFamily: "Amiri_700Bold", fontSize: 23 },
   heroSub: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11.5, marginTop: 3 },

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import Icon from "@/components/app/Icon";
 import { SURAHS, JUZ_LIST, TOTAL_PAGES } from "@/lib/quran-data";
 import MushafReader from "@/components/mushaf/MushafReader";
@@ -9,6 +9,8 @@ import { toArabicDigits } from "@/lib/mushaf/format";
 import { readAccountStorage, writeAccountStorage } from "@/lib/account-storage";
 import { authStore } from "@/lib/auth";
 import { trpc } from "@/providers/trpc";
+import { pageOfAyah } from "@/lib/mushaf/page-index";
+import { canRecite, type MushafAssignment } from "@/lib/recitation-assignments";
 
 // ── مفاتيح التخزين المحلي ────────────────────────────────────────────
 const LS_LAST_PAGE = "tabyan.mushaf.lastPage";
@@ -34,6 +36,7 @@ function ReaderView({
   onNavigate,
   bookmarks,
   toggleBookmark,
+  assignment,
 }: {
   page: number;
   accountId: string | null;
@@ -41,6 +44,7 @@ function ReaderView({
   onNavigate: (p: number) => void;
   bookmarks: number[];
   toggleBookmark: (p: number) => void;
+  assignment: MushafAssignment | null;
 }) {
   // آخر صفحة مقروءة محفوظة ضمن الحساب الحالي فقط.
   useEffect(() => {
@@ -54,8 +58,36 @@ function ReaderView({
       onNavigate={onNavigate}
       bookmarks={bookmarks}
       toggleBookmark={toggleBookmark}
+      assignment={assignment}
     />
   );
+}
+
+/**
+ * رابط واجب تسميع: /student/mushaf-fahd?assignment=<id> — يفتح القارئ على أول
+ * صفحة في نطاق الواجب ويبدأ منه التسميع التعليمي. الواجب يُقرأ من الخادم لا من الرابط.
+ */
+function useAssignmentFromUrl(accountId: string | null) {
+  const [assignmentId] = useState(() => new URLSearchParams(window.location.search).get("assignment"));
+  const enabled = !!assignmentId && !!accountId && !authStore.isDemo && authStore.role === "student";
+  const mine = trpc.recitationAssignments.mine.useQuery(undefined, { enabled });
+  const row = enabled ? mine.data?.find((r) => r.assignment.id === assignmentId) : undefined;
+  const assignment: MushafAssignment | null = useMemo(() => row && canRecite(row.assignment.status) ? {
+    id: row.assignment.id,
+    surahId: row.assignment.surahId,
+    startAyah: row.assignment.startAyah,
+    endAyah: row.assignment.endAyah,
+    hideMode: row.assignment.hideMode,
+    note: row.assignment.note,
+    teacherName: row.teacherName,
+  } : null, [row]);
+  return {
+    assignmentId: enabled ? assignmentId : null,
+    assignment,
+    loading: enabled && mine.isLoading,
+    /** الرابط يشير إلى واجب لم يعد متاحاً (أُلغي أو قُيّم أو لا يخص هذا الطالب). */
+    unavailable: enabled && !mine.isLoading && !assignment,
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -79,6 +111,11 @@ function MushafFahdAccount({ accountId }: { accountId: string | null }) {
   const [lastPage, setLastPage]   = useState<number | null>(null);
   const [bookmarks, setBookmarks] = useState<number[]>([]);
   const [savedCount, setSavedCount] = useState(0);
+  const navigate = useNavigate();
+  const fromAssignment = useAssignmentFromUrl(accountId);
+  const assignment = fromAssignment.assignment;
+  const [assignmentDismissed, setAssignmentDismissed] = useState(false);
+  const assignmentPage = assignment ? pageOfAyah(assignment.surahId, assignment.startAyah) : null;
 
   useEffect(() => {
     purgeLegacyMushafCaches();
@@ -135,6 +172,22 @@ function MushafFahdAccount({ accountId }: { accountId: string | null }) {
     setSavedCount(0);
   }
 
+  // ── واجب التسميع: القارئ يُفتح على أول صفحة في نطاقه، والإغلاق يعيد لقائمة الواجبات ──
+  if (assignment && assignmentPage !== null && !assignmentDismissed) {
+    return createPortal(
+      <ReaderView
+        page={reader ?? assignmentPage}
+        accountId={accountId}
+        onClose={() => { setAssignmentDismissed(true); navigate("/student/assignments"); }}
+        onNavigate={openPage}
+        bookmarks={bookmarks}
+        toggleBookmark={toggleBookmark}
+        assignment={assignment}
+      />,
+      document.body
+    );
+  }
+
   // ── عرض القارئ — ملء الشاشة كاملاً عبر portal ──
   if (reader !== null) {
     return createPortal(
@@ -145,6 +198,7 @@ function MushafFahdAccount({ accountId }: { accountId: string | null }) {
         onNavigate={openPage}
         bookmarks={bookmarks}
         toggleBookmark={toggleBookmark}
+        assignment={null}
       />,
       document.body
     );
@@ -153,6 +207,19 @@ function MushafFahdAccount({ accountId }: { accountId: string | null }) {
   // ── الفهرس ──
   return (
     <div className="space-y-4 page-enter pb-32" dir="rtl">
+      {fromAssignment.assignmentId && !assignmentDismissed && (fromAssignment.loading || fromAssignment.unavailable) && (
+        <div className="flex items-center gap-2.5 glass rounded-2xl border border-gold/30 bg-gold/5 dark:bg-gold/10 px-4 py-2.5">
+          <Icon name={fromAssignment.loading ? "hourglass" : "info"} size={16} className="text-gold-dark dark:text-gold shrink-0" />
+          <span className="flex-1 font-readex text-xs text-foreground">
+            {fromAssignment.loading ? "جارٍ تحميل واجب التسميع…" : "هذا الواجب لم يعد متاحاً للتسميع"}
+          </span>
+          {fromAssignment.unavailable && (
+            <Link to="/student/assignments" className="font-readex text-[11px] font-bold text-burgundy dark:text-gold">
+              واجباتي
+            </Link>
+          )}
+        </div>
+      )}
       {/* العنوان */}
       <div className="text-center">
         <div className="w-14 h-14 mx-auto icon-bubble text-burgundy mb-3">

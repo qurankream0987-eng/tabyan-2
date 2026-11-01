@@ -32,6 +32,8 @@ export default function Quran({ allPaths = false }: { allPaths?: boolean }) {
 
   // أيقونات SVG الحقيقية المطابقة للموقع (QuranMenu): hifz / tilawah / qiraat
   const sections: Array<{ href: string; icon: SectionIconName; title: string; badge?: { label: string; locked: boolean } }> = [
+    { href: "/student/mushaf", icon: "quran", title: "المصحف" },
+    { href: "/student/recitation", icon: "hifz", title: "واجبات التسميع" },
     { href: "/student/levels/quran", icon: "hifz", title: "حفظ ومراجعة القرآن" },
     { href: "/student/tilawah", icon: "tilawah", title: "تصحيح التلاوة" },
     { href: "/student/ijazat", icon: "qiraat", title: "القراءات", badge: qiraatBadge },
@@ -54,7 +56,7 @@ export default function Quran({ allPaths = false }: { allPaths?: boolean }) {
           <Card style={[
             styles.card,
             s.icon === "qiraat" ? styles.qiraatCard : undefined,
-            { borderStartWidth: 3, borderStartColor: s.icon === "qiraat" ? categories.qiraat : categories.quran },
+            { borderRightWidth: 3, borderRightColor: s.icon === "qiraat" ? categories.qiraat : categories.quran },
           ]}>
             <View style={[
               styles.iconBubble,
@@ -81,7 +83,7 @@ export default function Quran({ allPaths = false }: { allPaths?: boolean }) {
                       styles.qiraatBadge,
                       { backgroundColor: s.badge.locked ? (isDark ? `${colors.text}1a` : `${palette.burgundy}1a`) : `${palette.gold}33` },
                     ]}>
-                      <Text style={[styles.qiraatBadgeText, { color: s.badge.locked ? colors.primary : (isDark ? palette.gold : palette.goldDark) }]}>
+                      <Text numberOfLines={1} style={[styles.qiraatBadgeText, { color: s.badge.locked ? colors.primary : (isDark ? palette.gold : palette.goldDark) }]}>
                         {s.badge.label}
                       </Text>
                     </View>
@@ -113,18 +115,18 @@ export default function Quran({ allPaths = false }: { allPaths?: boolean }) {
 
 const styles = StyleSheet.create({
   pressable: { marginBottom: 2 },
-  card: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14 },
+  card: { flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingVertical: 14 },
   qiraatCard: { padding: 12, marginBottom: 14 },
   iconBubble: { width: 48, height: 48, borderRadius: 17, alignItems: "center", justifyContent: "center" },
   qiraatIconBubble: { width: 44, height: 44, borderRadius: 16 },
   body: { flex: 1, minWidth: 0 },
-  row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  title: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right", flexShrink: 1 },
+  row: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  title: { flex: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right" },
   arrowBubble: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   qiraatArrowBubble: { width: 32, height: 32, borderRadius: 16 },
-  badgeRow: { marginTop: 8, alignItems: "flex-start" },
-  qiraatBadgeRow: { marginTop: 4, alignItems: "flex-start" },
-  qiraatBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999, alignSelf: "flex-start" },
+  badgeRow: { marginTop: 8, alignItems: "flex-end" },
+  qiraatBadgeRow: { marginTop: 4, alignItems: "flex-end" },
+  qiraatBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 999, alignSelf: "flex-end" },
   qiraatBadgeText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 11 },
   liveCard: { gap: 10, marginTop: 8 },
   liveTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right" },

@@ -5,8 +5,10 @@ import type {
   SpeechRecognitionProviderEvents,
 } from "./types";
 
+// Transcription sessions reject a `model` query parameter ("invalid_model");
+// the transcription model is set in session.update instead.
 export const OPENAI_REALTIME_URL =
-  "wss://api.openai.com/v1/realtime?model=gpt-realtime-2.1&intent=transcription";
+  "wss://api.openai.com/v1/realtime?intent=transcription";
 
 /**
  * OpenAI's transcription WebSocket adapter. Provider-specific protocol details

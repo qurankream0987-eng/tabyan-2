@@ -54,6 +54,7 @@ const SmartMushafV3 = lazy(() => import("@/pages/student/SmartMushafV3"));
 const PrayerTimes = lazy(() => import("@/pages/student/PrayerTimes"));
 const Qibla = lazy(() => import("@/pages/student/Qibla"));
 const RecitationHistory = lazy(() => import("@/pages/student/RecitationHistory"));
+const RecitationAssignments = lazy(() => import("@/pages/student/RecitationAssignments"));
 const RecitationConnectivityGate = lazy(() => import("@/pages/student/RecitationConnectivityGate"));
 
 // teacher
@@ -194,6 +195,7 @@ export default function App() {
                 <Route path="help" element={<StudentHelp />} />
                 <Route path="mushaf-fahd" element={<MushafFahd />} />
                 <Route path="recitation/history" element={<RecitationHistory />} />
+                <Route path="assignments" element={<RecitationAssignments />} />
                 <Route path="recitation/connectivity-gate" element={<RecitationConnectivityGate />} />
                 <Route path="prayer-times" element={<PrayerTimes />} />
                 <Route path="qibla" element={<Qibla />} />

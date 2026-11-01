@@ -21,10 +21,12 @@ import RecitationSession from "./RecitationSession";
 import RecitationResult from "./RecitationResult";
 import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 
+/**
+ * هذا المسار عام فقط: التسميع التعليمي يبدأ من واجب حدده المعلم
+ * (صفحة واجبات التسميع ← المصحف)، ولا يعرف هذا المسار أي واجب.
+ */
 interface RecitationFlowProps {
   onClose: () => void;
-  /** إذا كان role=student يُتاح وضع التسميع التعليمي */
-  isStudent?: boolean;
 }
 
 type FlowState =
@@ -51,7 +53,7 @@ type FlowState =
       mode: SessionMode;
     };
 
-export default function RecitationFlow({ onClose, isStudent = true }: RecitationFlowProps) {
+export default function RecitationFlow({ onClose }: RecitationFlowProps) {
   const [state, setState] = useState<FlowState>({ step: "setup" });
   const navigate = useNavigate();
 
@@ -73,7 +75,6 @@ export default function RecitationFlow({ onClose, isStudent = true }: Recitation
     return (
       <SetupStep
         isLoading={state.step === "loading"}
-        isStudent={isStudent}
         onConfirm={(params) => {
           setState({ step: "loading" });
           // الانتقال يتم داخل SetupStep عبر onConfirm
@@ -142,12 +143,10 @@ type SetupParams = Promise<{
 
 function SetupStep({
   isLoading,
-  isStudent,
   onConfirm,
   onClose,
 }: {
   isLoading: boolean;
-  isStudent: boolean;
   onConfirm: (params: SetupParams) => void;
   onClose: () => void;
 }) {
@@ -158,7 +157,7 @@ function SetupStep({
   const [startAyah, setStartAyah] = useState(1);
   const [endAyah, setEndAyah] = useState(7);
   const [hideMode, setHideMode] = useState<HideMode>("full_hide");
-  const [mode, setMode] = useState<SessionMode>("general");
+  const mode: SessionMode = "general";
 
   const selectedSurah = SURAHS.find((s) => s.n === surahId) ?? SURAHS[0];
   const maxAyah = selectedSurah.ayahs;
@@ -183,20 +182,11 @@ function SetupStep({
     const promise: SetupParams = (async () => {
       try {
         // نبدأ الجلسة وجلب النصوص بالتوازي
-        const startInput = mode === "general"
-          ? {
-              mode: "general" as const,
-              startContext: { startVerseKey: `${surahId}:${startAyah}` },
-              hideMode,
-            }
-          : {
-              mode: "educational" as const,
-              expectedRange: {
-                start: { surahId, ayah: startAyah },
-                end: { surahId, ayah: endAyah },
-              },
-              hideMode,
-            };
+        const startInput = {
+          mode: "general" as const,
+          startContext: { startVerseKey: `${surahId}:${startAyah}` },
+          hideMode,
+        };
         const [{ sessionId }, ayahsData] = await Promise.all([
           startMut.mutateAsync(startInput),
           hideMode !== "full_hide"
@@ -231,32 +221,6 @@ function SetupStep({
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-5">
-        {/* نوع الجلسة */}
-        {isStudent && (
-          <section className="space-y-2">
-            <label className="font-readex text-sm font-bold text-foreground">نوع الجلسة</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(["general", "educational"] as const).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setMode(m)}
-                  className={`py-3 rounded-xl font-readex text-sm font-bold border transition btn-press ${
-                    mode === m
-                      ? "bg-burgundy text-white dark:bg-gold dark:text-burgundy border-transparent shadow"
-                      : "border-border text-muted-foreground hover:border-burgundy/30 dark:hover:border-gold/30"
-                  }`}
-                >
-                  {m === "general" ? "🎙 تسميع عام" : "📚 تعليمي"}
-                </button>
-              ))}
-            </div>
-            {mode === "educational" && (
-              <p className="font-readex text-[11px] text-muted-foreground">
-                سيظهر هذا التسميع في ملفك عند معلمك
-              </p>
-            )}
-          </section>
-        )}
 
         {/* اختيار السورة */}
         <section className="space-y-2">

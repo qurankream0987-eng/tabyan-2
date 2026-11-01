@@ -3,7 +3,8 @@
 FROM node:24.20.0-bookworm-slim
 
 WORKDIR /app
-ENV CI=true
+ENV CI=true \
+    ONNXRUNTIME_NODE_INSTALL=skip
 
 # One COPY: Railway's builder failed to mount the stack of per-package COPY
 # layers ("overlay ... invalid argument") before npm ci.
@@ -20,13 +21,19 @@ ARG RAILWAY_BUCKET_SECRET_ACCESS_KEY
 ARG RAILWAY_BUCKET_URL_STYLE
 RUN node tools/scripts/build-assets.mjs fetch
 
+# Live recitation model (provider "tilawi"), pinned and checksum-verified.
+# onnxruntime-node ships binaries for every platform; keep only linux.
+RUN node tools/scripts/fetch-asr-model.mjs \
+ && rm -rf node_modules/onnxruntime-node/bin/napi-v6/darwin node_modules/onnxruntime-node/bin/napi-v6/win32
+
 RUN PORT=5173 BASE_PATH=/ npm run build --workspace @workspace/tabyan \
  && PORT=5174 BASE_PATH=/tabyan-staff-preview/ npm run build --workspace @workspace/tabyan-staff-preview \
  && NODE_ENV=production npm run build --workspace @workspace/api-server
 
 ENV NODE_ENV=production \
     TABYAN_WEB_DIST=/app/apps/web/dist/public \
-    TABYAN_STAFF_PREVIEW_DIST=/app/apps/staff-preview/dist/public
+    TABYAN_STAFF_PREVIEW_DIST=/app/apps/staff-preview/dist/public \
+    TABYAN_TILAWI_MODEL_DIR=/app/apps/api/models/tilawi
 
 WORKDIR /app/apps/api
 CMD ["node", "--enable-source-maps", "dist/index.mjs"]

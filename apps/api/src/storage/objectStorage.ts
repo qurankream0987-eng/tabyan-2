@@ -205,6 +205,17 @@ export class ObjectStorageService {
     });
   }
 
+  /** Writes an object the server produced itself (e.g. a recitation recording). */
+  async putObjectEntity(objectPath: string, body: Buffer, contentType: string): Promise<void> {
+    const uploadURL = await this.provider.createWriteCapability(objectPath, 300);
+    const response = await fetch(uploadURL, {
+      method: "PUT",
+      headers: { "Content-Type": contentType },
+      body: new Uint8Array(body),
+    });
+    if (!response.ok) throw new Error(`Object upload failed with HTTP ${response.status}`);
+  }
+
   /** Deletes a private object and confirms its absence before DB completion. */
   async deleteObjectEntity(objectPath: string): Promise<void> {
     const object = this.objectEntityFileHandle(objectPath);

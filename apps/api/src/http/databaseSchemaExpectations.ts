@@ -52,6 +52,7 @@ export const expectedPublicTables = new Set([
   "auth_tokens",
   "webauthn_credentials",
   "webauthn_challenges",
+  "recitation_assignments",
   "recitation_sessions",
   "placement_attempts",
 ]);

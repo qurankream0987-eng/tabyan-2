@@ -7,7 +7,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, protectedProcedure, studentProcedure, teacherProcedure } from "../middleware";
 import { db } from "@workspace/db";
-import { recitationSessions, sessions, students, levels } from "@workspace/db";
+import { recitationAssignments, recitationSessions, sessions, students, levels } from "@workspace/db";
 import {
   RECITATION_POLICY_VERSION,
   getRecitationPolicy,
@@ -27,15 +27,6 @@ function transcriptionEnabled(): boolean {
 
 function liveTrackingEnabled(): boolean {
   return transcriptionEnabled() && process.env.TABYAN_AI_LIVE_TRACKING_ENABLED === "true";
-}
-
-/**
- * لا يوجد في الـschema الحالي واجب تسميع يحمل نطاقاً معتمداً من الخادم.
- * `todayAssignment` يوفّر مستوى الطالب فقط، لا assignment range؛ لذلك
- * نغلق EDUCATIONAL fail-closed بدلاً من قبول نطاق اختاره العميل كواجب.
- */
-function educationalAssignmentSourceReady(): boolean {
-  return false;
 }
 
 // ── Cache سور alquran.cloud ───────────────────────────────────────────────────
@@ -86,7 +77,8 @@ export const recitationRouter = createRouter({
     enabled: aiEnabled(),
     transcriptionEnabled: transcriptionEnabled(),
     liveTrackingEnabled: liveTrackingEnabled(),
-    educationalAssignmentSource: educationalAssignmentSourceReady() ? "ready" : "missing",
+    // EDUCATIONAL يبدأ من واجب تسميع حدده المعلم (recitation_assignments).
+    educationalAssignmentSource: "ready" as "ready" | "missing",
   })),
 
   /**
@@ -150,11 +142,26 @@ export const recitationRouter = createRouter({
       if (input.mode === "educational" && ctx.user.role !== "student") {
         throw new TRPCError({ code: "FORBIDDEN", message: "التسميع التعليمي متاح للطلاب فقط" });
       }
-      if (input.mode === "educational" && !educationalAssignmentSourceReady()) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "لا يوجد واجب تعليمي معتمد بنطاق محدد بعد",
-        });
+
+      // EDUCATIONAL يبدأ فقط من واجب حدده المعلم؛ النطاق ووضع العرض يأتيان من الواجب، لا من العميل.
+      let assignmentId: string | null = null;
+      let hideMode = input.hideMode;
+      if (input.mode === "educational") {
+        const [assignment] = await db.select().from(recitationAssignments)
+          .where(and(eq(recitationAssignments.id, input.assignmentId), eq(recitationAssignments.studentId, ctx.user.id)))
+          .limit(1);
+        if (!assignment || assignment.status === "cancelled" || assignment.status === "reviewed") {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "هذا الواجب غير متاح للتسميع" });
+        }
+        const { start, end } = input.expectedRange;
+        const matchesAssignment = start.surahId === assignment.surahId && end.surahId === assignment.surahId
+          && start.ayah === assignment.startAyah && end.ayah === assignment.endAyah
+          && start.wordPosition === undefined && end.wordPosition === undefined;
+        if (!matchesAssignment) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "نطاق التسميع لا يطابق الواجب" });
+        }
+        assignmentId = assignment.id;
+        hideMode = assignment.hideMode;
       }
 
       const policy = getRecitationPolicy(input.mode);
@@ -182,13 +189,15 @@ export const recitationRouter = createRouter({
         startWordPosition: startContext?.startWordPosition ?? null,
         expectedRange,
         policyVersion: RECITATION_POLICY_VERSION,
-        hideMode: input.hideMode,
+        hideMode,
+        assignmentId,
         status: "listening",
         startedAt: new Date(),
         pausedSeconds: 0,
       });
       return {
         sessionId: id,
+        hideMode,
         policy: {
           mode: policy.mode,
           expectedEndPosition: policy.expectedEndPosition,

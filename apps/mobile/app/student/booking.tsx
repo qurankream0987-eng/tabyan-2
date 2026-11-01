@@ -42,6 +42,14 @@ const typeLabelOf = (sc: { sessionType: string; typeLabel?: string }) => sc.type
 
 type Schedule = { id: string; sessionType: string; typeLabel?: string; sessionMode: string; maxStudents: number; availableDays: unknown; availableTimes: unknown; durationMinutes: number; levelId: number | null; enrolledCount?: number; isAcceptingBookings?: boolean };
 type Teacher = { teacherId: string; name: string; avgRating: string; experienceYears: number; specialization: string | null; schedules: Schedule[] };
+/** Arabic count agreement: موعد واحد، موعدان، 3–10 مواعيد، 11+ موعدًا. */
+function slotCountLabel(count: number): string {
+  if (count === 1) return "موعد واحد";
+  if (count === 2) return "موعدان";
+  if (count >= 3 && count <= 10) return `${count} مواعيد`;
+  return `${count} موعدًا`;
+}
+
 type Slot = { day: string; time: string; teacher: Teacher; schedule: Schedule };
 
 const fmtTime12 = (t: string) => {
@@ -142,7 +150,7 @@ export default function Booking() {
             <View style={[styles.dayHeader, { borderBottomColor: colors.border }]}>
               <Icon name="calendar-outline" size={14} color={colors.primary} />
               <Text style={[styles.dayTitle, { color: colors.text }]}>{DAY_AR[day]}</Text>
-              <Text style={[styles.dayCount, { color: colors.muted }]}>{slotsByDay.get(day)!.length} موعد</Text>
+              <Text style={[styles.dayCount, { color: colors.muted }]}>{slotCountLabel(slotsByDay.get(day)!.length)}</Text>
             </View>
             {slotsByDay.get(day)!.map((slot) => {
               const sc = slot.schedule;
@@ -162,7 +170,7 @@ export default function Booking() {
                   <Card style={styles.slotCard}>
                     <View style={styles.slotRow}>
                       <View style={[styles.timeBubble, { backgroundColor: `${colors.primary}0d`, borderColor: `${colors.primary}1a` }]}>
-                        <Text style={[styles.timeText, { color: colors.primary }]}>{slot.time}</Text>
+                        <Text style={[styles.timeText, { color: colors.primary }]}>{slot.time.replace("-", "\n")}</Text>
                       </View>
                       <View style={styles.slotBody}>
                         <Text style={[styles.teacherName, { color: colors.text }]}>{slot.teacher.name}</Text>
@@ -256,7 +264,7 @@ const styles = StyleSheet.create({
   slotCard: { paddingVertical: 13, marginBottom: 8 },
   slotRow: { flexDirection: "row", alignItems: "center", gap: 11 },
   timeBubble: { width: 48, height: 48, borderRadius: 12, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  timeText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 12 },
+  timeText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 12, lineHeight: 17, textAlign: "center" },
   slotBody: { flex: 1, minWidth: 0 },
   teacherName: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13.5, textAlign: "right" },
   slotMeta: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right", marginTop: 2 },

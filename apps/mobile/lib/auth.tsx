@@ -18,6 +18,7 @@ type AuthState = {
 };
 
 type AuthRouter = {
+  canDismiss: () => boolean;
   dismissAll: () => void;
   replace: (path: any) => void;
 };
@@ -25,7 +26,8 @@ type AuthRouter = {
 const AuthContext = createContext<AuthState | null>(null);
 
 export function navigateToWelcome(router: AuthRouter) {
-  router.dismissAll();
+  // dismissAll on a stack with nothing to pop raises POP_TO_TOP "not handled".
+  if (router.canDismiss()) router.dismissAll();
   router.replace("/guest");
 }
 

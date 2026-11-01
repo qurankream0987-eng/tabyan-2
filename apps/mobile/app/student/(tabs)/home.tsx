@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Card, ErrorState, LoadingState, ProgressBar, Screen } from "../../../components/ui";
+import { Card, ErrorState, Icon, LoadingState, ProgressBar, Screen } from "../../../components/ui";
 import SectionIcon, { type SectionIconName } from "../../../components/ui/section-icon";
 import { useAuth } from "../../../lib/auth";
 import { trpc } from "../../../lib/trpc";
@@ -106,13 +106,13 @@ export default function StudentHome() {
         const tint = categories[p.path];
         return (
           <Pressable key={p.to} accessibilityRole="button" accessibilityLabel={p.title} onPress={() => router.push(p.to as never)} style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1 }]}>
-            <Card style={[styles.pathCard, { borderStartWidth: 3, borderStartColor: tint }]}>
+            <Card style={[styles.pathCard, { borderRightWidth: 3, borderRightColor: tint }]}>
               <View style={[styles.pathIcon, { backgroundColor: `${tint}17` }]}>
                 <SectionIcon name={p.icon} size={38} />
               </View>
               <Text style={[styles.pathTitle, { color: palette.goldDark }]}>{p.title}</Text>
               <View style={[styles.pathArrow, { backgroundColor: `${colors.primary}14` }]}>
-                <Text style={[styles.pathArrowText, { color: colors.primary }]}>‹</Text>
+                <Icon name="chevron-back" size={17} color={colors.primary} />
               </View>
             </Card>
           </Pressable>
@@ -159,12 +159,11 @@ const styles = StyleSheet.create({
   dutyMeta: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12.5, color: palette.gold, textAlign: "right" },
   dutyBtn: { borderRadius: 999, paddingVertical: 11, alignItems: "center", marginTop: 4 },
   dutyBtnText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13.5 },
-  pathCard: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
+  pathCard: { flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
   pathIcon: { width: 44, height: 44, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   pathTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 15.5, flex: 1, textAlign: "right" },
   pathArrow: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-  pathArrowText: { fontSize: 17, marginTop: -2 },
-  placementCard: { flexDirection: "row", alignItems: "center", gap: 12, borderStartWidth: 4, borderStartColor: palette.gold },
+  placementCard: { flexDirection: "row-reverse", alignItems: "center", gap: 12, borderRightWidth: 4, borderRightColor: palette.gold },
   placementBody: { flex: 1, minWidth: 0 },
   placementTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13.5, textAlign: "right" },
   placementSub: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11.5, marginTop: 2, textAlign: "right" },

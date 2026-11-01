@@ -10,6 +10,14 @@
     "./input-normalization": "./src/input-normalization.ts",
     "./password-validation": "./src/password-validation.ts",
     "./countries": "./src/countries.ts",
+    "./quran-normalizer": "./src/quran-normalizer.ts",
+    "./quran-live-matcher": "./src/quran-live-matcher.ts",
+    "./recitation-state-engine": "./src/recitation-state-engine.ts",
+    "./quran-surahs": "./src/quran-surahs.ts",
+    "./mushaf-page-index": "./src/mushaf-page-index.ts",
+    "./mushaf-page-layout": "./src/mushaf-page-layout.ts",
+    "./mushaf-page-data": "./src/mushaf-page-data.ts",
+    "./quran-search": "./src/quran-search.ts",
     "./product-registry.json": "./product-registry.json"
   }
 }

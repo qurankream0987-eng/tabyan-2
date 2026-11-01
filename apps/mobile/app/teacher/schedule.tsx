@@ -112,13 +112,13 @@ function formatDateTime(value: unknown) {
 }
 
 const styles = StyleSheet.create({
-  filters: { flexDirection: "row", gap: 8, marginBottom: 12 },
+  filters: { flexDirection: "row-reverse", gap: 8, marginBottom: 12 },
   filterText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 12, textAlign: "center" },
   sectionTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right", marginBottom: 10 },
   request: { borderRadius: 16, padding: 12, marginBottom: 8 },
-  requestActions: { flexDirection: "row", gap: 8, marginTop: 10 },
+  requestActions: { flexDirection: "row-reverse", gap: 8, marginTop: 10 },
   error: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "right", marginBottom: 8 },
-  cardHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 12 },
+  cardHeader: { flexDirection: "row-reverse", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 12 },
   cardBody: { flex: 1, alignItems: "flex-end" },
   title: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, textAlign: "right" },
   meta: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right", marginTop: 4 },

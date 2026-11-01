@@ -27,6 +27,7 @@ const { selectResults, inserted, updated, tableProxy, makeBuilder } = vi.hoisted
 
 vi.mock("@workspace/db", () => {
   const recitationSessions = tableProxy("recitationSessions");
+  const recitationAssignments = tableProxy("recitationAssignments");
   const sessions = tableProxy("sessions");
   const students = tableProxy("students");
   const levels = tableProxy("levels");
@@ -49,6 +50,7 @@ vi.mock("@workspace/db", () => {
       })),
     },
     levels,
+    recitationAssignments,
     recitationSessions,
     sessions,
     students,
@@ -124,17 +126,76 @@ describe("recitationRouter contract separation", () => {
     expect(inserted[0].values).not.toHaveProperty("surahId");
   });
 
-  it("rejects EDUCATIONAL when the server-owned assignment source is unavailable", async () => {
+  const assignmentId = "6f1c2d3e-4a5b-4c6d-8e7f-001122334455";
+  const assignment = {
+    id: assignmentId,
+    studentId: "student-1",
+    surahId: 2,
+    startAyah: 255,
+    endAyah: 257,
+    hideMode: "progressive_reveal",
+    status: "assigned",
+  };
+
+  it("rejects EDUCATIONAL without a teacher assignment for this student", async () => {
+    selectResults.push([]);
     const caller = recitationRouter.createCaller(studentContext);
 
     await expect(caller.start({
       mode: "educational",
+      assignmentId,
       expectedRange: validEducationalRange,
       hideMode: "full_hide",
     })).rejects.toMatchObject({
       code: "PRECONDITION_FAILED",
     });
     expect(inserted).toHaveLength(0);
+  });
+
+  it("rejects EDUCATIONAL whose range differs from the assignment", async () => {
+    selectResults.push([assignment]);
+    const caller = recitationRouter.createCaller(studentContext);
+
+    await expect(caller.start({
+      mode: "educational",
+      assignmentId,
+      expectedRange: { start: { surahId: 2, ayah: 255 }, end: { surahId: 2, ayah: 260 } },
+      hideMode: "full_hide",
+    })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(inserted).toHaveLength(0);
+  });
+
+  it("starts EDUCATIONAL from the assignment, with the teacher's display mode", async () => {
+    selectResults.push([assignment]);
+    const caller = recitationRouter.createCaller(studentContext);
+
+    const result = await caller.start({
+      mode: "educational",
+      assignmentId,
+      expectedRange: validEducationalRange,
+      hideMode: "visible_review",
+    });
+
+    expect(result.hideMode).toBe("progressive_reveal");
+    expect(inserted).toHaveLength(1);
+    expect(inserted[0].values).toMatchObject({
+      mode: "educational",
+      assignmentId,
+      hideMode: "progressive_reveal",
+      expectedRange: validEducationalRange,
+    });
+  });
+
+  it("does not start EDUCATIONAL from a reviewed or cancelled assignment", async () => {
+    selectResults.push([{ ...assignment, status: "reviewed" }]);
+    const caller = recitationRouter.createCaller(studentContext);
+
+    await expect(caller.start({
+      mode: "educational",
+      assignmentId,
+      expectedRange: validEducationalRange,
+      hideMode: "full_hide",
+    })).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
   });
 
   it("ends a GENERAL session without writing educational progress", async () => {

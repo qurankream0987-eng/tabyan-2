@@ -69,6 +69,13 @@ import { testRevealMap, useMemorizationTestRunner, type TestRunnerDeps } from ".
 import RecitationHistorySheet, { type HistoryTab } from "./RecitationHistorySheet";
 import { RecitationHistoryStore, type AyahSessionResult, type HistoryData, type HistoryMistake } from "@/lib/recitation-ai/recitationHistoryStore";
 import { DEFAULT_TEST_SETTINGS, type QuestionResult } from "@/lib/recitation-ai/memorizationTest";
+import {
+  buildAssignmentResult,
+  collectRangeWords,
+  type AssignmentResultPayload,
+  type MushafAssignment,
+} from "@/lib/recitation-assignments";
+import AssignmentSubmissionNotice, { type AssignmentSubmission } from "./AssignmentSubmissionNotice";
 import { trpc } from "@/providers/trpc";
 import { authStore } from "@/lib/auth";
 import type { WordFeedbackState } from "@/lib/mushaf/word-presentation";
@@ -129,9 +136,11 @@ interface Props {
   onNavigate: (page: number) => void;
   bookmarks: number[];
   toggleBookmark: (page: number) => void;
+  /** واجب تسميع فُتح القارئ من أجله: يبدأ منه التسميع التعليمي وتُسلَّم نتيجته. */
+  assignment?: MushafAssignment | null;
 }
 
-export default function MushafReader({ page, accountId, onClose, onNavigate, bookmarks, toggleBookmark }: Props) {
+export default function MushafReader({ page, accountId, onClose, onNavigate, bookmarks, toggleBookmark, assignment = null }: Props) {
   const isDemo = authStore.isDemo;
   const storageUserKey = isDemo ? "demo" : accountId;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -312,6 +321,21 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
   const [pendingFollowStart, setPendingFollowStart] = useState<{ page: number; verseKey: string } | null>(null);
   const [sessionHideMarkers, setSessionHideMarkers] = useState(false);
   const [aiWeakest, setAiWeakest] = useState<{ verseKey: string; confirmed: number; corrected: number; peeks: number }[]>([]);
+  // ── واجب التسميع: تسليم نتيجة الجلسة التعليمية للمعلم بعد إنهائها ─────────
+  const [assignmentSubmission, setAssignmentSubmission] = useState<AssignmentSubmission | null>(null);
+  const trpcUtils = trpc.useUtils();
+  const submitAssignmentMut = trpc.recitationAssignments.submit.useMutation();
+  const sendAssignmentResult = useCallback(async (sessionId: string, payload: AssignmentResultPayload) => {
+    setAssignmentSubmission({ status: "submitting", sessionId, payload });
+    try {
+      await submitAssignmentMut.mutateAsync({ sessionId, result: payload });
+      setAssignmentSubmission({ status: "submitted", sessionId, payload });
+      void trpcUtils.recitationAssignments.mine.invalidate();
+    } catch (error) {
+      const message = error instanceof Error && error.message ? error.message : "تعذّر الاتصال بالخادم";
+      setAssignmentSubmission({ status: "failed", sessionId, payload, message });
+    }
+  }, [submitAssignmentMut, trpcUtils]);
   const [tashkeelLive, setTashkeelLive] = useState(() => aiOptionsRef.current.tashkeel ?? false);
   const tashkeelMonitorRef = useRef(new TashkeelEvidenceMonitor());
   const [tashkeelLevel, setTashkeelLevel] = useState<"unknown" | "none" | "partial" | "present">("unknown");
@@ -419,8 +443,9 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
     return {
       rangeKeys: visibleKeys,
       // إظهار الآيات = متابعة مع صبغة خافتة لما قُرئ؛ إخفاؤها = كشف تدريجي للحفظ.
+      // التسميع التعليمي يعرض بوضع الواجب الذي فرضه الخادم.
       hideMode: aiReveal
-        ? (sessionHidden ? "progressive_reveal" : "visible_review")
+        ? (rec.mode === "educational" ? rec.hideMode : sessionHidden ? "progressive_reveal" : "visible_review")
         : (aiCanaryAvailable ? "visible_review" : rec.hideMode),
       hideAyahMarkers: aiReveal && sessionHidden && sessionHideMarkers,
       currentVerseKey: rec.currentVerseKey,
@@ -851,6 +876,30 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
     return false;
   }), [aiCanaryAvailable, prepareLiveMatcher, rec.startSession, startAiForSession]);
 
+  /** بدء من ورقة الإعداد؛ جلسة الواجب تسميع لا متابعة، وتعرض بوضع الواجب. */
+  const startFromSetup = useCallback((
+    request: RecitationStartRequest,
+    hideMode: HideMode,
+    aiOptions?: RecitationAiOptions,
+  ) => {
+    if (request.mode === "educational") {
+      setFollowMode(false);
+      setSessionHidden(hideMode !== "visible_review");
+      setSessionHideMarkers(false);
+      setAssignmentSubmission(null);
+    }
+    return startRecitationWithAi(request, hideMode, aiOptions);
+  }, [startRecitationWithAi]);
+
+  // فتح القارئ من واجب: تظهر ورقة الواجب مرة واحدة بعد جاهزية التسميع.
+  const assignmentSetupShownRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!assignment || !rec.enabled || rec.phase !== "idle") return;
+    if (assignmentSetupShownRef.current === assignment.id) return;
+    assignmentSetupShownRef.current = assignment.id;
+    rec.openSetup();
+  }, [assignment, rec.enabled, rec.phase, rec.openSetup]);
+
   const startAi = useCallback(async () => {
     if (!aiCanaryAvailable || rec.phase !== "active" || !rec.sessionId) return;
     if (!matcherRef.current && rec.range) {
@@ -1195,6 +1244,11 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
     }
     if (endedNormally) cleanlyClosedSessionRef.current = serverSessionId;
     const engine = engineRef.current;
+    const matcher = matcherRef.current;
+    // واجب التسميع: النتيجة تُحسب هنا من المحرك نفسه وتُسلَّم بعد تأكيد إنهاء الجلسة.
+    const assignmentRange = rec.mode === "educational" && assignment ? assignment : null;
+    let assignmentPayload: AssignmentResultPayload | null = null;
+    if (assignmentRange) setAssignmentSubmission(null);
     const saved = await rec.endSession(async () => {
     if (engine) {
       // انحرافات لم تتأكد تُصنَّف unconfirmed ولا تُحتسب أخطاء في الملخص.
@@ -1202,6 +1256,12 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
       const summary = engine.summary();
       setAiSummary(summary);
       setAiWeakest(engine.weakestAyahs(3));
+      if (assignmentRange && matcher) {
+        assignmentPayload = buildAssignmentResult(
+          collectRangeWords((index) => matcher.wordAt(index), engine, assignmentRange),
+          summary.wordsHeard,
+        );
+      }
       // الاختبار يسجّل نفسه عند انتهائه؛ هنا التلاوة/الحفظ فقط. لا صوت ولا نص.
       if (historyStore && !testActiveRef.current && !followModeRef.current && summary.wordsHeard > 0) {
         const ayahs = engine.ayahResults();
@@ -1231,8 +1291,18 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
     });
     if (isTarteelTrial) traceAi("TARTEEL_RECITATION_END_RESULT", { saved });
     if (saved) cleanlyClosedSessionRef.current = null;
+    if (saved && assignmentRange) {
+      const payload = assignmentPayload as AssignmentResultPayload | null;
+      if (!payload) {
+        setAssignmentSubmission({ status: "unavailable", sessionId: serverSessionId, payload: null });
+      } else if (payload.wordsRecited === 0) {
+        setAssignmentSubmission({ status: "empty", sessionId: serverSessionId, payload });
+      } else {
+        await sendAssignmentResult(serverSessionId, payload);
+      }
+    }
     });
-  }, [aiCanaryAvailable, historyStore, live.diagnostics.asrProvider, live.state, live.stop, rec, refreshHistory]);
+  }, [aiCanaryAvailable, assignment, historyStore, live.diagnostics.asrProvider, live.state, live.stop, rec, refreshHistory, sendAssignmentResult]);
 
   const cancelRecitationWithAi = useCallback(() => {
     feedbackRef.current?.complete(false);
@@ -1244,21 +1314,26 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
   // ── إعادة الاتصال التلقائية (Part 13: RECONNECTING) ─────────────────────
   // فقط لانقطاع نقل عابر أثناء جلسة نشطة؛ الـ matcher والمحرك يبقيان كما هما
   // فيُستأنف التتبع من الموضع الملتزم نفسه. رفض الميكروفون/الخادم لا يُعاد.
+  // `reconnecting` ليس من الاعتماديات: setReconnecting(true) كان يعيد تشغيل
+  // التأثير فيلغي مؤقّته ويستهلك محاولة، وعند بلوغ الحد يبقى «يعيد الاتصال» عالقاً.
   useEffect(() => {
     if (live.state === "listening") {
-      if (reconnecting) setReconnecting(false);
+      setReconnecting(false);
       reconnectAttemptsRef.current = 0;
       return;
     }
-    if (live.state !== "failed" || !rec.sessionId) return;
-    if (reconnectCountRef.current >= 3) return; // Total cap per logical session, not just a retry burst.
-    // Audio-file QA is opt-in and must not silently switch back to the mic.
-    if (live.diagnostics.audioSource === "audio-file") {
-      if (reconnecting) setReconnecting(false);
+    if (live.state !== "failed" || !rec.sessionId) {
+      // A reconnect in flight shows as connecting; anything else ends it.
+      if (live.state === "idle" || !rec.sessionId) setReconnecting(false);
       return;
     }
-    if (!shouldAutoReconnect(live.failure, reconnectAttemptsRef.current, rec.phase)) {
-      if (reconnecting) setReconnecting(false);
+    if (
+      reconnectCountRef.current >= 3 // Total cap per logical session, not just a retry burst.
+      // Audio-file QA is opt-in and must not silently switch back to the mic.
+      || live.diagnostics.audioSource === "audio-file"
+      || !shouldAutoReconnect(live.failure, reconnectAttemptsRef.current, rec.phase)
+    ) {
+      setReconnecting(false);
       return;
     }
     const attempt = reconnectAttemptsRef.current;
@@ -1269,7 +1344,7 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
     const sessionId = rec.sessionId;
     const timer = window.setTimeout(() => { void live.start(sessionId); }, RECONNECT_DELAYS_MS[attempt]);
     return () => window.clearTimeout(timer);
-  }, [live.diagnostics.audioSource, live.failure, live.start, live.state, rec.phase, rec.sessionId, reconnecting]);
+  }, [live.diagnostics.audioSource, live.failure, live.start, live.state, rec.phase, rec.sessionId]);
 
   const retryAi = useCallback(() => {
     reconnectAttemptsRef.current = 0;
@@ -2196,10 +2271,10 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
           accountId={storageUserKey}
           pageData={pageReady ? data : null}
           currentAyah={currentAyahForSetup}
-          isStudent={rec.isStudent}
+          assignment={rec.isStudent ? assignment : null}
           educationalAvailable={rec.educationalAvailable}
           isStarting={rec.isStarting}
-          onStart={startRecitationWithAi}
+          onStart={startFromSetup}
           aiAvailable={aiCanaryAvailable}
           onClose={() => { setRecitePreset(null); rec.closeSetup(); }}
         />
@@ -2213,6 +2288,14 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
           onClose={rec.closeResult}
           onRepeat={rec.result.mode === "general" ? () => handleStartRecitation({ hidden: sessionHidden }) : rec.repeatSession}
           kindLabel={rec.result.mode === "general" ? (sessionHidden ? "حفظ" : "تلاوة") : undefined}
+          notice={assignmentSubmission && assignmentSubmission.sessionId === rec.result.sessionId ? (
+            <AssignmentSubmissionNotice
+              submission={assignmentSubmission}
+              onRetry={assignmentSubmission.payload
+                ? () => void sendAssignmentResult(assignmentSubmission.sessionId, assignmentSubmission.payload!)
+                : undefined}
+            />
+          ) : undefined}
         />
       )}
 

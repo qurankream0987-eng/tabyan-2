@@ -1,7 +1,31 @@
-export const RECITATION_PROVIDERS = ["openai", "nvidia", "speechmatics", "tarteel", "nabr"] as const;
+export const RECITATION_PROVIDERS = ["openai", "nvidia", "speechmatics", "tarteel", "tilawi", "nabr"] as const;
 
 export type RecitationProviderName = (typeof RECITATION_PROVIDERS)[number];
 export type TranscriptProviderName = Exclude<RecitationProviderName, "nabr">;
+
+/**
+ * Providers that answer a final commit with a `finalized` message once every
+ * buffered sample is decoded. Clients wait for that acknowledgement before
+ * closing; other providers are treated as done at their first final.
+ */
+const FINALIZATION_ACK_PROVIDERS: ReadonlySet<string> = new Set(["openai", "tarteel", "tilawi"]);
+
+export function providerAcknowledgesFinalization(provider: string | null | undefined): boolean {
+  return !!provider && FINALIZATION_ACK_PROVIDERS.has(provider);
+}
+
+/** Local chunked decoders can take much longer than a streaming API to drain. */
+export function providerFinalizationTimeoutMs(provider: string | null | undefined): number {
+  return provider === "tarteel" ? 120_000 : 10_000;
+}
+
+/**
+ * Recitation socket keepalive. Clients send `{ t: "ping" }` this often, even
+ * while paused, and the gateway answers `{ t: "pong" }`. A client that hears
+ * nothing from the gateway for the silence timeout treats the socket as dead.
+ */
+export const RECITATION_KEEPALIVE_INTERVAL_MS = 10_000;
+export const RECITATION_GATEWAY_SILENCE_TIMEOUT_MS = 30_000;
 
 export type NormalizedMistakeType =
   | "omission"

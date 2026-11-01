@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deriveAiPhase, presentAiPhase, shouldAutoReconnect, type AiPhaseInput } from "./aiSessionPhase";
+import { deriveAiPhase, gatewayErrorFailure, presentAiPhase, shouldAutoReconnect, type AiPhaseInput } from "./aiSessionPhase";
 import { AudioQualityMonitor, frameStats } from "./audioQuality";
 
 const base: AiPhaseInput = { recitation: "active", transport: "idle", preparing: false, reconnecting: false, aiEnabled: true };
@@ -42,6 +42,15 @@ describe("shouldAutoReconnect", () => {
     expect(shouldAutoReconnect("mic", 0, "active")).toBe(false);
     expect(shouldAutoReconnect("server", 0, "active")).toBe(false);
     expect(shouldAutoReconnect("transport", 0, "paused")).toBe(false);
+  });
+
+  it("treats provider stream errors and idle cleanup as reconnectable transport failures", () => {
+    expect(gatewayErrorFailure("PROVIDER_STREAM_ERROR")).toBe("transport");
+    expect(gatewayErrorFailure("PROVIDER_CLOSED")).toBe("transport");
+    expect(gatewayErrorFailure("SESSION_IDLE")).toBe("transport");
+    expect(gatewayErrorFailure("SESSION_REPLACED")).toBe("server");
+    expect(gatewayErrorFailure("UNAUTHORIZED")).toBe("server");
+    expect(gatewayErrorFailure(undefined)).toBe("server");
   });
 });
 

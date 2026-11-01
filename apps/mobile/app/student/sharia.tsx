@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Card, EmptyState, ErrorState, LoadingState, StudentScreen } from "../../components/student/student-screen";
+import { Icon } from "../../components/ui";
 import SectionIcon, { type SectionIconName } from "../../components/ui/section-icon";
 import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
@@ -69,13 +70,13 @@ export default function Sharia() {
                   onPress={() => router.push(`/student/sharia/${key}` as never)}
                   style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1 })}
                 >
-                  <Card style={[styles.subjectCard, { borderStartWidth: 3, borderStartColor: categories.sharia }]}>
+                  <Card style={[styles.subjectCard, { borderRightWidth: 3, borderRightColor: categories.sharia }]}>
                     <View style={[styles.iconBubble, { backgroundColor: `${palette.gold}1f` }]}>
                       <SectionIcon name={icon} size={32} />
                     </View>
                     <Text style={[styles.subjectName, { color: colors.text }]}>{name}</Text>
                     <View style={[styles.arrowBubble, { backgroundColor: `${colors.primary}14` }]}>
-                      <Text style={[styles.arrow, { color: colors.primary }]}>‹</Text>
+                      <Icon name="chevron-back" size={18} color={colors.primary} />
                     </View>
                   </Card>
                 </Pressable>
@@ -96,9 +97,8 @@ const styles = StyleSheet.create({
   summaryMeta: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "right", marginTop: 2 },
   resume: { borderRadius: 12, padding: 10, marginTop: 12 },
   resumeText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 11, textAlign: "right" },
-  subjectCard: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14 },
+  subjectCard: { flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingVertical: 14 },
   iconBubble: { width: 48, height: 48, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   subjectName: { flex: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right" },
   arrowBubble: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
-  arrow: { fontSize: 19, marginTop: -2 },
 });

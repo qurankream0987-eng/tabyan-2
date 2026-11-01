@@ -190,12 +190,12 @@ export function NotificationDetail({ listPath, base }: { listPath: string; base:
 
           {payload && (payload.teacherName || payload.subject || payload.date || payload.time || payload.durationMinutes != null || payload.sessionKind) ? (
             <View style={[styles.details, { borderTopColor: `${palette.gold}66` }]}>
-              {payload.teacherName ? <InfoRow icon="user" label="المعلم" value={payload.teacherName} /> : null}
-              {payload.subject ? <InfoRow icon="book" label="المادة" value={payload.subject} /> : null}
-              {payload.date ? <InfoRow icon="calendar" label="الموعد" value={payload.date} /> : null}
-              {payload.time ? <InfoRow icon="clock" label="الساعة" value={payload.time} /> : null}
-              {payload.durationMinutes != null ? <InfoRow icon="timer" label="المدة" value={`${payload.durationMinutes} دقيقة`} /> : null}
-              {payload.sessionKind ? <InfoRow icon="location" label="نوع الحلقة" value={payload.sessionKind} /> : null}
+              {payload.teacherName ? <InfoRow icon="person-outline" label="المعلم" value={payload.teacherName} /> : null}
+              {payload.subject ? <InfoRow icon="book-outline" label="المادة" value={payload.subject} /> : null}
+              {payload.date ? <InfoRow icon="calendar-outline" label="الموعد" value={payload.date} /> : null}
+              {payload.time ? <InfoRow icon="time-outline" label="الساعة" value={payload.time} /> : null}
+              {payload.durationMinutes != null ? <InfoRow icon="timer-outline" label="المدة" value={`${payload.durationMinutes} دقيقة`} /> : null}
+              {payload.sessionKind ? <InfoRow icon="location-outline" label="نوع الحلقة" value={payload.sessionKind} /> : null}
             </View>
           ) : null}
 
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   date: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "center", marginTop: 4 },
   body: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 14, lineHeight: 28, textAlign: "center", marginTop: 16, width: "100%" },
   details: { width: "100%", borderTopWidth: 1, marginTop: 18, paddingTop: 15, gap: 10 },
-  infoRow: { flexDirection: "row", alignItems: "center", gap: 9, width: "100%" },
+  infoRow: { flexDirection: "row-reverse", alignItems: "center", gap: 9, width: "100%" },
   infoIcon: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
   infoLabel: { width: 62, fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 11, textAlign: "right" },
   infoValue: { flex: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, textAlign: "right" },

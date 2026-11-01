@@ -3,12 +3,17 @@ import {
   isQrcStructuredObservation,
   NormalizedTranscriptMatcherBridge,
   normalizeProviderObservation,
+  providerAcknowledgesFinalization,
+  providerFinalizationTimeoutMs,
+  RECITATION_GATEWAY_SILENCE_TIMEOUT_MS,
+  RECITATION_KEEPALIVE_INTERVAL_MS,
   type QrcStructuredObservation,
+  type RecitationProviderName,
 } from "@workspace/tabyan-domain";
 import type { TranscriptEvent } from "./types";
 import { RollingSamples, UtteranceSegmenter } from "./latencyTelemetry";
 import { AudioQualityMonitor, frameStats, type AudioQualitySnapshot } from "./audioQuality";
-import type { TransportFailure, TransportState } from "./aiSessionPhase";
+import { gatewayErrorFailure, type TransportFailure, type TransportState } from "./aiSessionPhase";
 import { PROCESSOR_SOURCE } from "./pcm-worklet-source";
 import { runSessionAction, waitForCleanSocketClose } from "@/lib/mushaf/session-audio-lifecycle";
 import {
@@ -22,7 +27,7 @@ import { normalizeQuranText } from "./normalizer";
 
 export type AudioInputSource = "microphone" | "audio-file";
 export type PipelineMilestone = "matcherStartMs" | "matcherEndMs" | "uiCommitMs" | "totalFeedbackMs";
-type RealtimeProviderName = "openai" | "nvidia" | "speechmatics" | "tarteel" | "nabr";
+type RealtimeProviderName = RecitationProviderName;
 type MeasuredMilestone =
   | "micCaptureStartMs"
   | "firstAudioFrameMs"
@@ -124,6 +129,7 @@ export interface RealtimeTranscriptionOptions {
 
 type GatewayMessage =
   | { t: "authenticated" }
+  | { t: "pong" }
   | { t: "finalized"; commitId?: string }
   | { t: "ready"; providerConnectionMs: number; provider?: RealtimeProviderName; audioSampleRateHz?: number }
   | { t: "qrc-observation"; observation: QrcStructuredObservation }
@@ -229,6 +235,8 @@ const EMPTY_DIAGNOSTICS: RealtimeDiagnostics = {
 const SPEECH_RMS_THRESHOLD = 0.02;
 const ACTIVE_SPEECH_STALL_MS = 5_000;
 const MAX_PARTIAL_ITEMS = 32;
+/** Worklet frames are 100 ms: keep up to 10 s captured before the provider is ready. */
+const MAX_PENDING_AUDIO_FRAMES = 100;
 
 function traceAi(event: string, metadata: Record<string, unknown> = {}) {
   if (import.meta.env.DEV) console.info(`[TABYAN_AI_TRACE] ${event}`, metadata);
@@ -310,6 +318,9 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
   const fileInjectionGenerationRef = useRef(0);
   const finalsRef = useRef(new RollingSamples());
   const pausedRef = useRef(false);
+  const providerReadyRef = useRef(false);
+  const pendingAudioRef = useRef<{ buffer: ArrayBuffer; rms: number }[]>([]);
+  const keepaliveTimerRef = useRef<number | null>(null);
   const finalResolverRef = useRef<(() => void) | null>(null);
   const finalCommitIdRef = useRef<string | null>(null);
   const partialByItemRef = useRef(new Map<string, string>());
@@ -399,6 +410,12 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
     const ws = wsRef.current;
     const stats = diagnosticRef.current;
     if (pausedRef.current) return false;
+    if (!providerReadyRef.current) {
+      // The provider is still connecting: hold the first words for the flush.
+      pendingAudioRef.current.push({ buffer, rms });
+      if (pendingAudioRef.current.length > MAX_PENDING_AUDIO_FRAMES) pendingAudioRef.current.shift();
+      return true;
+    }
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       if (stateRef.current === "listening") stats.clientDroppedChunkCount += 1;
       return false;
@@ -607,6 +624,10 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
   }, [snapshotDiagnostics, transportLive]);
 
   const cleanupMedia = useCallback(() => {
+    if (keepaliveTimerRef.current !== null) window.clearInterval(keepaliveTimerRef.current);
+    keepaliveTimerRef.current = null;
+    providerReadyRef.current = false;
+    pendingAudioRef.current = [];
     processorRef.current?.disconnect();
     processorRef.current = null;
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -682,9 +703,9 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
-      // Permission may return after cancel/retry. Never attach the old microphone
-      // to a replacement session, and always stop the newly granted tracks.
-      if (wsRef.current !== expectedWs) {
+      // Permission may return after cancel/retry or a failed start. Never attach
+      // the old microphone to a replacement session; stop the granted tracks.
+      if (wsRef.current !== expectedWs || (stateRef.current as TransportState) === "failed") {
         stream.getTracks().forEach((track) => track.stop());
         return false;
       }
@@ -695,7 +716,7 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
       const url = URL.createObjectURL(new Blob([PROCESSOR_SOURCE], { type: "application/javascript" }));
       moduleUrlRef.current = url;
       await context.audioWorklet.addModule(url);
-      if (wsRef.current !== expectedWs) {
+      if (wsRef.current !== expectedWs || (stateRef.current as TransportState) === "failed") {
         stream.getTracks().forEach((track) => track.stop());
         void context.close().catch(() => {});
         URL.revokeObjectURL(url);
@@ -733,19 +754,24 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
       };
       await context.resume();
       if (wsRef.current !== expectedWs) return false;
+      if ((stateRef.current as TransportState) === "failed") {
+        cleanupMedia();
+        return false;
+      }
       if (context.state !== "running") throw new Error("Audio capture context is not running");
-      try { await onAudioReadyRef.current?.(); } catch { /* Optional audio cue. */ }
-      if (wsRef.current !== expectedWs || (stateRef.current as TransportState) === "failed") return false;
-      stateRef.current = "listening";
-      setState("listening");
       traceAi("AUDIO_CAPTURE_STARTED");
+      // Capture runs while the provider connects; its audio is buffered until READY.
+      if (stateRef.current === "requesting_mic") {
+        stateRef.current = "connecting";
+        setState("connecting");
+      }
       return true;
     } catch {
       if (wsRef.current !== expectedWs) return false;
       fail("تعذر الوصول إلى الميكروفون — امنح الإذن ثم أعد المحاولة", "mic");
       return false;
     }
-  }, [fail, markPipelineMilestone, observeAudioLevel, sendPcmChunk]);
+  }, [cleanupMedia, fail, markPipelineMilestone, observeAudioLevel, sendPcmChunk]);
 
   const start = useCallback(async (sessionId: string, source: AudioInputSource = "microphone") => {
     if (source === "microphone" && (!navigator.mediaDevices?.getUserMedia || !window.AudioWorkletNode)) {
@@ -858,6 +884,33 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
           clearStartTimeout();
           resolve(started);
         };
+        // The microphone opens with the socket so words spoken while the provider
+        // connects are buffered and flushed at READY instead of being lost.
+        const capture = source === "microphone" ? startCapture(ws) : null;
+        void capture?.then((capturing) => {
+          if (capturing) return;
+          if (wsRef.current === ws) close();
+          settle(false);
+        }, () => {
+          if (wsRef.current !== ws) { settle(false); return; }
+          fail("تعذر تهيئة التقاط الصوت", "mic");
+          close();
+          settle(false);
+        });
+        let providerReadyReceived = false;
+        const startKeepalive = () => {
+          keepaliveTimerRef.current = window.setInterval(() => {
+            if (wsRef.current !== ws || ws.readyState !== WebSocket.OPEN) return;
+            // Pongs arrive even during silence, so a quiet socket is a dead one.
+            if (Date.now() - (socketLastMessageAtRef.current ?? 0) > RECITATION_GATEWAY_SILENCE_TIMEOUT_MS) {
+              socketCloseRequestedByRef.current = "client_gateway_silent";
+              fail("انقطع الاتصال بخدمة التعرف", "transport");
+              close();
+              return;
+            }
+            try { ws.send(JSON.stringify({ t: "ping" })); } catch { /* onclose reports the failure. */ }
+          }, RECITATION_KEEPALIVE_INTERVAL_MS);
+        };
         timeout = window.setTimeout(() => {
           if (wsRef.current !== ws) { settle(false); return; }
           socketCloseRequestedByRef.current = "client_start_timeout";
@@ -905,7 +958,7 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
             const errorMessage = typeof message.message === "string" && message.message.trim()
               ? message.message
               : "تعذر استمرار اتصال خدمة التفريغ الحي";
-            fail(errorMessage, "server");
+            fail(errorMessage, gatewayErrorFailure(message.code));
             socketCloseRequestedByRef.current = "api_error_message";
             ws.close();
             settle(false);
@@ -927,8 +980,7 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
           if (message.t === "finalized") {
             logSocketLifecycle("API_FINALIZED_MESSAGE_RECEIVED", ws);
             if (
-              (diagnosticRef.current.asrProvider === "tarteel"
-                || diagnosticRef.current.asrProvider === "openai")
+              providerAcknowledgesFinalization(diagnosticRef.current.asrProvider)
               && message.commitId === finalCommitIdRef.current && stateRef.current === "stopping") {
               if (import.meta.env.DEV && diagnosticRef.current.asrProvider === "tarteel") {
                 traceAi("TARTEEL_FINAL_COMMIT_ACK", {
@@ -945,7 +997,8 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
             logSocketLifecycle("API_PROVIDER_READY_MESSAGE_RECEIVED", ws, {
               provider: message.provider ?? "unknown",
             });
-            if (stateRef.current === "requesting_mic" || stateRef.current === "listening") return;
+            if (providerReadyReceived) return;
+            providerReadyReceived = true;
             clearStartTimeout();
             traceAi("ASR_PROVIDER_READY", { provider: message.provider ?? "unknown" });
             requestedAudioSampleRateRef.current = message.audioSampleRateHz ?? 24_000;
@@ -963,27 +1016,21 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
             diagnosticRef.current.providerSessionStartedAt = performance.now();
             const connectionMs = Math.round(performance.now() - startedAtRef.current);
             setMetrics((previous) => ({ ...previous, connectionMs }));
-            if (source === "audio-file") {
-              void Promise.resolve().then(() => onAudioReadyRef.current?.()).catch(() => {}).then(() => {
-                if (wsRef.current !== ws) { settle(false); return; }
-                stateRef.current = "listening";
-                setState("listening");
-                settle(true);
-              });
-            } else {
-              void startCapture(ws)
-                .then((capturing) => {
-                  if (wsRef.current !== ws) { settle(false); return; }
-                  if (!capturing) close();
-                  settle(capturing);
-                })
-                .catch(() => {
-                  if (wsRef.current !== ws) { settle(false); return; }
-                  fail("تعذر تهيئة التقاط الصوت", "mic");
-                  close();
-                  settle(false);
-                });
-            }
+            // Microphone: wait for capture (permission may still be pending);
+            // capture failures are already handled by the capture promise.
+            void (capture ?? Promise.resolve(true)).then(async (capturing) => {
+              if (wsRef.current !== ws || !capturing) { settle(false); return; }
+              try { await onAudioReadyRef.current?.(); } catch { /* Optional audio cue. */ }
+              if (wsRef.current !== ws || (stateRef.current as TransportState) === "failed") { settle(false); return; }
+              providerReadyRef.current = true;
+              const pending = pendingAudioRef.current;
+              pendingAudioRef.current = [];
+              for (const frame of pending) sendPcmChunk(frame.buffer, frame.rms);
+              startKeepalive();
+              stateRef.current = "listening";
+              setState("listening");
+              settle(true);
+            }, () => settle(false));
             return;
           }
           if (message.t === "qrc-observation") {
@@ -1088,10 +1135,7 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
                 p95Ms: finalsRef.current.percentile(0.95),
               }));
               traceAi("ASR_FINAL", { provider: diagnosticRef.current.asrProvider });
-              if (
-                diagnosticRef.current.asrProvider !== "openai"
-                && diagnosticRef.current.asrProvider !== "tarteel"
-              ) {
+              if (!providerAcknowledgesFinalization(diagnosticRef.current.asrProvider)) {
                 finalResolverRef.current?.();
                 finalResolverRef.current = null;
               }
@@ -1155,6 +1199,7 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
     fail,
     markPipelineMilestone,
     normalizeTranscriptForMatcher,
+    sendPcmChunk,
     startCapture,
   ]);
 
@@ -1294,8 +1339,10 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
     const finalized = await Promise.race([
       completed.then(() => true),
       new Promise<boolean>((resolve) => {
-        const batchProvider = diagnosticRef.current.asrProvider === "tarteel";
-        finalTimeout = setTimeout(() => resolve(false), batchProvider ? 120_000 : 10_000);
+        finalTimeout = setTimeout(
+          () => resolve(false),
+          providerFinalizationTimeoutMs(diagnosticRef.current.asrProvider),
+        );
       }),
     ]);
     clearTimeout(finalTimeout);

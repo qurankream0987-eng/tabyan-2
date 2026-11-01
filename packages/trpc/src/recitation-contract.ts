@@ -75,8 +75,14 @@ export const generalStartInputSchema = z.object({
   hideMode: hideModeSchema,
 }).strict();
 
+/**
+ * EDUCATIONAL starts only from a teacher's assignment. The server takes the
+ * range and display mode from the assignment; a client expectedRange that
+ * differs from it is rejected.
+ */
 export const educationalStartInputSchema = z.object({
   mode: z.literal("educational"),
+  assignmentId: z.string().uuid(),
   expectedRange: expectedRangeSchema,
   hideMode: hideModeSchema,
 }).strict();
@@ -133,4 +139,24 @@ export function isLegacyRangedGeneral(session: {
     && session.surahId != null
     && session.startAyah != null
     && session.endAyah != null;
+}
+/** Result a student submits for an assignment, computed on their device by the shared mistake engine. */
+export const assignmentResultSchema = z.object({
+  wordsRecited: z.number().int().min(0).max(10_000),
+  totalWords: z.number().int().min(0).max(10_000),
+  confirmedMistakes: z.number().int().min(0).max(10_000),
+  skippedWords: z.number().int().min(0).max(10_000),
+  correctedWords: z.number().int().min(0).max(10_000),
+  peekedWords: z.number().int().min(0).max(10_000),
+  flaggedWords: z.array(z.object({
+    key: z.string().regex(/^\d{1,3}:\d{1,3}:\d{1,3}$/),
+    kind: z.enum(["mistake", "skipped", "corrected", "peeked"]),
+  }).strict()).max(500),
+}).strict();
+
+export type AssignmentResultInput = z.infer<typeof assignmentResultSchema>;
+
+/** Where the server keeps the audio of an educational session, for the teacher to listen to. */
+export function recitationAudioObjectPath(sessionId: string): string {
+  return `/objects/uploads/recitation-audio/${sessionId}`;
 }

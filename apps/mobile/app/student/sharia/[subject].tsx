@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Badge, Card, EmptyState, ErrorState, LoadingState, StudentScreen } from "../../../components/student/student-screen";
+import { Icon } from "../../../components/ui";
 import SectionIcon, { type SectionIconName } from "../../../components/ui/section-icon";
 import { useAuth } from "../../../lib/auth";
 import { trpc } from "../../../lib/trpc";
@@ -118,11 +119,11 @@ function LevelCard({ level, icon, onOpen }: { level: Level; icon: SectionIconNam
           </View>
           <View style={styles.levelCopy}>
             <View style={styles.levelTitleRow}>
-              <Text style={[styles.levelName, { color: colors.text }]}>{level.name}</Text>
+              <Text numberOfLines={1} style={[styles.levelName, { color: colors.text }]}>{level.name}</Text>
               <Badge label={status.label} tone={status.tone} />
             </View>
           </View>
-          <Text style={[styles.levelArrow, { color: colors.primary }]}>{open ? "⌃" : "‹"}</Text>
+          <Icon name={open ? "chevron-up" : "chevron-back"} size={20} color={colors.primary} style={styles.levelArrow} />
         </View>
       </Pressable>
       {open ? (
@@ -149,12 +150,12 @@ const styles = StyleSheet.create({
   levelList: { gap: 12 },
   levelCard: { padding: 14 },
   levelCardOpen: { paddingBottom: 18 },
-  levelHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+  levelHeader: { flexDirection: "row-reverse", alignItems: "center", gap: 10 },
   levelIcon: { width: 48, height: 48, borderRadius: 17, alignItems: "center", justifyContent: "center" },
   levelCopy: { flex: 1, minWidth: 0 },
   levelTitleRow: { flexDirection: "row-reverse", alignItems: "center", gap: 7, flexWrap: "wrap" },
   levelName: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right", flexShrink: 1 },
-  levelArrow: { fontSize: 22, width: 28, textAlign: "center" },
+  levelArrow: { width: 28, textAlign: "center" },
   levelDetails: { marginTop: 14, paddingTop: 14, borderTopWidth: 1 },
   entryButton: { borderRadius: 999, minHeight: 46, alignItems: "center", justifyContent: "center" },
   entryText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14 },

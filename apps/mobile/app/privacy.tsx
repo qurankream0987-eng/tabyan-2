@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   bulletRow: { flexDirection: "row-reverse", alignItems: "flex-start", gap: 6, marginTop: 5 },
   bullet: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, lineHeight: 19 },
   flexText: { flex: 1 },
-  reviewToggle: { minHeight: 34, justifyContent: "center", alignSelf: "flex-start", marginTop: 2 },
+  reviewToggle: { minHeight: 34, justifyContent: "center", alignSelf: "flex-end", marginTop: 2 },
   toolsCard: { padding: 12 },
   searchInput: { minHeight: 42, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingHorizontal: 10, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 18, textAlign: "right" },
   controls: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 7, marginTop: 8, marginBottom: 4 },

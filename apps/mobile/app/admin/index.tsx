@@ -132,12 +132,12 @@ export default function AdminHome() {
 }
 
 const styles = StyleSheet.create({
-  kpiGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  kpiGrid: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 8 },
   kpiWrap: { flexBasis: "48%", flexGrow: 1 },
-  kpiCell: { alignItems: "flex-start", gap: 5, paddingVertical: 14 },
+  kpiCell: { alignItems: "flex-end", gap: 5, paddingVertical: 14 },
   kpiValue: { fontFamily: "Amiri_700Bold", fontSize: 23 },
-  kpiLabel: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right" },
-  urgentHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
+  kpiLabel: { alignSelf: "stretch", fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right" },
+  urgentHead: { flexDirection: "row-reverse", alignItems: "center", gap: 8, marginBottom: 12 },
   urgentDot: { width: 8, height: 8, borderRadius: 4 },
   urgentTitle: { fontFamily: "Amiri_700Bold", fontSize: 19 },
   summary: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 13, textAlign: "right", marginBottom: 10 },

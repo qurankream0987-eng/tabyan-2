@@ -126,7 +126,7 @@ export default function Login() {
             <View style={[styles.check, { borderColor: rememberMe ? colors.primary : colors.border, backgroundColor: rememberMe ? colors.primary : "transparent" }]}>
               {rememberMe ? <Icon name="checkmark" size={14} color={colors.primaryText} /> : null}
             </View>
-            <Text style={[styles.rememberText, { color: colors.muted }]}>تذكرني على هذا الجهاز</Text>
+            <Text numberOfLines={1} style={[styles.rememberText, { color: colors.muted }]}>تذكرني على هذا الجهاز</Text>
           </Pressable>
           {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
           <Button

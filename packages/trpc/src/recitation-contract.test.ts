@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  assignmentResultSchema,
   educationalStartInputSchema,
   generalStartInputSchema,
   getRecitationPolicy,
@@ -38,8 +39,19 @@ describe("recitation contract separation", () => {
       hideMode: "full_hide",
     }).success).toBe(false);
 
+    // An EDUCATIONAL start names the teacher's assignment it comes from.
     expect(educationalStartInputSchema.safeParse({
       mode: "educational",
+      expectedRange: {
+        start: { surahId: 2, ayah: 255 },
+        end: { surahId: 2, ayah: 257 },
+      },
+      hideMode: "full_hide",
+    }).success).toBe(false);
+
+    expect(educationalStartInputSchema.safeParse({
+      mode: "educational",
+      assignmentId: "6f1c2d3e-4a5b-4c6d-8e7f-001122334455",
       expectedRange: {
         start: { surahId: 2, ayah: 255 },
         end: { surahId: 2, ayah: 257 },
@@ -69,5 +81,19 @@ describe("recitation contract separation", () => {
       startAyah: 1,
       endAyah: 7,
     })).toBe(false);
+  });
+});
+describe("assignment result contract", () => {
+  const result = {
+    wordsRecited: 10, totalWords: 12, confirmedMistakes: 1, skippedWords: 0, correctedWords: 0, peekedWords: 0,
+    flaggedWords: [{ key: "67:3:2", kind: "mistake" }],
+  };
+
+  it("accepts flagged words keyed surah:ayah:position", () => {
+    expect(assignmentResultSchema.safeParse(result).success).toBe(true);
+  });
+
+  it("rejects malformed flagged word keys", () => {
+    expect(assignmentResultSchema.safeParse({ ...result, flaggedWords: [{ key: "67:3", kind: "mistake" }] }).success).toBe(false);
   });
 });

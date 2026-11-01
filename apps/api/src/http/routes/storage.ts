@@ -8,7 +8,7 @@ import { join } from "path";
 import { z } from "zod";
 import { and, eq, gt, inArray, or } from "drizzle-orm";
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, authTokens, books, downloads, levels, notifications, recordings, sessions, shariaContent, students, userStorageObjects, users } from "@workspace/db";
+import { db, authTokens, books, downloads, levels, notifications, recitationAssignments, recitationSessions, recordings, sessions, shariaContent, students, userStorageObjects, users } from "@workspace/db";
 import {
   createFinalizedVideoAttachmentProof,
   createIssuedVideoAttachmentProof,
@@ -162,6 +162,18 @@ async function canReadSessionRecording(userId: string, objectPath: string): Prom
   return recording?.teacherId === userId || recording?.studentId === userId;
 }
 
+/** A recitation recording is heard by the student who recited and the teacher of that assignment. */
+async function canReadRecitationAudio(userId: string, objectPath: string): Promise<boolean> {
+  const sessionId = /^\/objects\/uploads\/recitation-audio\/([\w-]+)$/.exec(objectPath)?.[1];
+  if (!sessionId) return false;
+  const [assignment] = await db.select({ id: recitationAssignments.id }).from(recitationAssignments)
+    .where(and(eq(recitationAssignments.sessionId, sessionId), eq(recitationAssignments.teacherId, userId))).limit(1);
+  if (assignment) return true;
+  const [own] = await db.select({ id: recitationSessions.id }).from(recitationSessions)
+    .where(and(eq(recitationSessions.id, sessionId), eq(recitationSessions.userId, userId))).limit(1);
+  return !!own;
+}
+
 type LibraryBookAccess = {
   section: string;
   levelIds: unknown;
@@ -245,6 +257,7 @@ async function canReadPrivateMedia(
     requestedPermission: ObjectPermission.READ,
   })) return true;
   if (await canReadSessionRecording(user.id, objectPath)) return true;
+  if (await canReadRecitationAudio(user.id, objectPath)) return true;
   return user.role === "student" && await studentMayReadPublishedMedia(user.id, objectPath);
 }
 

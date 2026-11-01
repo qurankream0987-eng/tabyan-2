@@ -1,8 +1,10 @@
 # Files `railway up` leaves out of the upload; the server image does not need them.
-# TTF Mushaf fonts are only used by apps/web/scripts/verify-mushaf.mjs; the site loads the woff2 set.
+# TTF Mushaf fonts are only used by apps/web/scripts/verify-mushaf.mjs and to build fonts-android.
 apps/web/public/mushaf/fonts-ttf/
 # Fetched from the bucket during the Docker build (tools/scripts/build-assets.mjs).
+# The site loads the woff2 fonts; the mobile app loads fonts-android (unhinted TTF, Android has no woff2).
 apps/web/public/mushaf/fonts/
+apps/web/public/mushaf/fonts-android/
 apps/web/public/mushaf/quran-words/
 docs/
 tests/
@@ -13,3 +15,5 @@ apps/mobile/*
 # The Tarteel Python worker is not used in production (TABYAN_AI_ASR_PROVIDER=openai).
 pyproject.toml
 uv.lock
+# Fetched during the Docker build (tools/scripts/fetch-asr-model.mjs).
+apps/api/models/

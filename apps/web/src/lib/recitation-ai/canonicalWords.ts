@@ -1,3 +1,4 @@
+import type { CanonicalQuranWord as SharedCanonicalQuranWord } from "@workspace/tabyan-domain/quran-live-matcher";
 import { pageOfAyah } from "../mushaf/page-index";
 import { normalizeQuranText } from "./normalizer";
 
@@ -10,15 +11,10 @@ export interface RecitationRange {
 
 export const QURAN_TEXT_VERSION = "qdc-uthmani-hafs-word-text-v1";
 
-export interface CanonicalQuranWord {
-  surah: number;
-  ayah: number;
-  verseKey: string;
-  position: number;
+/** كلمة المطابقة المشتركة، وفي الويب تحمل دائماً موضعها في صفحة المصحف. */
+export interface CanonicalQuranWord extends SharedCanonicalQuranWord {
   page: number;
   line: number;
-  displayText: string;
-  normalizedText: string;
 }
 
 interface StoredWord {

@@ -147,7 +147,7 @@ export function NotificationFeed({ listPath, settingsPath }: { listPath: string;
         </View>
         <View style={styles.heading}>
           <Text style={[styles.title, { color: colors.text }]}>الإشعارات</Text>
-          {(data?.unreadCount ?? 0) > 0 ? <Badge label={String(data?.unreadCount)} /> : null}
+          {(data?.unreadCount ?? 0) > 0 ? <Badge label={String(data?.unreadCount)} style={styles.headingBadge} /> : null}
         </View>
       </View>
 
@@ -228,10 +228,11 @@ export function NotificationFeed({ listPath, settingsPath }: { listPath: string;
 }
 
 const styles = StyleSheet.create({
-  toolbar: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
+  toolbar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
   toolbarActions: { flexDirection: "row", gap: 8 },
   iconButton: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   heading: { flexDirection: "row-reverse", alignItems: "center", gap: 8 },
+  headingBadge: { alignSelf: "center" },
   title: { fontFamily: "Amiri_700Bold", fontSize: 24 },
   markAll: { flexDirection: "row-reverse", alignItems: "center", gap: 5, alignSelf: "flex-end", paddingVertical: 6, marginBottom: 5 },
   markAllText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 12 },

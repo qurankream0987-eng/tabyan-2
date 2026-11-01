@@ -11,6 +11,7 @@ import { resolveLibraryAsset } from "../../../lib/media/library-media";
 import { userFacingErrorMessage } from "../../../lib/user-facing-error";
 import { useTheme } from "../../../lib/theme";
 import { TeacherScreen } from "../../../components/teacher/teacher-screen";
+import { RecitationAssignmentsSection } from "../../../components/teacher/recitation-assignments";
 
 export default function StudentDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -87,7 +88,7 @@ export default function StudentDetail() {
   };
 
   return (
-    <TeacherScreen title="ملف الطالب" loading={q.isLoading} error={!!q.error} retry={() => void q.refetch()}>
+    <TeacherScreen title="ملف الطالب" back loading={q.isLoading} error={!!q.error} retry={() => void q.refetch()}>
       {!data ? (
         <EmptyState title="الطالب غير موجود" />
       ) : (
@@ -105,6 +106,8 @@ export default function StudentDetail() {
               ) : null}
             </View>
           </Card>
+
+          <RecitationAssignmentsSection studentId={studentId} />
 
           <Card>
             <Text style={[styles.sectionTitle, { color: colors.primary }]}>انتقال المستوى</Text>

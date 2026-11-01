@@ -1,5 +1,8 @@
 # See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
+# downloaded model weights (tools/scripts/fetch-asr-model.mjs)
+apps/api/models/
+
 # compiled output
 dist
 tmp
@@ -82,3 +85,6 @@ Thumbs.db
 
 # generated Expo static build
 apps/mobile/static-build/
+
+# Generated from fonts-ttf by tools/scripts/build-android-mushaf-fonts.mjs; served from the bucket.
+apps/web/public/mushaf/fonts-android/

@@ -8,6 +8,13 @@
       "when": 1793018358855,
       "tag": "0000_ams_schema_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793468062814,
+      "tag": "0001_recitation_assignments",
+      "breakpoints": true
     }
   ]
 }

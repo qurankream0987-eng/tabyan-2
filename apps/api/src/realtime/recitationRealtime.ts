@@ -4,11 +4,14 @@ import { and, eq } from "drizzle-orm";
 import { db, recitationSessions } from "@workspace/db";
 import { createContext } from "@workspace/tabyan-trpc";
 import { logger } from "../lib/logger";
+import { RecitationAudioRecorder } from "./recitationAudioRecorder";
 import { NvidiaStreamingProvider, NVIDIA_ARABIC_SAMPLE_RATE_HZ } from "../recitation-providers/NvidiaStreamingProvider";
 import { OpenAiRealtimeProvider } from "../recitation-providers/OpenAiRealtimeProvider";
 import { SpeechmaticsStreamingProvider } from "../recitation-providers/SpeechmaticsStreamingProvider";
 import { TarteelWhisperProvider } from "../recitation-providers/TarteelWhisperProvider";
 import { tarteelTranscriber } from "../recitation-providers/TarteelWhisperWorker";
+import { TilawiStreamingProvider } from "../recitation-providers/tilawi/TilawiStreamingProvider";
+import { sharedTilawiModel } from "../recitation-providers/tilawi/tilawiModel";
 import { NabrQrcSpeechProvider } from "../recitation-providers/NabrQrcSpeechProvider";
 import { NabrQrcOneShotTestGate } from "../recitation-providers/nabr-qrc-one-shot-test";
 import { qrcIntervalSummary } from "../recitation-providers/nabr-qrc-diagnostics";
@@ -24,7 +27,12 @@ import { selectSpeechRecognitionProvider } from "../recitation-providers/provide
 import { classifyProviderError } from "../recitation-providers/provider-error-classification";
 import { normalizeTranscriptEvent } from "../recitation-providers/recitation-contracts";
 import type { QrcStructuredObservation } from "@workspace/tabyan-domain";
-import { recitationSessionLeases, RECITATION_IDLE_MS, RECITATION_MAX_CONNECTION_MS } from "../recitation-providers/sessionLease";
+import {
+  recitationSessionLeases,
+  RECITATION_HEARTBEAT_TIMEOUT_MS,
+  RECITATION_IDLE_MS,
+  RECITATION_MAX_CONNECTION_MS,
+} from "../recitation-providers/sessionLease";
 import type {
   AudioAcceptanceEvidence,
   CanonicalTranscriptEvent,
@@ -36,6 +44,7 @@ type ClientMessage =
   | { t: "auth"; token: string; sessionId: string; diagnosticClientId?: string }
   | { t: "audio"; audio: string; timing?: { audioChunkCreatedAt: number; audioChunkSentAt: number } }
   | { t: "commit"; final?: boolean; commitId?: string }
+  | { t: "ping" }
   | { t: "close" };
 
 type AuthenticatedUser = { id: string };
@@ -111,6 +120,13 @@ export function attachRecitationRealtime(server: Server) {
       logger.warn("Local Quran Whisper warmup unavailable");
     });
   }
+  // Load the in-process model at startup so the first recitation is not delayed.
+  if (liveTranscriptionEnabled() && selectedProvider() === "tilawi") {
+    sharedTilawiModel().then(
+      () => logger.info("Tilawi recitation model loaded"),
+      (error: unknown) => logger.error({ err: error }, "Tilawi recitation model unavailable"),
+    );
+  }
   const wss = new WebSocketServer({ noServer: true, maxPayload: 48 * 1024, perMessageDeflate: false });
 
   server.on("upgrade", (req, socket, head) => {
@@ -131,7 +147,10 @@ export function attachRecitationRealtime(server: Server) {
     let lastClientMessageAt: number | null = null;
     const leaseOwner = Symbol("recitation socket");
     let leaseStudent: string | null = null;
+    // Educational sessions keep the audio for the teacher to listen to.
+    let recorder: RecitationAudioRecorder | null = null;
     let lastActivityAt = Date.now();
+    let lastPongAt = lastActivityAt;
     const connectedAt = lastActivityAt;
     let sessionDeadlineAt = connectedAt + RECITATION_MAX_CONNECTION_MS;
     const developmentDiagnostics = process.env.NODE_ENV === "development";
@@ -165,6 +184,15 @@ export function attachRecitationRealtime(server: Server) {
     };
     const cleanupTimer = setInterval(() => {
       const now = Date.now();
+      // A socket that stops answering protocol pings is half-open: drop it so
+      // its lease cannot outlive the connection.
+      if (now - lastPongAt > RECITATION_HEARTBEAT_TIMEOUT_MS) {
+        logSocketLifecycle("API_HEARTBEAT_TIMEOUT", { lastPongAgeMs: now - lastPongAt });
+        closeAll("heartbeat_timeout");
+        closeGatewaySocket("heartbeat_timeout", true);
+        return;
+      }
+      if (ws.readyState === WebSocket.OPEN) ws.ping();
       const idleMs = now - lastActivityAt;
       const sessionAgeMs = now - connectedAt;
       const idleExpired = idleMs > RECITATION_IDLE_MS;
@@ -178,9 +206,12 @@ export function attachRecitationRealtime(server: Server) {
           sessionAgeMs,
           absoluteDeadlineAt: new Date(sessionDeadlineAt).toISOString(),
         });
-        clientError(ws, "SESSION_EXPIRED", "انتهت مهلة اتصال التسميع؛ ابدأ اتصالاً جديداً");
+        if (idleExpired) clientError(ws, "SESSION_IDLE", "انقطع اتصال التسميع لعدم وصول أي إشارة من التطبيق");
+        else clientError(ws, "SESSION_EXPIRED", "انتهت مهلة اتصال التسميع؛ ابدأ اتصالاً جديداً");
         closeAll(cause);
-        closeGatewaySocket(cause, true);
+        // The socket still answers pings: close gracefully so the error frame
+        // reaches the client instead of being discarded by terminate().
+        closeGatewaySocket(cause);
       }
     }, 10_000);
     cleanupTimer.unref();
@@ -287,6 +318,8 @@ export function attachRecitationRealtime(server: Server) {
       logNabrSummary();
       provider?.close(reason);
       provider = null;
+      void recorder?.finish();
+      recorder = null;
     };
 
     const authTimeout = setTimeout(() => {
@@ -302,6 +335,7 @@ export function attachRecitationRealtime(server: Server) {
       logSocketLifecycle("API_CLIENT_WEBSOCKET_PING_RECEIVED", { payloadBytes: data.byteLength });
     });
     ws.on("pong", (data) => {
+      lastPongAt = Date.now();
       logSocketLifecycle("API_CLIENT_WEBSOCKET_PONG_RECEIVED", { payloadBytes: data.byteLength });
     });
 
@@ -527,6 +561,12 @@ export function attachRecitationRealtime(server: Server) {
       provider.connect();
     };
 
+    const connectTilawi = () => {
+      logger.info("recitation realtime Tilawi connection attempt");
+      provider = new TilawiStreamingProvider(providerEvents("tilawi"));
+      provider.connect();
+    };
+
     const connectNabr = (session: NabrQrcSessionContext) => {
       if (process.env.NODE_ENV !== "development"
         || process.env.NABR_QRC_ONE_SHOT_TEST !== "true") {
@@ -614,6 +654,7 @@ export function attachRecitationRealtime(server: Server) {
                 startVerseKey: recitationSessions.startVerseKey,
                 startWordPosition: recitationSessions.startWordPosition,
                 expectedRange: recitationSessions.expectedRange,
+                assignmentId: recitationSessions.assignmentId,
               })
               .from(recitationSessions)
               .where(and(
@@ -635,7 +676,14 @@ export function attachRecitationRealtime(server: Server) {
               closeGatewaySocket("session_expired_before_provider_connect");
               return;
             }
-            if (!recitationSessionLeases.acquire(ctx.user.id, session.id, leaseOwner)) {
+            // A reconnect for the same session replaces the previous socket,
+            // which may be half-open and not yet caught by the heartbeat.
+            const replace = () => {
+              clientError(ws, "SESSION_REPLACED", "فُتح اتصال تسميع أحدث لهذه الجلسة");
+              closeAll("replaced_by_reconnect");
+              closeGatewaySocket("replaced_by_reconnect");
+            };
+            if (!recitationSessionLeases.acquire(ctx.user.id, session.id, leaseOwner, replace)) {
               clientError(ws, "SESSION_ALREADY_ACTIVE", "يوجد اتصال تسميع نشط لهذا الحساب");
               closeGatewaySocket("session_already_active");
               return;
@@ -660,9 +708,14 @@ export function attachRecitationRealtime(server: Server) {
                closeGatewaySocket("provider_not_configured");
                return;
              }
+             if (session.assignmentId) {
+               // Same rate the client is told to send in the ready message.
+               recorder = new RecitationAudioRecorder(session.id, selected === "nvidia" ? NVIDIA_ARABIC_SAMPLE_RATE_HZ : 24_000);
+             }
               if (selected === "nvidia") connectNvidia();
              else if (selected === "speechmatics") connectSpeechmatics();
              else if (selected === "tarteel") connectTarteel();
+             else if (selected === "tilawi") connectTilawi();
               else if (selected === "nabr") connectNabr(session);
              else connectOpenAi();
           } catch {
@@ -675,7 +728,15 @@ export function attachRecitationRealtime(server: Server) {
 
        if (!user || closed) return;
 
+      if (message.t === "ping") {
+        // Client keepalive: a paused or silent reciter is idle, not gone.
+        lastActivityAt = Date.now();
+        send(ws, { t: "pong" });
+        return;
+      }
+
       if (message.t === "audio") {
+        if (recorder && isSafeBase64Audio(message.audio)) recorder.append(message.audio);
         if (!provider?.isOpen()) {
           droppedAudioChunkCount += 1;
           if (droppedAudioChunkCount === 1 || droppedAudioChunkCount % 50 === 0) {

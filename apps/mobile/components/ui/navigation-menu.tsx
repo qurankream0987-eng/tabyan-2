@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   overlay: { flex: 1, flexDirection: "row", backgroundColor: "transparent" },
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)" },
   panel: { width: "82%", maxWidth: 360, borderLeftWidth: StyleSheet.hairlineWidth, shadowColor: "#000", shadowOpacity: 0.24, shadowRadius: 18, elevation: 12 },
-  panelHeader: { minHeight: 102, paddingHorizontal: 18, paddingTop: 18, paddingBottom: 14, flexDirection: "row", alignItems: "center", gap: 10, borderBottomWidth: StyleSheet.hairlineWidth },
+  panelHeader: { minHeight: 102, paddingHorizontal: 18, paddingTop: 18, paddingBottom: 14, flexDirection: "row-reverse", alignItems: "center", gap: 10, borderBottomWidth: StyleSheet.hairlineWidth },
   avatar: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" },
   avatarText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 20 },
   identity: { flex: 1, minWidth: 0, alignItems: "flex-end" },

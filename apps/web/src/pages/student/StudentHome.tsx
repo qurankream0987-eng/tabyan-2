@@ -9,6 +9,7 @@ import { authStore } from "@/lib/auth";
 import { fmtTime, sessionDayLabel } from "@/lib/format";
 import { DEMO_DASHBOARD, type DemoDashboard, type DemoSessionRow } from "@/lib/demo/student-core";
 import productRegistry from "@workspace/tabyan-domain/product-registry.json";
+import { assignmentRangeLabel } from "@/lib/recitation-assignments";
 
 // ── آيات اليوم الدوارة ────────────────────────────────────────────────────────
 // آية احتياطية تظهر فقط إذا تعذر الوصول للخادم
@@ -145,6 +146,9 @@ export default function StudentHome() {
         </div>
       </section>
 
+      {/* واجبات التسميع التي لم تُسلَّم بعد */}
+      {!DEMO && <PendingAssignmentsCard />}
+
       {/* دروس اليوم — todayLessons */}
       <section>
         {todayLessons.length > 0 ? (
@@ -194,6 +198,33 @@ export default function StudentHome() {
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+/** تذكير بواجبات التسميع التي حددها المعلم ولم يسمّعها الطالب بعد. */
+function PendingAssignmentsCard() {
+  const q = trpc.recitationAssignments.mine.useQuery();
+  const pending = (q.data ?? []).filter((r) => r.assignment.status === "assigned");
+  if (pending.length === 0) return null;
+  return (
+    <section>
+      <Link to="/student/assignments" className="block group">
+        <GlassCard hover className="p-4 flex items-center gap-3 border-s-4 border-s-gold">
+          <div className="w-11 h-11 rounded-2xl bg-gold/15 dark:bg-gold/20 flex items-center justify-center text-gold-dark dark:text-gold shrink-0">
+            <Icon name="mic" size={20} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-readex text-sm font-bold text-foreground">
+              واجبات التسميع{pending.length > 1 ? ` (${pending.length})` : ""}
+            </div>
+            <div className="font-readex text-xs text-muted-foreground mt-0.5 truncate">
+              {assignmentRangeLabel(pending[0].assignment)}
+            </div>
+          </div>
+          <Icon name="arrow-left" size={16} className="text-muted-foreground shrink-0" />
+        </GlassCard>
+      </Link>
+    </section>
+  );
+}
 
 function LoadingState() {
   return (

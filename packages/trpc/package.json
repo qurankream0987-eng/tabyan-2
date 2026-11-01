@@ -7,6 +7,7 @@
     ".": "./src/index.ts",
     "./registration-validation": "./src/lib/registration-validation.ts",
     "./media-deletion-policy": "./src/lib/mediaDeletionPolicy.ts",
+    "./recitation-contract": "./src/recitation-contract.ts",
     "./types": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.d.ts"

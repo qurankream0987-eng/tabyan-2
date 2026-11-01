@@ -11,10 +11,18 @@ export default function QuranMenu() {
   const DEMO = authStore.isDemo;
   const paths = trpc.student.paths.useQuery(undefined, { enabled: !DEMO });
   const qiraat = DEMO ? DEMO_PATHS.qiraat : paths.data?.qiraat;
+  const assignments = trpc.recitationAssignments.mine.useQuery(undefined, { enabled: !DEMO });
+  const pendingAssignments = (assignments.data ?? []).filter((r) => r.assignment.status === "assigned").length;
 
   const sections: Array<{ to: string; icon: SectionIconName; title: string; badge?: string; locked?: boolean }> = [
     { to: "/student/levels/quran", icon: "hifz", title: "حفظ ومراجعة القرآن" },
     { to: "/student/tilawah", icon: "tilawah", title: "تصحيح التلاوة" },
+    {
+      to: "/student/assignments",
+      icon: "graduation",
+      title: "واجبات التسميع",
+      badge: pendingAssignments ? `${pendingAssignments} بانتظار تسميعك` : undefined,
+    },
     {
       to: "/student/ijazat",
       icon: "qiraat",

@@ -9,3 +9,4 @@ export * from "@workspace/tabyan-domain/password-validation";
 export * from "./lib/registration-validation";
 export * from "./lib/video-attachment";
 export * from "./lib/user-storage-ownership";
+export { recitationAudioObjectPath } from "./recitation-contract";

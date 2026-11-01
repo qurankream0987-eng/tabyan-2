@@ -94,6 +94,21 @@ export const RECITATION_PROVIDER_CAPABILITIES = {
     makharijDetection: "unverified",
     confidenceScores: "not_supported",
   },
+  tilawi: {
+    integration: "integrated",
+    streamingAudio: "supported",
+    partialTranscript: "supported",
+    finalTranscript: "supported",
+    // CTC frame positions, not acoustic word boundaries.
+    wordAlignment: "unverified",
+    ayahAlignment: "unverified",
+    omissionDetection: "unverified",
+    substitutionDetection: "unverified",
+    repetitionHandling: "unverified",
+    tajweedDetection: "not_supported",
+    makharijDetection: "not_supported",
+    confidenceScores: "supported",
+  },
   nabr: {
     integration: "documented_only",
     streamingAudio: "supported",

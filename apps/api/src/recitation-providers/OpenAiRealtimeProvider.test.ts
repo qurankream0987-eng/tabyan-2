@@ -91,9 +91,9 @@ test("OpenAI Realtime adapter reports forwarded audio and a server-accepted comm
   assert.deepEqual(commitAcceptanceEvidence, ["provider_commit_ack"]);
 });
 
-test("OpenAI transcription connects with a Realtime model and transcription intent", () => {
+test("OpenAI transcription connects with the transcription intent and no model parameter", () => {
   const url = new URL(OPENAI_REALTIME_URL);
   assert.equal(url.pathname, "/v1/realtime");
-  assert.equal(url.searchParams.get("model"), "gpt-realtime-2.1");
+  assert.equal(url.searchParams.has("model"), false);
   assert.equal(url.searchParams.get("intent"), "transcription");
 });

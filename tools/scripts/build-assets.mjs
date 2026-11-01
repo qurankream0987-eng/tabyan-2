@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Large static web assets (the Mushaf page fonts and word data, ~100 MB) live
+// Large static web assets (the Mushaf page fonts and word data, ~260 MB) live
 // in the object storage bucket instead of the deploy upload, which Railway
 // caps. `upload` copies them from the repo into the bucket and writes
 // tools/scripts/build-assets.manifest.json; the Docker build runs `fetch`,
@@ -20,7 +20,7 @@ const require = createRequire(path.join(root, "apps/api/package.json"));
 const { S3Client, GetObjectCommand, PutObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
 
 const publicDir = path.join(root, "apps/web/public");
-const assetDirs = ["mushaf/fonts", "mushaf/quran-words"];
+const assetDirs = ["mushaf/fonts", "mushaf/fonts-android", "mushaf/quran-words"];
 const keyPrefix = "build-assets/web/";
 const manifestPath = path.join(root, "tools/scripts/build-assets.manifest.json");
 

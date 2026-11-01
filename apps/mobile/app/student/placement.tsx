@@ -994,7 +994,7 @@ export default function Placement() {
     <StudentScreen title={title} subtitle="تقييم مستوى التلاوة" cameraMode={cameraMode}>
       {/* بانر إعادة التسجيل بعد الرفض */}
       {st === "rejected" && !cameraMode ? (
-        <Card style={{ borderStartWidth: 4, borderStartColor: colors.danger, backgroundColor: `${colors.danger}0d` }}>
+        <Card style={{ borderRightWidth: 4, borderRightColor: colors.danger, backgroundColor: `${colors.danger}0d` }}>
           <Text style={[styles.rejectedTitle, { color: colors.danger }]}>طُلب منك إعادة التسجيل</Text>
           {statusData?.notes ? (
             <Text style={[styles.rejectedNotes, { color: colors.text }]}>{statusData.notes}</Text>
@@ -1395,7 +1395,7 @@ const styles = StyleSheet.create({
   rejectedAttempts: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 11, textAlign: "right", marginTop: 8 },
   stepIcon: { width: 48, height: 48, borderRadius: 16, alignItems: "center", justifyContent: "center", marginBottom: 12 },
   introBox: { borderRadius: 14, paddingHorizontal: 14, paddingVertical: 11, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 12.5, lineHeight: 21, textAlign: "center", overflow: "hidden" },
-  stepsRow: { flexDirection: "row", justifyContent: "center", gap: 18, marginTop: 18 },
+  stepsRow: { flexDirection: "row-reverse", justifyContent: "center", gap: 18, marginTop: 18 },
   stepItem: { alignItems: "center", gap: 5 },
   stepDot: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   stepNum: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 11.5 },
@@ -1437,7 +1437,7 @@ const styles = StyleSheet.create({
   permissionText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 14, textAlign: "right", lineHeight: 23, marginBottom: 14 },
   permissionNote: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right", lineHeight: 20, marginTop: 12 },
   instructionsTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 15, textAlign: "right", marginBottom: 10 },
-  bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 7 },
+  bulletRow: { flexDirection: "row-reverse", alignItems: "flex-start", gap: 8, marginBottom: 7 },
   tuhfaBox: { borderWidth: 1.5, borderRadius: 16, padding: 14, gap: 6 },
   tuhfaTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, textAlign: "center" },
   tuhfaSub: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "center" },

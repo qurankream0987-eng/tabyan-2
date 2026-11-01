@@ -145,7 +145,7 @@ export function Button({ label, onPress, variant = "primary", icon, disabled = f
     ]}>
       {loading ? <ActivityIndicator color={foreground} /> : null}
       {icon && !loading ? <Icon name={icon} size={18} color={foreground} /> : null}
-      <Text style={[styles.buttonText, { color: foreground }]}>{label}</Text>
+      <Text numberOfLines={1} style={[styles.buttonText, { color: foreground }]}>{label}</Text>
     </SoftPressable>
   );
 }
@@ -186,11 +186,11 @@ export function ErrorState({ onRetry, message = "تعذر الوصول إلى ا
   return <Card style={styles.empty}><Icon name="cloud-offline-outline" size={38} color={colors.danger} /><Text style={[styles.emptyTitle, { color: colors.text }]}>حدث خطأ مؤقت</Text><Text style={[styles.emptyDescription, { color: colors.muted }]}>{message}</Text>{onRetry ? <Button label="إعادة المحاولة" onPress={onRetry} variant="secondary" icon="refresh-outline" /> : null}</Card>;
 }
 
-export function Badge({ label, tone = "gold" }: { label: string; tone?: "gold" | "success" | "danger" | "muted" }) {
+export function Badge({ label, tone = "gold", style }: { label: string; tone?: "gold" | "success" | "danger" | "muted"; style?: StyleProp<ViewStyle> }) {
   const { colors } = useTheme();
   const bg = tone === "success" ? `${colors.success}22` : tone === "danger" ? `${colors.danger}22` : tone === "muted" ? colors.input : `${palette.gold}25`;
   const fg = tone === "success" ? colors.success : tone === "danger" ? colors.danger : tone === "muted" ? colors.muted : colors.primary;
-  return <View style={[styles.badge, { backgroundColor: bg }]}><Text style={[styles.badgeText, { color: fg }]}>{label}</Text></View>;
+  return <View style={[styles.badge, { backgroundColor: bg }, style]}><Text numberOfLines={1} style={[styles.badgeText, { color: fg }]}>{label}</Text></View>;
 }
 
 export function FeatureTile({ title, description, icon, onPress, accent = false, style }: { title: string; description?: string; icon: string; onPress: () => void; accent?: boolean; style?: StyleProp<ViewStyle> }) {
@@ -210,8 +210,8 @@ const styles = StyleSheet.create({
   headerLogo: { width: 42, height: 42 },
   headerActionBare: { backgroundColor: "transparent", borderColor: "transparent", borderWidth: 0 },
   headerTitle: { flex: 1, minWidth: 0, paddingHorizontal: 4, alignItems: "center" },
-  headerText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 18, textAlign: "center" },
-  headerSubtitle: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, marginTop: 1, textAlign: "center" },
+  headerText: { alignSelf: "stretch", fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 18, textAlign: "center" },
+  headerSubtitle: { alignSelf: "stretch", fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, marginTop: 1, textAlign: "center" },
   iconButton: { width: 44, height: 44, borderRadius: 15, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   notificationBadge: { position: "absolute", top: 1, left: 1, minWidth: 17, height: 17, paddingHorizontal: 3, borderRadius: 9, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#FFF" },
   notificationBadgeText: { color: "#FFF", fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 9, lineHeight: 12, textAlign: "center" },
@@ -219,8 +219,8 @@ const styles = StyleSheet.create({
   button: { minHeight: 48, borderRadius: 16, borderWidth: 1, paddingHorizontal: 20, flexDirection: "row", gap: 8, justifyContent: "center", alignItems: "center" },
   buttonText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, lineHeight: 23, flexShrink: 1, textAlign: "center", paddingVertical: 8 },
   sectionAction: { minHeight: 44, justifyContent: "center", paddingHorizontal: 8 },
-  sectionTitle: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 16, marginBottom: 10 },
-  sectionText: { flexShrink: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 17, lineHeight: 26 },
+  sectionTitle: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", marginTop: 16, marginBottom: 10 },
+  sectionText: { flex: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 17, lineHeight: 26, textAlign: "right" },
   actionText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 13 },
   smallText: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 13, lineHeight: 20 },
   progressLabel: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
@@ -233,9 +233,9 @@ const styles = StyleSheet.create({
   emptyDescription: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13, lineHeight: 23, textAlign: "center", marginBottom: 4 },
   badge: { paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999, alignSelf: "flex-start" },
   badgeText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 11 },
-  tile: { minHeight: 76, borderRadius: 18, borderWidth: 1, padding: 14, marginBottom: 10, flexDirection: "row", alignItems: "center", gap: 12 },
+  tile: { minHeight: 76, borderRadius: 18, borderWidth: 1, padding: 14, marginBottom: 10, flexDirection: "row-reverse", alignItems: "center", gap: 12 },
   tileIcon: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  tileBody: { flex: 1, minWidth: 0, alignItems: "flex-end" },
+  tileBody: { flex: 1, minWidth: 0 },
   tileTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 15, lineHeight: 23, textAlign: "right" },
   tileDescription: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 20, textAlign: "right", marginTop: 2 },
 });

@@ -5,6 +5,7 @@
  * أضعف المواضع · اقتراح المراجعة. التقييم شفاف: طريقة حساب الدقة مكتوبة،
  * والانحرافات غير المؤكدة لا تُحتسب أخطاء. بلا مؤثرات احتفالية.
  */
+import type { ReactNode } from "react";
 import Icon from "@/components/app/Icon";
 import { formatDuration, toArabicNum, type SessionMode } from "@/lib/recitation-types";
 import { SURAHS } from "@/lib/quran-data";
@@ -26,6 +27,8 @@ interface Props {
   weakest?: WeakAyah[];
   /** عنوان وضع الجلسة الفعلي (تلاوة/حفظ/اختبار/متابعة) إن اختلف عن نوع الخادم */
   kindLabel?: string;
+  /** رسالة أعلى الملخص (مثل حالة تسليم واجب التسميع للمعلم). */
+  notice?: ReactNode;
   /** فتح سجل الجلسات والأخطاء */
   onOpenHistory?: () => void;
   onClose: () => void;
@@ -56,7 +59,7 @@ export function reviewSuggestion(summary: RecitationSummary | null | undefined, 
 }
 
 export default function RecitationResultSheet({
-  result, aiSummary, weakest = [], kindLabel, onOpenHistory, onClose, onRepeat,
+  result, aiSummary, weakest = [], kindLabel, notice, onOpenHistory, onClose, onRepeat,
 }: Props) {
   const { surahName, startAyah, endAyah, durationSeconds, mode } = result;
   const hasAi = !!aiSummary && aiSummary.wordsHeard > 0;
@@ -100,6 +103,8 @@ export default function RecitationResultSheet({
         </div>
       )}
     >
+      {notice}
+
       {hasAi && (
         <div className="text-center pt-1 pb-4">
           <p className="tby-sheet-muted font-readex text-[11px]">الدقة</p>

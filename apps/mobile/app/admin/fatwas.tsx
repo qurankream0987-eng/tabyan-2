@@ -21,6 +21,14 @@ const categories = [
 type Category = (typeof categories)[number][0];
 type Mode = "assign" | "reject" | "review" | "category";
 
+/** "منذ 5 ساعات" up to two days, then whole days, with Arabic count agreement. */
+function ageLabel(hours: number): string {
+  if (hours < 1) return "منذ أقل من ساعة";
+  if (hours < 48) return hours === 1 ? "منذ ساعة" : hours === 2 ? "منذ ساعتين" : hours <= 10 ? `منذ ${hours} ساعات` : `منذ ${hours} ساعة`;
+  const days = Math.floor(hours / 24);
+  return days <= 10 ? `منذ ${days} أيام` : `منذ ${days} يومًا`;
+}
+
 export default function Fatwas() {
   const { colors } = useTheme();
   const notify = useAdminFeedback();
@@ -107,7 +115,7 @@ export default function Fatwas() {
           <AdminRow key={r.id} title={r.questionText} subtitle={[r.studentName, r.categoryLabel, r.muftiName].filter(Boolean).join(" · ")}
             badges={<>
               {r.priority === "urgent" ? <Badge label="عاجل" tone="danger" /> : null}
-              {r.hoursAgo != null ? <Badge label={`منذ ${r.hoursAgo} ساعة${r.hoursAgo >= 48 && tab === "assigned" ? " · متجاوزة المهلة" : ""}`} tone={r.hoursAgo >= 48 && tab === "assigned" ? "danger" : "muted"} /> : null}
+              {r.hoursAgo != null ? <Badge label={`${ageLabel(r.hoursAgo)}${r.hoursAgo >= 48 && tab === "assigned" ? " · متجاوزة المهلة" : ""}`} tone={r.hoursAgo >= 48 && tab === "assigned" ? "danger" : "muted"} /> : null}
             </>}
             actions={<>{primaryAction(r)}<IconAction icon="ellipsis-horizontal" label={`خيارات السؤال`} onPress={() => setMenuFor(r)} /></>} />
         ))}

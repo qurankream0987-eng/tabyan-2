@@ -144,7 +144,7 @@ export default function Levels() {
         style={({ pressed }) => [styles.pickCta, { backgroundColor: `${colors.primary}0f`, opacity: pressed ? 0.85 : 1 }]}
       >
         <Icon name="calendar-outline" size={18} color={colors.muted} />
-        <Text style={[styles.pickCtaText, { color: colors.muted }]}>اختر حلقة في هذا المسار</Text>
+        <Text numberOfLines={1} style={[styles.pickCtaText, { color: colors.muted }]}>اختر حلقة في هذا المسار</Text>
         <Icon name="chevron-back" size={14} color={colors.muted} />
       </Pressable>
     </StudentScreen>
@@ -187,13 +187,13 @@ function LevelCard({ level: l, path, onBook }: { level: LevelRow; path: PathKey;
         onPress={() => onBook(`/student/booking?levelId=${l.id}&path=${path}`)}
         style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1 }]}
       >
-        <Card style={[styles.levelCard, { borderStartWidth: 3, borderStartColor: accent }]}>{header}</Card>
+        <Card style={[styles.levelCard, { borderRightWidth: 3, borderRightColor: accent }]}>{header}</Card>
       </Pressable>
     );
   }
 
   return (
-    <Card style={[styles.levelCard, { borderStartWidth: 3, borderStartColor: accent }]}>
+    <Card style={[styles.levelCard, { borderRightWidth: 3, borderRightColor: accent }]}>
       <Pressable accessibilityRole="button" onPress={() => setOpen((o) => !o)} style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1 }]}>
         {header}
       </Pressable>
@@ -268,7 +268,7 @@ function ShariaView({ levels, onBook }: { levels: LevelRow[]; onBook: (l: LevelR
         const subjLevels = levels.filter((l) => l.nameEn === subj.key);
         if (!subjLevels.length) return null;
         return (
-          <Card key={subj.key} style={{ borderStartWidth: 3, borderStartColor: categories.sharia }}>
+          <Card key={subj.key} style={{ borderRightWidth: 3, borderRightColor: categories.sharia }}>
             <View style={styles.shariaHead}>
               <View style={[styles.levelIconBubble, { backgroundColor: `${palette.gold}1f` }]}>
                 <SectionIcon name={subj.icon} size={28} />
@@ -302,23 +302,23 @@ function ShariaView({ levels, onBook }: { levels: LevelRow[]; onBook: (l: LevelR
 const styles = StyleSheet.create({
   list: { gap: 14 },
   levelCard: { marginBottom: 0 },
-  cardHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+  cardHeader: { flexDirection: "row-reverse", alignItems: "center", gap: 10 },
   levelIconBubble: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   levelName: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, textAlign: "right", flex: 1 },
   arrowBubble: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
   details: { marginTop: 16, paddingTop: 16, borderTopWidth: 1, gap: 8 },
   detailTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 15, textAlign: "right", marginTop: 6 },
-  detailRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  detailRow: { flexDirection: "row-reverse", alignItems: "flex-start", gap: 8 },
   detailText: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 13, lineHeight: 22, textAlign: "right", flex: 1 },
   aqeedahLink: { flex: 1 },
   underlined: { textDecorationLine: "underline", textDecorationColor: palette.gold },
   bullet: { width: 8, height: 8, marginTop: 7, borderRadius: 2, backgroundColor: palette.gold, transform: [{ rotate: "45deg" }] },
   cta: { marginTop: 10 },
-  pickCta: { marginTop: 8, borderRadius: 999, paddingVertical: 12, paddingHorizontal: 18, flexDirection: "row", gap: 8, alignItems: "center", justifyContent: "center" },
+  pickCta: { marginTop: 8, borderRadius: 999, paddingVertical: 12, paddingHorizontal: 18, flexDirection: "row-reverse", gap: 8, alignItems: "center", justifyContent: "center" },
   pickCtaText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13 },
-  shariaHead: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
+  shariaHead: { flexDirection: "row-reverse", alignItems: "center", gap: 10, marginBottom: 12 },
   shariaTitle: { fontFamily: "Amiri_700Bold", fontSize: 21 },
-  shariaGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  shariaGrid: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 10 },
   shariaLevel: { flexBasis: "47%", flexGrow: 1, borderRadius: 16, borderWidth: 1, padding: 10, alignItems: "center" },
   shariaLevelLabel: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 10 },
   shariaLevelName: { fontFamily: "Amiri_700Bold", fontSize: 20, marginTop: 2 },

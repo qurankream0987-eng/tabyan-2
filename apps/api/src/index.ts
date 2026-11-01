@@ -4,6 +4,7 @@ import { logger } from "./lib/logger";
 import { assertFfprobeAvailable, ffprobeRuntimePath } from "./media/videoStructure";
 import { startSessionReminderScheduler } from "./jobs/sessionReminder";
 import { startPrivateMediaCleanupScheduler } from "./jobs/privateMediaCleanup";
+import { startRecitationAudioCleanupScheduler } from "./jobs/recitationAudioCleanup";
 import { attachSessionCallSignaling } from "./realtime/signaling";
 import { attachRecitationRealtime } from "./realtime/recitationRealtime";
 import { attachNabrQrcGateway } from "./realtime/nabrQrcGateway";
@@ -64,6 +65,7 @@ async function startSchedulersAfterReadiness(): Promise<void> {
 
     startSessionReminderScheduler();
     startPrivateMediaCleanupScheduler();
+    startRecitationAudioCleanupScheduler();
   } catch (error) {
     logger.error(
       { errorName: error instanceof Error ? error.name : "unknown" },
