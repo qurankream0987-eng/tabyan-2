@@ -86,14 +86,14 @@ export default function Content() {
     <StudentScreen title="درس شرعي">
       {data.level ? <Pressable onPress={() => router.replace(`/student/sharia/${subject}/${levelId ?? data.level?.id}` as never)}><Text style={[styles.back, { color: colors.primary }]}>‹ {data.level.subjectName} — {data.level.name}</Text></Pressable> : null}
       <Card style={styles.header}>
-        <View style={[styles.typeIcon, { backgroundColor: colors.input }]}><Icon name={content.contentType === "video" ? "videocam-outline" : content.contentType === "audio" ? "headset-outline" : "book-outline"} size={27} color={colors.primary} /></View>
+        <View style={[styles.typeIcon, { backgroundColor: colors.input }]}><Icon name={content.contentType === "video" ? "video" : content.contentType === "audio" ? "headphones" : "books"} size={27} color={colors.primary} /></View>
         <Text style={[styles.title, { color: colors.primary }]}>{content.title}</Text>
         <Text style={[styles.meta, { color: colors.muted }]}>{typeLabel}{content.author ? ` · ${content.author}` : ""}{content.durationMinutes ? ` · ${content.durationMinutes} دقيقة` : ""}</Text>
         {content.description ? <Text style={[styles.description, { color: colors.muted }]}>{content.description}</Text> : null}
         <View style={styles.progressHeader}><Text style={[styles.meta, { color: colors.muted }]}>{data.progressPercentage}%</Text><Text style={[styles.meta, { color: colors.text }]}>التقدم</Text></View>
         <ProgressBar value={data.progressPercentage} />
         {data.lastPosition ? <Text style={[styles.resume, { color: colors.muted }]}>آخر موضع محفوظ: {data.lastPosition}</Text> : null}
-        <Button label={data.bookmarked ? "إزالة الحفظ" : "حفظ الدرس"} icon={data.bookmarked ? "star" : "star-outline"} variant="secondary" onPress={() => bookmark.mutate({ contentId: id }, { onSuccess: () => void query.refetch() })} loading={bookmark.isPending} />
+        <Button label={data.bookmarked ? "إزالة الحفظ" : "حفظ الدرس"} icon={data.bookmarked ? "star" : "star"} variant="secondary" onPress={() => bookmark.mutate({ contentId: id }, { onSuccess: () => void query.refetch() })} loading={bookmark.isPending} />
       </Card>
 
       {content.contentType === "text" ? (
@@ -114,7 +114,7 @@ export default function Content() {
             onTimeUpdate={handleMediaTimeUpdate}
           />
           <Card>
-            <Button label="فتح المشغل الخارجي" icon="open-outline" variant="secondary" onPress={() => {
+            <Button label="فتح المشغل الخارجي" icon="link" variant="secondary" onPress={() => {
               const target = resolveLibraryAsset(source, token);
               return void Linking.openURL(target).catch((cause) => setActionError(userFacingErrorMessage(cause, "تعذر فتح الملف. حاول مرة أخرى.")));
             }} />
@@ -122,7 +122,7 @@ export default function Content() {
         </>
       ) : null}
        {content.contentType === "pdf" || content.contentType === "link" ? (
-         source ? <Card><Button label={content.contentType === "pdf" ? "فتح ملف PDF" : "فتح الرابط"} icon="open-outline" onPress={() => {
+         source ? <Card><Button label={content.contentType === "pdf" ? "فتح ملف PDF" : "فتح الرابط"} icon="link" onPress={() => {
            const target = resolveLibraryAsset(source, token);
            return void Linking.openURL(target).catch((cause) => setActionError(userFacingErrorMessage(cause, "تعذر فتح الملف. حاول مرة أخرى.")));
          }} /></Card> : <EmptyState title="لا يوجد ملف قابل للفتح" description="لم يتم إرفاق ملف لهذا الدرس بعد." />
@@ -130,7 +130,7 @@ export default function Content() {
        {actionError ? <Text style={[styles.completed, { color: colors.danger }]}>{actionError}</Text> : null}
       {!media && content.contentType !== "text" && content.contentType !== "pdf" && content.contentType !== "link" ? <EmptyState title="نوع المحتوى غير مدعوم" /> : null}
 
-      {data.status !== "completed" ? <Button label={progress.isPending ? "جارٍ الحفظ…" : "أنهيت الدرس — وضع علامة مكتمل"} icon="checkmark-circle-outline" onPress={() => saveProgress(100)} loading={progress.isPending} /> : <Text style={[styles.completed, { color: colors.success }]}><Icon name="checkmark-circle" size={16} color={colors.success} /> مكتمل</Text>}
+      {data.status !== "completed" ? <Button label={progress.isPending ? "جارٍ الحفظ…" : "أنهيت الدرس — وضع علامة مكتمل"} icon="check-circle" onPress={() => saveProgress(100)} loading={progress.isPending} /> : <Text style={[styles.completed, { color: colors.success }]}><Icon name="check-circle" size={16} color={colors.success} /> مكتمل</Text>}
 
       {(data.prev || data.next) ? (
         <View style={styles.navigation}>

@@ -77,7 +77,7 @@ export default function Schedule() {
             <Badge label={statusLabel(s.status)} tone={statusTone(s.status)} />
           </View>
           {["scheduled", "confirmed", "in_progress"].includes(s.status) && s.id ? (
-            <Button label={s.status === "in_progress" ? "دخول الحلقة" : "الغرفة ←"} icon={s.status === "in_progress" ? "videocam-outline" : undefined} variant="secondary" onPress={() => router.push(`/teacher/session/${s.id}`)} />
+            <Button label={s.status === "in_progress" ? "دخول الحلقة" : "الغرفة ←"} icon={s.status === "in_progress" ? "video" : undefined} variant="secondary" onPress={() => router.push(`/teacher/session/${s.id}`)} />
           ) : null}
         </Card>
       )) : <EmptyState title="لا حصص في هذه الفترة" />}

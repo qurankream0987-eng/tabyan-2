@@ -25,10 +25,10 @@ export default function TeacherHome() {
   const isMufti = d.teacher?.isMufti === true;
 
   const stats = [
-    { v: d.weekCount, l: "حصص الأسبوع", icon: "calendar-outline" },
-    { v: d.studentsCount, l: "طلابي", icon: "person-outline" },
-    { v: summary.pendingEvaluations, l: "تقييمات", icon: "school-outline" },
-    { v: summary.avgRating, l: "تقييمي", icon: "diamond-outline" },
+    { v: d.weekCount, l: "حصص الأسبوع", icon: "calendar" },
+    { v: d.studentsCount, l: "طلابي", icon: "user" },
+    { v: summary.pendingEvaluations, l: "تقييمات", icon: "graduation" },
+    { v: summary.avgRating, l: "تقييمي", icon: "star" },
   ];
 
   return (
@@ -59,7 +59,7 @@ export default function TeacherHome() {
         <Card style={{ borderColor: `${palette.gold}40`, borderWidth: 2 }}>
           <View style={styles.nextRow}>
             <View style={[styles.nextIcon, { backgroundColor: `${colors.primary}14` }]}>
-              <Icon name="school-outline" size={22} color={colors.primary} />
+              <Icon name="graduation" size={22} color={colors.primary} />
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[styles.nextTitle, { color: colors.text }]}>{d.nextSession.typeLabel}{d.nextSession.topic ? ` — ${d.nextSession.topic}` : ""}</Text>
@@ -90,12 +90,12 @@ export default function TeacherHome() {
               onPress={() => router.push(`/teacher/students/${assignment.studentId}` as never)}
               style={({ pressed }) => [styles.reviewRow, { backgroundColor: `${colors.primary}0c`, opacity: pressed ? 0.85 : 1 }]}
             >
-              <View style={[styles.reviewIcon, { backgroundColor: `${colors.primary}14` }]}><Icon name="mic-outline" size={18} color={colors.primary} /></View>
+              <View style={[styles.reviewIcon, { backgroundColor: `${colors.primary}14` }]}><Icon name="mic" size={18} color={colors.primary} /></View>
               <View style={styles.reviewText}>
                 <Text style={[styles.reviewTitle, { color: colors.text }]} numberOfLines={1}>{studentName}</Text>
                 <Text style={[styles.reviewDetail, { color: colors.muted }]} numberOfLines={1}>{assignmentRange(assignment)}{assignment.submittedAt ? ` · ${formatDateTime(assignment.submittedAt)}` : ""}</Text>
               </View>
-              <Icon name="chevron-back" size={16} color={colors.muted} />
+              <Icon name="arrow-left" size={16} color={colors.muted} />
             </Pressable>
           ))}
         </>
@@ -106,9 +106,9 @@ export default function TeacherHome() {
         <Text style={[styles.sectionTitle, { color: colors.primary, marginBottom: 12 }]}>ملخص الأسبوع</Text>
         <View style={styles.weekGrid}>
           {[
-            { v: summary.completedThisWeek, l: "حصة مكتملة", icon: "checkmark-outline" },
-            { v: summary.teachingHours, l: "ساعات التدريس", icon: "calendar-outline" },
-            { v: d.recordingsThisMonth, l: "تسجيل الشهر", icon: "bookmark-outline" },
+            { v: summary.completedThisWeek, l: "حصة مكتملة", icon: "check" },
+            { v: summary.teachingHours, l: "ساعات التدريس", icon: "calendar" },
+            { v: d.recordingsThisMonth, l: "تسجيل الشهر", icon: "bookmark" },
           ].map((s) => (
             <View key={s.l} style={[styles.weekCell, { backgroundColor: `${colors.primary}0d`, borderColor: `${colors.primary}14` }]}>
               <Icon name={s.icon} size={16} color={palette.goldDark} />
@@ -123,7 +123,7 @@ export default function TeacherHome() {
       <View style={styles.quickGrid}>
         <Pressable accessibilityRole="button" onPress={() => router.push("/teacher/evaluations" as never)} style={({ pressed }) => [styles.quickCellWrap, { opacity: pressed ? 0.88 : 1 }]}>
           <Card style={styles.quickCell}>
-            <Icon name="school-outline" size={22} color={colors.primary} />
+            <Icon name="graduation" size={22} color={colors.primary} />
             <Text style={[styles.quickTitle, { color: colors.text }]}>تقييمات معلقة</Text>
             <Text style={[styles.quickSub, { color: colors.muted }]}>{summary.pendingEvaluations ?? 0} بانتظارك</Text>
           </Card>
@@ -134,7 +134,7 @@ export default function TeacherHome() {
           style={({ pressed }) => [styles.quickCellWrap, { opacity: pressed ? 0.88 : 1 }]}
         >
           <Card style={styles.quickCell}>
-             <Icon name={isMufti && d.pendingFatwas != null ? "chatbox-ellipses-outline" : "calendar-outline"} size={22} color={colors.primary} />
+             <Icon name={isMufti && d.pendingFatwas != null ? "scale" : "calendar"} size={22} color={colors.primary} />
              <Text style={[styles.quickTitle, { color: colors.text }]}>{isMufti && d.pendingFatwas != null ? "صندوق الفتاوى" : "جدولي"}</Text>
              <Text style={[styles.quickSub, { color: colors.muted }]}>{isMufti && d.pendingFatwas != null ? `${d.pendingFatwas} سؤال معلق` : "مواعيدي وطلبات التغيير"}</Text>
           </Card>

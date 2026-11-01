@@ -501,7 +501,7 @@ export default function StudentSessionCall({
           />
         </View>
       ) : null}
-      {phase === "permission" ? <Button label="السماح بالكاميرا والميكروفون" icon="videocam-outline" onPress={retry} /> : null}
+      {phase === "permission" ? <Button label="السماح بالكاميرا والميكروفون" icon="video" onPress={retry} /> : null}
       {phase === "joined" && peers.length === 0 ? <Text style={[styles.empty, { color: colors.muted }]}>تم التحقق من دخولك — بانتظار انضمام المعلم…</Text> : null}
       {phase === "connected" && !peers.some((peer) => peer.role === "teacher" && peer.state === "connected") ? <Text style={[styles.empty, { color: colors.muted }]}>تم فقدان الوسائط مؤقتًا — جارٍ إعادة الاتصال.</Text> : null}
       {localStream ? (

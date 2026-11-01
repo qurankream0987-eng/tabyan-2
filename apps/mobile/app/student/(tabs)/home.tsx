@@ -122,12 +122,12 @@ export default function StudentHome() {
       {pendingAssignments.length ? (
         <SoftPressable accessibilityRole="button" accessibilityLabel="واجبات التسميع" onPress={() => router.push("/student/recitation" as never)}>
           <Card style={[styles.assignmentCard, { borderRightColor: palette.gold }]}>
-            <View style={[styles.pathIcon, { backgroundColor: `${palette.gold}26` }]}><Icon name="mic-outline" size={22} color={isDark ? palette.gold : palette.goldDark} /></View>
+            <View style={[styles.pathIcon, { backgroundColor: `${palette.gold}26` }]}><Icon name="mic" size={22} color={isDark ? palette.gold : palette.goldDark} /></View>
             <View style={styles.assignmentBody}>
               <Text style={[styles.assignmentTitle, { color: colors.text }]}>واجبات التسميع{pendingAssignments.length > 1 ? ` (${pendingAssignments.length})` : ""}</Text>
               <Text numberOfLines={1} style={[styles.assignmentSub, { color: colors.muted }]}>{assignmentRange(pendingAssignments[0].assignment)}</Text>
             </View>
-            <Icon name="chevron-back" size={17} color={colors.muted} />
+            <Icon name="arrow-left" size={17} color={colors.muted} />
           </Card>
         </SoftPressable>
       ) : null}
@@ -137,7 +137,7 @@ export default function StudentHome() {
         <SoftPressable key={lesson.id} accessibilityRole="button" onPress={() => router.push(`/student/library/${lesson.id}` as never)}>
           <Card style={styles.lessonCard}>
             <Text style={[styles.lessonTitle, { color: colors.text }]}>{lesson.title}</Text>
-            <Icon name="chevron-back" size={16} color={colors.muted} />
+            <Icon name="arrow-left" size={16} color={colors.muted} />
           </Card>
         </SoftPressable>
       )) : <EmptyState title="لا دروس لهذا اليوم" />}
@@ -150,14 +150,14 @@ export default function StudentHome() {
           <Card key={p} style={[styles.dutyCard, { backgroundColor: featureSurface, borderColor: featureSurface }]}>
             <Text style={styles.dutyTitle}>الواجب</Text>
             {next.surahName || next.topic ? (
-              <View style={styles.dutyChip}><Icon name="book-outline" size={14} color={palette.gold} /><Text style={styles.dutyChipText}>{String(next.topic ?? next.surahName)}</Text></View>
+              <View style={styles.dutyChip}><Icon name="books" size={14} color={palette.gold} /><Text style={styles.dutyChipText}>{String(next.topic ?? next.surahName)}</Text></View>
             ) : null}
             <View style={styles.dutyMetaRow}>
-              {next.levelName ? <View style={styles.dutyMetaItem}><Icon name="library-outline" size={13} color={palette.gold} /><Text style={styles.dutyMeta}>{String(next.levelName)}</Text></View> : null}
-              <View style={styles.dutyMetaItem}><Icon name="person-outline" size={13} color={palette.gold} /><Text style={styles.dutyMeta}>{String(next.teacherName ?? "معلمك")}</Text></View>
-              <View style={styles.dutyMetaItem}><Icon name="time-outline" size={13} color={palette.gold} /><Text style={styles.dutyMeta}>{formatDateTime(next.scheduledAt ?? next.date) || "موعد قادم"}</Text></View>
+              {next.levelName ? <View style={styles.dutyMetaItem}><Icon name="books" size={13} color={palette.gold} /><Text style={styles.dutyMeta}>{String(next.levelName)}</Text></View> : null}
+              <View style={styles.dutyMetaItem}><Icon name="user" size={13} color={palette.gold} /><Text style={styles.dutyMeta}>{String(next.teacherName ?? "معلمك")}</Text></View>
+              <View style={styles.dutyMetaItem}><Icon name="clock" size={13} color={palette.gold} /><Text style={styles.dutyMeta}>{formatDateTime(next.scheduledAt ?? next.date) || "موعد قادم"}</Text></View>
             </View>
-            <Button label="ادخل إلى الحلقة" icon="videocam-outline" onPress={() => router.push(`/student/session/${next.id}` as never)} style={styles.dutyBtn} />
+            <Button label="ادخل إلى الحلقة" icon="video" onPress={() => router.push(`/student/session/${next.id}` as never)} style={styles.dutyBtn} />
           </Card>
         );
       })}
@@ -173,7 +173,7 @@ export default function StudentHome() {
               </View>
               <Text style={[styles.pathTitle, { color: palette.goldDark }]}>{p.title}</Text>
               <View style={[styles.pathArrow, { backgroundColor: `${colors.primary}14` }]}>
-                <Icon name="chevron-back" size={17} color={colors.primary} />
+                <Icon name="arrow-left" size={17} color={colors.primary} />
               </View>
             </Card>
           </Pressable>

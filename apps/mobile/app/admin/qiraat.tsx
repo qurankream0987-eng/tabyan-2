@@ -47,20 +47,20 @@ export default function Qiraat() {
       <Text style={[styles.description, { color: colors.muted }]}>بوابة مسار القراءات — لا دخول إلا بإجازة الشاطبية موثّقة</Text>
       {feedback ? <Text style={[styles.feedback, { color: feedback.startsWith("تعذر") ? colors.danger : colors.success }]}>{feedback}</Text> : null}
       <SectionTitle title={`الشهادات (${rows.length})`} />
-      {q.isLoading ? <LoadingState /> : q.error ? <ErrorState onRetry={() => void q.refetch()} message={userFacingErrorMessage(q.error, "تعذر تحميل الشهادات.")} /> : !rows.length ? <EmptyState title="لا شهادات مرفوعة" description="ستظهر الشهادات عند إرسالها للمراجعة." icon="document-text-outline" /> : rows.map((row) => (
+      {q.isLoading ? <LoadingState /> : q.error ? <ErrorState onRetry={() => void q.refetch()} message={userFacingErrorMessage(q.error, "تعذر تحميل الشهادات.")} /> : !rows.length ? <EmptyState title="لا شهادات مرفوعة" description="ستظهر الشهادات عند إرسالها للمراجعة." icon="file-text" /> : rows.map((row) => (
         <Card key={row.id}>
-          <View style={styles.row}><View style={styles.body}><Text style={[styles.name, { color: colors.text }]}>{row.studentName ?? "طالب"}</Text><Text style={[styles.note, { color: colors.muted }]}>{timestamp(row.createdAt)}{row.hoursAgo != null ? ` · منذ ${Math.max(0, Math.round(row.hoursAgo))} س` : ""}</Text><Badge label={row.status === "approved" ? "مقبول" : row.status === "rejected" ? "مرفوض" : "قيد المراجعة"} tone={row.status === "approved" ? "success" : row.status === "rejected" ? "danger" : "gold"} /></View>{(!row.status || row.status === "pending") ? <Button label="مراجعة" icon="document-text-outline" onPress={() => { setSelected(row); setNote(""); setOpenError(""); setFeedback(""); }} /> : null}</View>
+          <View style={styles.row}><View style={styles.body}><Text style={[styles.name, { color: colors.text }]}>{row.studentName ?? "طالب"}</Text><Text style={[styles.note, { color: colors.muted }]}>{timestamp(row.createdAt)}{row.hoursAgo != null ? ` · منذ ${Math.max(0, Math.round(row.hoursAgo))} س` : ""}</Text><Badge label={row.status === "approved" ? "مقبول" : row.status === "rejected" ? "مرفوض" : "قيد المراجعة"} tone={row.status === "approved" ? "success" : row.status === "rejected" ? "danger" : "gold"} /></View>{(!row.status || row.status === "pending") ? <Button label="مراجعة" icon="file-text" onPress={() => { setSelected(row); setNote(""); setOpenError(""); setFeedback(""); }} /> : null}</View>
         </Card>
       ))}
-      <Button label="تحديث البيانات" variant="secondary" icon="refresh-outline" onPress={() => void q.refetch()} />
+      <Button label="تحديث البيانات" variant="secondary" icon="refresh" onPress={() => void q.refetch()} />
       <AdminSheet visible={!!selected} title="مراجعة شهادة الإجازة" subtitle={selected?.studentName} onClose={close} busy={review.isPending} dirty={!!note}
         footer={<View style={{ gap: 8 }}>
-          <ConfirmButton primary label="اعتماد" icon="checkmark-circle-outline" loading={review.isPending} title="اعتماد شهادة الإجازة؟" itemName={selected?.studentName} impact="ستُعتمد الإجازة وتظهر في ملف الطالب." onConfirm={() => void run(true)} />
+          <ConfirmButton primary label="اعتماد" icon="check" loading={review.isPending} title="اعتماد شهادة الإجازة؟" itemName={selected?.studentName} impact="ستُعتمد الإجازة وتظهر في ملف الطالب." onConfirm={() => void run(true)} />
           <ConfirmButton label="رفض" danger disabled={note.trim().length < 10} loading={review.isPending} title="رفض شهادة الإجازة؟" itemName={selected?.studentName} impact="ستُرفض الشهادة ويصل الطالب سبب الرفض المكتوب." onConfirm={() => void run(false)} />
         </View>}>
           <FormError message={feedback} />
           <Text style={[styles.title, { color: colors.primary }]}>مراجعة شهادة الإجازة</Text><Text style={[styles.modalName, { color: colors.text }]}>{selected?.studentName}</Text>
-          {selected?.certificateUrl ? <Button label="فتح الشهادة للمعاينة" variant="secondary" icon="document-text-outline" onPress={() => void openCertificate()} /> : <Text style={[styles.note, { color: colors.muted }]}>لا توجد شهادة مرفقة</Text>}
+          {selected?.certificateUrl ? <Button label="فتح الشهادة للمعاينة" variant="secondary" icon="certificate" onPress={() => void openCertificate()} /> : <Text style={[styles.note, { color: colors.muted }]}>لا توجد شهادة مرفقة</Text>}
           {openError ? <Text style={[styles.note, { color: colors.danger }]}>{openError}</Text> : null}
           <TextInput value={note} onChangeText={setNote} placeholder="ملاحظات (10 أحرف على الأقل عند الرفض)…" placeholderTextColor={colors.muted} multiline maxLength={500} style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]} />
       </AdminSheet>

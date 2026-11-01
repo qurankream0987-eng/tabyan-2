@@ -32,7 +32,7 @@ export default function Recordings() {
 
   return (
     <TeacherScreen title="تسجيلات حصصي" loading={query.isLoading} error={!!query.error} retry={() => void query.refetch()}>
-      <PageHero icon="videocam-outline" title="تسجيلات حصصي" subtitle="مشاهدة فقط — الحذف صلاحية الإدارة حصراً" />
+      <PageHero icon="video" title="تسجيلات حصصي" subtitle="مشاهدة فقط — الحذف صلاحية الإدارة حصراً" />
       {rows.length ? rows.map((recording) => (
         <Card key={recording.id}>
           <Pressable accessibilityRole="button" onPress={() => setSelected(recording)} style={styles.row}>

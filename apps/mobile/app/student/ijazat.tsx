@@ -53,7 +53,7 @@ export default function Ijazat() {
       <StudentScreen title="القراءات">
         <Card style={styles.approvedCard}>
           <View style={[styles.approvedIcon, { backgroundColor: `${colors.success}1f` }]}>
-            <Icon name="checkmark" size={34} color={colors.success} />
+            <Icon name="check-circle" size={34} color={colors.success} />
           </View>
           <Text style={[styles.approvedTitle, { color: colors.primary }]}>تهانينا!</Text>
           <Text style={[styles.approvedText, { color: colors.text }]}>
@@ -64,7 +64,7 @@ export default function Ijazat() {
           </Text>
           <Button
             label="الدخول إلى برنامج القراءات"
-            icon="arrow-back-outline"
+            icon="arrow-left"
             style={styles.approvedButton}
             onPress={() => router.push("/student/levels/qiraat" as never)}
           />
@@ -86,7 +86,7 @@ export default function Ijazat() {
       {hasPending ? (
         <Card style={styles.pendingCard}>
           <View style={[styles.pendingIcon, { backgroundColor: `${palette.gold}26` }]}>
-            <Icon name="time-outline" size={28} color={palette.goldDark} />
+            <Icon name="hourglass" size={28} color={palette.goldDark} />
           </View>
           <Text style={[styles.pendingTitle, { color: colors.primary }]}>وثيقتك قيد المراجعة</Text>
           <Text style={[styles.note, { color: colors.muted }]}>
@@ -101,7 +101,7 @@ export default function Ijazat() {
           {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
           <Button
             label={uploading ? "جارٍ رفع الشهادة…" : "اختيار وثيقة الإجازة"}
-            icon="cloud-upload-outline"
+            icon="upload"
             loading={uploading || submit.isPending}
             disabled={uploading || submit.isPending}
             onPress={() => void pickCertificate()}
@@ -209,7 +209,7 @@ function QiraatLanding({
         },
       ]}>
         <View style={[styles.questionIcon, { backgroundColor: isDark ? `${palette.gold}1a` : `${palette.gold}26` }]}>
-          <Icon name="shield-outline" size={24} color={isDark ? palette.gold : palette.goldDark} />
+          <Icon name="shield" size={24} color={isDark ? palette.gold : palette.goldDark} />
         </View>
         <Text style={[styles.questionTitle, { color: colors.primary }]}>
           هل لديك إجازة برواية حفص عن عاصم{"\n"}عن طريق الشاطبية؟

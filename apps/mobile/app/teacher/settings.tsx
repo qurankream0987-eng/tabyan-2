@@ -136,7 +136,7 @@ export default function Settings() {
         <SettingOptions label="تذكير قبل الحصة" values={REMINDER_MINUTES.map((value) => [String(value), `${value} دقيقة`] as const)} selected={String(settings.reminderMinutes ?? 15)} pending={pendingKey === "reminderMinutes"} onSelect={(value) => void saveSetting("reminderMinutes", Number(value))} />
       </Card>
 
-      <Button label="تسجيل الخروج" icon="log-out-outline" variant="danger" onPress={() => void logout()} />
+      <Button label="تسجيل الخروج" icon="logout" variant="danger" onPress={() => void logout()} />
     </TeacherScreen>
   );
 }
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   label: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 12, textAlign: "right" },
   input: { minHeight: 46, borderWidth: 1, borderRadius: 13, paddingHorizontal: 12, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13, marginTop: 5, marginBottom: 10 },
   bio: { minHeight: 84, textAlignVertical: "top", paddingTop: 11 },
-  toggleRow: { minHeight: 56, flexDirection: "row-reverse", alignItems: "center", gap: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "transparent" },
+  toggleRow: { minHeight: 56, flexDirection: "row", alignItems: "center", gap: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "transparent" },
   toggleBody: { flex: 1, alignItems: "flex-end" },
   hint: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 10, textAlign: "right", marginTop: 2 },
   switch: { width: 48, height: 25, borderRadius: 14, borderWidth: 1, padding: 2, justifyContent: "center" },

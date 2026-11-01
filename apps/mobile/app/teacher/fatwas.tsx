@@ -55,7 +55,7 @@ export default function Fatwas() {
   if (!query.isLoading && data && !data.isMufti) return <TeacherScreen title="الفتاوى"><EmptyState title="ليست لديك صلاحية الإفتاء" description="يُعيّن المفتين من معلمي المنصة" /></TeacherScreen>;
   return (
     <TeacherScreen title="صندوق الفتاوى" loading={query.isLoading} error={!!query.error} retry={() => void query.refetch()}>
-      <PageHero icon="chatbubble-ellipses-outline" title="صندوق الفتاوى" subtitle={`${pending.length} سؤالاً بانتظار إجابتك — الحد الأقصى 20`} />
+      <PageHero icon="mosque" title="صندوق الفتاوى" subtitle={`${pending.length} سؤالاً بانتظار إجابتك — الحد الأقصى 20`} />
       <SectionTitle title="بانتظار الإجابة" />
       {pending.length ? pending.map((fatwa) => {
         const hours = fatwa.hoursAgo ?? 0;
@@ -67,7 +67,7 @@ export default function Fatwas() {
                 <Badge label={categoryLabels[fatwa.category] ?? fatwa.category} tone="gold" />
                 {fatwa.priority === "urgent" ? <Badge label="عاجل" tone="danger" /> : null}
                 <Text style={[styles.age, late ? styles.ageLate : null, { color: late ? colors.danger : colors.muted }]}>
-                  <Icon name="timer-outline" size={12} color={late ? colors.danger : colors.muted} /> منذ {hours} ساعة{late ? " — يُعاد إسناده عند 48" : ""}
+                  <Icon name="timer" size={12} color={late ? colors.danger : colors.muted} /> منذ {hours} ساعة{late ? " — يُعاد إسناده عند 48" : ""}
                 </Text>
               </View>
               <Text style={[styles.question, { color: colors.text }]} numberOfLines={2}>{fatwa.questionText}</Text>
@@ -98,7 +98,7 @@ export default function Fatwas() {
               <TextInput value={referenceText} onChangeText={setReferenceText} maxLength={500} placeholder="المرجع (اختياري): الآية/الحديث/الفتاوى…" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]} textAlign="right" />
               <Text style={[styles.sectionLabel, styles.sectionLabelSpaced, { color: colors.text }]}>التسجيل الصوتي <Text style={[styles.sectionLabelHint, { color: colors.muted }]}>(اختياري — حتى 10 دقائق)</Text></Text>
               <TextInput value={audioUrl} onChangeText={setAudioUrl} placeholder="https://… رابط الصوت (اختياري)" placeholderTextColor={colors.muted} style={[styles.input, styles.inputTight, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]} textAlign="left" autoCapitalize="none" />
-              <Button label={answer.isPending ? "جارٍ الإرسال…" : "إرسال الإجابة للمراجعة"} icon="send-outline" loading={answer.isPending} disabled={answerText.trim().length < 50 || answerText.trim().length > 2000 || answer.isPending || !selected} onPress={() => selected && answer.mutate({ questionId: selected.id, answerText: answerText.trim(), referenceText: referenceText.trim() || undefined, audioUrl: audioUrl.trim() || undefined })} />
+              <Button label={answer.isPending ? "جارٍ الإرسال…" : "إرسال الإجابة للمراجعة"} icon="send" loading={answer.isPending} disabled={answerText.trim().length < 50 || answerText.trim().length > 2000 || answer.isPending || !selected} onPress={() => selected && answer.mutate({ questionId: selected.id, answerText: answerText.trim(), referenceText: referenceText.trim() || undefined, audioUrl: audioUrl.trim() || undefined })} />
               <Text style={[styles.reviewNote, { color: colors.muted }]}>تراجع الإدارة إجابتك قبل نشرها للطالب</Text>
               <Button label="إلغاء" variant="secondary" onPress={() => setSelected(null)} />
             </ScrollView>

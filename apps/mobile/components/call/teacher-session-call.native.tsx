@@ -620,7 +620,7 @@ const TeacherSessionCall = forwardRef<TeacherSessionCallHandle, TeacherSessionCa
           {recordingError ? <Text style={[styles.error, { color: colors.danger }]}>{recordingError}</Text> : null}
         </View>
       ) : null}
-      {phase === "permission" ? <Button label="السماح بالكاميرا والميكروفون" icon="videocam-outline" onPress={retry} /> : null}
+      {phase === "permission" ? <Button label="السماح بالكاميرا والميكروفون" icon="video" onPress={retry} /> : null}
       {phase === "joined" && peers.length === 0 ? <Text style={[styles.empty, { color: colors.muted }]}>تم دخولك — بانتظار انضمام الطالب…</Text> : null}
       {phase === "connected" && !peers.some((peer) => peer.role === "student" && peer.state === "connected") ? <Text style={[styles.empty, { color: colors.muted }]}>تم فقدان الوسائط مؤقتًا — جارٍ إعادة الاتصال.</Text> : null}
       {localStream ? (

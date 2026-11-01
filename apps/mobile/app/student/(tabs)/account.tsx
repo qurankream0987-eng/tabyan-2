@@ -149,7 +149,7 @@ export default function Account() {
 
       {/* مكتبتي */}
       <Card>
-        <CardHeading title="مكتبتي" icon="library" action="فتح المكتبة" onAction={() => router.push("/student/library" as never)} />
+        <CardHeading title="مكتبتي" icon="bookmark" action="فتح المكتبة" onAction={() => router.push("/student/library" as never)} />
         <View style={styles.libraryGrid}>
           <View style={[styles.libraryCell, { backgroundColor: tint }]}>
             <Text style={[styles.libraryCount, { color: headingColor }]}>{myLib.data?.bookmarks.length ?? 0}</Text>
@@ -190,11 +190,11 @@ export default function Account() {
 
       {/* روابط لا تظهر في مكان آخر على الهاتف */}
       <Card style={styles.linksCard}>
-        <LinkRow label="إجازاتي وشهاداتي" icon="ribbon-outline" onPress={() => router.push("/student/ijazat" as never)} />
+        <LinkRow label="إجازاتي وشهاداتي" icon="certificate" onPress={() => router.push("/student/ijazat" as never)} />
         <Divider />
-        <LinkRow label="إعدادات الإشعارات" icon="notifications-outline" onPress={() => router.push("/student/notifications/settings" as never)} />
+        <LinkRow label="إعدادات الإشعارات" icon="bell" onPress={() => router.push("/student/notifications/settings" as never)} />
         <Divider />
-        <LinkRow label="المساعدة والدعم" icon="help-circle-outline" onPress={() => router.push("/student/help" as never)} />
+        <LinkRow label="المساعدة والدعم" icon="help" onPress={() => router.push("/student/help" as never)} />
       </Card>
 
       {/* حذف الحساب */}
@@ -203,12 +203,12 @@ export default function Account() {
           <Card style={[styles.deleteCard, { borderColor: highlightDelete ? colors.danger : `${colors.danger}66`, borderWidth: highlightDelete ? 2 : 1 }]}>
             <Text style={[styles.deleteHeading, { color: colors.danger }]}>حذف الحساب</Text>
             <Text style={[styles.hint, { color: colors.muted }]}>ستظهر لك تفاصيل الحذف وتأكيده قبل إرسال الطلب. هذا الإجراء نهائي ولا يمكن التراجع عنه.</Text>
-            <Button label="حذف الحساب" icon="trash-outline" variant="danger" testID="button-delete-account" onPress={() => { setDeleteError(null); setDeleteConfirmationOpen(true); }} style={styles.deleteButton} />
+            <Button label="حذف الحساب" icon="trash" variant="danger" testID="button-delete-account" onPress={() => { setDeleteError(null); setDeleteConfirmationOpen(true); }} style={styles.deleteButton} />
           </Card>
         </View>
       ) : null}
 
-      <Button label="تسجيل الخروج" icon="log-out-outline" variant="danger" onPress={() => void signOut().then(() => navigateToWelcome(router))} />
+      <Button label="تسجيل الخروج" icon="logout" variant="danger" onPress={() => void signOut().then(() => navigateToWelcome(router))} />
       <Text style={[styles.footer, { color: colors.muted }]}>تبيان — نسخة تجريبية · مجانية 100٪ لوجه الله</Text>
 
       <Modal visible={deleteConfirmationOpen} transparent animationType="fade" onRequestClose={closeDeleteConfirmation}>
@@ -221,7 +221,7 @@ export default function Account() {
             </Text>
             {deleteError ? <Text accessibilityRole="alert" style={[styles.hint, { color: colors.danger }]} testID="status-delete-account-error">{deleteError}</Text> : null}
             {deleteAccount.isPending ? <Text style={[styles.hint, { color: colors.muted }]} testID="status-delete-account-pending">جارٍ إرسال طلب حذف الحساب…</Text> : null}
-            <Button label={deleteAccount.isPending ? "جارٍ حذف الحساب…" : "نعم، احذف حسابي"} icon="trash-outline" variant="danger" loading={deleteAccount.isPending} disabled={deleteAccount.isPending} testID="button-confirm-delete-account" onPress={() => void submitDeletion()} style={styles.dialogButton} />
+            <Button label={deleteAccount.isPending ? "جارٍ حذف الحساب…" : "نعم، احذف حسابي"} icon="trash" variant="danger" loading={deleteAccount.isPending} disabled={deleteAccount.isPending} testID="button-confirm-delete-account" onPress={() => void submitDeletion()} style={styles.dialogButton} />
             <Button label="إلغاء" variant="secondary" disabled={deleteAccount.isPending} testID="button-cancel-delete-account" onPress={closeDeleteConfirmation} style={styles.dialogButtonSpaced} />
           </View>
         </View>
@@ -291,7 +291,7 @@ function LinkRow({ label, icon, onPress }: { label: string; icon: string; onPres
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.linkRow, { opacity: pressed ? 0.82 : 1 }]}>
       <View style={[styles.linkIcon, { backgroundColor: `${palette.gold}20` }]}><Icon name={icon} size={17} color={colors.primary} /></View>
       <Text style={[styles.linkLabel, { color: colors.text }]}>{label}</Text>
-      <Icon name="chevron-back" size={18} color={colors.muted} />
+      <Icon name="arrow-left" size={18} color={colors.muted} />
     </Pressable>
   );
 }
@@ -319,12 +319,13 @@ const styles = StyleSheet.create({
   libraryCount: { fontFamily: "Amiri_700Bold", fontSize: 22, lineHeight: 32 },
   libraryLabel: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11 },
   divider: { height: StyleSheet.hairlineWidth, marginVertical: 8 },
-  toggle: { flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingVertical: 10 },
+  // Switch sits level with the label, not the middle of a wrapped description.
+  toggle: { flexDirection: "row", alignItems: "flex-start", gap: 12, paddingVertical: 10 },
   toggleBody: { flex: 1, minWidth: 0 },
   toggleLabel: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, textAlign: "right" },
   toggleDesc: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, lineHeight: 17, textAlign: "right", marginTop: 2 },
   toggleStatus: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 11, textAlign: "right", marginTop: 2 },
-  switch: { width: 48, height: 25, borderRadius: 14, borderWidth: 1, padding: 2, justifyContent: "center" },
+  switch: { width: 48, height: 25, borderRadius: 14, borderWidth: 1, padding: 2, justifyContent: "center", marginTop: -2 },
   switchThumb: { width: 19, height: 19, borderRadius: 10 },
   choiceLabel: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 12, textAlign: "right", marginBottom: 8 },
   choiceLabelSpaced: { marginTop: 14 },

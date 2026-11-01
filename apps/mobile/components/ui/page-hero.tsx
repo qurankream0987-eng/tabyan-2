@@ -1,9 +1,12 @@
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { SvgIcon, resolveIcon } from "./svg-icon";
 import { palette, useTheme } from "../../lib/theme";
 
 // Not imported from ./index: that file re-exports PageHero, so this would be a require cycle.
 function Icon({ name, size, color }: { name: string; size: number; color: string }) {
+  const web = resolveIcon(name);
+  if (web) return <SvgIcon name={web.name} rotate={web.rotate} size={size} color={color} />;
   return <Ionicons name={name as keyof typeof Ionicons.glyphMap} size={size} color={color} />;
 }
 

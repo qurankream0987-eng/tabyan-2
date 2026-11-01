@@ -19,18 +19,18 @@ export default function AdminHome() {
   const u = k?.urgent ?? {};
 
   const kpiCards = [
-    { v: k?.activeStudents, l: "طالب نشط", icon: "people-outline" },
-    { v: k?.sessionsToday, l: "حصص اليوم", icon: "calendar-outline" },
-    { v: k?.completedMonth, l: "حصص مكتملة هذا الشهر", icon: "checkmark-outline" },
-    { v: k?.avgRating, l: "متوسط تقييم الطلاب", icon: "star-outline" },
+    { v: k?.activeStudents, l: "طالب نشط", icon: "users" },
+    { v: k?.sessionsToday, l: "حصص اليوم", icon: "calendar" },
+    { v: k?.completedMonth, l: "حصص مكتملة هذا الشهر", icon: "check" },
+    { v: k?.avgRating, l: "متوسط تقييم الطلاب", icon: "star" },
   ];
   const urgentItems = [
-    { label: "طلبات ترقية", count: u.pendingReviews, to: "/admin/promotions", icon: "trending-up-outline" },
-    { label: "شهادات إجازة", count: u.pendingQiraat, to: "/admin/qiraat", icon: "ribbon-outline" },
-    { label: "اختبارات تحديد المستوى", count: u.pendingPlacement, to: "/admin/students-review", icon: "videocam-outline" },
-    { label: "قبول المعلمين", count: u.pendingKyc, to: "/admin/teachers-review", icon: "shield-checkmark-outline" },
-    { label: "فتاوى بلا إسناد", count: u.pendingFatwas, to: "/admin/fatwas", icon: "chatbox-ellipses-outline" },
-    { label: "فتاوى متأخرة +48 ساعة", count: u.lateFatwas48h, to: "/admin/fatwas", icon: "time-outline" },
+    { label: "طلبات ترقية", count: u.pendingReviews, to: "/admin/promotions", icon: "trending-up" },
+    { label: "شهادات إجازة", count: u.pendingQiraat, to: "/admin/qiraat", icon: "certificate" },
+    { label: "اختبارات تحديد المستوى", count: u.pendingPlacement, to: "/admin/students-review", icon: "video" },
+    { label: "قبول المعلمين", count: u.pendingKyc, to: "/admin/teachers-review", icon: "id-card" },
+    { label: "فتاوى بلا إسناد", count: u.pendingFatwas, to: "/admin/fatwas", icon: "scale" },
+    { label: "فتاوى متأخرة +48 ساعة", count: u.lateFatwas48h, to: "/admin/fatwas", icon: "clock" },
   ];
 
   // COUNT(*) may arrive as a string; each queue is a distinct status, so the total is their sum.
@@ -41,17 +41,17 @@ export default function AdminHome() {
   const totalPending = counted.reduce((sum, it) => sum + it.count, 0);
   const accent = isDark ? palette.gold : palette.burgundy;
   const shortcuts = [
-    { label: "إضافة كتاب", to: "/admin/library", icon: "library-outline" },
-    { label: "إنشاء جدول", to: "/admin/schedules", icon: "calendar-outline" },
-    { label: "إضافة حساب", to: "/admin/accounts", icon: "person-add-outline" },
-    { label: "إرسال إشعار", to: "/admin/notifications", icon: "notifications-outline" },
-    { label: "مراقبة الجلسات", to: "/admin/sessions-monitoring", icon: "videocam-outline" },
+    { label: "إضافة كتاب", to: "/admin/library", icon: "library" },
+    { label: "إنشاء جدول", to: "/admin/schedules", icon: "calendar" },
+    { label: "إضافة حساب", to: "/admin/accounts", icon: "user" },
+    { label: "إرسال إشعار", to: "/admin/notifications", icon: "bell" },
+    { label: "مراقبة الجلسات", to: "/admin/sessions-monitoring", icon: "video" },
   ];
 
   return (
     <AdminFrame title="لوحة التحكم المركزية">
       {/* رأس الصفحة: درع في فقاعة + تحية + ملخص المهام المعلّقة */}
-      <PageHero icon="shield-outline" title="لوحة التحكم المركزية" subtitle={totalPending > 0 ? `${totalPending} مهمة بانتظار مراجعتك` : "لا مهام معلّقة الآن"} />
+      <PageHero icon="shield" title="لوحة التحكم المركزية" subtitle={totalPending > 0 ? `${totalPending} مهمة بانتظار مراجعتك` : "لا مهام معلّقة الآن"} />
 
       {/* يحتاج تدخّلك الآن — شبكة من عمودين، الأكثر إلحاحاً أولاً */}
       <Card>
@@ -110,7 +110,7 @@ export default function AdminHome() {
           <LoadingState label="جارٍ تحميل المشرفين النشطين…" />
         ) : admins.error ? (
           <View style={[styles.activeError, { backgroundColor: `${colors.danger}12`, borderColor: `${colors.danger}35` }]}>
-            <Icon name="warning-outline" size={18} color={colors.danger} />
+            <Icon name="alert-triangle" size={18} color={colors.danger} />
             <Text style={[styles.activeErrorText, { color: colors.danger }]}>تعذّر تحميل المشرفين النشطين</Text>
             <Text style={[styles.activeHint, { color: colors.muted }]}>حاول تحديث الصفحة مرة أخرى</Text>
           </View>

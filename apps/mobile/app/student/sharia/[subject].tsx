@@ -123,7 +123,7 @@ function LevelCard({ level, icon, onOpen }: { level: Level; icon: SectionIconNam
               <Badge label={status.label} tone={status.tone} />
             </View>
           </View>
-          <Icon name={open ? "chevron-up" : "chevron-back"} size={20} color={colors.primary} style={styles.levelArrow} />
+          <Icon name={open ? "chevron-up" : "arrow-left"} size={20} color={colors.primary} style={styles.levelArrow} />
         </View>
       </Pressable>
       {open ? (

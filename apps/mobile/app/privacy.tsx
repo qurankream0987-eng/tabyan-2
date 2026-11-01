@@ -178,7 +178,7 @@ export default function PrivacyScreen() {
                     {section.id === "account-deletion" && role === "student" && token ? (
                       <Button
                         label="إدارة الحساب وحذفه"
-                        icon="settings-outline"
+                        icon="settings"
                         variant="secondary"
                         style={styles.actionButton}
                         onPress={() => router.push("/student/account?focus=delete" as never)}
@@ -190,11 +190,11 @@ export default function PrivacyScreen() {
                         <Text style={[styles.contactValue, { color: colors.muted }]} selectable>{`واتساب / اتصال: ${SUPPORT_CONTACT.displayPhone}`}</Text>
                         <Text style={[styles.contactValue, { color: colors.muted }]} selectable>{`البريد الإلكتروني: ${SUPPORT_CONTACT.email}`}</Text>
                         <View style={styles.contactActions}>
-                          <Button label="اتصال" icon="call-outline" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.phoneHref)} style={styles.contactAction} />
-                          <Button label="واتساب" icon="chatbubble-ellipses-outline" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.whatsappHref)} style={styles.contactAction} />
-                          <Button label="البريد" icon="mail-outline" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.emailHref)} style={styles.contactAction} />
-                          <Button label="نسخ الرقم" icon="copy-outline" variant="secondary" onPress={() => void copyContact(SUPPORT_CONTACT.displayPhone, "رقم الدعم")} style={styles.contactAction} />
-                          <Button label="نسخ البريد" icon="copy-outline" variant="secondary" onPress={() => void copyContact(SUPPORT_CONTACT.email, "البريد الإلكتروني")} style={styles.contactAction} />
+                          <Button label="اتصال" icon="phone" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.phoneHref)} style={styles.contactAction} />
+                          <Button label="واتساب" icon="send" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.whatsappHref)} style={styles.contactAction} />
+                          <Button label="البريد" icon="mail" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.emailHref)} style={styles.contactAction} />
+                          <Button label="نسخ الرقم" icon="clipboard" variant="secondary" onPress={() => void copyContact(SUPPORT_CONTACT.displayPhone, "رقم الدعم")} style={styles.contactAction} />
+                          <Button label="نسخ البريد" icon="clipboard" variant="secondary" onPress={() => void copyContact(SUPPORT_CONTACT.email, "البريد الإلكتروني")} style={styles.contactAction} />
                         </View>
                         {copyStatus ? <Text accessibilityLiveRegion="polite" style={[styles.small, { color: colors.muted }]}>{copyStatus}</Text> : null}
                       </View>

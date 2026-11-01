@@ -75,7 +75,7 @@ export default function Quran() {
                   s.icon === "qiraat" ? styles.qiraatArrowBubble : undefined,
                   { backgroundColor: s.icon === "qiraat" ? (isDark ? `${palette.gold}1a` : `${palette.burgundy}14`) : `${palette.gold}1f` },
                 ]}>
-                  <Icon name="chevron-back" size={16} color={colors.primary} />
+                  <Icon name="arrow-left" size={16} color={colors.primary} />
                 </View>
               </View>
               {s.badge ? (
@@ -107,7 +107,7 @@ export default function Quran() {
         </Text>
         <Button
           label="فتح التسميع الحي"
-          icon="mic-outline"
+          icon="mic"
           onPress={() => router.push("/student/recitation" as never)}
         />
       </Card>

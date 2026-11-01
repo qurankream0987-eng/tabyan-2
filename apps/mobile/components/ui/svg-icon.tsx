@@ -518,9 +518,84 @@ export function isSvgIconName(name: string): name is IconName {
   return Object.hasOwn(PATHS, name);
 }
 
-export function SvgIcon({ name, size = 20, color = "#800020", strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
+/**
+ * Ionicons names still used around the app, resolved to the web icon set so
+ * every screen draws the same glyphs as the web. Chevrons that the set lacks
+ * reuse a sibling turned by `rotate`.
+ */
+const LEGACY: Record<string, { name: IconName; rotate?: number }> = {
+  "add": { name: "plus" }, "add-outline": { name: "plus" }, "add-circle-outline": { name: "plus" },
+  "albums-outline": { name: "library" }, "layers-outline": { name: "library" }, "library-outline": { name: "library" },
+  "alert-circle-outline": { name: "alert-triangle" }, "warning-outline": { name: "alert-triangle" },
+  "archive-outline": { name: "archive" },
+  "arrow-back": { name: "arrow-right" }, "arrow-back-outline": { name: "arrow-right" }, "arrow-forward": { name: "arrow-left" },
+  "arrow-up-outline": { name: "arrow-right", rotate: -90 }, "arrow-down-outline": { name: "arrow-right", rotate: 90 },
+  "attach-outline": { name: "link" }, "link-outline": { name: "link" },
+  "bar-chart-outline": { name: "chart" }, "stats-chart-outline": { name: "chart" },
+  "book-outline": { name: "books" }, "reader-outline": { name: "books" },
+  "bookmark-outline": { name: "bookmark" },
+  "bulb-outline": { name: "info" }, "information-circle-outline": { name: "info" },
+  "calendar-outline": { name: "calendar" },
+  "call-outline": { name: "phone" }, "phone-portrait-outline": { name: "phone" },
+  "card-outline": { name: "id-card" }, "id-card-outline": { name: "id-card" },
+  "chatbox-ellipses-outline": { name: "send" }, "chatbubble-ellipses-outline": { name: "send" }, "chatbubbles-outline": { name: "send" },
+  "checkmark": { name: "check" }, "checkmark-outline": { name: "check" }, "checkmark-done-outline": { name: "check" },
+  "checkmark-circle": { name: "check-circle" }, "checkmark-circle-outline": { name: "check-circle" },
+  "chevron-back": { name: "chevron-left" }, "chevron-forward": { name: "chevron-right" },
+  "chevron-down": { name: "chevron-right", rotate: 90 }, "chevron-down-outline": { name: "chevron-right", rotate: 90 },
+  "chevron-up": { name: "chevron-right", rotate: -90 }, "chevron-up-outline": { name: "chevron-right", rotate: -90 },
+  "clipboard-outline": { name: "clipboard" }, "copy-outline": { name: "clipboard" }, "list-outline": { name: "clipboard" },
+  "close": { name: "x" }, "close-outline": { name: "x" }, "close-circle": { name: "x-circle" }, "close-circle-outline": { name: "x-circle" },
+  "cloud-offline-outline": { name: "wifi-off" },
+  "cloud-upload-outline": { name: "upload" },
+  "create-outline": { name: "edit" },
+  "document-outline": { name: "file-text" }, "document-text-outline": { name: "file-text" }, "receipt-outline": { name: "file-text" },
+  "download-outline": { name: "download" },
+  "expand-outline": { name: "maximize" },
+  "eye-outline": { name: "eye" }, "eye-off-outline": { name: "eye-off" },
+  "filter-outline": { name: "filter" },
+  "git-branch-outline": { name: "trending-up" }, "trending-up-outline": { name: "trending-up" },
+  "headset-outline": { name: "headphones" }, "musical-notes-outline": { name: "headphones" },
+  "help-buoy-outline": { name: "help" }, "help-circle-outline": { name: "help" },
+  "home-outline": { name: "home" },
+  "hourglass-outline": { name: "hourglass" },
+  "image-outline": { name: "photo" },
+  "key-outline": { name: "lock" }, "lock-closed-outline": { name: "lock" }, "lock-open-outline": { name: "lock" },
+  "location-outline": { name: "map-pin" },
+  "log-out-outline": { name: "logout" },
+  "mail-outline": { name: "mail" },
+  "megaphone-outline": { name: "bell" }, "notifications-outline": { name: "bell" },
+  "menu-outline": { name: "menu" },
+  "mic-outline": { name: "mic" }, "mic-off-outline": { name: "mic-off" },
+  "moon-outline": { name: "moon" }, "sunny-outline": { name: "sun" },
+  "open-outline": { name: "external-link" }, "share-outline": { name: "external-link" },
+  "options-outline": { name: "settings" }, "settings-outline": { name: "settings" },
+  "pause-outline": { name: "pause" }, "pause-circle-outline": { name: "pause" },
+  "people-outline": { name: "users" }, "person-add-outline": { name: "users" }, "person-outline": { name: "user" },
+  "play-circle-outline": { name: "play" }, "play-outline": { name: "play" },
+  "refresh-outline": { name: "refresh" }, "sync-outline": { name: "refresh" },
+  "ribbon-outline": { name: "certificate" },
+  "scale-outline": { name: "scale" },
+  "school-outline": { name: "graduation" },
+  "search-outline": { name: "search" },
+  "send-outline": { name: "send" },
+  "shield-checkmark-outline": { name: "shield" }, "shield-outline": { name: "shield" },
+  "star-outline": { name: "star" },
+  "stop-circle": { name: "stop" }, "stop-circle-outline": { name: "stop" }, "stop-outline": { name: "stop" },
+  "time-outline": { name: "clock" }, "timer-outline": { name: "timer" },
+  "trash-outline": { name: "trash" },
+  "videocam-outline": { name: "video" }, "videocam-off-outline": { name: "video-off" },
+};
+
+/** The web glyph for a web name or a legacy Ionicons name; null when the set has no match. */
+export function resolveIcon(name: string): { name: IconName; rotate?: number } | null {
+  if (isSvgIconName(name)) return { name };
+  return LEGACY[name] ?? null;
+}
+
+export function SvgIcon({ name, size = 20, color = "#800020", strokeWidth = 1.8, rotate = 0 }: { name: IconName; size?: number; color?: string; strokeWidth?: number; rotate?: number }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={rotate ? { transform: [{ rotate: `${rotate}deg` }] } : undefined}>
       {PATHS[name]}
     </Svg>
   );

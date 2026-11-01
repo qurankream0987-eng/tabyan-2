@@ -97,26 +97,26 @@ export default function Assessments() {
       {q.isLoading || bank.isLoading || levels.isLoading ? <ListSkeleton /> : q.error || bank.error || levels.error ? <ErrorState onRetry={() => { void q.refetch(); void bank.refetch(); void levels.refetch(); }} /> : tab === "bank" ? (
         !bankRows.length ? <EmptyState title="بنك الأسئلة فارغ" description="أضف أسئلة عامة يمكن نسخها إلى أي اختبار." action="إضافة سؤال" onAction={() => newQuestion()} /> : bankRows.map((item) => (
           <AdminRow key={item.id} title={item.questionText} subtitle={[item.topic, typeLabel(item.type)].filter(Boolean).join(" · ")}
-            actions={<IconAction icon="add-circle-outline" label={`إضافة «${item.questionText}» إلى اختبار`} disabled={!rows.length} loading={pendingId === `bank-${item.id}`} onPress={() => setBankItem(item)} />} />
+            actions={<IconAction icon="plus" label={`إضافة «${item.questionText}» إلى اختبار`} disabled={!rows.length} loading={pendingId === `bank-${item.id}`} onPress={() => setBankItem(item)} />} />
         ))
       ) : !rows.length ? <EmptyState title="لا توجد اختبارات" description="أنشئ أول اختبار للطلاب." action="إنشاء اختبار" onAction={newAssessment} /> : rows.map((a) => (
         <AdminRow key={a.id} title={a.name} muted={a.isActive === false}
           subtitle={`${a.levelName ? `المستوى: ${a.levelName} · ` : ""}نجاح ${a.passPercentage}% · ${a.maxAttempts} محاولات · ${a.questionCount ?? 0} سؤال`}
           badges={<><Badge label={a.isActive === false ? "موقوف" : "مفعّل"} tone={a.isActive === false ? "muted" : "success"} /><Badge label={`${a.attemptCount ?? 0} محاولة`} /></>}
           actions={<>
-            <IconAction icon="bar-chart-outline" label={`نتائج ${a.name}`} onPress={() => setResults(a)} />
+            <IconAction icon="chart" label={`نتائج ${a.name}`} onPress={() => setResults(a)} />
             <IconAction icon="ellipsis-horizontal" label={`خيارات ${a.name}`} loading={pendingId === String(a.id)} onPress={() => setMenuFor(a)} />
           </>} />
       ))}
 
       <MobileActionSheet visible={!!menuFor} title={menuFor?.name ?? ""} onClose={() => setMenuFor(null)} actions={menuFor ? [
-        { key: "question", label: "إضافة سؤال", icon: "add-circle-outline", onPress: () => newQuestion(menuFor) },
-        { key: "results", label: `النتائج (${menuFor.attemptCount ?? 0})`, icon: "bar-chart-outline", onPress: () => setResults(menuFor) },
-        { key: "toggle", label: menuFor.isActive === false ? "تفعيل الاختبار" : "إيقاف الاختبار", icon: menuFor.isActive === false ? "play-circle-outline" : "pause-circle-outline", onPress: () => toggle.mutate({ id: menuFor.id, isActive: menuFor.isActive === false } as any) },
+        { key: "question", label: "إضافة سؤال", icon: "plus", onPress: () => newQuestion(menuFor) },
+        { key: "results", label: `النتائج (${menuFor.attemptCount ?? 0})`, icon: "chart", onPress: () => setResults(menuFor) },
+        { key: "toggle", label: menuFor.isActive === false ? "تفعيل الاختبار" : "إيقاف الاختبار", icon: menuFor.isActive === false ? "play" : "pause", onPress: () => toggle.mutate({ id: menuFor.id, isActive: menuFor.isActive === false } as any) },
       ] : []} />
 
       <MobileActionSheet visible={!!bankItem} title="إضافة السؤال إلى اختبار" subtitle={bankItem?.questionText} onClose={() => setBankItem(null)}
-        actions={rows.map((a) => ({ key: String(a.id), label: a.name, icon: "clipboard-outline", onPress: () => { if (!bankItem) return; setPendingId(`bank-${bankItem.id}`); copyFromBank.mutate({ assessmentId: a.id, questionText: bankItem.questionText, type: bankItem.type, options: bankItem.options ?? undefined, correctAnswer: bankItem.correctAnswer ?? undefined, topic: bankItem.topic ?? undefined } as any, { onSettled: () => setPendingId(null) }); } }))} />
+        actions={rows.map((a) => ({ key: String(a.id), label: a.name, icon: "clipboard", onPress: () => { if (!bankItem) return; setPendingId(`bank-${bankItem.id}`); copyFromBank.mutate({ assessmentId: a.id, questionText: bankItem.questionText, type: bankItem.type, options: bankItem.options ?? undefined, correctAnswer: bankItem.correctAnswer ?? undefined, topic: bankItem.topic ?? undefined } as any, { onSettled: () => setPendingId(null) }); } }))} />
 
       <AdminSheet visible={!!assessment} title="إنشاء اختبار" onClose={() => { setAssessment(null); setFormError(null); }} dirty={assessmentDirty} busy={create.isPending}
         footer={(requestClose) => <SheetFooter onSecondary={requestClose} onPrimary={submitAssessment} loading={create.isPending} primaryLabel="إنشاء الاختبار" />}>

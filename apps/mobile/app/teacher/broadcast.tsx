@@ -52,13 +52,13 @@ export default function Broadcast() {
         <Text numberOfLines={1} style={[styles.audienceText, { color: colors.text }]}>{label}</Text>
         {detail ? <Text numberOfLines={1} style={[styles.detail, { color: colors.muted }]}>{detail}</Text> : null}
       </View>
-      {count ? <Badge label={count} tone={disabled ? "muted" : "gold"} /> : <Icon name="people-outline" size={18} color={palette.gold} />}
+      {count ? <Badge label={count} tone={disabled ? "muted" : "gold"} /> : <Icon name="users" size={18} color={palette.gold} />}
     </SoftPressable>
   );
 
   return (
     <TeacherScreen title="الإشعارات الجماعية" error={!!audiencesQ.error || !!historyQ.error} retry={() => { void audiencesQ.refetch(); void historyQ.refetch(); }}>
-      <PageHero icon="notifications-outline" title="الإشعارات الجماعية" subtitle="أرسل إشعاراً لطلابك المسجلين في حلقاتك" />
+      <PageHero icon="bell" title="الإشعارات الجماعية" subtitle="أرسل إشعاراً لطلابك المسجلين في حلقاتك" />
       {audiencesQ.isLoading ? <LoadingState /> : <Card>
         <Text style={[styles.label, { color: colors.primary }]}>المستهدفون</Text>
         {audienceRow("all", scheduleId === null, false, () => setScheduleId(null), `جميع طلابي (${audiences?.allCount ?? 0} طالب)`)}
@@ -75,8 +75,8 @@ export default function Broadcast() {
         <Text style={[styles.label, styles.fieldLabel, { color: colors.primary }]}>نص الإشعار</Text>
         <TextInput value={body} onChangeText={setBody} maxLength={BODY_MAX} multiline placeholder="اكتب رسالتك لطلابك…" placeholderTextColor={colors.muted} style={[styles.input, styles.textarea, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]} textAlign="right" />
         <Text style={[styles.counter, { color: colors.muted }]}>{body.length}/{BODY_MAX}</Text>
-        <View style={[styles.note, { backgroundColor: `${palette.gold}14`, borderColor: `${palette.gold}33` }]}><Icon name="notifications-outline" size={15} color={palette.gold} /><Text style={[styles.noteText, { color: colors.muted }]}>يصل الإشعار فقط إلى طلابك المسجلين في حلقاتك — لا يمكن إرساله لغيرهم.</Text></View>
-        <Button label={send.isPending ? "جارٍ الإرسال…" : "إرسال الإشعار"} icon="send-outline" disabled={!canSend || send.isPending} onPress={review} />
+        <View style={[styles.note, { backgroundColor: `${palette.gold}14`, borderColor: `${palette.gold}33` }]}><Icon name="bell" size={15} color={palette.gold} /><Text style={[styles.noteText, { color: colors.muted }]}>يصل الإشعار فقط إلى طلابك المسجلين في حلقاتك — لا يمكن إرساله لغيرهم.</Text></View>
+        <Button label={send.isPending ? "جارٍ الإرسال…" : "إرسال الإشعار"} icon="send" disabled={!canSend || send.isPending} onPress={review} />
       </Card>}
       <SectionTitle title="الإشعارات المرسلة" />
       {historyQ.isLoading ? <LoadingState /> : historyQ.data?.length ? historyQ.data.map((item) => (
@@ -98,7 +98,7 @@ export default function Broadcast() {
             <View style={[styles.previewBox, { backgroundColor: colors.input }]}><Text numberOfLines={1} style={[styles.historyTitle, { color: colors.text }]}>{title}</Text><Text numberOfLines={3} style={[styles.detail, { color: colors.muted }]}>{body}</Text></View>
             <View style={styles.confirmActions}>
               <Button label="إلغاء" variant="secondary" style={styles.confirmButton} disabled={send.isPending} onPress={() => setConfirmOpen(false)} />
-              <Button label={send.isPending ? "جارٍ الإرسال…" : "إرسال"} icon="send-outline" style={styles.confirmButton} loading={send.isPending} disabled={send.isPending} onPress={() => send.mutate({ title: title.trim(), body: body.trim(), scheduleId: scheduleId ?? undefined })} />
+              <Button label={send.isPending ? "جارٍ الإرسال…" : "إرسال"} icon="send" style={styles.confirmButton} loading={send.isPending} disabled={send.isPending} onPress={() => send.mutate({ title: title.trim(), body: body.trim(), scheduleId: scheduleId ?? undefined })} />
             </View>
           </View>
         </View>

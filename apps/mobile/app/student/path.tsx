@@ -39,7 +39,7 @@ function PathHeader({ icon, title, description, open, onPress, colors, isDark }:
         <Text style={[styles.headerDescription, { color: colors.muted }]}>{description}</Text>
       </View>
       <View style={[styles.headerChevron, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : `${palette.burgundy}0d` }]}>
-        <Icon name={open ? "chevron-down" : "chevron-back"} size={18} color={colors.primary} />
+        <Icon name={open ? "chevron-down" : "arrow-left"} size={18} color={colors.primary} />
       </View>
     </Pressable>
   );
@@ -62,7 +62,7 @@ function PathRow({ icon, title, description, badge, trailing, gold = false, onPr
         </View>
         <Text style={[styles.rowDescription, { color: colors.muted }]}>{description}</Text>
       </View>
-      {trailing ?? <Icon name="chevron-back" size={16} color={colors.muted} />}
+      {trailing ?? <Icon name="arrow-left" size={16} color={colors.muted} />}
     </Pressable>
   );
 }
@@ -117,7 +117,7 @@ export default function PathSelection() {
               <View style={[styles.qiraatInline, { backgroundColor: `${palette.gold}0d`, borderTopColor: `${palette.gold}33` }]}>
                 <Badge label={qiraat.label} tone={qiraat.tone} style={styles.qiraatBadge} />
                 <Text style={[styles.qiraatHint, { color: colors.muted }]}>{qiraat.hint}</Text>
-                <Button label={qiraat.action} icon={paths.data?.qiraat?.certified ? "arrow-back-outline" : "document-text-outline"} onPress={() => go(qiraat.href)} />
+                <Button label={qiraat.action} icon={paths.data?.qiraat?.certified ? "arrow-left" : "file-text"} onPress={() => go(qiraat.href)} />
               </View>
             ) : null}
           </View>

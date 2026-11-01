@@ -83,12 +83,12 @@ export default function Levels() {
   const actionsFor = (level: any) => {
     const index = rows.findIndex((row) => row.id === level.id);
     return [
-      { key: "edit", label: "تعديل المستوى", icon: "create-outline", onPress: () => setEdit({ ...level }) },
-      { key: "active", label: level.isActive === false ? "تفعيل المستوى" : "تعطيل المستوى", icon: level.isActive === false ? "checkmark-circle-outline" : "pause-circle-outline", onPress: () => quickUpdate.mutate({ id: level.id, isActive: level.isActive === false } as any) },
-      { key: "hidden", label: level.isHidden ? "إظهار للطلاب" : "إخفاء عن الطلاب", icon: level.isHidden ? "eye-outline" : "eye-off-outline", onPress: () => quickUpdate.mutate({ id: level.id, isHidden: !level.isHidden } as any) },
-      ...(index > 0 ? [{ key: "up", label: "نقل لأعلى", icon: "arrow-up-outline", onPress: () => swap.mutate({ idA: level.id, idB: rows[index - 1].id }) }] : []),
-      ...(index < rows.length - 1 ? [{ key: "down", label: "نقل لأسفل", icon: "arrow-down-outline", onPress: () => swap.mutate({ idA: level.id, idB: rows[index + 1].id }) }] : []),
-      { key: "delete", label: "حذف المستوى", icon: "trash-outline", danger: true, onPress: () => setDeleting(level) },
+      { key: "edit", label: "تعديل المستوى", icon: "edit", onPress: () => setEdit({ ...level }) },
+      { key: "active", label: level.isActive === false ? "تفعيل المستوى" : "تعطيل المستوى", icon: level.isActive === false ? "play" : "pause", onPress: () => quickUpdate.mutate({ id: level.id, isActive: level.isActive === false } as any) },
+      { key: "hidden", label: level.isHidden ? "إظهار للطلاب" : "إخفاء عن الطلاب", icon: level.isHidden ? "eye" : "eye-off", onPress: () => quickUpdate.mutate({ id: level.id, isHidden: !level.isHidden } as any) },
+      ...(index > 0 ? [{ key: "up", label: "نقل لأعلى", icon: "chevron-right", onPress: () => swap.mutate({ idA: level.id, idB: rows[index - 1].id }) }] : []),
+      ...(index < rows.length - 1 ? [{ key: "down", label: "نقل لأسفل", icon: "chevron-left", onPress: () => swap.mutate({ idA: level.id, idB: rows[index + 1].id }) }] : []),
+      { key: "delete", label: "حذف المستوى", icon: "trash", danger: true, onPress: () => setDeleting(level) },
     ];
   };
 
@@ -97,13 +97,13 @@ export default function Levels() {
       <ChoiceChips label="المسار" options={PATHS} value={path} onChange={setPath} />
       <AdminToolbar count={q.isLoading ? undefined : rows.length} countLabel="مستوى" />
       {q.isLoading ? <ListSkeleton /> : q.error ? <ErrorState onRetry={() => void q.refetch()} /> : !rows.length
-        ? <EmptyState title="لا توجد مستويات" description="أنشئ مستوى جديداً ليظهر هنا." icon="layers-outline" action="إضافة مستوى" onAction={newLevel} />
+        ? <EmptyState title="لا توجد مستويات" description="أنشئ مستوى جديداً ليظهر هنا." icon="graduation" action="إضافة مستوى" onAction={newLevel} />
         : rows.map((level) => (
           <AdminRow key={level.id} title={`${level.orderIndex}. ${level.name}`} muted={level.isActive === false}
             subtitle={`${level.sessionsCount} جلسات · ${level.requiredJuz} أجزاء${level.requiresIjazah ? " · يتطلب إجازة" : ""}`}
             badges={<>{level.isActive === false ? <Badge label="معطل" tone="danger" /> : <Badge label="مفعل" tone="success" />}{level.isHidden ? <Badge label="مخفي" tone="muted" /> : null}</>}
             actions={<>
-              <IconAction icon="create-outline" label={`تعديل ${level.name}`} onPress={() => setEdit({ ...level })} />
+              <IconAction icon="edit" label={`تعديل ${level.name}`} onPress={() => setEdit({ ...level })} />
               <IconAction icon="ellipsis-horizontal" label={`خيارات ${level.name}`} loading={pendingId === level.id} onPress={() => setMenuFor(level)} />
             </>} />
         ))}

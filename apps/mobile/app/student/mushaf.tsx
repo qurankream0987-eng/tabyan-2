@@ -83,7 +83,7 @@ function PagerPage({
       ) : query.error ? (
         <View style={styles.pageMessage}>
           <Text style={[styles.messageText, { color: colors.danger }]}>تعذر تحميل الصفحة {page}.</Text>
-          <Button label="إعادة المحاولة" variant="secondary" icon="refresh-outline" onPress={() => void query.refetch()} />
+          <Button label="إعادة المحاولة" variant="secondary" icon="refresh" onPress={() => void query.refetch()} />
         </View>
       ) : (
         <View style={styles.pageMessage}><LoadingState label={`جارٍ تحميل الصفحة ${page}…`} /></View>
@@ -240,15 +240,15 @@ export default function MushafReaderScreen() {
                 سورة {SURAHS[selected.surah - 1]?.name} · الآية {selected.ayah}
               </Text>
               <Pressable accessibilityLabel="إغلاق" onPress={() => setSelectedVerse(null)} hitSlop={10}>
-                <Icon name="close" size={22} color={colors.muted} />
+                <Icon name="x" size={22} color={colors.muted} />
               </Pressable>
             </View>
             <View style={styles.panelActions}>
-              <View style={styles.flex}><Button label="استمع من هنا" icon="play-outline" variant="secondary" onPress={() => playFrom(selected)} /></View>
+              <View style={styles.flex}><Button label="استمع من هنا" icon="headphones" variant="secondary" onPress={() => playFrom(selected)} /></View>
               <View style={styles.flex}>
                 <Button
                   label="سمّع من هنا"
-                  icon="mic-outline"
+                  icon="mic"
                   onPress={() => {
                     setSelectedVerse(null);
                     playerRef.current?.stop();
@@ -263,7 +263,7 @@ export default function MushafReaderScreen() {
         {playingAyah || audioError ? (
           <View style={[styles.audioBar, { backgroundColor: colors.selected, borderTopColor: colors.border }]}>
             <Pressable accessibilityLabel="إيقاف التلاوة" onPress={() => { playerRef.current?.stop(); setAudioError(false); }} hitSlop={10}>
-              <Icon name="stop-circle" size={30} color={colors.primary} />
+              <Icon name="stop" size={30} color={colors.primary} />
             </Pressable>
             <Text style={[styles.audioText, { color: audioError ? colors.danger : colors.text }]} numberOfLines={1}>
               {audioError
@@ -274,10 +274,10 @@ export default function MushafReaderScreen() {
         ) : null}
 
         <View style={[styles.toolbar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-          <ToolbarButton icon="list-outline" label="الفهرس" onPress={() => setSheet("index")} colors={colors} />
-          <ToolbarButton icon="search-outline" label="بحث" onPress={() => setSheet("search")} colors={colors} />
+          <ToolbarButton icon="clipboard" label="الفهرس" onPress={() => setSheet("index")} colors={colors} />
+          <ToolbarButton icon="search" label="بحث" onPress={() => setSheet("search")} colors={colors} />
           <ToolbarButton
-            icon={playingAyah ? "pause-outline" : "play-outline"}
+            icon={playingAyah ? "pause" : "play"}
             label={playingAyah ? "إيقاف" : "استماع"}
             onPress={() => {
               if (playingAyah) playerRef.current?.stop();
@@ -285,15 +285,15 @@ export default function MushafReaderScreen() {
             }}
             colors={colors}
           />
-          <ToolbarButton icon="person-outline" label="القارئ" onPress={() => setSheet("reciter")} colors={colors} />
+          <ToolbarButton icon="headphones" label="القارئ" onPress={() => setSheet("reciter")} colors={colors} />
           <ToolbarButton
-            icon={page !== null && bookmarks.includes(page) ? "bookmark" : "bookmark-outline"}
+            icon={page !== null && bookmarks.includes(page) ? "bookmark" : "bookmark"}
             label="علامة"
             onPress={() => void toggleBookmark()}
             colors={colors}
           />
           <ToolbarButton
-            icon="mic-outline"
+            icon="mic"
             label="تسميع"
             onPress={() => {
               if (!page) return;
@@ -362,7 +362,7 @@ function SheetModal({
           <View style={styles.panelHeader}>
             <Text style={[styles.sheetTitle, { color: colors.text }]}>{title}</Text>
             <Pressable accessibilityLabel="إغلاق" onPress={onClose} hitSlop={10}>
-              <Icon name="close" size={24} color={colors.muted} />
+              <Icon name="x" size={24} color={colors.muted} />
             </Pressable>
           </View>
           {children}

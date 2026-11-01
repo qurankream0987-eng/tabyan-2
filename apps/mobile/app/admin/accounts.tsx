@@ -248,7 +248,7 @@ export default function Accounts() {
         impact="سيُسجَّل خروج الحساب من كل الأجهزة، ويمكنه الدخول مجدداً بكلمة السر." confirmLabel="إنهاء الجلسات"
         loading={terminateSessions.isPending} onCancel={() => setTerminateTarget(null)} onConfirm={() => terminateTarget && terminateSessions.mutate({ userId: terminateTarget.id })} />
 
-      {!rows.length ? <EmptyState title="لا توجد حسابات منشأة بعد" description="ابدأ بإضافة حساب جديد" icon="key-outline" /> : rows.map((account) => (
+      {!rows.length ? <EmptyState title="لا توجد حسابات منشأة بعد" description="ابدأ بإضافة حساب جديد" icon="shield" /> : rows.map((account) => (
         <Card key={account.id}>
           <View style={styles.accountHeader}>
             <View style={[styles.accountIcon, { backgroundColor: `${colors.primary}14` }]}><Text style={{ color: colors.primary, fontSize: 18 }}>{account.role === "admin" ? "◈" : "●"}</Text></View>

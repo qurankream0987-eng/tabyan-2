@@ -114,7 +114,7 @@ export default function StudentDetail() {
             <Text style={[styles.heading, { color: colors.primary }]}>{data.info?.user?.fullName ?? "الطالب"}</Text>
             <View style={styles.badges}>
               <Text style={[styles.badge, { color: colors.text, backgroundColor: `${colors.primary}12` }]}>
-                <Icon name="book-outline" size={12} color={colors.text} /> {data.info?.student?.totalJuz ?? 0} جزء
+                <Icon name="quran" size={12} color={colors.text} /> {data.info?.student?.totalJuz ?? 0} جزء
               </Text>
               {avgScore != null ? (
                 <Text style={[styles.badge, { color: colors.text, backgroundColor: `${palette.gold}26` }]}>
@@ -136,7 +136,7 @@ export default function StudentDetail() {
             <Text style={[styles.muted, { color: colors.muted }]}>طلب الانتقال للمستوى التالي يحتاج مراجعة المشرف.</Text>
             <Button
               label={promote.isPending ? "جارٍ إرسال الطلب…" : "طلب الانتقال للمستوى التالي"}
-              icon="school-outline"
+              icon="graduation"
               variant="secondary"
               loading={promote.isPending}
               disabled={promote.isPending}
@@ -147,14 +147,14 @@ export default function StudentDetail() {
           {/* Web: the card always shows; a null choice reads «لم يحدد اختياره بعد». */}
           <Card>
             <View style={styles.tuhfaRow}>
-              <View style={[styles.tuhfaIcon, { backgroundColor: `${palette.gold}26` }]}><Icon name="library-outline" size={20} color={isDark ? palette.gold : palette.goldDark} /></View>
+              <View style={[styles.tuhfaIcon, { backgroundColor: `${palette.gold}26` }]}><Icon name="books" size={20} color={isDark ? palette.gold : palette.goldDark} /></View>
               <View style={styles.flex}>
                 <Text style={[styles.sectionTitle, styles.tuhfaTitle, { color: colors.primary }]}>منظومة تحفة الأطفال</Text>
                 <Text style={[styles.tuhfaChoice, { color: data.wantsTuhfa === true ? colors.success : colors.muted }]}>
                   {data.wantsTuhfa === true ? "يرغب في الحفظ" : data.wantsTuhfa === false ? "لا يرغب في الحفظ" : "لم يحدد اختياره بعد"}
                 </Text>
               </View>
-              {data.wantsTuhfa === true ? <View style={[styles.tuhfaCheck, { backgroundColor: `${colors.success}26` }]}><Icon name="checkmark" size={16} color={colors.success} /></View> : null}
+              {data.wantsTuhfa === true ? <View style={[styles.tuhfaCheck, { backgroundColor: `${colors.success}26` }]}><Icon name="check" size={16} color={colors.success} /></View> : null}
             </View>
           </Card>
 
@@ -208,7 +208,7 @@ export default function StudentDetail() {
                     onPress={() => setOpenRecordingId(open ? null : recording.id)}
                     style={[styles.recording, { backgroundColor: `${colors.primary}0c` }]}
                   >
-                    <Icon name={open ? "chevron-up-outline" : "play-circle-outline"} size={18} color={colors.primary} />
+                    <Icon name={open ? "chevron-up-outline" : "play"} size={18} color={colors.primary} />
                     <Text style={[styles.body, styles.flex, { color: colors.text }]}>تسجيل — {Math.round(Number(recording.durationSeconds ?? 0) / 60)} دقيقة</Text>
                     <Text style={[styles.small, { color: colors.muted }]}>{formatDateTime(recording.createdAt)}</Text>
                   </Pressable>
@@ -233,15 +233,15 @@ export default function StudentDetail() {
             {attachedFile ? (
               <View style={[styles.attachment, { backgroundColor: `${colors.primary}0c` }]}>
                 <Text style={[styles.small, { color: colors.text }]} numberOfLines={1}>{attachedFile.name}</Text>
-                <Pressable onPress={() => setAttachedFile(null)}><Icon name="close-circle-outline" size={18} color={colors.danger} /></Pressable>
+                <Pressable onPress={() => setAttachedFile(null)}><Icon name="x" size={18} color={colors.danger} /></Pressable>
               </View>
             ) : (
-              <Button label={uploadProgress == null ? "إرفاق ملف PDF (اختياري)" : `جارٍ رفع الملف… ${uploadProgress}%`} icon="attach-outline" variant="secondary" disabled={uploadProgress != null} onPress={() => void pickPdf()} />
+              <Button label={uploadProgress == null ? "إرفاق ملف PDF (اختياري)" : `جارٍ رفع الملف… ${uploadProgress}%`} icon="upload" variant="secondary" disabled={uploadProgress != null} onPress={() => void pickPdf()} />
             )}
             {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
             <Button
               label={send.isPending ? "جارٍ الإرسال…" : "إرسال"}
-              icon="send-outline"
+              icon="send"
               loading={send.isPending}
               disabled={!message.trim() || send.isPending || uploadProgress != null}
               onPress={() => send.mutate({ studentId, messageText: message.trim(), ...(attachedFile ? { fileUrl: attachedFile.url } : {}) })}

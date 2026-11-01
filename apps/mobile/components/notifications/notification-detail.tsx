@@ -28,18 +28,18 @@ type NotificationRecord = {
 };
 
 const TYPE_META: Record<string, { label: string; icon: string }> = {
-  session_reminder: { label: "تذكير جلسة", icon: "time-outline" },
-  session_change: { label: "تغيير موعد", icon: "calendar-outline" },
-  evaluation: { label: "تقييم", icon: "star-outline" },
-  achievement: { label: "إنجاز", icon: "ribbon-outline" },
-  announcement: { label: "إعلان", icon: "megaphone-outline" },
-  ayah: { label: "آية اليوم", icon: "book-outline" },
-  payment: { label: "مدفوعات", icon: "card-outline" },
-  placement: { label: "تحديد المستوى", icon: "videocam-outline" },
-  promotion: { label: "ترقية", icon: "trending-up-outline" },
-  session: { label: "جلسات", icon: "calendar-outline" },
-  activity: { label: "نشاط", icon: "stats-chart-outline" },
-  general: { label: "عام", icon: "notifications-outline" },
+  session_reminder: { label: "تذكير جلسة", icon: "clock" },
+  session_change: { label: "تغيير موعد", icon: "calendar" },
+  evaluation: { label: "تقييم", icon: "star" },
+  achievement: { label: "إنجاز", icon: "certificate" },
+  announcement: { label: "إعلان", icon: "bell" },
+  ayah: { label: "آية اليوم", icon: "quran" },
+  payment: { label: "مدفوعات", icon: "file-text" },
+  placement: { label: "تحديد المستوى", icon: "video" },
+  promotion: { label: "ترقية", icon: "trending-up" },
+  session: { label: "جلسات", icon: "calendar" },
+  activity: { label: "نشاط", icon: "chart" },
+  general: { label: "عام", icon: "bell" },
 };
 
 type Payload = {
@@ -148,7 +148,7 @@ export function NotificationDetail({ listPath, base }: { listPath: string; base:
 
   if (query.isLoading || !id) return <><Header title="تفاصيل الإشعار" back /><Screen><LoadingState /></Screen></>;
   if (query.error || !notification) {
-    return <><Header title="تفاصيل الإشعار" back /><Screen><ErrorState message="الإشعار غير موجود أو تم حذفه." onRetry={() => void query.refetch()} /><Button label="العودة للإشعارات" icon="arrow-forward" variant="secondary" onPress={() => router.replace(listPath as never)} /></Screen></>;
+    return <><Header title="تفاصيل الإشعار" back /><Screen><ErrorState message="الإشعار غير موجود أو تم حذفه." onRetry={() => void query.refetch()} /><Button label="العودة للإشعارات" icon="arrow-right" variant="secondary" onPress={() => router.replace(listPath as never)} /></Screen></>;
   }
 
   const meta = TYPE_META[notification.type] ?? TYPE_META.general;
@@ -190,22 +190,22 @@ export function NotificationDetail({ listPath, base }: { listPath: string; base:
 
           {payload && (payload.teacherName || payload.subject || payload.date || payload.time || payload.durationMinutes != null || payload.sessionKind) ? (
             <View style={[styles.details, { borderTopColor: `${palette.gold}66` }]}>
-              {payload.teacherName ? <InfoRow icon="person-outline" label="المعلم" value={payload.teacherName} /> : null}
-              {payload.subject ? <InfoRow icon="book-outline" label="المادة" value={payload.subject} /> : null}
-              {payload.date ? <InfoRow icon="calendar-outline" label="الموعد" value={payload.date} /> : null}
-              {payload.time ? <InfoRow icon="time-outline" label="الساعة" value={payload.time} /> : null}
-              {payload.durationMinutes != null ? <InfoRow icon="timer-outline" label="المدة" value={`${payload.durationMinutes} دقيقة`} /> : null}
-              {payload.sessionKind ? <InfoRow icon="location-outline" label="نوع الحلقة" value={payload.sessionKind} /> : null}
+              {payload.teacherName ? <InfoRow icon="user" label="المعلم" value={payload.teacherName} /> : null}
+              {payload.subject ? <InfoRow icon="quran" label="المادة" value={payload.subject} /> : null}
+              {payload.date ? <InfoRow icon="calendar" label="الموعد" value={payload.date} /> : null}
+              {payload.time ? <InfoRow icon="clock" label="الساعة" value={payload.time} /> : null}
+              {payload.durationMinutes != null ? <InfoRow icon="timer" label="المدة" value={`${payload.durationMinutes} دقيقة`} /> : null}
+              {payload.sessionKind ? <InfoRow icon="map-pin" label="نوع الحلقة" value={payload.sessionKind} /> : null}
             </View>
           ) : null}
 
-          {meetingUrl ? <Button label="انضم الآن" icon="videocam-outline" onPress={() => void openAction(meetingUrl)} /> : null}
-          {notification.primaryActionUrl ? <Button label={notification.primaryActionLabel ?? "الإجراء الأساسي"} icon="arrow-back" variant={meetingUrl ? "secondary" : "primary"} onPress={() => void openAction(notification.primaryActionUrl!)} /> : null}
-          {notification.secondaryActionUrl ? <Button label={notification.secondaryActionLabel ?? "إجراء إضافي"} icon="arrow-back" variant="secondary" onPress={() => void openAction(notification.secondaryActionUrl!)} /> : null}
+          {meetingUrl ? <Button label="انضم الآن" icon="video" onPress={() => void openAction(meetingUrl)} /> : null}
+          {notification.primaryActionUrl ? <Button label={notification.primaryActionLabel ?? "الإجراء الأساسي"} icon="arrow-left" variant={meetingUrl ? "secondary" : "primary"} onPress={() => void openAction(notification.primaryActionUrl!)} /> : null}
+          {notification.secondaryActionUrl ? <Button label={notification.secondaryActionLabel ?? "إجراء إضافي"} icon="arrow-left" variant="secondary" onPress={() => void openAction(notification.secondaryActionUrl!)} /> : null}
            {actionError ? <Text style={[styles.actionError, { color: colors.danger }]}>{actionError}</Text> : null}
           <View style={styles.managementActions}>
-             <Button label={notification.isPinned ? "إلغاء التثبيت" : "تثبيت"} icon={notification.isPinned ? "pin" : "pin-outline"} variant="secondary" loading={togglePin.isPending} disabled={togglePin.isPending || remove.isPending} onPress={() => togglePin.mutate({ id: notification.id })} />
-             <Button label={remove.isPending ? "جارٍ حذف الإشعار…" : "حذف الإشعار"} icon="trash-outline" variant="danger" loading={remove.isPending} disabled={togglePin.isPending || remove.isPending} onPress={() => remove.mutate({ id: notification.id })} />
+             <Button label={notification.isPinned ? "إلغاء التثبيت" : "تثبيت"} icon={notification.isPinned ? "pin" : "pin"} variant="secondary" loading={togglePin.isPending} disabled={togglePin.isPending || remove.isPending} onPress={() => togglePin.mutate({ id: notification.id })} />
+             <Button label={remove.isPending ? "جارٍ حذف الإشعار…" : "حذف الإشعار"} icon="trash" variant="danger" loading={remove.isPending} disabled={togglePin.isPending || remove.isPending} onPress={() => remove.mutate({ id: notification.id })} />
           </View>
         </Card>
 

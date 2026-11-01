@@ -116,7 +116,7 @@ export default function Sharia() {
                   <Text numberOfLines={1} style={[styles.resumeTitle, { color: colors.text }]}>{last.title}</Text>
                 </View>
                 <View style={[styles.arrowBubble, { backgroundColor: isDark ? `${palette.gold}1a` : `${palette.burgundy}14` }]}>
-                  <Icon name="chevron-back" size={16} color={colors.primary} />
+                  <Icon name="arrow-left" size={16} color={colors.primary} />
                 </View>
               </Card>
             </Pressable>
@@ -141,7 +141,7 @@ export default function Sharia() {
                     </View>
                     <Text style={[styles.subjectName, { color: colors.text }]}>{name}</Text>
                     <View style={[styles.arrowBubble, { backgroundColor: isDark ? `${palette.gold}1a` : `${palette.burgundy}14` }]}>
-                      <Icon name="chevron-back" size={16} color={colors.primary} />
+                      <Icon name="arrow-left" size={16} color={colors.primary} />
                     </View>
                   </Card>
                 </Pressable>

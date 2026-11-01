@@ -16,7 +16,7 @@ export default function Certificate() {
   if (query.isLoading) return <StudentScreen title="الشهادة"><LoadingState /></StudentScreen>;
   if (query.error) return <StudentScreen title="الشهادة"><ErrorState onRetry={() => void query.refetch()} /></StudentScreen>;
   const data = query.data as { certificate: { grade: string; issuedAt: string | Date; certificateNumber: string }; level: { name: string }; subject: { name: string } } | null | undefined;
-  if (!data) return <StudentScreen title="الشهادة"><EmptyState title="الشهادة غير متاحة بعد" description="أكمل الاختبار بنجاح أولاً، ثم ستظهر شهادتك هنا." icon="ribbon-outline" /></StudentScreen>;
+  if (!data) return <StudentScreen title="الشهادة"><EmptyState title="الشهادة غير متاحة بعد" description="أكمل الاختبار بنجاح أولاً، ثم ستظهر شهادتك هنا." icon="graduation" /></StudentScreen>;
   return (
     <StudentScreen title="شهادة الإتمام">
       <Card style={styles.card}>
@@ -29,7 +29,7 @@ export default function Certificate() {
       </Card>
       <Button
         label="مشاركة بيانات الشهادة"
-        icon="share-outline"
+        icon="external-link"
         variant="secondary"
         onPress={() => void Share.share({
           message: `شهادة إتمام المستوى\n${data.subject.name} — ${data.level.name}\nالتقدير: ${data.certificate.grade}\nرقم الشهادة: ${data.certificate.certificateNumber}\nتاريخ الإصدار: ${new Date(data.certificate.issuedAt).toLocaleDateString("ar-SA-u-nu-latn")}`,

@@ -171,7 +171,7 @@ export default function Qibla() {
       {needsPermission ? (
         <View style={[styles.glass, styles.centered, { backgroundColor: colors.card, borderColor: glassBorder }]}>
           <Text style={[styles.muted, { color: colors.muted }]}>فعّل البوصلة للحصول على اتجاه دقيق</Text>
-          <Button label="تفعيل البوصلة" icon="refresh-outline" onPress={() => void locate()} />
+          <Button label="تفعيل البوصلة" icon="refresh" onPress={() => void locate()} />
         </View>
       ) : null}
 
@@ -179,7 +179,7 @@ export default function Qibla() {
       {locState === "idle" && !needsPermission ? (
         <View style={[styles.glass, styles.strip, { backgroundColor: colors.card, borderColor: glassBorder }]}>
           <Text style={[styles.muted, styles.stripText, { color: colors.muted }]}>لتحديد اتجاه القبلة من موقعك</Text>
-          <Button label="تحديد موقعي" icon="location-outline" onPress={() => void locate()} style={styles.smallButton} />
+          <Button label="تحديد موقعي" icon="map-pin" onPress={() => void locate()} style={styles.smallButton} />
         </View>
       ) : null}
       {locState === "loading" ? (

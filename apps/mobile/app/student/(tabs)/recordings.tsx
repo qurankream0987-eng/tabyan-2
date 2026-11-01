@@ -27,7 +27,7 @@ export default function Recordings() {
   const tint = isDark ? `${palette.gold}1F` : `${palette.burgundy}14`;
   return (
     <Screen>
-      <PageHero icon="videocam-outline" title="تسجيلاتي" />
+      <PageHero icon="video" title="تسجيلاتي" />
       {rows.length === 0 ? <EmptyState title="لا تسجيلات بعد" description="ستظهر تسجيلات حلقاتك المكتملة هنا" /> : rows.map((r) => (
         <SoftPressable key={r.id} accessibilityRole="button" accessibilityLabel={`تشغيل ${recTitle(r)}`} onPress={() => setOpen(r)}>
           <Card>
@@ -60,7 +60,7 @@ export default function Recordings() {
                 <View style={[styles.grabber, { backgroundColor: colors.border }]} />
                 <Text style={[styles.sheetTitle, { color: colors.primary }]}>{recTitle(open)}</Text>
                 <LibraryMediaPlayer source={resolveLibraryAsset(open.videoUrl, token)} contentType="video" />
-                <View style={styles.noteRow}><Icon name="close" size={12} color={colors.muted} /><Text style={[styles.note, { color: colors.muted }]}>التحميل غير متاح — بث مباشر فقط</Text></View>
+                <View style={styles.noteRow}><Icon name="x" size={12} color={colors.muted} /><Text style={[styles.note, { color: colors.muted }]}>التحميل غير متاح — بث مباشر فقط</Text></View>
                 {open.evaluation ? (
                   <View style={[styles.evalBox, { backgroundColor: isDark ? `${palette.gold}0D` : `${palette.burgundy}0D`, borderColor: isDark ? `${palette.gold}14` : `${palette.burgundy}14` }]}>
                     <Text style={[styles.evalTitle, { color: colors.text }]}>تقييم المعلم</Text>
@@ -72,7 +72,7 @@ export default function Recordings() {
                         </View>
                       ))}
                     </View>
-                    {open.evaluation.notes ? <View style={styles.notesRow}><Icon name="create-outline" size={13} color={colors.muted} /><Text style={[styles.notes, { color: colors.muted }]}>{open.evaluation.notes}</Text></View> : null}
+                    {open.evaluation.notes ? <View style={styles.notesRow}><Icon name="edit" size={13} color={colors.muted} /><Text style={[styles.notes, { color: colors.muted }]}>{open.evaluation.notes}</Text></View> : null}
                   </View>
                 ) : null}
               </ScrollView>

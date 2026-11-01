@@ -22,14 +22,14 @@ export default function SessionsMonitoring() {
           <View style={styles.meta}><Badge label={isLive ? "جارية الآن" : "قادمة"} tone={isLive ? "success" : "gold"} /><Text style={[styles.small, { color: colors.muted }]}>{s.type === "group" ? "جماعية" : "فردية"}</Text></View>
           <Text style={[styles.small, { color: colors.muted }]}>الطالب: {String(s.studentName ?? "غير محدد")} · المعلم: {String(s.teacherName ?? "غير محدد")}</Text>
           <Text style={[styles.small, { color: colors.muted }]}>{s.levelName ? `المستوى: ${String(s.levelName)} · ` : ""}{s.scheduledAt ? formatDateTime(s.scheduledAt) : "موعد غير محدد"} · {String(s.durationMinutes ?? "—")} دقيقة</Text>
-        </View><View style={[styles.join, { backgroundColor: isLive ? colors.primary : colors.input }]}><Icon name={isLive ? "videocam-outline" : "time-outline"} size={18} color={isLive ? colors.primaryText : colors.muted} /></View></View>
+        </View><View style={[styles.join, { backgroundColor: isLive ? colors.primary : colors.input }]}><Icon name={isLive ? "video" : "clock"} size={18} color={isLive ? colors.primaryText : colors.muted} /></View></View>
         {!isLive ? <Text style={[styles.small, { color: colors.muted }]}>لم تبدأ الحلقة بعد</Text> : null}
       </Card>
     </Pressable>
   );
-  return <AdminFrame title="مراقبة الجلسات"><Card accent><Text style={[styles.heading, { color: colors.text }]}>متابعة الحلقات</Text><Text style={[styles.small, { color: colors.muted }]}>الحلقات الجارية والقادمة من الخادم.</Text><Button label="تحديث البيانات" variant="secondary" icon="refresh-outline" onPress={() => void q.refetch()} /></Card>
-    <Text style={[styles.section, { color: colors.text }]}>جارية الآن ({live.length})</Text>{live.length ? live.map((s) => render(s, true)) : <EmptyState title="لا توجد حلقات جارية" icon="videocam-outline" />}
-    <Text style={[styles.section, { color: colors.text }]}>قادمة ({upcoming.length})</Text>{upcoming.length ? upcoming.map((s) => render(s, false)) : <EmptyState title="لا توجد حلقات قادمة" icon="calendar-outline" />}
+  return <AdminFrame title="مراقبة الجلسات"><Card accent><Text style={[styles.heading, { color: colors.text }]}>متابعة الحلقات</Text><Text style={[styles.small, { color: colors.muted }]}>الحلقات الجارية والقادمة من الخادم.</Text><Button label="تحديث البيانات" variant="secondary" icon="refresh" onPress={() => void q.refetch()} /></Card>
+    <Text style={[styles.section, { color: colors.text }]}>جارية الآن ({live.length})</Text>{live.length ? live.map((s) => render(s, true)) : <EmptyState title="لا توجد حلقات جارية" icon="video" />}
+    <Text style={[styles.section, { color: colors.text }]}>قادمة ({upcoming.length})</Text>{upcoming.length ? upcoming.map((s) => render(s, false)) : <EmptyState title="لا توجد حلقات قادمة" icon="calendar" />}
   </AdminFrame>;
 }
 function formatDateTime(value: unknown) {

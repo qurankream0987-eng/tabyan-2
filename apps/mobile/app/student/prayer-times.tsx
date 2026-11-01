@@ -220,7 +220,7 @@ export default function PrayerTimes() {
           <ArchBand width={panelWidth} />
           <View style={styles.panelBody}>
             <Text style={[styles.panelText, { color: colors.muted }]}>نحتاج إلى موقعك لعرض مواقيت الصلاة الدقيقة في منطقتك</Text>
-            <Button label="تحديد موقعي لعرض المواقيت" icon="location-outline" onPress={locate} />
+            <Button label="تحديد موقعي لعرض المواقيت" icon="map-pin" onPress={locate} />
           </View>
         </View>
       ) : null}
@@ -239,8 +239,8 @@ export default function PrayerTimes() {
           <View style={[styles.alertShell, { backgroundColor: isDark ? "rgba(212,175,55,0.12)" : "rgba(128,0,32,0.07)" }]}><SvgIcon name="alert-triangle" size={26} color={brand} /></View>
           <Text style={[styles.panelTitle, { color: brand }]}>تعذّر تحديد موقعك</Text>
           <Text style={[styles.panelText, { color: colors.muted }]}>يرجى السماح بالوصول للموقع من إعدادات الجهاز، أو استخدم توقيت مكة المكرمة</Text>
-          <Button label="استخدام توقيت مكة المكرمة" icon="business-outline" onPress={useMakkah} style={styles.fullWidth} />
-          <Button label="إعادة المحاولة" icon="refresh-outline" variant="secondary" onPress={locate} style={styles.fullWidth} />
+          <Button label="استخدام توقيت مكة المكرمة" icon="mosque" onPress={useMakkah} style={styles.fullWidth} />
+          <Button label="إعادة المحاولة" icon="refresh" variant="secondary" onPress={locate} style={styles.fullWidth} />
         </View>
       ) : null}
 

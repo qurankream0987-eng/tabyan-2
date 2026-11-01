@@ -96,7 +96,7 @@ export default function NativeWelcomeHero({ onRegister, onLogin, onBrowseMushaf 
         <Button
           testID="welcome-register"
           label="ابدأ رحلتك — مجاناً"
-          icon="arrow-forward"
+          icon="arrow-right"
           onPress={onRegister}
           style={[styles.action, { minHeight: layout.actionHeight + 2 }]}
         />
@@ -104,7 +104,7 @@ export default function NativeWelcomeHero({ onRegister, onLogin, onBrowseMushaf 
           testID="welcome-login"
           label="تسجيل الدخول"
           variant="secondary"
-          icon="person-outline"
+          icon="user"
           onPress={onLogin}
           style={[styles.action, { minHeight: layout.actionHeight }]}
         />
@@ -112,7 +112,7 @@ export default function NativeWelcomeHero({ onRegister, onLogin, onBrowseMushaf 
           testID="welcome-open-mushaf"
           label="تصفّح المصحف مباشرة"
           variant="quiet"
-          icon="book-outline"
+          icon="quran"
           onPress={onBrowseMushaf}
           style={[styles.action, { minHeight: layout.actionHeight }]}
         />

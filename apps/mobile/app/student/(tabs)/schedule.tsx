@@ -70,15 +70,15 @@ export default function Schedule() {
       <PageHero title="جدولي الأسبوعي" />
       {active.length === 0 ? (
         <Card style={[styles.emptyCard, { borderColor: isDark ? `${palette.gold}66` : `${palette.burgundy}55` }]}>
-          <View style={[styles.emptyBubble, { backgroundColor: tint }]}><Icon name="calendar-outline" size={36} color={colors.primary} /></View>
+          <View style={[styles.emptyBubble, { backgroundColor: tint }]}><Icon name="calendar" size={36} color={colors.primary} /></View>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>لا حلقات بعد</Text>
           <Text style={[styles.emptyText, { color: colors.muted }]}>ابدأ بحجز موعدك الأول لبدء رحلة التعلم</Text>
-          <Button label="سجّل الآن" icon="add" onPress={() => router.push("/student/booking")} />
+          <Button label="سجّل الآن" icon="plus" onPress={() => router.push("/student/booking")} />
         </Card>
       ) : grouped.map((day) => (
         <View key={day} style={styles.dayGroup}>
           <View style={[styles.dayHeader, { borderBottomColor: colors.border }]}>
-            <View style={[styles.dayIcon, { backgroundColor: tint }]}><Icon name="calendar-outline" size={14} color={colors.primary} /></View>
+            <View style={[styles.dayIcon, { backgroundColor: tint }]}><Icon name="calendar" size={14} color={colors.primary} /></View>
             <Text style={[styles.dayTitle, { color: colors.text }]}>{DAY_AR[day]}</Text>
           </View>
           {active.filter((s) => s.dayOfWeek === day).map((s) => (
@@ -95,7 +95,7 @@ export default function Schedule() {
                 </View>
                 <Badge label={sessionStatusLabel(s.status)} tone={s.status === "in_progress" ? "live" : sessionStatusTone(s.status)} />
               </View>
-              {s.status === "in_progress" ? <Button label="دخول الحلقة" icon="videocam-outline" style={styles.enter} onPress={() => router.push(`/student/session/${s.id}` as never)} /> : (
+              {s.status === "in_progress" ? <Button label="دخول الحلقة" icon="video" style={styles.enter} onPress={() => router.push(`/student/session/${s.id}` as never)} /> : (
                 <View style={styles.actions}>
                   <SoftPressable accessibilityRole="button" onPress={() => { setChangeId(s.id); setNewDay(s.dayOfWeek); setNewTime(s.timeSlot); setReason(""); }} style={[styles.action, { backgroundColor: isDark ? `${palette.gold}0D` : `${palette.burgundy}0D` }]}><Text style={[styles.actionText, { color: colors.primary }]}>تغيير</Text></SoftPressable>
                   <SoftPressable accessibilityRole="button" onPress={() => setCancelId(s.id)} style={[styles.action, { backgroundColor: `${colors.danger}0D` }]}><Text style={[styles.actionText, { color: colors.danger }]}>إلغاء</Text></SoftPressable>
@@ -110,7 +110,7 @@ export default function Schedule() {
         <View style={[styles.instructions, { borderTopColor: colors.border }]}>
           <Card style={{ backgroundColor: isDark ? `${palette.gold}0D` : `${palette.burgundy}0D`, borderColor: "transparent", shadowOpacity: 0, elevation: 0 }}>
             <View style={styles.instructionsRow}>
-              <Icon name="shield-checkmark-outline" size={20} color={`${colors.primary}80`} />
+              <Icon name="shield" size={20} color={`${colors.primary}80`} />
               <View style={styles.instructionsBody}>
                 <Text style={[styles.instructionsTitle, { color: colors.text }]}>تعليمات المواعيد الثابتة</Text>
                 {["المواعيد أعلاه ثابتة وتتكرر أسبوعياً حتى انتهائك من المستوى.", "يُسمح بتغيير الموعد مرة واحدة شهرياً وفق الأوقات المتاحة للمعلم.", "إلغاء الموعد نهائياً يتطلب مراجعة من الإدارة لتأكيد الإلغاء."].map((line) => (
@@ -119,7 +119,7 @@ export default function Schedule() {
               </View>
             </View>
           </Card>
-          <Button label="احجز حلقة جديدة" variant="secondary" icon="add-circle-outline" onPress={() => router.push("/student/booking")} />
+          <Button label="احجز حلقة جديدة" variant="secondary" icon="plus" onPress={() => router.push("/student/booking")} />
         </View>
       ) : null}
 
@@ -127,7 +127,7 @@ export default function Schedule() {
         <KeyboardAvoidingView behavior="padding" style={styles.backdrop}>
           <Pressable accessibilityLabel="إغلاق" style={StyleSheet.absoluteFill} onPress={() => setCancelId(null)} />
           <SafeAreaView style={[styles.sheet, { backgroundColor: colors.card }]}>
-            <View style={[styles.cancelIcon, { backgroundColor: `${colors.danger}1A` }]}><Icon name="close" size={26} color={colors.danger} /></View>
+            <View style={[styles.cancelIcon, { backgroundColor: `${colors.danger}1A` }]}><Icon name="x" size={26} color={colors.danger} /></View>
             <Text style={[styles.modalTitle, { color: colors.text }]}>تأكيد الإلغاء</Text>
             <Text style={[styles.modalText, { color: colors.muted }]}>هل أنت متأكد من رغبتك في إلغاء هذا الحجز الأسبوعي؟ لا يمكن التراجع عن هذا الإجراء إلا بطلب جديد.</Text>
             <View style={styles.modalActions}>
@@ -151,7 +151,7 @@ export default function Schedule() {
               <Text style={[styles.label, { color: colors.muted }]}>الوقت الجديد</Text>
               <Pressable accessibilityRole="button" accessibilityLabel="اختيار الوقت" onPress={() => setPickerOpen((v) => !v)} style={[styles.input, styles.timeInput, { borderColor: colors.border, backgroundColor: colors.input }]}>
                 <Text style={[styles.timeValue, { color: newTime ? colors.text : colors.muted }]}>{newTime || "اختر الوقت"}</Text>
-                <Icon name="time-outline" size={18} color={colors.muted} />
+                <Icon name="clock" size={18} color={colors.muted} />
               </Pressable>
               {pickerOpen ? <DateTimePicker value={pickerValue} mode="time" is24Hour display={Platform.OS === "ios" ? "spinner" : "default"} onChange={onTimePicked} /> : null}
               <Text style={[styles.label, { color: colors.muted }]}>السبب (اختياري)</Text>

@@ -221,22 +221,22 @@ export default function Onboarding() {
   if (kyc.error) return <TeacherScreen title="اعتماد المعلم"><ErrorState message="تعذر تحميل حالة الاعتماد." onRetry={() => void kyc.refetch()} /></TeacherScreen>;
 
   if (status?.kycStatus === "approved") {
-    return <TeacherScreen title="اعتماد المعلم"><Card style={styles.center}><Icon name="checkmark-circle" size={52} color={colors.success} /><Text style={[styles.heading, { color: colors.primary }]}>تم قبول طلبك</Text><Text style={[styles.body, styles.centerText, { color: colors.muted }]}>أنت معلم متطوع معتمد في منصة تبيان — بارك الله فيك</Text>{status.isMufti ? <Badge label="أنت أيضاً مفتٍ معتمد — راجع صندوق الفتاوى" tone="gold" style={styles.centerBadge} /> : null}<Button label="إلى لوحتي" style={styles.fullWidth} onPress={() => router.replace("/teacher" as never)} /></Card></TeacherScreen>;
+    return <TeacherScreen title="اعتماد المعلم"><Card style={styles.center}><Icon name="check-circle" size={52} color={colors.success} /><Text style={[styles.heading, { color: colors.primary }]}>تم قبول طلبك</Text><Text style={[styles.body, styles.centerText, { color: colors.muted }]}>أنت معلم متطوع معتمد في منصة تبيان — بارك الله فيك</Text>{status.isMufti ? <Badge label="أنت أيضاً مفتٍ معتمد — راجع صندوق الفتاوى" tone="gold" style={styles.centerBadge} /> : null}<Button label="إلى لوحتي" style={styles.fullWidth} onPress={() => router.replace("/teacher" as never)} /></Card></TeacherScreen>;
   }
 
   if (status?.kycStatus === "awaiting_assessment") {
     return (
       <TeacherScreen title="اختبار القبول">
         <Card style={styles.center}>
-          <Icon name="clipboard-outline" size={48} color={colors.primary} />
+          <Icon name="clipboard" size={48} color={colors.primary} />
           <Text style={[styles.heading, { color: colors.primary }]}>اختبار القبول</Text>
           <Text style={[styles.body, styles.centerText, { color: colors.muted }]}>يرجى الدخول إلى اختبار قبول المعلم لإتمام إجراءات التسجيل.</Text>
           <Text style={[styles.hint, { color: palette.goldDark }]}>بانتظار اختبار القبول</Text>
           <View style={[styles.notice, { backgroundColor: `${palette.gold}1a` }]}>
-            <Text style={[styles.noticeTitle, { color: colors.primary }]}><Icon name="star-outline" size={15} color={colors.primary} /> العمل في المنصة تطوعي</Text>
+            <Text style={[styles.noticeTitle, { color: colors.primary }]}><Icon name="star" size={15} color={colors.primary} /> العمل في المنصة تطوعي</Text>
             <Text style={[styles.body, { color: colors.text }]}>• التدريس في تبيان عمل تطوعي احتسابي بلا مقابل مادي.{"\n"}• تنظّم مواعيدك بنفسك ويمكنك التوقف في أي وقت.{"\n"}• يُعتمد حسابك بعد اجتياز اختبار القبول ومراجعة الإشراف.</Text>
           </View>
-          <Button label={startAssessment.isPending ? "جارٍ فتح الاختبار…" : "ادخل الاختبار"} icon="arrow-back-outline" style={styles.fullWidth} loading={startAssessment.isPending} onPress={() => startAssessment.mutate({ volunteer: true })} />
+          <Button label={startAssessment.isPending ? "جارٍ فتح الاختبار…" : "ادخل الاختبار"} icon="arrow-left" style={styles.fullWidth} loading={startAssessment.isPending} onPress={() => startAssessment.mutate({ volunteer: true })} />
           <Button label="رجوع" variant="quiet" onPress={() => router.canGoBack() ? router.back() : router.replace("/teacher" as never)} />
         </Card>
         <Certificates {...certificateProps} />
@@ -248,7 +248,7 @@ export default function Onboarding() {
     return (
       <TeacherScreen title="طلب القبول">
         <Card style={styles.center}>
-          <Icon name="hourglass-outline" size={48} color={palette.goldDark} />
+          <Icon name="hourglass" size={48} color={palette.goldDark} />
           <Text style={[styles.heading, { color: colors.primary }]}>طلب القبول قيد المراجعة</Text>
           <Text style={[styles.body, styles.centerText, { color: colors.muted }]}>يراجع المشرف فيديو التعريف وإجاباتك — ستصلك النتيجة خلال 24 ساعة</Text>
           <Button label="تعديل الطلب وإعادة الإرسال" variant="quiet" onPress={() => setAnswers(Array(10).fill(" "))} />
@@ -262,7 +262,7 @@ export default function Onboarding() {
   return (
     <TeacherScreen title="اختبار قبول المعلم">
       <Card style={styles.center}>
-        <PageHero icon="id-card-outline" title="اختبار قبول المعلم" style={styles.hero} />
+        <PageHero icon="id-card" title="اختبار قبول المعلم" style={styles.hero} />
         {status?.kycStatus === "in_progress" ? <Text style={[styles.hint, { color: palette.goldDark }]}>الاختبار قيد التنفيذ</Text> : null}
         {status?.kycStatus === "rejected" ? <View style={[styles.rejected, { backgroundColor: `${colors.danger}1A` }]}><Text style={[styles.body, styles.centerText, { color: colors.danger }]}>رُفض طلبك السابق{status.notes ? `: ${status.notes}` : ""} — يمكنك إعادة التقديم</Text></View> : null}
         <Text style={[styles.body, styles.centerText, { color: colors.muted }]}>خطوتان: فيديو تعريفي + 10 أسئلة</Text>
@@ -270,10 +270,10 @@ export default function Onboarding() {
       {status?.kycStatus === "pending" && reviewNotes ? <ReviewNotes notes={reviewNotes} /> : null}
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
       <Card>
-        <Text style={[styles.sectionTitle, { color: colors.primary }]}><Icon name="videocam-outline" size={17} color={colors.primary} /> ١. الفيديو التعريفي</Text>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}><Icon name="video" size={17} color={colors.primary} /> ١. الفيديو التعريفي</Text>
         <Text style={[styles.body, { color: colors.muted }]}>صوّر فيديو تعريفيًا لمدة <Text style={styles.bold}>30 ثانية على الأقل</Text> تتلو فيه آيات بصوتك، أو أرفق فيديو جاهزًا من الاستديو</Text>
         <View style={styles.methods}>
-          {([["record", "سجل مقطع فيديو", "camera-outline"], ["upload", "ارفق المقطع", "cloud-upload-outline"]] as const).map(([method, label, icon]) => {
+          {([["record", "سجل مقطع فيديو", "camera"], ["upload", "ارفق المقطع", "upload"]] as const).map(([method, label, icon]) => {
             const active = videoMethod === method;
             return (
               <SoftPressable key={method} accessibilityRole="button" accessibilityState={{ selected: active }} disabled={uploading || recording} onPress={() => setVideoMethod(method)} style={[styles.method, { backgroundColor: active ? colors.primary : colors.input, borderColor: active ? colors.primary : colors.border }]}>
@@ -286,23 +286,23 @@ export default function Onboarding() {
         {videoMethod === "record" && !videoUrl ? (
           <>
             {hasRecordingPermission ? <NativeCameraView ref={cameraRef} facing="front" mode="video" style={styles.camera} /> : null}
-            <Button label={recording ? "إيقاف التسجيل" : "بدء التسجيل"} icon={recording ? "stop-circle-outline" : "radio-button-on-outline"} disabled={uploading} style={styles.spaced} onPress={recording ? () => cameraRef.current?.stopRecording() : recordVideo} />
+            <Button label={recording ? "إيقاف التسجيل" : "بدء التسجيل"} icon={recording ? "stop" : "video"} disabled={uploading} style={styles.spaced} onPress={recording ? () => cameraRef.current?.stopRecording() : recordVideo} />
           </>
         ) : null}
-        {videoMethod === "upload" ? <Button label={uploading ? "جارٍ الرفع…" : videoUrl ? "استبدال الفيديو" : "ارفق المقطع"} icon="cloud-upload-outline" variant="secondary" disabled={uploading || recording} style={styles.spaced} onPress={() => void chooseVideo()} /> : null}
+        {videoMethod === "upload" ? <Button label={uploading ? "جارٍ الرفع…" : videoUrl ? "استبدال الفيديو" : "ارفق المقطع"} icon="upload" variant="secondary" disabled={uploading || recording} style={styles.spaced} onPress={() => void chooseVideo()} /> : null}
         {uploading ? <UploadProgress value={uploadProgress} colors={colors} /> : null}
         {videoUrl && !uploading ? (
           <>
-            <View style={[styles.confirmed, { backgroundColor: `${colors.success}1A` }]}><Icon name="checkmark-circle" size={16} color={colors.success} /><Text style={[styles.confirmedText, { color: colors.success }]}>تم رفع الفيديو: <Text style={styles.bold}>{videoName || "الملف"}</Text></Text></View>
+            <View style={[styles.confirmed, { backgroundColor: `${colors.success}1A` }]}><Icon name="check-circle" size={16} color={colors.success} /><Text style={[styles.confirmedText, { color: colors.success }]}>تم رفع الفيديو: <Text style={styles.bold}>{videoName || "الملف"}</Text></Text></View>
             {localVideoUri ? <LocalVideoPreview uri={localVideoUri} style={styles.preview} /> : <View style={styles.preview}><LibraryMediaPlayer source={resolveLibraryAsset(videoUrl, token)} contentType="video" /></View>}
-            {videoMethod === "record" ? <Button label="إعادة التسجيل" icon="refresh-outline" variant="secondary" disabled={uploading || recording} style={styles.spaced} onPress={resetVideo} /> : null}
+            {videoMethod === "record" ? <Button label="إعادة التسجيل" icon="refresh" variant="secondary" disabled={uploading || recording} style={styles.spaced} onPress={resetVideo} /> : null}
           </>
         ) : null}
       </Card>
       <Card>
-        <Text style={[styles.sectionTitle, { color: colors.primary }]}><Icon name="create-outline" size={17} color={colors.primary} /> ٢. الأسئلة العشرة</Text>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}><Icon name="edit" size={17} color={colors.primary} /> ٢. الأسئلة العشرة</Text>
         {QUESTIONS.map((question, index) => <View key={question} style={styles.question}><Text style={[styles.label, { color: colors.text }]}>{index + 1}. {question}</Text><TextInput value={answers[index]} onChangeText={(value) => setAnswers((current) => current.map((answer, i) => i === index ? value : answer))} multiline style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]} textAlign="right" /></View>)}
-        <Button label={submitKyc.isPending ? "جارٍ الإرسال…" : "إرسال طلب القبول"} icon="send-outline" loading={submitKyc.isPending} disabled={uploading || !videoUrl || !videoProof || !allAnswered} onPress={submit} />
+        <Button label={submitKyc.isPending ? "جارٍ الإرسال…" : "إرسال طلب القبول"} icon="send" loading={submitKyc.isPending} disabled={uploading || !videoUrl || !videoProof || !allAnswered} onPress={submit} />
       </Card>
       <Certificates {...certificateProps} />
     </TeacherScreen>
@@ -311,7 +311,7 @@ export default function Onboarding() {
 
 function ReviewNotes({ notes }: { notes: string }) {
   const { colors } = useTheme();
-  return <Card style={[styles.notice, { backgroundColor: `${palette.gold}1a` }]}><Text style={[styles.sectionTitle, { color: palette.goldDark }]}><Icon name="information-circle-outline" size={17} color={palette.goldDark} /> ملاحظات من الإدارة</Text><Text style={[styles.body, { color: colors.text }]}>{notes}</Text></Card>;
+  return <Card style={[styles.notice, { backgroundColor: `${palette.gold}1a` }]}><Text style={[styles.sectionTitle, { color: palette.goldDark }]}><Icon name="info" size={17} color={palette.goldDark} /> ملاحظات من الإدارة</Text><Text style={[styles.body, { color: colors.text }]}>{notes}</Text></Card>;
 }
 
 function UploadProgress({ value, colors }: { value: number; colors: ReturnType<typeof useTheme>["colors"] }) {
@@ -327,20 +327,20 @@ function Certificates({ certificates, loading, error, title, onTitleChange, onPi
   };
   return (
     <Card>
-      <Text style={[styles.sectionTitle, { color: colors.primary }]}><Icon name="ribbon-outline" size={17} color={colors.primary} /> شهادات ومؤهلات (اختياري)</Text>
+      <Text style={[styles.sectionTitle, { color: colors.primary }]}><Icon name="certificate" size={17} color={colors.primary} /> شهادات ومؤهلات (اختياري)</Text>
       <Text style={[styles.body, { color: colors.muted }]}>ارفع صور أو ملفات PDF لإجازاتك وشهاداتك لتعزيز طلبك</Text>
       <TextInput value={title} onChangeText={onTitleChange} maxLength={200} placeholder="عنوان الشهادة (اختياري)…" placeholderTextColor={colors.muted} style={[styles.input, styles.titleInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]} textAlign="right" />
-      <Button label={disabled ? "جارٍ الرفع…" : "إضافة شهادة"} icon="add-outline" variant="secondary" disabled={disabled} style={styles.spaced} onPress={onPick} />
+      <Button label={disabled ? "جارٍ الرفع…" : "إضافة شهادة"} icon="plus" variant="secondary" disabled={disabled} style={styles.spaced} onPress={onPick} />
       {loading ? <LoadingState label="جارٍ تحميل الشهادات…" /> : error ? <ErrorState message="تعذر تحميل الشهادات." /> : certificates?.length ? certificates.map((certificate) => (
         <View key={certificate.id} style={[styles.certificate, { borderBottomColor: colors.border }]}>
-          <Icon name="document-text-outline" size={16} color={colors.muted} />
+          <Icon name="file-text" size={16} color={colors.muted} />
           <View style={styles.certificateCopy}><Text numberOfLines={1} style={[styles.label, { color: colors.text }]}>{certificate.title || "شهادة"}</Text><Text style={[styles.meta, { color: colors.muted }]}>{formatDate(certificate.createdAt)}</Text></View>
           {deleteId === certificate.id ? (
             <View style={styles.deleteActions}><Button label="إلغاء" variant="quiet" disabled={deleting} onPress={() => setDeleteId(null)} /><Button label="حذف" variant="danger" loading={deleting} disabled={deleting} onPress={() => onDelete(certificate.id)} /></View>
           ) : (
             <View style={styles.certificateActions}>
-              <Pressable accessibilityRole="link" accessibilityLabel="عرض الشهادة" hitSlop={8} onPress={() => view(certificate)} style={styles.viewLink}><Icon name="open-outline" size={13} color={colors.primary} /><Text style={[styles.viewText, { color: colors.primary }]}>عرض</Text></Pressable>
-              <Pressable accessibilityRole="button" accessibilityLabel="حذف الشهادة" hitSlop={8} onPress={() => setDeleteId(certificate.id)}><Icon name="trash-outline" size={18} color={colors.danger} /></Pressable>
+              <Pressable accessibilityRole="link" accessibilityLabel="عرض الشهادة" hitSlop={8} onPress={() => view(certificate)} style={styles.viewLink}><Icon name="link" size={13} color={colors.primary} /><Text style={[styles.viewText, { color: colors.primary }]}>عرض</Text></Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel="حذف الشهادة" hitSlop={8} onPress={() => setDeleteId(certificate.id)}><Icon name="trash" size={18} color={colors.danger} /></Pressable>
             </View>
           )}
         </View>

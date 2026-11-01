@@ -16,7 +16,7 @@ export function PlacementRecordingHUD({ elapsed, maximum, minimumReached, minimu
           {elapsed} / {maximum}
         </Text>
         <View accessible accessibilityLabel="الميكروفون — يُفحص مسار الصوت بعد الإيقاف">
-          <Icon name="mic-outline" size={15} color={palette.cream} />
+          <Icon name="mic" size={15} color={palette.cream} />
         </View>
       </View>
       <Text numberOfLines={1} maxFontSizeMultiplier={1.15} style={styles.minimum}>

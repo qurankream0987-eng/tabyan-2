@@ -93,7 +93,7 @@ export default function Book() {
       <Card style={styles.card}>
         <View style={styles.detailHeader}>
           <View style={[styles.cover, { backgroundColor: `${colors.primary}12` }]}>
-            <Icon name={contentType === "pdf" ? "document-text-outline" : "book-outline"} size={36} color={colors.primary} />
+            <Icon name={contentType === "pdf" ? "file-text" : "books"} size={36} color={colors.primary} />
           </View>
           <View style={styles.copy}>
             <Text style={[styles.type, { color: colors.muted }]}>{contentType.toUpperCase() || "محتوى"}</Text>
@@ -109,11 +109,11 @@ export default function Book() {
           <Text style={[styles.metaText, { color: colors.muted }]}>المصدر: {book.sourceType === "uploaded" ? "ملف مرفوع" : "محتوى منشور"}</Text>
         </View>
         <View style={styles.actions}>
-          {canRead ? <Button label="قراءة الكتاب" icon="book-outline" onPress={() => router.push(`/student/library/${book.id}/read` as never)} style={styles.primaryAction} /> : null}
+          {canRead ? <Button label="قراءة الكتاب" icon="books" onPress={() => router.push(`/student/library/${book.id}/read` as never)} style={styles.primaryAction} /> : null}
           {["audio", "video"].includes(contentType) && source ? <LibraryMediaPlayer contentType={contentType as "audio" | "video"} source={source} /> : null}
-          {contentType === "link" && source ? <Button label="فتح الرابط" icon="link-outline" onPress={openSource} style={styles.primaryAction} /> : null}
-           {contentType === "pdf" && book.sourceType === "uploaded" && source ? <Button label={downloadBusy ? "جارٍ التنزيل…" : book.isDownloaded ? "إزالة التنزيل" : "تنزيل"} variant="secondary" icon="download-outline" loading={downloadBusy} onPress={() => void downloadBook()} style={styles.primaryAction} /> : null}
-          <Button label={book.isBookmarked ? "إزالة من المحفوظات" : "حفظ في مكتبتي"} variant="secondary" icon={book.isBookmarked ? "bookmark" : "bookmark-outline"} loading={toggleBookmark.isPending} onPress={() => toggleBookmark.mutate({ bookId: book.id })} style={styles.primaryAction} />
+          {contentType === "link" && source ? <Button label="فتح الرابط" icon="arrow-left" onPress={openSource} style={styles.primaryAction} /> : null}
+           {contentType === "pdf" && book.sourceType === "uploaded" && source ? <Button label={downloadBusy ? "جارٍ التنزيل…" : book.isDownloaded ? "إزالة التنزيل" : "تنزيل"} variant="secondary" icon="download" loading={downloadBusy} onPress={() => void downloadBook()} style={styles.primaryAction} /> : null}
+          <Button label={book.isBookmarked ? "إزالة من المحفوظات" : "حفظ في مكتبتي"} variant="secondary" icon={book.isBookmarked ? "bookmark" : "bookmark"} loading={toggleBookmark.isPending} onPress={() => toggleBookmark.mutate({ bookId: book.id })} style={styles.primaryAction} />
         </View>
       </Card>
     </StudentScreen>

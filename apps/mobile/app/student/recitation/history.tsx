@@ -76,7 +76,7 @@ export default function RecitationHistory() {
                   <View style={styles.metaLine}>
                     {row.durationSeconds != null ? (
                       <View style={styles.durationChip}>
-                        <Icon name="time-outline" size={12} color={colors.muted} />
+                        <Icon name="timer" size={12} color={colors.muted} />
                         <Text style={[styles.durationText, { color: colors.text }]}>{formatDuration(row.durationSeconds)}</Text>
                       </View>
                     ) : null}
@@ -86,7 +86,7 @@ export default function RecitationHistory() {
               </Card>
             );
           })}
-          <Button label="بدء جلسة تسميع جديدة" variant="quiet" icon="mic-outline" onPress={() => router.push("/student/recitation" as never)} />
+          <Button label="بدء جلسة تسميع جديدة" variant="quiet" icon="mic" onPress={() => router.push("/student/recitation" as never)} />
         </>
       )}
     </StudentScreen>

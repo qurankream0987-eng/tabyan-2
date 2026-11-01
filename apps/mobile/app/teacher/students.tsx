@@ -31,8 +31,8 @@ export default function Students() {
               <Text style={[styles.name, { color: colors.text }]}>{s.name}</Text>
               <Text style={[styles.level, { color: colors.muted }]}>المستوى: {s.levelName || "—"}</Text>
               <View style={[styles.footer, { borderTopColor: colors.border }]}>
-                <Text style={[styles.footerText, { color: colors.muted }]}><Icon name="library-outline" size={12} color={colors.muted} /> {s.totalJuz ?? 0} أجزاء</Text>
-                <Text style={[styles.footerText, { color: s.nextSessionAt ? colors.primary : colors.muted }]}><Icon name="time-outline" size={12} color={s.nextSessionAt ? colors.primary : colors.muted} /> {s.nextSessionAt ? "موعد قادم" : "لا يوجد"}</Text>
+                <Text style={[styles.footerText, { color: colors.muted }]}><Icon name="books" size={12} color={colors.muted} /> {s.totalJuz ?? 0} أجزاء</Text>
+                <Text style={[styles.footerText, { color: s.nextSessionAt ? colors.primary : colors.muted }]}><Icon name="clock" size={12} color={s.nextSessionAt ? colors.primary : colors.muted} /> {s.nextSessionAt ? "موعد قادم" : "لا يوجد"}</Text>
               </View>
             </Card>
           </Pressable>

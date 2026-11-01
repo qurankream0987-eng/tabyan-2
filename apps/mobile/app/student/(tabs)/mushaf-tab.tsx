@@ -53,7 +53,7 @@ export default function MushafTab() {
 
   const header = (
     <View>
-      <PageHero icon="book-outline" title="المصحف" subtitle="رواية حفص — الطبعة المدنية ٦٠٤ صفحات" />
+      <PageHero icon="quran" title="المصحف" subtitle="رواية حفص — الطبعة المدنية ٦٠٤ صفحات" />
 
       <View style={styles.features}>
         {FEATURES.map((feature) => {

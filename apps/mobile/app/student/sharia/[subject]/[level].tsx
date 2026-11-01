@@ -18,11 +18,11 @@ type ContentRow = {
 };
 
 const CONTENT_META: Record<string, { label: string; icon: string }> = {
-  pdf: { label: "ملف PDF", icon: "document-text-outline" },
-  text: { label: "نص مقروء", icon: "book-outline" },
-  audio: { label: "صوتيات", icon: "headset-outline" },
-  video: { label: "مرئيات", icon: "videocam-outline" },
-  link: { label: "رابط خارجي", icon: "link-outline" },
+  pdf: { label: "ملف PDF", icon: "file-text" },
+  text: { label: "نص مقروء", icon: "file-text" },
+  audio: { label: "صوتيات", icon: "headphones" },
+  video: { label: "مرئيات", icon: "video" },
+  link: { label: "رابط خارجي", icon: "link" },
 };
 
 function statusMeta(status: string) {
@@ -58,15 +58,15 @@ export default function Level() {
         <Text style={[styles.progressText, { color: colors.text }]}>{progress}% مكتمل</Text>
         <ProgressBar value={progress} label={`${progress}%`} />
         <View style={styles.actions}>
-          <Button label="اختبار المستوى" icon="create-outline" onPress={() => router.push(`/student/sharia/${subject}/exam?levelId=${data.level.id}` as never)} />
-          <Button label="الشهادة" icon="ribbon-outline" variant="secondary" onPress={() => router.push(`/student/sharia/${subject}/certificate?levelId=${data.level.id}` as never)} />
+          <Button label="اختبار المستوى" icon="edit" onPress={() => router.push(`/student/sharia/${subject}/exam?levelId=${data.level.id}` as never)} />
+          <Button label="الشهادة" icon="certificate" variant="secondary" onPress={() => router.push(`/student/sharia/${subject}/certificate?levelId=${data.level.id}` as never)} />
         </View>
-        <Button label="الحلقات المتاحة لهذا المستوى" icon="calendar-outline" variant="secondary"
+        <Button label="الحلقات المتاحة لهذا المستوى" icon="graduation" variant="secondary"
           onPress={() => router.push({ pathname: "/student/booking", params: { path: "sharia", subject: data.level.subject, levelId: String(data.level.id), mode: "group" } } as never)} />
       </Card>
 
       {rows.length ? rows.map((item) => {
-        const meta = CONTENT_META[item.contentType] ?? { label: item.contentType, icon: "book-outline" };
+        const meta = CONTENT_META[item.contentType] ?? { label: item.contentType, icon: "books" };
         const status = statusMeta(item.status);
         return (
           <Pressable key={item.id} onPress={() => router.push(`/student/sharia/${subject}/content?contentId=${encodeURIComponent(item.id)}&levelId=${data.level.id}` as never)}>
@@ -83,7 +83,7 @@ export default function Level() {
             </Card>
           </Pressable>
         );
-      }) : <EmptyState title="لا توجد دروس منشورة" description="ستظهر دروس هذا المستوى عند نشرها من الإدارة." icon="book-outline" />}
+      }) : <EmptyState title="لا توجد دروس منشورة" description="ستظهر دروس هذا المستوى عند نشرها من الإدارة." icon="books" />}
     </StudentScreen>
   );
 }

@@ -41,7 +41,7 @@ export default function Fatwa() {
   const valid = text.trim().length >= 10;
   return (
     <Screen>
-      <PageHero icon="scale-outline" title="مفتون معتمدون" subtitle="بإشراف المسؤول — تصلك الإجابة بعد اعتمادها" />
+      <PageHero icon="scale" title="مفتون معتمدون" subtitle="بإشراف المسؤول — تصلك الإجابة بعد اعتمادها" />
       <View style={styles.tabs}>
         {([["ask", "اسأل"], ["mine", `فتاواي${rows.length ? ` (${rows.length})` : ""}`]] as const).map(([key, label]) => (
           <Pressable key={key} accessibilityRole="tab" accessibilityState={{ selected: tab === key }} onPress={() => setTab(key)} style={[styles.tab, { backgroundColor: tab === key ? colors.primary : tint }]}>
@@ -65,7 +65,7 @@ export default function Fatwa() {
           <Text style={[styles.counter, { color: valid || !text ? colors.muted : colors.danger }]}>{text.length}/{MAX}</Text>
           <TextInput value={imageUrl} onChangeText={setImageUrl} placeholder="رابط صورة (اختياري — حتى 5MB)" placeholderTextColor={colors.muted} autoCapitalize="none" keyboardType="url" style={[styles.urlInput, { backgroundColor: colors.input, borderColor: colors.border, color: colors.text }]} textAlign="left" />
           <TextInput value={audioUrl} onChangeText={setAudioUrl} placeholder="رابط تسجيل صوتي للسؤال (اختياري)" placeholderTextColor={colors.muted} autoCapitalize="none" keyboardType="url" style={[styles.urlInput, { backgroundColor: colors.input, borderColor: colors.border, color: colors.text }]} textAlign="left" />
-          <Button label="إرسال السؤال" icon="arrow-back" loading={ask.isPending} disabled={!valid || ask.isPending} onPress={() => ask.mutate({ questionText: text.trim(), category: category as never, imageUrl: imageUrl.trim() || undefined, audioUrl: audioUrl.trim() || undefined })} />
+          <Button label="إرسال السؤال" icon="arrow-left" loading={ask.isPending} disabled={!valid || ask.isPending} onPress={() => ask.mutate({ questionText: text.trim(), category: category as never, imageUrl: imageUrl.trim() || undefined, audioUrl: audioUrl.trim() || undefined })} />
         </Card>
       ) : rows.length === 0 ? <EmptyState title="لا أسئلة بعد" description="أرسل أول سؤال من تبويب «اسأل»" action="اسأل الآن" onAction={() => setTab("ask")} /> : rows.map((row) => (
         <SoftPressable key={row.id} accessibilityRole="button" onPress={() => router.push(`/student/fatwa/${row.id}?source=mine` as never)}>
@@ -80,7 +80,7 @@ export default function Fatwa() {
         </SoftPressable>
       ))}
 
-      <Button label="الفتاوى العامة" variant="quiet" icon="library-outline" style={styles.publicLink} onPress={() => router.push("/student/fatwas")} />
+      <Button label="الفتاوى العامة" variant="quiet" icon="library" style={styles.publicLink} onPress={() => router.push("/student/fatwas")} />
     </Screen>
   );
 }

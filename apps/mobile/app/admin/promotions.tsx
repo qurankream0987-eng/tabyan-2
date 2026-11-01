@@ -36,9 +36,9 @@ export default function Promotions() {
     <AdminFrame title="طلبات الترقية">
       <Text style={[styles.description, { color: colors.muted }]}>شاهد فيديو التلاوة (60 ثانية) وقرر — التوصيات من المعلمين استرشادية فقط</Text>
       <SectionTitle title={`بانتظار المراجعة (${pending.length})`} />
-      {q.isLoading ? <LoadingState /> : q.error ? <ErrorState onRetry={() => void q.refetch()} message={userFacingErrorMessage(q.error, "تعذر تحميل الطلبات.")} /> : !pending.length ? <EmptyState title="لا طلبات معلقة" description="ستظهر طلبات الترقية الجديدة هنا." icon="trending-up-outline" /> : pending.map((row) => (
+      {q.isLoading ? <LoadingState /> : q.error ? <ErrorState onRetry={() => void q.refetch()} message={userFacingErrorMessage(q.error, "تعذر تحميل الطلبات.")} /> : !pending.length ? <EmptyState title="لا طلبات معلقة" description="ستظهر طلبات الترقية الجديدة هنا." icon="trending-up" /> : pending.map((row) => (
         <Card key={row.id} accent>
-          <View style={styles.row}><View style={styles.rowBody}><Text style={[styles.name, { color: colors.text }]}>{row.studentName ?? "طالب"}</Text><Text style={[styles.note, { color: colors.muted }]}>{levelText(row)}</Text><Text style={[styles.note, { color: colors.muted }]}>منذ {Math.max(0, Math.round(row.hoursAgo ?? 0))} ساعة</Text></View><Button label="مراجعة" icon="videocam-outline" onPress={() => { setSelected(row); setNote(""); }} /></View>
+          <View style={styles.row}><View style={styles.rowBody}><Text style={[styles.name, { color: colors.text }]}>{row.studentName ?? "طالب"}</Text><Text style={[styles.note, { color: colors.muted }]}>{levelText(row)}</Text><Text style={[styles.note, { color: colors.muted }]}>منذ {Math.max(0, Math.round(row.hoursAgo ?? 0))} ساعة</Text></View><Button label="مراجعة" icon="video" onPress={() => { setSelected(row); setNote(""); }} /></View>
         </Card>
       ))}
       {reviewed.length ? <>
@@ -48,10 +48,10 @@ export default function Promotions() {
             badges={<Badge label={row.status === "approved" ? "مقبول" : row.status === "rejected" ? "مرفوض" : String(row.status)} tone={row.status === "approved" ? "success" : row.status === "rejected" ? "danger" : "muted"} />} />
         ))}
       </> : null}
-      <Button label="تحديث البيانات" variant="secondary" icon="refresh-outline" onPress={() => void q.refetch()} />
+      <Button label="تحديث البيانات" variant="secondary" icon="refresh" onPress={() => void q.refetch()} />
       <AdminSheet visible={!!selected} title="مراجعة طلب ترقية" subtitle={selected?.studentName} onClose={close} dirty={!!note} busy={review.isPending}
         footer={<View style={{ gap: 8 }}>
-          <ConfirmButton primary label="ترقية" icon="checkmark-circle-outline" loading={review.isPending} title="اعتماد الترقية؟" itemName={selected?.studentName} impact="يُنقل الطالب فوراً إلى المستوى التالي ويصله إشعار «مبروك!»." onConfirm={() => void run(true)} />
+          <ConfirmButton primary label="ترقية" icon="check" loading={review.isPending} title="اعتماد الترقية؟" itemName={selected?.studentName} impact="يُنقل الطالب فوراً إلى المستوى التالي ويصله إشعار «مبروك!»." onConfirm={() => void run(true)} />
           <ConfirmButton label="رفض" danger loading={review.isPending} title="رفض طلب الترقية؟" itemName={selected?.studentName} impact="سيبقى الطالب في مستواه الحالي ويُبلَّغ بالملاحظات المكتوبة." onConfirm={() => void run(false)} />
         </View>}>
           <FormError message={error} />

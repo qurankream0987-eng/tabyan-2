@@ -148,7 +148,7 @@ export default function Booking() {
         days.map((day) => (
           <View key={day} style={styles.daySection}>
             <View style={[styles.dayHeader, { borderBottomColor: colors.border }]}>
-              <Icon name="calendar-outline" size={14} color={colors.primary} />
+              <Icon name="calendar" size={14} color={colors.primary} />
               <Text style={[styles.dayTitle, { color: colors.text }]}>{DAY_AR[day]}</Text>
               <Text style={[styles.dayCount, { color: colors.muted }]}>{slotCountLabel(slotsByDay.get(day)!.length)}</Text>
             </View>
@@ -221,7 +221,7 @@ export default function Booking() {
                   هذا موعد أسبوعي ثابت يتكرر كل {DAY_AR[sel.day]} الساعة {fmtTime12(sel.time)} حتى نهاية المستوى الحالي
                 </Text>
                 {error ? <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text> : null}
-                <Button label={book.isPending ? "جارٍ الحجز…" : "تأكيد الحجز"} icon="checkmark" loading={book.isPending} disabled={book.isPending} onPress={confirm} />
+                <Button label={book.isPending ? "جارٍ الحجز…" : "تأكيد الحجز"} icon="check" loading={book.isPending} disabled={book.isPending} onPress={confirm} />
                 <Button label="تراجع" variant="secondary" disabled={book.isPending} onPress={() => setSel(null)} />
               </>
             ) : null}
@@ -236,13 +236,13 @@ export default function Booking() {
             {booked ? (
               <>
                 <View style={[styles.successIcon, { backgroundColor: `${colors.success}1a` }]}>
-                  <Icon name="checkmark" size={28} color={colors.success} />
+                  <Icon name="check" size={28} color={colors.success} />
                 </View>
                 <Text style={[styles.sheetTitle, { color: colors.text }]}>تم تسجيل حجزك الأسبوعي</Text>
                 <Text style={[styles.sheetNote, { color: colors.muted }]}>
                   حلقة {typeLabelOf(booked.schedule)} مع {booked.teacher.name}{"\n"}كل {DAY_AR[booked.day]} الساعة {fmtTime12(booked.time)}
                 </Text>
-                <Button label="جدولي الأسبوعي" icon="calendar-outline" onPress={() => { setBooked(null); router.push("/student/schedule" as never); }} />
+                <Button label="جدولي الأسبوعي" icon="calendar" onPress={() => { setBooked(null); router.push("/student/schedule" as never); }} />
                 <Button label="إغلاق" variant="secondary" onPress={() => setBooked(null)} />
               </>
             ) : null}

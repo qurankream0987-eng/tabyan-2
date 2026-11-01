@@ -31,7 +31,7 @@ export default function Tilawah() {
       </Card>
       <Button
         label="سجل في الحلقة"
-        icon="mic-outline"
+        icon="mic"
         style={styles.button}
         onPress={() => router.push("/student/booking?path=tajweed_correction" as never)}
       />

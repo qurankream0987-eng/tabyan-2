@@ -818,8 +818,8 @@ export default function Placement() {
         <Card style={styles.timelineCard}>
           <Text style={[styles.timelineTitle, { color: colors.primary }]}>حالة الاختبار</Text>
           <View style={styles.timeline}>
-            <TimelineStep icon="checkmark" label="تم الاستلام" state="done" colors={colors} />
-            <TimelineStep icon="time-outline" label="قيد المراجعة" state="active" colors={colors} />
+            <TimelineStep icon="check" label="تم الاستلام" state="done" colors={colors} />
+            <TimelineStep icon="clock" label="قيد المراجعة" state="active" colors={colors} />
             <TimelineStep icon="star" label="النتيجة" state="next" colors={colors} />
           </View>
         </Card>
@@ -849,7 +849,7 @@ export default function Placement() {
       <StudentScreen title={title}>
         <Card style={styles.centerCard}>
           <View style={[styles.bigIcon, { backgroundColor: `${colors.success}1f` }]}>
-            <Icon name="checkmark" size={40} color={colors.success} />
+            <Icon name="check" size={40} color={colors.success} />
           </View>
           <Text style={[styles.resultTitle, { color: colors.primary }]}>تمت الموافقة!</Text>
           {statusData?.resultLevelName ? (
@@ -883,7 +883,7 @@ export default function Placement() {
             </View>
           ) : null}
         </Card>
-        <Button label="اختر موعد حلقتك" icon="calendar-outline" onPress={() => router.push("/student/booking" as never)} />
+        <Button label="اختر موعد حلقتك" icon="calendar" onPress={() => router.push("/student/booking" as never)} />
       </StudentScreen>
     );
   }
@@ -1027,7 +1027,7 @@ export default function Placement() {
                   state === "next" && { borderColor: colors.border },
                 ]}>
                   {state === "done"
-                    ? <Icon name="checkmark" size={12} color={palette.burgundy} />
+                    ? <Icon name="check" size={12} color={palette.burgundy} />
                     : <Text style={[styles.stepNum, { color: state === "next" ? colors.muted : state === "active" ? colors.primaryText : palette.gold }]}>{toAr(i + 1)}</Text>}
                 </View>
                 <Text style={[styles.stepLabel, { color: state === "next" ? colors.muted : colors.primary }]}>{label}</Text>
@@ -1049,7 +1049,7 @@ export default function Placement() {
               استُخدمت جميع المحاولات المتاحة لاختبار القبول ({toAr(attemptsMax)} محاولات). للحصول على محاولة إضافية، يرجى التواصل مع الإدارة.
             </Text>
             <View style={[styles.exhaustedContact, { backgroundColor: `${palette.gold}26` }]}>
-              <Icon name="help-circle-outline" size={16} color={palette.goldDark} />
+              <Icon name="help" size={16} color={palette.goldDark} />
               <Text style={[styles.exhaustedContactText, { color: palette.goldDark }]}>تواصل مع الإدارة لإعادة فتح المحاولات</Text>
             </View>
           </View>
@@ -1149,7 +1149,7 @@ export default function Placement() {
                           ? "جارٍ تجهيز الكاميرا…"
                           : "بدء تسجيل الاختبار"
                 }
-                icon={videoUri ? (attemptsUsed >= attemptsMax ? "lock-closed-outline" : "refresh-outline") : isRecording ? "stop-circle-outline" : "videocam-outline"}
+                icon={videoUri ? (attemptsUsed >= attemptsMax ? "lock" : "refresh") : isRecording ? "stop" : "video"}
                 loading={captureState === "STARTING" || captureState === "STOPPING" || captureState === "FINALIZING"}
                 onPress={() => {
                   if (videoUri) resetRecording();
@@ -1189,7 +1189,7 @@ export default function Placement() {
               <View style={styles.recorded}>
                 <View style={styles.recordedHeader}>
                     <Icon
-                      name={Platform.OS !== "ios" || previewModel.submissionReady ? "checkmark-circle-outline" : "alert-circle-outline"}
+                      name={Platform.OS !== "ios" || previewModel.submissionReady ? "check-circle" : "alert-triangle"}
                       size={22}
                       color={Platform.OS !== "ios" || previewModel.submissionReady ? colors.success : colors.danger}
                     />
@@ -1210,7 +1210,7 @@ export default function Placement() {
                 {!attemptReserved && attemptId ? (
                   <Button
                     label={reservingAttempt ? "جارٍ تثبيت المحاولة…" : "إعادة مزامنة المحاولة"}
-                    icon="sync-outline"
+                    icon="refresh"
                     loading={reservingAttempt}
                     disabled={reservingAttempt}
                     onPress={() => void reserveAttempt(attemptId, durationSeconds, getAccountGeneration(), pathType)}
@@ -1246,7 +1246,7 @@ export default function Placement() {
                 ) : null}
                 <Button
                   label={isUploading ? "جارٍ الإرسال…" : "إرسال الاختبار"}
-                  icon="cloud-upload-outline"
+                  icon="upload"
                   loading={isUploading || submit.isPending}
                   disabled={
                     isUploading
@@ -1263,7 +1263,7 @@ export default function Placement() {
                 {attemptsUsed < attemptsMax ? (
                   <Button
                     label="حذف التسجيل وإعادة المحاولة"
-                    icon="refresh-outline"
+                    icon="refresh"
                     variant="secondary"
                     disabled={isUploading || reservingAttempt || !attemptReserved || submit.isPending}
                     onPress={resetRecording}
@@ -1279,13 +1279,13 @@ export default function Placement() {
             {permissionNeedsSettings ? (
               <Button
                 label="فتح إعدادات الجهاز"
-                icon="settings-outline"
+                icon="settings"
                 onPress={() => void openPermissionSettings()}
               />
             ) : (
               <Button
                 label={captureState === "REQUESTING_PERMISSION" ? "جارٍ طلب الإذن…" : "منح إذن الكاميرا والميكروفون"}
-                icon="lock-open-outline"
+                icon="lock"
                 loading={captureState === "REQUESTING_PERMISSION"}
                 disabled={captureState === "REQUESTING_PERMISSION"}
                 onPress={() => void requestRecordingPermissions()}

@@ -533,12 +533,12 @@ function YouTubeExternalPlayer({ videoId }: { videoId: string }) {
     <Card style={styles.card}>
       <Text style={[styles.heading, { color: colors.text }]}>مشغل الفيديو</Text>
       <View style={[styles.externalVideo, { backgroundColor: colors.background, borderColor: colors.border }]}>
-        <Icon name="logo-youtube" size={42} color={colors.danger} />
+        <Icon name="play" size={42} color={colors.danger} />
         <Text style={[styles.externalTitle, { color: colors.text }]}>فيديو YouTube</Text>
         <Text style={[styles.externalHint, { color: colors.muted }]}>يفتح في تطبيق YouTube أو المتصفح دون استخدام WebView.</Text>
       </View>
       {error ? <Text style={[styles.externalError, { color: colors.danger }]}>{error}</Text> : null}
-      <Button label={opening ? "جارٍ الفتح…" : error ? "إعادة المحاولة" : "فتح الفيديو"} icon="open-outline" loading={opening} disabled={opening} onPress={() => void open()} />
+      <Button label={opening ? "جارٍ الفتح…" : error ? "إعادة المحاولة" : "فتح الفيديو"} icon="external-link" loading={opening} disabled={opening} onPress={() => void open()} />
     </Card>
   );
 }
@@ -1048,7 +1048,7 @@ function PlayableMedia({
             <Text style={[styles.time, { color: colors.muted }]}>{formatTime(currentTime)} / {formatTime(duration)}</Text>
             <Text style={[styles.hint, { color: colors.muted }]}>استخدم شريط المشغل للتقديم أو الرجوع</Text>
           </View>
-          {contentType === "video" ? <Button label="ملء الشاشة" icon="expand-outline" variant="secondary" onPress={() => { try { (player as any).enterFullscreen?.(); } catch { /* native controls remain available */ } }} /> : null}
+          {contentType === "video" ? <Button label="ملء الشاشة" icon="maximize" variant="secondary" onPress={() => { try { (player as any).enterFullscreen?.(); } catch { /* native controls remain available */ } }} /> : null}
         </>
       )}
     </Card>

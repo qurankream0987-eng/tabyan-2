@@ -37,9 +37,9 @@ export default function FatwaDetail() {
   const answerBlock = (answer: { answerText?: string | null; referenceText?: string | null; audioUrl?: string | null }) => (
     <>
       <View style={[styles.box, { backgroundColor: answerBg }]}>
-        <View style={styles.boxHead}><Text style={[styles.boxLabel, { color: goldText }]}>إجابة المفتي</Text><Icon name="checkmark" size={13} color={goldText} /></View>
+        <View style={styles.boxHead}><Text style={[styles.boxLabel, { color: goldText }]}>إجابة المفتي</Text><Icon name="check" size={13} color={goldText} /></View>
         <Text style={[styles.body, { color: colors.text }]}>{String(answer.answerText ?? "")}</Text>
-        {answer.referenceText ? <View style={styles.refRow}><Icon name="book-outline" size={12} color={colors.muted} /><Text style={[styles.ref, { color: colors.muted }]}>المرجع: {String(answer.referenceText)}</Text></View> : null}
+        {answer.referenceText ? <View style={styles.refRow}><Icon name="books" size={12} color={colors.muted} /><Text style={[styles.ref, { color: colors.muted }]}>المرجع: {String(answer.referenceText)}</Text></View> : null}
       </View>
       {answer.audioUrl ? <LibraryMediaPlayer source={String(answer.audioUrl)} contentType="audio" /> : null}
     </>
@@ -87,7 +87,7 @@ export default function FatwaDetail() {
               <View style={styles.stars}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Pressable key={star} accessibilityRole="button" accessibilityLabel={`${star} من 5`} accessibilityState={{ selected: myStars >= star, disabled: rate.isPending }} disabled={rate.isPending} hitSlop={4} onPress={() => { setRating(star); rate.mutate({ answerId: String(answer.id), starRating: star }); }}>
-                    <Icon name={myStars >= star ? "star" : "star-outline"} size={30} color={myStars >= star ? palette.gold : `${colors.muted}66`} />
+                    <Icon name={myStars >= star ? "star" : "star"} size={30} color={myStars >= star ? palette.gold : `${colors.muted}66`} />
                   </Pressable>
                 ))}
               </View>
@@ -95,7 +95,7 @@ export default function FatwaDetail() {
             </View>
           </>
         ) : (
-          <View style={styles.pending}><Icon name="time-outline" size={15} color={colors.muted} /><Text style={[styles.pendingText, { color: colors.muted }]}>لم تُنشر الإجابة بعد — سيصلك إشعار فور الإجابة</Text></View>
+          <View style={styles.pending}><Icon name="clock" size={15} color={colors.muted} /><Text style={[styles.pendingText, { color: colors.muted }]}>لم تُنشر الإجابة بعد — سيصلك إشعار فور الإجابة</Text></View>
         )}
       </Card>
     </StudentScreen>

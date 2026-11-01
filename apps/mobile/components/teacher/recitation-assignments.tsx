@@ -84,10 +84,10 @@ export function RecitationAssignmentsSection({ studentId }: { studentId: string 
   return (
     <Card>
       <View style={styles.rowBetween}>
-        <Text style={[styles.sectionTitle, { color: colors.primary }]}><Icon name="mic-outline" size={16} color={colors.primary} /> واجبات التسميع</Text>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}><Icon name="mic" size={16} color={colors.primary} /> واجبات التسميع</Text>
         {!creating ? (
           <Pressable accessibilityRole="button" onPress={() => setCreating(true)} style={[styles.addPill, { backgroundColor: `${colors.primary}0f` }]}>
-            <Icon name="add" size={14} color={colors.primary} />
+            <Icon name="plus" size={14} color={colors.primary} />
             <Text style={[styles.addPillText, { color: colors.primary }]}>واجب جديد</Text>
           </Pressable>
         ) : null}
@@ -196,11 +196,11 @@ function CreateForm({ studentId, colors, onDone, onCancel }: { studentId: string
       <View style={styles.fieldsRow}>
         <Pressable accessibilityRole="button" accessibilityLabel="اختيار موعد التسليم" onPress={() => setDatePickerOpen(true)} style={[...fieldStyle, styles.flex]}>
           <Text style={[styles.pickerText, { color: due ? colors.text : colors.muted }]}>{due ? formatDate(due) : "بدون موعد"}</Text>
-          <Icon name="calendar-outline" size={16} color={colors.muted} />
+          <Icon name="calendar" size={16} color={colors.muted} />
         </Pressable>
         {due ? (
           <Pressable accessibilityRole="button" accessibilityLabel="إزالة الموعد" onPress={() => setDue(null)} style={[styles.clearDate, { borderColor: colors.border }]}>
-            <Icon name="close" size={16} color={colors.muted} />
+            <Icon name="x" size={16} color={colors.muted} />
           </Pressable>
         ) : null}
       </View>
@@ -213,7 +213,7 @@ function CreateForm({ studentId, colors, onDone, onCancel }: { studentId: string
         <View style={styles.flex}>
           <Button
             label="إرسال الواجب"
-            icon="send-outline"
+            icon="send"
             loading={create.isPending}
             disabled={!!rangeError || create.isPending}
             onPress={() => {
@@ -302,7 +302,7 @@ function RecordingPlayback({ objectPath, colors }: { objectPath: string; colors:
       <Button
         label={loading ? "جارٍ تحميل التسجيل…" : state.playing ? "إيقاف مؤقت" : state.position > 0 ? "متابعة الاستماع" : "استمع للتسميع"}
         variant="secondary"
-        icon={state.playing ? "pause-outline" : "play-outline"}
+        icon={state.playing ? "pause" : "play"}
         loading={loading}
         disabled={loading}
         onPress={() => void toggle()}
@@ -347,7 +347,7 @@ function AssignmentCard({ assignment, colors, onChanged }: { assignment: Assignm
         <View style={styles.details}>
           {assignment.note ? (
             <View style={styles.noteRow}>
-              <Icon name="create-outline" size={12} color={colors.muted} />
+              <Icon name="edit" size={12} color={colors.muted} />
               <Text style={[styles.body, styles.flex, { color: colors.text }]}>{assignment.note}</Text>
             </View>
           ) : null}
@@ -367,7 +367,7 @@ function AssignmentCard({ assignment, colors, onChanged }: { assignment: Assignm
               onPress={() => void confirmAr("إلغاء الواجب", "إلغاء هذا الواجب؟").then((ok) => { if (ok) { setError(""); cancel.mutate({ assignmentId: assignment.id }); } })}
               style={styles.cancelLink}
             >
-              <Icon name="close-circle-outline" size={13} color={colors.muted} />
+              <Icon name="x-circle" size={13} color={colors.muted} />
               <Text style={[styles.small, { color: colors.muted }]}>{cancel.isPending ? "جارٍ الإلغاء…" : "إلغاء الواجب"}</Text>
             </Pressable>
           ) : null}
@@ -399,7 +399,7 @@ function ResultView({ assignment, colors }: { assignment: Assignment; colors: Co
         ))}
       </View>
       <View style={styles.noteRow}>
-        <Icon name="information-circle-outline" size={12} color={colors.muted} />
+        <Icon name="info" size={12} color={colors.muted} />
         <Text style={[styles.small, styles.flex, { color: colors.muted }]}>{AUTO_RESULT_NOTE}</Text>
       </View>
       <FlaggedWords assignment={assignment} colors={colors} />
@@ -508,7 +508,7 @@ function ReviewForm({ assignment, colors, onReviewed }: { assignment: Assignment
         <View style={styles.flex}>
           <Button
             label="حفظ التقييم"
-            icon="checkmark-done-outline"
+            icon="check"
             loading={review.isPending}
             disabled={!valid || review.isPending}
             onPress={() => { if (!valid) return; setError(""); review.mutate({ assignmentId: assignment.id, score: value!, feedback: feedback.trim() || undefined }); }}

@@ -93,10 +93,10 @@ export default function Fatwas() {
   const muftiOptions = (people.data ?? []).map((m: any) => ({ value: String(m.teacherId), label: m.fullName }));
   const editedText = () => (active?.row.answer && answer !== active.row.answer.answerText ? answer.trim() : undefined);
   const rowActions = (row: any) => [
-    ...(tab === "pending" || tab === "assigned" ? [{ key: "assign", label: tab === "pending" ? "إسناد لمفتٍ" : "إعادة إسناد", icon: "person-add-outline", onPress: () => open("assign", row) }] : []),
-    ...(tab === "answered" && row.answer ? [{ key: "review", label: "مراجعة الإجابة", icon: "document-text-outline", onPress: () => open("review", row) }] : []),
-    { key: "category", label: "تغيير التصنيف", icon: "pricetag-outline", onPress: () => open("category", row) },
-    ...(tab === "pending" ? [{ key: "reject", label: "رفض السؤال", icon: "close-circle-outline", danger: true, onPress: () => open("reject", row) }] : []),
+    ...(tab === "pending" || tab === "assigned" ? [{ key: "assign", label: tab === "pending" ? "إسناد لمفتٍ" : "إعادة إسناد", icon: "send", onPress: () => open("assign", row) }] : []),
+    ...(tab === "answered" && row.answer ? [{ key: "review", label: "مراجعة الإجابة", icon: "edit", onPress: () => open("review", row) }] : []),
+    { key: "category", label: "تغيير التصنيف", icon: "bookmark", onPress: () => open("category", row) },
+    ...(tab === "pending" ? [{ key: "reject", label: "رفض السؤال", icon: "x", danger: true, onPress: () => open("reject", row) }] : []),
   ];
   const primaryAction = (row: any) => (tab === "pending" || tab === "assigned"
     ? <Button label={tab === "pending" ? "إسناد" : "إعادة إسناد"} variant="secondary" style={styles.primaryAction} onPress={() => open("assign", row)} />
@@ -110,7 +110,7 @@ export default function Fatwas() {
       <AdminSearchBar value={search} onChange={setSearch} placeholder="بحث في نص السؤال…" filterCount={filterCount} onOpenFilters={() => setFiltersOpen(true)} />
       <ActiveFilters count={filterCount} onClear={() => setFilters({ priority: "", category: "", mufti: "" })} />
       {q.isLoading || people.isLoading ? <ListSkeleton /> : q.error || people.error ? <ErrorState onRetry={() => { void q.refetch(); void people.refetch(); }} />
-        : !rows.length ? <EmptyState title="لا عناصر في هذا التبويب" description={filterCount || search ? "غيّر البحث أو امسح الفلاتر." : undefined} icon="chatbubbles-outline" />
+        : !rows.length ? <EmptyState title="لا عناصر في هذا التبويب" description={filterCount || search ? "غيّر البحث أو امسح الفلاتر." : undefined} icon="scale" />
         : rows.map((r) => (
           <AdminRow key={r.id} title={r.questionText} subtitle={[r.studentName, r.categoryLabel, r.muftiName].filter(Boolean).join(" · ")}
             badges={<>

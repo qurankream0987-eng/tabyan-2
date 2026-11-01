@@ -68,13 +68,13 @@ export default function Settings() {
       {q.isLoading ? <ListSkeleton rows={4} /> : q.error ? <ErrorState onRetry={() => void q.refetch()} /> : !rows.length ? <EmptyState title="لا توجد إعدادات قابلة للتعديل" /> : rows.map((setting) => (
         <AdminRow key={setting.key} title={LABELS[setting.key]} subtitle={`القيمة الحالية: ${String(setting.value ?? "—")}`}
           onPress={() => setEditing({ key: setting.key, value: String(setting.value ?? "") })}
-          actions={<IconAction icon="create-outline" label={`تعديل ${LABELS[setting.key]}`} onPress={() => setEditing({ key: setting.key, value: String(setting.value ?? "") })} />} />
+          actions={<IconAction icon="edit" label={`تعديل ${LABELS[setting.key]}`} onPress={() => setEditing({ key: setting.key, value: String(setting.value ?? "") })} />} />
       ))}
 
       <Text style={[styles.section, { color: colors.text }]}>الأمان</Text>
-      <AdminRow title="كلمة المرور الرئيسية" subtitle="تغييرها يُنهي جلسات جميع المشرفين" leadingIcon="key-outline"
+      <AdminRow title="كلمة المرور الرئيسية" subtitle="تغييرها يُنهي جلسات جميع المشرفين" leadingIcon="lock"
         onPress={() => setPasswordForm({ current: "", next: "" })}
-        actions={<IconAction icon="create-outline" label="تغيير كلمة المرور الرئيسية" onPress={() => setPasswordForm({ current: "", next: "" })} />} />
+        actions={<IconAction icon="edit" label="تغيير كلمة المرور الرئيسية" onPress={() => setPasswordForm({ current: "", next: "" })} />} />
 
       <Card>
         <ThemePreferencePicker />
@@ -95,7 +95,7 @@ export default function Settings() {
       </Card>
 
       <Text style={[styles.section, { color: colors.text }]}>الجلسة</Text>
-      <Button label="تسجيل الخروج" variant="danger" icon="log-out-outline" onPress={() => void signOut().then(() => navigateToWelcome(router))} />
+      <Button label="تسجيل الخروج" variant="danger" icon="logout" onPress={() => void signOut().then(() => navigateToWelcome(router))} />
 
       <AdminSheet visible={!!editing} title={editing ? LABELS[editing.key] ?? "الإعداد" : ""} onClose={() => { setEditing(null); setEditError(null); }} dirty={settingDirty} busy={update.isPending}
         footer={(requestClose) => <SheetFooter onSecondary={requestClose} onPrimary={() => editing && update.mutate({ key: editing.key, value: editing.value } as any)} loading={update.isPending} disabled={!editing?.value.trim()} primaryLabel="حفظ" />}>

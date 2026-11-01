@@ -16,15 +16,15 @@ const READ_STATUSES: Array<[ReadStatus, string]> = [
   ["all", "الكل"], ["unread", "غير مقروءة"], ["read", "مقروءة"],
 ];
 const TYPES: Array<[string, string, string]> = [
-  ["session_reminder", "تذكير جلسة", "time-outline"],
-  ["session_change", "تغيير موعد", "calendar-outline"],
-  ["evaluation", "تقييم", "star-outline"],
-  ["achievement", "إنجاز", "ribbon-outline"],
-  ["announcement", "إعلان", "megaphone-outline"],
-  ["ayah", "آية اليوم", "book-outline"],
-  ["payment", "مدفوعات", "card-outline"],
-  ["placement", "تحديد المستوى", "videocam-outline"],
-  ["promotion", "ترقية", "trending-up-outline"],
+  ["session_reminder", "تذكير جلسة", "clock"],
+  ["session_change", "تغيير موعد", "calendar"],
+  ["evaluation", "تقييم", "star"],
+  ["achievement", "إنجاز", "certificate"],
+  ["announcement", "إعلان", "bell"],
+  ["ayah", "آية اليوم", "books"],
+  ["payment", "مدفوعات", "id-card"],
+  ["placement", "تحديد المستوى", "video"],
+  ["promotion", "ترقية", "trending-up"],
 ];
 
 type NotificationRow = {
@@ -69,7 +69,7 @@ function relativeTime(value: NotificationRow["createdAt"]) {
 
 function typeMeta(type: string) {
   const found = TYPES.find(([key]) => key === type);
-  return found ?? ["general", "عام", "notifications-outline"];
+  return found ?? ["general", "عام", "bell"];
 }
 
 export function NotificationFeed({ listPath, settingsPath }: { listPath: string; settingsPath: string }) {
@@ -139,10 +139,10 @@ export function NotificationFeed({ listPath, settingsPath }: { listPath: string;
       <View style={styles.toolbar}>
         <View style={styles.toolbarActions}>
           <Pressable accessibilityLabel="تصفية الإشعارات" onPress={openFilter} style={[styles.iconButton, { backgroundColor: colors.input, borderColor: colors.border }]}>
-            <Icon name="filter-outline" size={19} color={colors.primary} />
+            <Icon name="filter" size={19} color={colors.primary} />
           </Pressable>
           <Pressable accessibilityLabel="إعدادات الإشعارات" onPress={() => router.push(settingsPath as never)} style={[styles.iconButton, { backgroundColor: colors.input, borderColor: colors.border }]}>
-            <Icon name="settings-outline" size={19} color={colors.primary} />
+            <Icon name="settings" size={19} color={colors.primary} />
           </Pressable>
         </View>
         <View style={styles.heading}>
@@ -153,7 +153,7 @@ export function NotificationFeed({ listPath, settingsPath }: { listPath: string;
 
       {(data?.unreadCount ?? 0) > 0 ? (
         <Pressable disabled={actionPending} onPress={() => markAll.mutate()} style={[styles.markAll, actionPending && { opacity: 0.5 }]}>
-          <Icon name="checkmark-done-outline" size={15} color={palette.gold} />
+          <Icon name="check" size={15} color={palette.gold} />
           <Text style={[styles.markAllText, { color: colors.primary }]}>تعليم الكل كمقروء</Text>
         </Pressable>
       ) : null}
@@ -161,11 +161,11 @@ export function NotificationFeed({ listPath, settingsPath }: { listPath: string;
 
       {query.isLoading ? <LoadingState /> : query.error ? <ErrorState onRetry={() => void query.refetch()} /> : (
         sections.every(([, , rows]) => rows.length === 0)
-           ? <EmptyState title={types.length || period !== "all" || readStatus !== "all" ? "لا نتائج مطابقة للفلاتر" : "لا توجد إشعارات حالياً"} description="ستظهر هنا تحديثاتك وتنبيهات المنصة." action="تحديث" onAction={() => void query.refetch()} icon="notifications-outline" />
+           ? <EmptyState title={types.length || period !== "all" || readStatus !== "all" ? "لا نتائج مطابقة للفلاتر" : "لا توجد إشعارات حالياً"} description="ستظهر هنا تحديثاتك وتنبيهات المنصة." action="تحديث" onAction={() => void query.refetch()} icon="bell" />
           : sections.map(([label, icon, rows]) => rows.length ? (
             <View key={label}>
               <View style={styles.sectionHeader}>
-                <Icon name={icon === "pin" ? "pin-outline" : icon === "today" ? "time-outline" : "hourglass-outline"} size={16} color={palette.gold} />
+                <Icon name={icon === "pin" ? "pin" : icon === "today" ? "clock" : "hourglass"} size={16} color={palette.gold} />
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>{label}</Text>
               </View>
               {rows.map((notification) => {
@@ -187,11 +187,11 @@ export function NotificationFeed({ listPath, settingsPath }: { listPath: string;
                         </View>
                       </View>
                     </Pressable>
-                    {joinUrl ? <Button label="انضم الآن" icon="videocam-outline" onPress={() => void openMeeting(notification, joinUrl)} style={styles.joinButton} /> : null}
+                    {joinUrl ? <Button label="انضم الآن" icon="video" onPress={() => void openMeeting(notification, joinUrl)} style={styles.joinButton} /> : null}
                     <View style={styles.cardActions}>
-                      {!notification.isRead ? <Pressable disabled={actionPending} accessibilityLabel="تعليم كمقروء" onPress={() => markRead.mutate({ id: notification.id })}><Icon name="checkmark-circle-outline" size={19} color={colors.primary} /></Pressable> : null}
-                      <Pressable disabled={actionPending} accessibilityLabel={notification.isPinned ? "إلغاء التثبيت" : "تثبيت"} onPress={() => togglePin.mutate({ id: notification.id })}><Icon name={notification.isPinned ? "pin" : "pin-outline"} size={19} color={notification.isPinned ? palette.gold : colors.muted} /></Pressable>
-                      <Pressable disabled={actionPending} accessibilityLabel="حذف الإشعار" onPress={() => remove.mutate({ id: notification.id })}><Icon name="trash-outline" size={19} color={colors.danger} /></Pressable>
+                      {!notification.isRead ? <Pressable disabled={actionPending} accessibilityLabel="تعليم كمقروء" onPress={() => markRead.mutate({ id: notification.id })}><Icon name="check-circle" size={19} color={colors.primary} /></Pressable> : null}
+                      <Pressable disabled={actionPending} accessibilityLabel={notification.isPinned ? "إلغاء التثبيت" : "تثبيت"} onPress={() => togglePin.mutate({ id: notification.id })}><Icon name={notification.isPinned ? "pin" : "pin"} size={19} color={notification.isPinned ? palette.gold : colors.muted} /></Pressable>
+                      <Pressable disabled={actionPending} accessibilityLabel="حذف الإشعار" onPress={() => remove.mutate({ id: notification.id })}><Icon name="trash" size={19} color={colors.danger} /></Pressable>
                     </View>
                   </Card>
                 );
@@ -204,7 +204,7 @@ export function NotificationFeed({ listPath, settingsPath }: { listPath: string;
         <View style={styles.modalBackdrop}>
           <View style={[styles.modal, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.modalHeader}>
-              <Pressable onPress={() => setFilterOpen(false)}><Icon name="close" size={22} color={colors.muted} /></Pressable>
+              <Pressable onPress={() => setFilterOpen(false)}><Icon name="x" size={22} color={colors.muted} /></Pressable>
               <Text style={[styles.modalTitle, { color: colors.text }]}>تصفية الإشعارات</Text>
               <Pressable onPress={() => { setDraftTypes([]); setDraftPeriod("all"); setDraftReadStatus("all"); }}><Text style={[styles.reset, { color: colors.primary }]}>إعادة</Text></Pressable>
             </View>

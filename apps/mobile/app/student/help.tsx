@@ -37,7 +37,7 @@ export default function Help() {
 
   return (
     <StudentScreen title="المساعدة" subtitle="أسئلة شائعة وطرق التواصل">
-      <PageHero icon="help-circle-outline" title="المساعدة والدعم" subtitle="إجابات عن أكثر الأسئلة شيوعاً" />
+      <PageHero icon="help" title="المساعدة والدعم" subtitle="إجابات عن أكثر الأسئلة شيوعاً" />
 
       {FAQS.map((faq, index) => <FaqCard key={faq.q} question={faq.q} answer={faq.a} testID={`button-faq-${index + 1}`} />)}
 
@@ -64,12 +64,12 @@ export default function Help() {
           </View>
         </View>
         <View style={styles.contactActions}>
-          <Button label="اتصال" icon="call-outline" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.phoneHref)} testID="button-support-call" style={styles.contactButton} />
-          <Button label="واتساب" icon="chatbubble-ellipses-outline" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.whatsappHref)} testID="button-support-whatsapp" style={styles.contactButton} />
-          <Button label="البريد الإلكتروني" icon="mail-outline" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.emailHref)} testID="button-support-email" style={styles.contactButton} />
-          <Button label="نسخ الرقم" icon="copy-outline" variant="secondary" onPress={() => void copy(SUPPORT_CONTACT.displayPhone, "رقم الدعم")} testID="button-copy-phone" style={styles.contactButton} />
+          <Button label="اتصال" icon="phone" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.phoneHref)} testID="button-support-call" style={styles.contactButton} />
+          <Button label="واتساب" icon="send" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.whatsappHref)} testID="button-support-whatsapp" style={styles.contactButton} />
+          <Button label="البريد الإلكتروني" icon="mail" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.emailHref)} testID="button-support-email" style={styles.contactButton} />
+          <Button label="نسخ الرقم" icon="clipboard" variant="secondary" onPress={() => void copy(SUPPORT_CONTACT.displayPhone, "رقم الدعم")} testID="button-copy-phone" style={styles.contactButton} />
         </View>
-        <Button label="مركز الدعم الكامل" icon="help-buoy-outline" variant="quiet" onPress={() => router.push("/support" as never)} />
+        <Button label="مركز الدعم الكامل" icon="help" variant="quiet" onPress={() => router.push("/support" as never)} />
       </Card>
     </StudentScreen>
   );
@@ -94,7 +94,7 @@ function FaqCard({ question, answer, testID }: { question: string; answer: strin
         </View>
         <Text style={[styles.faqQuestion, { color: colors.text }]}>{question}</Text>
         <Animated.View style={{ transform: [{ rotate }] }}>
-          <Icon name="chevron-back" size={18} color={colors.muted} />
+          <Icon name="arrow-left" size={18} color={colors.muted} />
         </Animated.View>
       </Pressable>
       {open ? <Text style={[styles.faqAnswer, { color: colors.muted }]}>{answer}</Text> : null}

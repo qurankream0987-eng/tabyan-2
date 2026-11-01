@@ -92,7 +92,7 @@ export function AdminFeedbackProvider({ children }: { children: ReactNode }) {
         {state ? (
           <Animated.View pointerEvents="box-none" style={[styles.snackWrap, { bottom: insets.bottom + 16, opacity }]}>
             <View accessibilityLiveRegion="polite" accessibilityRole="alert" style={[styles.snack, { backgroundColor: background }]}>
-              <Icon name={state.tone === "error" ? "alert-circle-outline" : state.tone === "info" ? "information-circle-outline" : "checkmark-circle-outline"} size={20} color="#fff" />
+              <Icon name={state.tone === "error" ? "alert-triangle" : state.tone === "info" ? "info" : "check-circle"} size={20} color="#fff" />
               <Text style={styles.snackText}>{state.message}</Text>
             </View>
           </Animated.View>
@@ -126,7 +126,7 @@ export function IconAction({ icon, label, onPress, tone = "default", disabled = 
 }
 
 /** Compact labelled action for the screen header — stays visible at any scroll depth. */
-export function HeaderAction({ label, icon = "add", onPress, accessibilityLabel }: { label: string; icon?: string; onPress: () => void; accessibilityLabel?: string }) {
+export function HeaderAction({ label, icon = "plus", onPress, accessibilityLabel }: { label: string; icon?: string; onPress: () => void; accessibilityLabel?: string }) {
   const { colors } = useTheme();
   return (
     <SoftPressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} hitSlop={6} onPress={onPress}
@@ -167,7 +167,7 @@ export function AdminSheet({ visible, title, subtitle, onClose, dirty = false, b
           <Text accessibilityRole="header" style={[styles.sheetTitle, { color: colors.text }]} numberOfLines={2}>{title}</Text>
           {subtitle ? <Text style={[styles.sheetSubtitle, { color: colors.muted }]} numberOfLines={2}>{subtitle}</Text> : null}
         </View>
-        <IconAction icon="close" label="إغلاق" onPress={requestClose} disabled={busy} />
+        <IconAction icon="x" label="إغلاق" onPress={requestClose} disabled={busy} />
       </View>
       <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetBody} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" automaticallyAdjustKeyboardInsets={Platform.OS === "ios"} showsVerticalScrollIndicator={false}>
         {children}
@@ -228,7 +228,7 @@ export function ConfirmAction({ visible, title, itemName, impact, confirmLabel, 
         <Pressable accessibilityLabel="إلغاء" style={StyleSheet.absoluteFill} onPress={() => { if (!loading) onCancel(); }} />
         <View style={[styles.confirmSheet, { backgroundColor: colors.background, borderColor: colors.border, paddingBottom: Math.max(insets.bottom, 16) }]}>
           <View style={[styles.confirmIcon, { backgroundColor: tone === "danger" ? `${colors.danger}16` : `${palette.gold}22` }]}>
-            <Icon name={tone === "danger" ? "warning-outline" : "help-circle-outline"} size={28} color={tone === "danger" ? colors.danger : colors.primary} />
+            <Icon name={tone === "danger" ? "alert-triangle" : "help"} size={28} color={tone === "danger" ? colors.danger : colors.primary} />
           </View>
           <Text accessibilityRole="header" style={[styles.confirmTitle, { color: colors.text }]}>{title}</Text>
           {itemName ? <Text style={[styles.confirmItem, { color: colors.primary }]}>«{itemName}»</Text> : null}
@@ -375,13 +375,13 @@ export function SwitchRow({ label, helper, value, onChange, disabled = false }: 
 export function FormError({ message }: { message?: string | null }) {
   const { colors } = useTheme();
   if (!message) return null;
-  return <View accessibilityLiveRegion="polite" style={[styles.formError, { borderColor: `${colors.danger}55`, backgroundColor: `${colors.danger}10` }]}><Icon name="alert-circle-outline" size={18} color={colors.danger} /><Text style={[styles.formErrorText, { color: colors.danger }]}>{message}</Text></View>;
+  return <View accessibilityLiveRegion="polite" style={[styles.formError, { borderColor: `${colors.danger}55`, backgroundColor: `${colors.danger}10` }]}><Icon name="alert-triangle" size={18} color={colors.danger} /><Text style={[styles.formErrorText, { color: colors.danger }]}>{message}</Text></View>;
 }
 
 /* ───────────────────────── lists, search & filters ───────────────────────── */
 
 /** Page toolbar: count + primary action, aligned RTL. */
-export function AdminToolbar({ count, countLabel, actionLabel, onAction, actionIcon = "add-outline" }: { count?: number; countLabel?: string; actionLabel?: string; onAction?: () => void; actionIcon?: string }) {
+export function AdminToolbar({ count, countLabel, actionLabel, onAction, actionIcon = "plus" }: { count?: number; countLabel?: string; actionLabel?: string; onAction?: () => void; actionIcon?: string }) {
   const { colors } = useTheme();
   return (
     <View style={styles.toolbar}>
@@ -396,15 +396,15 @@ export function AdminSearchBar({ value, onChange, placeholder = "بحث…", fil
   return (
     <View style={styles.searchRow}>
       <View style={[styles.searchBox, { backgroundColor: colors.input, borderColor: colors.border }]}>
-        <Icon name="search-outline" size={18} color={colors.muted} />
+        <Icon name="search" size={18} color={colors.muted} />
         <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={colors.muted} accessibilityLabel={placeholder} returnKeyType="search"
           style={[styles.searchInput, { color: colors.text }]} />
-        {value ? <Pressable accessibilityLabel="مسح البحث" hitSlop={10} onPress={() => onChange("")}><Icon name="close-circle" size={18} color={colors.muted} /></Pressable> : null}
+        {value ? <Pressable accessibilityLabel="مسح البحث" hitSlop={10} onPress={() => onChange("")}><Icon name="x-circle" size={18} color={colors.muted} /></Pressable> : null}
       </View>
       {onOpenFilters ? (
         <SoftPressable accessibilityRole="button" accessibilityLabel={filterCount ? `الفلاتر، ${filterCount} مفعّلة` : "الفلاتر"} onPress={onOpenFilters}
           style={[styles.filterButton, { backgroundColor: filterCount ? colors.primary : colors.input, borderColor: filterCount ? colors.primary : colors.border }]}>
-          <Icon name="options-outline" size={20} color={filterCount ? colors.primaryText : colors.primary} />
+          <Icon name="filter" size={20} color={filterCount ? colors.primaryText : colors.primary} />
           {filterCount ? <View style={[styles.filterBadge, { backgroundColor: palette.gold }]}><Text style={styles.filterBadgeText}>{filterCount}</Text></View> : null}
         </SoftPressable>
       ) : null}

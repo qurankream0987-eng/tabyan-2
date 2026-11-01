@@ -137,7 +137,7 @@ export default function Users() {
     <AdminSearchBar value={query} onChange={setQuery} placeholder="بحث بالاسم أو الهاتف…" />
     <View style={styles.filters}>
       {roles.map(([key, label]) => <Button key={key} label={label} variant={role === key ? "primary" : "secondary"} disabled={pending} style={styles.filter} onPress={() => setRole(key)} />)}
-      <Button label="تصدير CSV" variant="secondary" icon="download-outline" disabled={pending} style={styles.filter} onPress={() => void exportCsv()} />
+      <Button label="تصدير CSV" variant="secondary" icon="download" disabled={pending} style={styles.filter} onPress={() => void exportCsv()} />
     </View>
     {q.data ? <Text style={[styles.count, { color: colors.muted }]}>{rows.length} مستخدم</Text> : null}
 

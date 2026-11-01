@@ -24,24 +24,24 @@ type ToggleKey =
 type SettingRow = { key: ToggleKey; label: string; hint: string; icon: string };
 
 const TYPE_SETTINGS: SettingRow[] = [
-  { key: "sessionReminders", label: "تذكير الجلسات", hint: "تنبيه قبل بدء كل جلسة", icon: "time-outline" },
-  { key: "sessionChanges", label: "تغييرات المواعيد", hint: "عند تعديل أو إلغاء موعد", icon: "calendar-outline" },
-  { key: "evaluations", label: "التقييمات", hint: "عند وصول تقييم جديد من المعلم", icon: "star-outline" },
-  { key: "achievements", label: "الإنجازات", hint: "الشهادات وإتمام المستويات", icon: "ribbon-outline" },
-  { key: "announcements", label: "إعلانات الإدارة", hint: "التعميمات والأخبار", icon: "notifications-outline" },
-  { key: "ayahOfDay", label: "آية اليوم", hint: "آية يومية للتدبر", icon: "book-outline" },
-  { key: "payments", label: "المدفوعات", hint: "الفواتير والاشتراكات", icon: "receipt-outline" },
+  { key: "sessionReminders", label: "تذكير الجلسات", hint: "تنبيه قبل بدء كل جلسة", icon: "clock" },
+  { key: "sessionChanges", label: "تغييرات المواعيد", hint: "عند تعديل أو إلغاء موعد", icon: "calendar" },
+  { key: "evaluations", label: "التقييمات", hint: "عند وصول تقييم جديد من المعلم", icon: "star" },
+  { key: "achievements", label: "الإنجازات", hint: "الشهادات وإتمام المستويات", icon: "certificate" },
+  { key: "announcements", label: "إعلانات الإدارة", hint: "التعميمات والأخبار", icon: "bell" },
+  { key: "ayahOfDay", label: "آية اليوم", hint: "آية يومية للتدبر", icon: "quran" },
+  { key: "payments", label: "المدفوعات", hint: "الفواتير والاشتراكات", icon: "file-text" },
 ];
 
 const DND_SETTINGS: SettingRow[] = [
-  { key: "dndDuringPrayer", label: "صامت وقت الصلاة", hint: "إيقاف التنبيهات في أوقات الصلاة", icon: "moon-outline" },
-  { key: "dndDuringSession", label: "صامت أثناء الجلسة", hint: "إيقاف التنبيهات أثناء جلساتك", icon: "mic-off-outline" },
+  { key: "dndDuringPrayer", label: "صامت وقت الصلاة", hint: "إيقاف التنبيهات في أوقات الصلاة", icon: "mosque" },
+  { key: "dndDuringSession", label: "صامت أثناء الجلسة", hint: "إيقاف التنبيهات أثناء جلساتك", icon: "mic-off" },
 ];
 
 const CHANNEL_SETTINGS: SettingRow[] = [
-  { key: "pushEnabled", label: "الإشعارات الفورية", hint: "استلام التنبيهات داخل المنصة", icon: "notifications-outline" },
-  { key: "soundEnabled", label: "الصوت", hint: "نغمة عند وصول إشعار", icon: "headset-outline" },
-  { key: "vibrationEnabled", label: "الاهتزاز", hint: "اهتزاز الجهاز عند التنبيه", icon: "phone-portrait-outline" },
+  { key: "pushEnabled", label: "الإشعارات الفورية", hint: "استلام التنبيهات داخل المنصة", icon: "bell" },
+  { key: "soundEnabled", label: "الصوت", hint: "نغمة عند وصول إشعار", icon: "headphones" },
+  { key: "vibrationEnabled", label: "الاهتزاز", hint: "اهتزاز الجهاز عند التنبيه", icon: "phone" },
 ];
 
 const REMINDER_OPTIONS = [
@@ -52,10 +52,10 @@ const REMINDER_OPTIONS = [
 ] as const;
 
 const AYAH_TIME_OPTIONS = [
-  { value: "05:00", label: "الفجر", icon: "moon-outline" },
-  { value: "12:00", label: "الظهر", icon: "sunny-outline" },
-  { value: "18:30", label: "المغرب", icon: "sunny-outline" },
-  { value: "20:00", label: "العشاء", icon: "moon-outline" },
+  { value: "05:00", label: "الفجر", icon: "moon" },
+  { value: "12:00", label: "الظهر", icon: "sun" },
+  { value: "18:30", label: "المغرب", icon: "sun" },
+  { value: "20:00", label: "العشاء", icon: "moon" },
 ] as const;
 
 export function NotificationSettingsScreen({ listPath }: { listPath: string }) {

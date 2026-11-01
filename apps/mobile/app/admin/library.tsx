@@ -22,7 +22,7 @@ import { resolveLibraryAsset } from "../../lib/media/library-media";
 import { uploadNativeFile } from "../../lib/media/mobile-upload";
 
 const options = (pairs: readonly (readonly [string, string])[]) => pairs.map(([value, label]) => ({ value, label }));
-const TYPE_ICON: Record<string, string> = { pdf: "document-text-outline", text: "reader-outline", audio: "headset-outline", video: "videocam-outline", link: "link-outline" };
+const TYPE_ICON: Record<string, string> = { pdf: "file-text", text: "clipboard", audio: "headphones", video: "video", link: "link" };
 
 export default function Library() {
   const { colors } = useTheme();
@@ -148,10 +148,10 @@ export default function Library() {
   const menuActions = (book: LibraryBookRow) => {
     const toggle = libraryStatusToggle(book.status);
     return [
-      { key: "view", label: "عرض التفاصيل", icon: "eye-outline", onPress: () => setViewing(book) },
-      { key: "edit", label: "تعديل الكتاب", icon: "create-outline", onPress: () => setDraft(libraryDraftFromBook(book)) },
-      ...(toggle ? [{ key: "status", label: toggle.next === "archived" ? "أرشفة الكتاب" : "استعادة الكتاب", icon: toggle.next === "archived" ? "archive-outline" : "refresh-outline", hint: toggle.next === "archived" ? "يختفي من مكتبة الطلاب" : "يعود للظهور للطلاب", onPress: () => toggleStatus(book), disabled: statusPendingId === book.id }] : []),
-      { key: "delete", label: "حذف نهائي", icon: "trash-outline", danger: true, onPress: () => setDeleting(book) },
+      { key: "view", label: "عرض التفاصيل", icon: "eye", onPress: () => setViewing(book) },
+      { key: "edit", label: "تعديل الكتاب", icon: "edit", onPress: () => setDraft(libraryDraftFromBook(book)) },
+      ...(toggle ? [{ key: "status", label: toggle.next === "archived" ? "أرشفة الكتاب" : "استعادة الكتاب", icon: toggle.next === "archived" ? "archive" : "archive-restore", hint: toggle.next === "archived" ? "يختفي من مكتبة الطلاب" : "يعود للظهور للطلاب", onPress: () => toggleStatus(book), disabled: statusPendingId === book.id }] : []),
+      { key: "delete", label: "حذف نهائي", icon: "trash", danger: true, onPress: () => setDeleting(book) },
     ];
   };
 
@@ -167,15 +167,15 @@ export default function Library() {
       {q.isLoading || levels.isLoading ? <ListSkeleton /> : q.error || levels.error ? (
         <ErrorState message="تعذر تحميل الكتب. تحقق من الاتصال وحاول مرة أخرى." onRetry={() => { void q.refetch(); void levels.refetch(); }} />
       ) : !all.length ? (
-        <EmptyState title="المكتبة فارغة" description="ابدأ بإضافة أول كتاب ليظهر للطلاب." icon="library-outline" action="إضافة كتاب" onAction={() => setDraft(emptyLibraryDraft())} />
+        <EmptyState title="المكتبة فارغة" description="ابدأ بإضافة أول كتاب ليظهر للطلاب." icon="library" action="إضافة كتاب" onAction={() => setDraft(emptyLibraryDraft())} />
       ) : !rows.length ? (
-        <EmptyState title="لا نتائج مطابقة" description="غيّر عبارة البحث أو امسح الفلاتر." icon="search-outline" action={filterCount ? "مسح الفلاتر" : undefined} onAction={() => setFilters(EMPTY_LIBRARY_FILTERS)} />
+        <EmptyState title="لا نتائج مطابقة" description="غيّر عبارة البحث أو امسح الفلاتر." icon="search" action={filterCount ? "مسح الفلاتر" : undefined} onAction={() => setFilters(EMPTY_LIBRARY_FILTERS)} />
       ) : rows.map((book) => (
-        <AdminRow key={book.id} title={book.title} subtitle={libraryBookMeta(book, levelName)} leadingIcon={TYPE_ICON[book.contentType] ?? "book-outline"}
+        <AdminRow key={book.id} title={book.title} subtitle={libraryBookMeta(book, levelName)} leadingIcon={TYPE_ICON[book.contentType] ?? "books"}
           muted={book.status === "archived"} onPress={() => setViewing(book)}
           badges={book.status !== "published" ? <Badge label={libraryStatusLabel(book.status)} tone="muted" /> : undefined}
           actions={<>
-            <IconAction icon="create-outline" label={`تعديل ${book.title}`} onPress={() => setDraft(libraryDraftFromBook(book))} />
+            <IconAction icon="edit" label={`تعديل ${book.title}`} onPress={() => setDraft(libraryDraftFromBook(book))} />
             <IconAction icon="ellipsis-horizontal" label={`خيارات ${book.title}`} loading={statusPendingId === book.id} onPress={() => setMenuFor(book)} />
           </>} />
       ))}
@@ -201,14 +201,14 @@ export default function Library() {
               onChange={(source) => setDraft((current) => (current ? withLibrarySource(current, source as LibraryBookDraft["sourceType"]) : current))} />
             {uploadedPdf ? (
               <FormField label="ملف الكتاب" required error={errors.file} helper={draft.fileObjectKey ? "الملف الحالي موجود — يمكنك استبداله" : "PDF حتى 500 ميجابايت"}>
-                <Button label={uploading === "file" ? "جارٍ رفع الملف…" : draft.fileObjectKey ? "استبدال ملف PDF" : "اختيار ملف PDF"} variant="secondary" icon="cloud-upload-outline" loading={uploading === "file"} disabled={!!uploading} onPress={() => void pickPdf()} />
+                <Button label={uploading === "file" ? "جارٍ رفع الملف…" : draft.fileObjectKey ? "استبدال ملف PDF" : "اختيار ملف PDF"} variant="secondary" icon="upload" loading={uploading === "file"} disabled={!!uploading} onPress={() => void pickPdf()} />
               </FormField>
             ) : <FormInput label="رابط PDF" value={draft.externalUrl} onChangeText={(externalUrl) => patch({ externalUrl })} placeholder="https://…" ltr keyboardType="url" error={errors.externalUrl} />}
           </> : null}
           {draft.contentType === "link" ? <FormInput label="الرابط الخارجي" required value={draft.externalUrl} onChangeText={(externalUrl) => patch({ externalUrl })} placeholder="https://…" ltr keyboardType="url" error={errors.externalUrl} /> : null}
           {draft.contentType === "audio" || draft.contentType === "video" ? <>
             <FormInput label={draft.contentType === "audio" ? "رابط الملف الصوتي" : "رابط الفيديو"} value={draft.fileUrl} onChangeText={(fileUrl) => patch({ fileUrl })} placeholder="https://… أو ارفع الملف" ltr keyboardType="url" error={errors.fileUrl} />
-            <Button label={uploading === "file" ? "جارٍ رفع الملف…" : "رفع ملف من الجهاز"} variant="secondary" icon="cloud-upload-outline" loading={uploading === "file"} disabled={!!uploading} onPress={() => void pickMedia()} />
+            <Button label={uploading === "file" ? "جارٍ رفع الملف…" : "رفع ملف من الجهاز"} variant="secondary" icon="upload" loading={uploading === "file"} disabled={!!uploading} onPress={() => void pickMedia()} />
             <View style={styles.gap} />
           </> : null}
           {draft.contentType === "text" ? <FormInput label="محتوى الكتاب" required multiline value={draft.textContent} onChangeText={(textContent) => patch({ textContent })} error={errors.textContent} /> : null}
@@ -217,7 +217,7 @@ export default function Library() {
           <FormField label="الغلاف" helper="صورة من الجهاز أو رابط جاهز">
             <View style={styles.coverRow}>
               {coverSource ? <Image source={{ uri: coverSource }} style={[styles.cover, { borderColor: colors.border }]} accessibilityLabel="معاينة الغلاف" /> : null}
-              <Button label={uploading === "cover" ? "جارٍ رفع الغلاف…" : draft.coverUrl ? "تغيير الغلاف" : "اختيار صورة"} variant="secondary" icon="image-outline" style={styles.flex} loading={uploading === "cover"} disabled={!!uploading} onPress={() => void pickCover()} />
+              <Button label={uploading === "cover" ? "جارٍ رفع الغلاف…" : draft.coverUrl ? "تغيير الغلاف" : "اختيار صورة"} variant="secondary" icon="photo" style={styles.flex} loading={uploading === "cover"} disabled={!!uploading} onPress={() => void pickCover()} />
             </View>
           </FormField>
           <FormInput label="رابط الغلاف" value={draft.coverUrl} onChangeText={(coverUrl) => patch({ coverUrl })} placeholder="https://…" ltr keyboardType="url" />
@@ -232,8 +232,8 @@ export default function Library() {
 
       <AdminSheet visible={!!viewing} title={viewing?.title ?? ""} subtitle={viewing ? libraryStatusLabel(viewing.status) : undefined} onClose={() => setViewing(null)} onDismissed={onDismissed}
         footer={viewing ? <View style={styles.viewFooter}>
-          <Button label="حذف" variant="danger" icon="trash-outline" style={styles.flex} onPress={() => { const book = viewing; chain(() => setViewing(null), () => setDeleting(book)); }} />
-          <Button label="تعديل" icon="create-outline" style={styles.flexWide} onPress={() => { const book = viewing; chain(() => setViewing(null), () => setDraft(libraryDraftFromBook(book))); }} />
+          <Button label="حذف" variant="danger" icon="trash" style={styles.flex} onPress={() => { const book = viewing; chain(() => setViewing(null), () => setDeleting(book)); }} />
+          <Button label="تعديل" icon="edit" style={styles.flexWide} onPress={() => { const book = viewing; chain(() => setViewing(null), () => setDraft(libraryDraftFromBook(book))); }} />
         </View> : null}>
         {viewing ? <>
           {viewing.coverUrl ? <Image source={{ uri: resolveLibraryAsset(viewing.coverUrl, token) }} style={[styles.viewCover, { borderColor: colors.border }]} accessibilityLabel="غلاف الكتاب" /> : null}
@@ -246,7 +246,7 @@ export default function Library() {
             <View key={label} style={[styles.detail, { borderBottomColor: colors.border }]}><Text style={[styles.detailLabel, { color: colors.muted }]}>{label}</Text><Text style={[styles.detailValue, { color: colors.text }]}>{value}</Text></View>
           ))}
           {viewing.description ? <Text style={[styles.description, { color: colors.text }]}>{viewing.description}</Text> : null}
-          {libraryStatusToggle(viewing.status) ? <Button label={libraryStatusToggle(viewing.status)!.next === "archived" ? "أرشفة الكتاب" : "استعادة الكتاب"} variant="secondary" icon="archive-outline" loading={statusPendingId === viewing.id} onPress={() => { const book = viewing; if (book.status === "published") chain(() => setViewing(null), () => setArchiving(book)); else toggleStatus(book); }} /> : null}
+          {libraryStatusToggle(viewing.status) ? <Button label={libraryStatusToggle(viewing.status)!.next === "archived" ? "أرشفة الكتاب" : "استعادة الكتاب"} variant="secondary" icon="archive" loading={statusPendingId === viewing.id} onPress={() => { const book = viewing; if (book.status === "published") chain(() => setViewing(null), () => setArchiving(book)); else toggleStatus(book); }} /> : null}
         </> : null}
       </AdminSheet>
 

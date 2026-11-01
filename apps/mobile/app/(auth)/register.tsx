@@ -561,7 +561,7 @@ export default function Register() {
                 testID="register-detect-country"
                 label={locating ? "جارٍ تحديد موقعك…" : "استخدم موقعي لتحديد الدولة تلقائياً"}
                 variant="quiet"
-                icon="location-outline"
+                icon="map-pin"
                 loading={locating}
                 onPress={() => void locateCountry()}
                 style={styles.locateButton}

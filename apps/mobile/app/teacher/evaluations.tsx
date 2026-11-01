@@ -17,7 +17,7 @@ export default function Evaluations() {
         <Card key={s.id} style={styles.card}>
           <View style={styles.row}>
             <View style={[styles.icon, { backgroundColor: `${colors.primary}14` }]}>
-              <Icon name="create-outline" size={20} color={colors.primary} />
+              <Icon name="edit" size={20} color={colors.primary} />
             </View>
             <View style={styles.body}>
               <Text style={[styles.title, { color: colors.text }]}>{s.typeLabel ?? s.sessionType}{s.topic ? ` — ${s.topic}` : ""}</Text>

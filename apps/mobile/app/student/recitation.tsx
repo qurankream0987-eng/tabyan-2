@@ -596,7 +596,7 @@ export default function NativeRecitationScreen() {
             {errorText ? <Text style={[styles.inlineError, { color: colors.danger }]}>{errorText}</Text> : null}
             <Button
               label={assignment ? "ابدأ تسميع الواجب" : "بدء جلسة عامة"}
-              icon="mic-outline"
+              icon="mic"
               disabled={!canStart}
               loading={startMutation.isPending}
               onPress={() => void beginSession()}
@@ -674,14 +674,14 @@ export default function NativeRecitationScreen() {
           <View style={styles.controls}>
             <View style={styles.controlRow}>
               {phase === "listening" ? (
-                <Button label="إيقاف مؤقت" variant="secondary" icon="pause-outline" loading={pauseMutation.isPending} onPress={() => void pauseSession()} />
+                <Button label="إيقاف مؤقت" variant="secondary" icon="pause" loading={pauseMutation.isPending} onPress={() => void pauseSession()} />
               ) : (
-                <Button label="استئناف" variant="secondary" icon="play-outline" loading={resumeMutation.isPending} onPress={() => void resumeSession()} />
+                <Button label="استئناف" variant="secondary" icon="play" loading={resumeMutation.isPending} onPress={() => void resumeSession()} />
               )}
-              <Button label="إنهاء التسميع" variant="primary" icon="stop-outline" onPress={() => void endSession()} />
+              <Button label="إنهاء التسميع" variant="primary" icon="stop" onPress={() => void endSession()} />
             </View>
             {hideMode !== "visible_review" ? (
-              <Button label="تلميح: أظهر الكلمة التالية" variant="secondary" icon="bulb-outline" disabled={phase !== "listening"} onPress={showHint} />
+              <Button label="تلميح: أظهر الكلمة التالية" variant="secondary" icon="eye" disabled={phase !== "listening"} onPress={showHint} />
             ) : null}
             <Button label="إلغاء دون احتساب إكمال" variant="quiet" onPress={() => void cancelSession()} />
           </View>
@@ -702,7 +702,7 @@ export default function NativeRecitationScreen() {
                   : ""}
               </Text>
               {submitState === "failed" ? (
-                <Button label="إعادة الإرسال" variant="secondary" icon="refresh-outline" onPress={() => void submitAssignment()} />
+                <Button label="إعادة الإرسال" variant="secondary" icon="refresh" onPress={() => void submitAssignment()} />
               ) : null}
               <Text style={[styles.smallText, { color: colors.muted }]}>
                 الأرقام محسوبة على جهازك آلياً، والتقييم لمعلمك.
@@ -714,7 +714,7 @@ export default function NativeRecitationScreen() {
             </Text>
           )}
           {errorText ? <Text style={[styles.smallText, { color: colors.muted }]}>{errorText}</Text> : null}
-          <Button label="جلسة جديدة" icon="refresh-outline" disabled={submitState === "sending"} onPress={() => resetScreen()} />
+          <Button label="جلسة جديدة" icon="refresh" disabled={submitState === "sending"} onPress={() => resetScreen()} />
         </Card>
       ) : null}
       {phase === "cancelled" ? (
@@ -735,9 +735,9 @@ export default function NativeRecitationScreen() {
             </>
           ) : null}
           {sessionIdRef.current ? (
-            <Button label="إعادة محاولة إغلاق الجلسة" variant="secondary" icon="refresh-outline" onPress={() => void retrySessionCleanup()} />
+            <Button label="إعادة محاولة إغلاق الجلسة" variant="secondary" icon="refresh" onPress={() => void retrySessionCleanup()} />
           ) : (
-            <Button label="إعداد جلسة جديدة" variant="secondary" icon="refresh-outline" onPress={() => resetScreen()} />
+            <Button label="إعداد جلسة جديدة" variant="secondary" icon="refresh" onPress={() => resetScreen()} />
           )}
         </Card>
       ) : null}
@@ -812,7 +812,7 @@ function AssignmentList({
       <View style={styles.assignmentHeader}>
         <Text style={[styles.cardTitle, styles.grow, { color: colors.text }]}>واجبات التسميع</Text>
         <Pressable accessibilityRole="button" onPress={onHistory} hitSlop={8} style={styles.historyLink}>
-          <Icon name="time-outline" size={16} color={colors.primary} />
+          <Icon name="clock" size={16} color={colors.primary} />
           <Text style={[styles.historyLinkText, { color: colors.primary }]}>سجل التسميع</Text>
         </Pressable>
       </View>
@@ -854,7 +854,7 @@ function AssignmentList({
               <Button
                 label={assignment.status === "submitted" ? "أعد التسميع" : "ابدأ التسميع"}
                 variant={assignment.status === "submitted" ? "secondary" : "primary"}
-                icon="mic-outline"
+                icon="mic"
                 onPress={() => onStart(assignment)}
               />
             ) : null}

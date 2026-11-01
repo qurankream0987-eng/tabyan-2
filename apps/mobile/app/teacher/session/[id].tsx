@@ -106,12 +106,12 @@ export default function SessionRoom() {
                 onRecordingReady={saveRecording}
                 onLeave={() => router.replace("/teacher")}
               />
-              <Button label={end.isPending ? "جارٍ إنهاء الحلقة…" : "إنهاء الحلقة وتقييم الطالب"} icon="stop-circle-outline" variant="danger" loading={end.isPending} disabled={end.isPending} onPress={finish} />
+              <Button label={end.isPending ? "جارٍ إنهاء الحلقة…" : "إنهاء الحلقة وتقييم الطالب"} icon="stop" variant="danger" loading={end.isPending} disabled={end.isPending} onPress={finish} />
             </>
           ) : canStart ? (
-            <Button label={start.isPending ? "جارٍ بدء الحلقة…" : "بدء الحلقة"} icon="play-circle-outline" loading={start.isPending} disabled={start.isPending} onPress={() => start.mutate({ id: String(id) })} />
+            <Button label={start.isPending ? "جارٍ بدء الحلقة…" : "بدء الحلقة"} icon="play" loading={start.isPending} disabled={start.isPending} onPress={() => start.mutate({ id: String(id) })} />
           ) : s.status === "completed" ? (
-            <Button label="تقييم الطالب" icon="create-outline" variant="secondary" onPress={() => router.push(`/teacher/evaluate/${id}`)} />
+            <Button label="تقييم الطالب" icon="edit" variant="secondary" onPress={() => router.push(`/teacher/evaluate/${id}`)} />
           ) : null}
         </>
       ) : <EmptyState title="لم تُعثر على الحصة" />}

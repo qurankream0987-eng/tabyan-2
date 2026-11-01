@@ -77,7 +77,7 @@ export function PlacementPreview({
                 state === "active" && { backgroundColor: colors.primary },
               ]}>
                 {state === "done"
-                  ? <Icon name="checkmark" size={13} color={colors.primaryText} />
+                  ? <Icon name="check" size={13} color={colors.primaryText} />
                   : <Text style={[styles.stepNumber, { color: state === "next" ? colors.muted : colors.primaryText }]}>
                       {toArabicDigits(index + 1)}
                     </Text>}
@@ -114,7 +114,7 @@ export function PlacementPreview({
           />
         ) : (
           <View style={styles.unavailable}>
-            <Icon name="videocam-off-outline" size={28} color={colors.muted} />
+            <Icon name="video-off" size={28} color={colors.muted} />
             <Text style={[styles.unavailableText, { color: colors.muted }]}>
               تعذرت معاينة الفيديو لأن الملف غير قابل للقراءة أو لا يحتوي على صورة صالحة.
             </Text>
@@ -129,7 +129,7 @@ export function PlacementPreview({
             return (
               <View key={key} style={styles.validationRow}>
                 <Icon
-                  name={passed ? "checkmark-circle-outline" : "alert-circle-outline"}
+                  name={passed ? "check-circle" : "alert-triangle"}
                   size={17}
                   color={passed ? colors.success : colors.danger}
                 />
@@ -169,7 +169,7 @@ export function PlacementPreview({
           <Button
             testID="placement-attempt-resync"
             label={reservingAttempt ? "جارٍ تثبيت المحاولة…" : "إعادة مزامنة المحاولة"}
-            icon="sync-outline"
+            icon="refresh"
             loading={reservingAttempt}
             disabled={reservingAttempt || isUploading || submitPending}
             onPress={onResyncAttempt}
@@ -186,7 +186,7 @@ export function PlacementPreview({
         <Button
           testID="placement-submit-button"
           label={isUploading ? "جارٍ الإرسال…" : "إرسال الاختبار"}
-          icon="cloud-upload-outline"
+          icon="upload"
           loading={isUploading || submitPending}
           disabled={!model.submissionReady || !workflowReady || isUploading || submitPending}
           onPress={onSubmit}
@@ -195,7 +195,7 @@ export function PlacementPreview({
         <Button
           testID="placement-rerecord-button"
           label="إعادة التسجيل"
-          icon="refresh-outline"
+          icon="refresh"
           disabled={!model.canRerecord || !canReset || isUploading || submitPending}
           onPress={onRerecord}
         />
@@ -208,7 +208,7 @@ export function PlacementPreview({
       {model.submissionReady && model.canRerecord ? (
         <Button
           label="حذف التسجيل وإعادة المحاولة"
-          icon="refresh-outline"
+          icon="refresh"
           variant="secondary"
           disabled={!canReset || isUploading || submitPending}
           onPress={onRerecord}

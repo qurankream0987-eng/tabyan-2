@@ -8,7 +8,7 @@ import { NotificationFeed } from "../../components/notifications/notification-fe
 export default function Inbox() {
   const router = useRouter();
   const { colors } = useTheme();
-  const settingsButton = <Pressable accessibilityLabel="إعدادات الإشعارات" onPress={() => router.push("/admin/inbox/settings" as never)} style={styles.settingsButton}><Icon name="settings-outline" size={20} color={colors.primary} /></Pressable>;
+  const settingsButton = <Pressable accessibilityLabel="إعدادات الإشعارات" onPress={() => router.push("/admin/inbox/settings" as never)} style={styles.settingsButton}><Icon name="settings" size={20} color={colors.primary} /></Pressable>;
   return (
     <AdminFrame title="صندوق الوارد" right={settingsButton}>
       <NotificationFeed listPath="/admin/inbox" settingsPath="/admin/inbox/settings" />

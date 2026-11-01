@@ -2,6 +2,7 @@ import { Animated, Easing, Image, Modal, Pressable, ScrollView, StyleSheet, Text
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { SvgIcon, resolveIcon } from "./svg-icon";
 import { navigateToWelcome, useAuth, type Role } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -17,57 +18,59 @@ type MenuItem = {
 };
 
 function MenuIcon({ name, size, color }: { name: string; size: number; color: string }) {
+  const web = resolveIcon(name);
+  if (web) return <SvgIcon name={web.name} rotate={web.rotate} size={size} color={color} />;
   return <Ionicons name={name as keyof typeof Ionicons.glyphMap} size={size} color={color} />;
 }
 
 export const MENUS: Record<Role, MenuItem[]> = {
   student: [
-    { href: "/student/path", label: "المسارات التعليمية", icon: "git-branch-outline", section: "main" },
-    { href: "/student/account", label: "الملف الشخصي", icon: "person-outline", section: "main" },
-    { href: "/student/schedule", label: "الجدول الأسبوعي", icon: "calendar-outline", section: "main" },
-    { href: "/student/progress", label: "تقدمي", icon: "bar-chart-outline", section: "main" },
-    { href: "/student/recordings", label: "حلقاتي المسجلة", icon: "videocam-outline", section: "main" },
-    { href: "/student/library", label: "مكتبتي", icon: "library-outline", section: "main" },
-    { href: "/student/fatwa", label: "فتاواي", icon: "scale-outline", section: "main" },
-    { href: "/student/ijazat", label: "إجازاتي", icon: "ribbon-outline", section: "main" },
-    { href: "/student/account", label: "الإعدادات", icon: "settings-outline", section: "secondary" },
-    { href: "/student/notifications", label: "الإشعارات", icon: "notifications-outline", section: "secondary" },
-    { href: "/support", label: "فريق دعم تبيان", icon: "help-circle-outline", section: "secondary" },
-    { href: "/privacy", label: "سياسة الخصوصية", icon: "shield-checkmark-outline", section: "secondary" },
-    { href: "/teacher-register", label: "التسجيل كمعلم", icon: "clipboard-outline", section: "access" },
-    { href: "/login?role=admin", label: "بوابة الإشراف", icon: "shield-outline", section: "access" },
+    { href: "/student/path", label: "المسارات التعليمية", icon: "trending-up", section: "main" },
+    { href: "/student/account", label: "الملف الشخصي", icon: "user", section: "main" },
+    { href: "/student/schedule", label: "الجدول الأسبوعي", icon: "calendar", section: "main" },
+    { href: "/student/progress", label: "تقدمي", icon: "chart", section: "main" },
+    { href: "/student/recordings", label: "حلقاتي المسجلة", icon: "video", section: "main" },
+    { href: "/student/library", label: "مكتبتي", icon: "library", section: "main" },
+    { href: "/student/fatwa", label: "فتاواي", icon: "scale", section: "main" },
+    { href: "/student/ijazat", label: "إجازاتي", icon: "certificate", section: "main" },
+    { href: "/student/account", label: "الإعدادات", icon: "settings", section: "secondary" },
+    { href: "/student/notifications", label: "الإشعارات", icon: "bell", section: "secondary" },
+    { href: "/support", label: "فريق دعم تبيان", icon: "help", section: "secondary" },
+    { href: "/privacy", label: "سياسة الخصوصية", icon: "shield", section: "secondary" },
+    { href: "/teacher-register", label: "التسجيل كمعلم", icon: "clipboard", section: "access" },
+    { href: "/login?role=admin", label: "بوابة الإشراف", icon: "shield", section: "access" },
   ],
   teacher: [
-    { href: "/teacher", label: "لوحة التحكم", icon: "home-outline", exact: true, section: "main" },
-    { href: "/teacher/schedule", label: "جدولي", icon: "calendar-outline", section: "main" },
-    { href: "/teacher/students", label: "طلابي", icon: "people-outline", section: "main" },
-    { href: "/teacher/recordings", label: "حلقاتي المُسجَّلة", icon: "videocam-outline", section: "main" },
-    { href: "/teacher/fatwas", label: "فتاواي", icon: "scale-outline", section: "main" },
-    { href: "/teacher/evaluations", label: "تقييماتي", icon: "bar-chart-outline", section: "main" },
-    { href: "/teacher/broadcast", label: "الإشعارات الجماعية", icon: "notifications-outline", section: "main" },
-    { href: "/teacher/settings", label: "الإعدادات", icon: "settings-outline", section: "main" },
-    { href: "/login?role=admin", label: "بوابة الإشراف", icon: "shield-outline", section: "access" },
+    { href: "/teacher", label: "لوحة التحكم", icon: "home", exact: true, section: "main" },
+    { href: "/teacher/schedule", label: "جدولي", icon: "calendar", section: "main" },
+    { href: "/teacher/students", label: "طلابي", icon: "users", section: "main" },
+    { href: "/teacher/recordings", label: "حلقاتي المُسجَّلة", icon: "video", section: "main" },
+    { href: "/teacher/fatwas", label: "فتاواي", icon: "scale", section: "main" },
+    { href: "/teacher/evaluations", label: "تقييماتي", icon: "chart", section: "main" },
+    { href: "/teacher/broadcast", label: "الإشعارات الجماعية", icon: "bell", section: "main" },
+    { href: "/teacher/settings", label: "الإعدادات", icon: "settings", section: "main" },
+    { href: "/login?role=admin", label: "بوابة الإشراف", icon: "shield", section: "access" },
   ],
   admin: [
-    { href: "/admin", label: "الرئيسية", icon: "home-outline", exact: true },
-    { href: "/admin/accounts", label: "إدارة الحسابات", icon: "shield-outline" },
-    { href: "/admin/users", label: "المستخدمون", icon: "people-outline" },
-    { href: "/admin/schedules", label: "الجداول والمواعيد", icon: "calendar-outline" },
-    { href: "/admin/sessions-monitoring", label: "متابعة الحلقات", icon: "videocam-outline" },
-    { href: "/admin/library", label: "المكتبة", icon: "library-outline" },
-    { href: "/admin/qiraat", label: "شهادات الإجازة", icon: "ribbon-outline" },
-    { href: "/admin/promotions", label: "طلبات الترقية", icon: "school-outline" },
-    { href: "/admin/levels", label: "إدارة المستويات", icon: "school-outline" },
-    { href: "/admin/sharia", label: "الدروس الشرعية", icon: "book-outline" },
-    { href: "/admin/students-review", label: "مراجعة الطلاب", icon: "videocam-outline" },
-    { href: "/admin/teachers-review", label: "مراجعة المعلمين", icon: "person-outline" },
-    { href: "/admin/fatwas", label: "الفتاوى", icon: "scale-outline" },
-    { href: "/admin/muftis", label: "المفتون", icon: "bookmark-outline" },
-    { href: "/admin/assessments", label: "منشئ التقييمات", icon: "clipboard-outline" },
-    { href: "/admin/analytics", label: "التحليلات", icon: "bar-chart-outline" },
-    { href: "/admin/notifications", label: "مركز الإشعارات", icon: "notifications-outline" },
-    { href: "/admin/audit-log", label: "سجل التدقيق", icon: "clipboard-outline" },
-    { href: "/admin/settings", label: "الإعدادات", icon: "settings-outline" },
+    { href: "/admin", label: "الرئيسية", icon: "home", exact: true },
+    { href: "/admin/accounts", label: "إدارة الحسابات", icon: "shield" },
+    { href: "/admin/users", label: "المستخدمون", icon: "users" },
+    { href: "/admin/schedules", label: "الجداول والمواعيد", icon: "calendar" },
+    { href: "/admin/sessions-monitoring", label: "متابعة الحلقات", icon: "video" },
+    { href: "/admin/library", label: "المكتبة", icon: "library" },
+    { href: "/admin/qiraat", label: "شهادات الإجازة", icon: "certificate" },
+    { href: "/admin/promotions", label: "طلبات الترقية", icon: "graduation" },
+    { href: "/admin/levels", label: "إدارة المستويات", icon: "graduation" },
+    { href: "/admin/sharia", label: "الدروس الشرعية", icon: "books" },
+    { href: "/admin/students-review", label: "مراجعة الطلاب", icon: "video" },
+    { href: "/admin/teachers-review", label: "مراجعة المعلمين", icon: "user" },
+    { href: "/admin/fatwas", label: "الفتاوى", icon: "scale" },
+    { href: "/admin/muftis", label: "المفتون", icon: "bookmark" },
+    { href: "/admin/assessments", label: "منشئ التقييمات", icon: "clipboard" },
+    { href: "/admin/analytics", label: "التحليلات", icon: "chart" },
+    { href: "/admin/notifications", label: "مركز الإشعارات", icon: "bell" },
+    { href: "/admin/audit-log", label: "سجل التدقيق", icon: "clipboard" },
+    { href: "/admin/settings", label: "الإعدادات", icon: "settings" },
   ],
 };
 
@@ -91,8 +94,8 @@ function useRoleMenuItems(role: Role): MenuItem[] {
   const roleItems = role === "student" ? MENUS[role] : MENUS[role].flatMap((item) => item.href === `/${role}/settings`
     ? [
         item,
-        { href: "/support", label: "فريق دعم تبيان", icon: "help-circle-outline", section: item.section },
-        { href: "/privacy", label: "سياسة الخصوصية", icon: "shield-checkmark-outline", section: item.section },
+        { href: "/support", label: "فريق دعم تبيان", icon: "help", section: item.section },
+        { href: "/privacy", label: "سياسة الخصوصية", icon: "shield", section: item.section },
       ]
     : [item]);
   return role === "teacher" && teacherCapability.data?.isMufti !== true
@@ -143,7 +146,7 @@ export function RoleSidebar({ role }: { role: Role }) {
       </ScrollView>
       <View style={[styles.footer, { borderTopColor: colors.border }]}>
         <Pressable accessibilityRole="button" accessibilityLabel="تسجيل الخروج" onPress={() => void logout()} style={({ pressed }) => [styles.logout, { opacity: pressed ? 0.78 : 1 }]}>
-          <MenuIcon name="log-out-outline" size={19} color={colors.danger} />
+          <MenuIcon name="logout" size={19} color={colors.danger} />
           <Text style={[styles.logoutText, { color: colors.danger }]}>تسجيل الخروج</Text>
         </Pressable>
       </View>
@@ -222,7 +225,7 @@ export function NavigationMenu({ role, visible, onClose }: { role: Role; visible
               <Text style={[styles.role, { color: colors.muted }]}>{ROLE_LABELS[role]}</Text>
             </View>
             <Pressable accessibilityLabel="إغلاق" onPress={onClose} style={styles.closeButton}>
-              <MenuIcon name="close" size={20} color={colors.muted} />
+              <MenuIcon name="x" size={20} color={colors.muted} />
             </Pressable>
           </View>
 
@@ -262,7 +265,7 @@ export function NavigationMenu({ role, visible, onClose }: { role: Role; visible
               onPress={() => void logout()}
               style={({ pressed }) => [styles.logout, { opacity: pressed ? 0.78 : 1 }]}
             >
-              <MenuIcon name="log-out-outline" size={19} color={colors.danger} />
+              <MenuIcon name="logout" size={19} color={colors.danger} />
               <Text style={[styles.logoutText, { color: colors.danger }]}>تسجيل الخروج</Text>
             </Pressable>
           </View>

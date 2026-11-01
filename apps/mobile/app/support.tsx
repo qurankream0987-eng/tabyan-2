@@ -3,8 +3,8 @@ import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from "react-native";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { Button, Card, Header, Screen } from "../components/ui";
+
+import { Button, Card, Header, Icon, Screen } from "../components/ui";
 import { useAuth } from "../lib/auth";
 import { palette, useTheme } from "../lib/theme";
 
@@ -47,7 +47,7 @@ export default function SupportScreen() {
         <Card style={styles.contactCard}>
           <View style={styles.sectionLead}>
             <View style={[styles.sectionIcon, { backgroundColor: colors.selected }]}>
-              <Ionicons name="headset-outline" size={21} color={colors.primary} />
+              <Icon name="headphones" size={21} color={colors.primary} />
             </View>
             <View style={styles.sectionLeadCopy}>
               <Text accessibilityRole="header" style={[styles.sectionTitle, { color: colors.primary }]}>تواصل مع فريق الدعم</Text>
@@ -68,12 +68,12 @@ export default function SupportScreen() {
           </View>
 
           <View style={styles.contactActions}>
-            <Button label="اتصال" icon="call-outline" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.phoneHref)} testID="button-support-call" style={styles.contactButton} />
-            <Button label="واتساب" icon="chatbubble-ellipses-outline" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.whatsappHref)} testID="button-support-whatsapp" style={styles.contactButton} />
-            <Button label="البريد الإلكتروني" icon="mail-outline" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.emailHref)} testID="button-support-email" style={styles.contactButton} />
+            <Button label="اتصال" icon="phone" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.phoneHref)} testID="button-support-call" style={styles.contactButton} />
+            <Button label="واتساب" icon="send" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.whatsappHref)} testID="button-support-whatsapp" style={styles.contactButton} />
+            <Button label="البريد الإلكتروني" icon="mail" variant="secondary" onPress={() => openLink(SUPPORT_CONTACT.emailHref)} testID="button-support-email" style={styles.contactButton} />
             <Button
               label="نسخ الرقم"
-              icon={copyStatus.startsWith("تم نسخ رقم") ? "checkmark-outline" : "copy-outline"}
+              icon={copyStatus.startsWith("تم نسخ رقم") ? "check" : "clipboard"}
               variant="secondary"
               onPress={() => void copyContact(SUPPORT_CONTACT.displayPhone, "رقم الدعم")}
               testID="button-copy-phone"
@@ -81,7 +81,7 @@ export default function SupportScreen() {
             />
             <Button
               label="نسخ البريد"
-              icon={copyStatus.startsWith("تم نسخ البريد") ? "checkmark-outline" : "copy-outline"}
+              icon={copyStatus.startsWith("تم نسخ البريد") ? "check" : "clipboard"}
               variant="secondary"
               onPress={() => void copyContact(SUPPORT_CONTACT.email, "البريد الإلكتروني")}
               testID="button-copy-email"
@@ -93,7 +93,7 @@ export default function SupportScreen() {
 
         <Card style={[styles.warningCard, { backgroundColor: colors.selected, borderColor: colors.primary }]}>
           <View style={styles.warningHeading}>
-            <Ionicons name="shield-checkmark-outline" size={22} color={colors.danger} />
+            <Icon name="shield" size={22} color={colors.danger} />
             <Text accessibilityRole="header" style={[styles.warningTitle, { color: colors.primary }]}>حافظ على أمان حسابك</Text>
           </View>
           <Text style={[styles.safetyCopy, { color: colors.text }]}>{SUPPORT_SAFETY_NOTICE}</Text>
@@ -103,7 +103,7 @@ export default function SupportScreen() {
           <Card>
             <Text accessibilityRole="header" style={[styles.accountHeading, { color: colors.text }]}>إدارة الحساب</Text>
             <Text style={[styles.copy, { color: colors.muted, marginBottom: 12 }]}>يمكنك الوصول إلى مسار حذف الحساب من إعدادات حساب الطالب.</Text>
-            <Button label="الانتقال إلى حذف الحساب" icon="trash-outline" variant="danger" onPress={() => router.push("/student/account?focus=delete" as never)} />
+            <Button label="الانتقال إلى حذف الحساب" icon="trash" variant="danger" onPress={() => router.push("/student/account?focus=delete" as never)} />
           </Card>
         ) : null}
 
@@ -134,7 +134,7 @@ export default function SupportScreen() {
                   testID={`button-faq-${index + 1}`}
                 >
                   <Text style={[styles.question, { color: colors.text }]}>{faq.question}</Text>
-                  <Ionicons name={expanded ? "chevron-up" : "chevron-down"} size={19} color={colors.primary} />
+                  <Icon name={expanded ? "chevron-up" : "chevron-down"} size={19} color={colors.primary} />
                 </Pressable>
                 {expanded ? <Text accessibilityLiveRegion="polite" style={[styles.answer, { color: colors.muted }]}>{faq.answer}</Text> : null}
               </View>
@@ -145,7 +145,7 @@ export default function SupportScreen() {
         <Card style={styles.privacyCard}>
           <View style={styles.privacyLead}>
             <View style={[styles.privacyIcon, { backgroundColor: colors.selected }]}>
-              <Ionicons name="book-outline" size={20} color={colors.primary} />
+              <Icon name="books" size={20} color={colors.primary} />
             </View>
             <View style={styles.privacyLeadCopy}>
               <Text accessibilityRole="header" style={[styles.privacyTitle, { color: colors.text }]}>مزيد من التفاصيل حول بياناتك</Text>
@@ -154,7 +154,7 @@ export default function SupportScreen() {
           </View>
           <Button
             label="اقرأ سياسة الخصوصية"
-            icon="document-text-outline"
+            icon="file-text"
             variant="secondary"
             onPress={() => router.push("/privacy" as never)}
             testID="button-support-privacy"

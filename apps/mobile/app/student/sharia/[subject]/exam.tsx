@@ -55,7 +55,7 @@ export default function Exam() {
           </Card>
         ))}
         <View style={styles.actions}>
-          {result.passed ? <Button label="عرض الشهادة" icon="ribbon-outline" onPress={() => router.push(`/student/sharia/${subject}/certificate?levelId=${id}` as never)} /> : result.attemptsRemaining > 0 ? <Button label="إعادة الاختبار" icon="refresh-outline" onPress={() => { setResult(null); setAnswers({}); }} /> : null}
+          {result.passed ? <Button label="عرض الشهادة" icon="certificate" onPress={() => router.push(`/student/sharia/${subject}/certificate?levelId=${id}` as never)} /> : result.attemptsRemaining > 0 ? <Button label="إعادة الاختبار" icon="refresh" onPress={() => { setResult(null); setAnswers({}); }} /> : null}
           <Button label="العودة للمستوى" variant="secondary" onPress={() => router.replace(`/student/sharia/${subject}/${id}` as never)} />
         </View>
       </StudentScreen>
@@ -83,7 +83,7 @@ export default function Exam() {
         </Card>
       ))}
       {submit.error ? <Text style={[styles.error, { color: colors.danger }]}>{userFacingErrorMessage(submit.error, "تعذر إرسال الاختبار.")}</Text> : null}
-      <Button label="إرسال الإجابات" icon="send-outline" onPress={submitExam} loading={submit.isPending} disabled={!allAnswered || data.attemptsRemaining <= 0} />
+      <Button label="إرسال الإجابات" icon="send" onPress={submitExam} loading={submit.isPending} disabled={!allAnswered || data.attemptsRemaining <= 0} />
     </StudentScreen>
   );
 }

@@ -141,7 +141,7 @@ export default function Schedules() {
             <AdminDateTimeField label="إلى" mode="time" value={slotEnd} onChange={setSlotEnd} />
           </View>
          </View>
-        <Button label="إضافة الموعد" variant="secondary" icon="add-outline" onPress={addSlot} />
+        <Button label="إضافة الموعد" variant="secondary" icon="plus" onPress={addSlot} />
         {slots.length ? <View style={styles.slotList}>{slots.map((slot, index) => <View key={`${slot.start}-${slot.end}-${index}`} style={[styles.slot, { backgroundColor: `${colors.primary}12` }]}><Text style={[styles.slotText, { color: colors.primary }]}>{slot.start} - {slot.end}</Text><Button label="حذف" variant="quiet" onPress={() => setSlots((current) => current.filter((_, itemIndex) => itemIndex !== index))} /></View>)}</View> : null}
          {mode === "group" ? <View style={styles.row}>
            <View style={styles.flex}><AdminInputLike value={max} onChange={(value) => setMax(normalizeDigits(value).replace(/\D/g, ""))} label="السعة القصوى (1-50)" colors={colors} keyboardType="number-pad" /></View>

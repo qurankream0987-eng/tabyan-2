@@ -16,11 +16,11 @@ const PATH_CATEGORY: Record<PathKey, LearningCategory> = {
 };
 
 const PATH_META: Record<PathKey, { name: string; desc: string; icon: string }> = {
-  quran: { name: "القرآن الكريم", desc: "حفظ ومراجعة وتلاوة", icon: "book-outline" },
-  tajweed: { name: "مسار التجويد", desc: "أحكام التجويد النظرية والتطبيقية عبر 3 مستويات", icon: "musical-notes-outline" },
-  tajweed_correction: { name: "تصحيح التلاوة", desc: "تحسين التلاوة بدون حفظ", icon: "mic-outline" },
-  qiraat: { name: "القراءات", desc: "مسار الإجازات", icon: "ribbon-outline" },
-  sharia: { name: "الدروس الشرعية", desc: "عقيدة وفقه وسيرة نبوية", icon: "scale-outline" },
+  quran: { name: "القرآن الكريم", desc: "حفظ ومراجعة وتلاوة", icon: "quran" },
+  tajweed: { name: "مسار التجويد", desc: "أحكام التجويد النظرية والتطبيقية عبر 3 مستويات", icon: "books" },
+  tajweed_correction: { name: "تصحيح التلاوة", desc: "تحسين التلاوة بدون حفظ", icon: "mic" },
+  qiraat: { name: "القراءات", desc: "مسار الإجازات", icon: "certificate" },
+  sharia: { name: "الدروس الشرعية", desc: "عقيدة وفقه وسيرة نبوية", icon: "library" },
 };
 
 // خريطة الأيقونات مطابقة حرفيًا للموقع (Levels.tsx): أيقونات SVG مخصصة
@@ -143,9 +143,9 @@ export default function Levels() {
         onPress={() => router.push(`/student/booking?path=${path}` as never)}
         style={({ pressed }) => [styles.pickCta, { backgroundColor: `${colors.primary}0f`, opacity: pressed ? 0.85 : 1 }]}
       >
-        <Icon name="calendar-outline" size={18} color={colors.muted} />
+        <Icon name="calendar" size={18} color={colors.muted} />
         <Text numberOfLines={1} style={[styles.pickCtaText, { color: colors.muted }]}>اختر حلقة في هذا المسار</Text>
-        <Icon name="chevron-back" size={14} color={colors.muted} />
+        <Icon name="arrow-left" size={14} color={colors.muted} />
       </Pressable>
     </StudentScreen>
   );
@@ -175,7 +175,7 @@ function LevelCard({ level: l, path, onBook }: { level: LevelRow; path: PathKey;
       <Text style={[styles.levelName, { color: colors.text }]}>{displayName}</Text>
       {l.isCurrent && !hasDetails ? <Badge label="مستواك" /> : null}
       <View style={[styles.arrowBubble, { backgroundColor: `${palette.gold}1f`, transform: hasDetails && open ? [{ rotate: "-90deg" }] : undefined }]}>
-        <Icon name="chevron-back" size={15} color={colors.primary} />
+        <Icon name="arrow-left" size={15} color={colors.primary} />
       </View>
     </View>
   );
@@ -236,7 +236,7 @@ function LevelCard({ level: l, path, onBook }: { level: LevelRow; path: PathKey;
           ) : null}
           <Button
             label="دخول اختبار القبول"
-            icon="videocam-outline"
+            icon="video"
             onPress={() => onBook(`/student/placement?levelId=${l.id}&path=${path}`)}
             style={styles.cta}
           />
@@ -250,7 +250,7 @@ function LevelCard({ level: l, path, onBook }: { level: LevelRow; path: PathKey;
           ))}
           <Button
             label="اختر مقعداً — جدول الشيوخ"
-            icon="calendar-outline"
+            icon="calendar"
             onPress={() => onBook(`/student/booking?levelId=${l.id}&path=${path}`)}
             style={styles.cta}
           />

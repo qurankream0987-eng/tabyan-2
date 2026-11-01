@@ -7,7 +7,7 @@ import { NotificationFeed } from "../../components/notifications/notification-fe
 export default function Notifications() {
   const router = useRouter();
   const { colors } = useTheme();
-  const settingsButton = <Pressable accessibilityLabel="إعدادات الإشعارات" onPress={() => router.push("/teacher/notifications/settings" as never)} style={styles.settingsButton}><Icon name="settings-outline" size={20} color={colors.primary} /></Pressable>;
+  const settingsButton = <Pressable accessibilityLabel="إعدادات الإشعارات" onPress={() => router.push("/teacher/notifications/settings" as never)} style={styles.settingsButton}><Icon name="settings" size={20} color={colors.primary} /></Pressable>;
   return (
     <TeacherScreen title="الإشعارات" right={settingsButton}>
       <NotificationFeed listPath="/teacher/notifications" settingsPath="/teacher/notifications/settings" />

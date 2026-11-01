@@ -26,14 +26,14 @@ const QuranLevels = [
 ] as const;
 
 const WHY_TABYAN_FEATURES = [
-  { icon: "ribbon-outline", title: "معلمون معتمدون" },
-  { icon: "book-outline", title: "حلقاتك محفوظة — تسجيلات حلقاتك وتقييمات معلمك في مكان واحد." },
+  { icon: "certificate", title: "معلمون معتمدون" },
+  { icon: "books", title: "حلقاتك محفوظة — تسجيلات حلقاتك وتقييمات معلمك في مكان واحد." },
   { sectionIcon: "hifz", title: "حفظ منهجي مستمر ضمن خطة متكاملة." },
   { sectionIcon: "tajweed", title: "طوّر تلاوتك عبر مستويات متدرجة في التجويد." },
   { sectionIcon: "tilawah", title: "صحّح تلاوتك وأتقن قراءة القرآن الكريم." },
   { sectionIcon: "qiraat", title: "انتقل من إتقان رواية حفص إلى رحاب القراءات القرآنية الأخرى" },
   { sectionIcon: "sharia", title: "علومٌ شرعية متكاملة في الفقه والعقيدة والسيرة." },
-  { icon: "document-text-outline", title: "مصحف تبيان AI لاختبار حفظك ومراجعة أخطائك بذكاء." },
+  { icon: "file-text", title: "مصحف تبيان AI لاختبار حفظك ومراجعة أخطائك بذكاء." },
 ] as const;
 
 const TajweedLevels = [
@@ -97,7 +97,7 @@ function Expandable({ title, description, icon, children, open, onPress }: Expan
 }
 
 function RegisterCta({ onPress, label = "ابدأ رحلتك — سجّل مجاناً" }: { onPress: () => void; label?: string }) {
-  return <Button label={label} icon="arrow-forward" onPress={onPress} style={styles.inlineCta} />;
+  return <Button label={label} icon="arrow-right" onPress={onPress} style={styles.inlineCta} />;
 }
 
 function SubExpandable({
@@ -346,7 +346,7 @@ export default function GuestHome() {
         </View>
         <Text style={[styles.copyright, { color: colors.muted }]}>© تبيان</Text>
       </View>
-      <Button label="التسجيل كمعلم" variant="quiet" icon="school-outline" onPress={() => router.push("/teacher-register" as never)} style={styles.teacherCta} />
+      <Button label="التسجيل كمعلم" variant="quiet" icon="clipboard" onPress={() => router.push("/teacher-register" as never)} style={styles.teacherCta} />
     </Screen>
   );
 }

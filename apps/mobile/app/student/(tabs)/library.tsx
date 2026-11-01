@@ -32,19 +32,19 @@ type Book = {
 };
 
 const SECTIONS: Array<{ key: Section; label: string; icon: string }> = [
-  { key: "", label: "الكل", icon: "library-outline" },
-  { key: "curriculum", label: "المنهج", icon: "book-outline" },
-  { key: "hadith", label: "الحديث", icon: "ribbon-outline" },
-  { key: "fatwa", label: "الفتاوى", icon: "scale-outline" },
-  { key: "general", label: "عام", icon: "albums-outline" },
+  { key: "", label: "الكل", icon: "books" },
+  { key: "curriculum", label: "المنهج", icon: "quran" },
+  { key: "hadith", label: "الحديث", icon: "certificate" },
+  { key: "fatwa", label: "الفتاوى", icon: "scale" },
+  { key: "general", label: "عام", icon: "library" },
 ];
 
 const TYPE_META: Record<string, { label: string; icon: string }> = {
-  pdf: { label: "PDF", icon: "document-text-outline" },
-  text: { label: "نص", icon: "reader-outline" },
-  audio: { label: "صوت", icon: "headset-outline" },
-  video: { label: "فيديو", icon: "videocam-outline" },
-  link: { label: "رابط", icon: "link-outline" },
+  pdf: { label: "PDF", icon: "books" },
+  text: { label: "نص", icon: "edit" },
+  audio: { label: "صوت", icon: "mic" },
+  video: { label: "فيديو", icon: "video" },
+  link: { label: "رابط", icon: "arrow-left" },
 };
 
 function ActionButton({ label, icon, onPress, active = false }: { label: string; icon: string; onPress: () => void; active?: boolean }) {
@@ -111,7 +111,7 @@ export default function Library() {
     <Screen>
       <View style={styles.hero}>
         <View style={[styles.heroIcon, { backgroundColor: `${colors.primary}12` }]}>
-          <Icon name="library-outline" size={30} color={colors.primary} />
+          <Icon name="library" size={30} color={colors.primary} />
         </View>
         <Text style={[styles.heroTitle, { color: colors.text }]}>المكتبة</Text>
         <Text style={[styles.heroSubtitle, { color: colors.muted }]}>المنهج حسب مستواك — والمكتبة العامة للجميع</Text>
@@ -119,7 +119,7 @@ export default function Library() {
       {actionError ? <ErrorState message={actionError} /> : null}
 
       <View style={[styles.search, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Icon name="search-outline" size={19} color={colors.muted} />
+        <Icon name="search" size={19} color={colors.muted} />
         <TextInput
           value={search}
           onChangeText={setSearch}
@@ -151,11 +151,11 @@ export default function Library() {
         <EmptyState
           title={search || section ? "لا نتائج" : "لا توجد كتب منشورة"}
           description={search || section ? "جرّب قسماً آخر أو كلمة بحث مختلفة." : "ستظهر الكتب بعد اعتمادها ونشرها."}
-          icon="library-outline"
+          icon="library"
         />
       ) : (
         books.map((book) => {
-          const meta = TYPE_META[book.contentType] ?? { label: book.contentType, icon: "book-outline" };
+          const meta = TYPE_META[book.contentType] ?? { label: book.contentType, icon: "books" };
           const source = resolveLibrarySource(book, token);
           return (
             <Card key={book.id} style={styles.bookCard}>
@@ -179,7 +179,7 @@ export default function Library() {
               </View>
               <View style={styles.actions}>
                 {(book.contentType === "pdf" && source) || (book.contentType === "text" && book.textContent) ? (
-                  <ActionButton label="قراءة" icon="book-outline" onPress={() => router.push(`/student/library/${book.id}/read` as never)} />
+                  <ActionButton label="قراءة" icon="books" onPress={() => router.push(`/student/library/${book.id}/read` as never)} />
                 ) : null}
                 {["audio", "video"].includes(book.contentType) && source ? (
                   <ActionButton label={book.contentType === "audio" ? "استماع" : "تشغيل"} icon={meta.icon} onPress={() => router.push(`/student/library/${book.id}` as never)} />
@@ -187,10 +187,10 @@ export default function Library() {
                    <ActionButton label="فتح الرابط" icon={meta.icon} onPress={() => void openLink(source)} />
                 ) : null}
                 {book.contentType === "pdf" && book.sourceType === "uploaded" && source ? (
-                   <ActionButton label={downloadBusy === book.id ? "جارٍ التنزيل…" : book.isDownloaded ? "محفوظ" : "تنزيل"} icon="download-outline" active={book.isDownloaded} onPress={() => void downloadBook(book, source)} />
+                   <ActionButton label={downloadBusy === book.id ? "جارٍ التنزيل…" : book.isDownloaded ? "محفوظ" : "تنزيل"} icon="download" active={book.isDownloaded} onPress={() => void downloadBook(book, source)} />
                 ) : null}
-                <ActionButton label={book.isBookmarked ? "محفوظ" : "حفظ"} icon={book.isBookmarked ? "bookmark" : "bookmark-outline"} active={book.isBookmarked} onPress={() => toggleBookmark.mutate({ bookId: book.id })} />
-                <ActionButton label="تفاصيل" icon="chevron-back" onPress={() => router.push(`/student/library/${book.id}` as never)} />
+                <ActionButton label={book.isBookmarked ? "محفوظ" : "حفظ"} icon={book.isBookmarked ? "bookmark" : "bookmark"} active={book.isBookmarked} onPress={() => toggleBookmark.mutate({ bookId: book.id })} />
+                <ActionButton label="تفاصيل" icon="arrow-left" onPress={() => router.push(`/student/library/${book.id}` as never)} />
               </View>
             </Card>
           );

@@ -51,7 +51,7 @@ export default function Read() {
           <Text style={[styles.title, { color: colors.text }]}>{book.title}</Text>
           <Text style={[styles.description, { color: colors.muted }]}>سيُفتح ملف PDF في عارض النظام المدمج مع التطبيق مع الحفاظ على صلاحية الوصول.</Text>
            {openError ? <Text style={[styles.description, { color: colors.danger }]}>{openError}</Text> : null}
-           {source ? <Button label="فتح عارض PDF" icon="document-text-outline" onPress={() => void WebBrowser.openBrowserAsync(source).catch((cause) => setOpenError(userFacingErrorMessage(cause, "تعذر فتح ملف PDF. حاول مرة أخرى.")))} /> : <EmptyState title="لا يوجد ملف قابل للفتح" />}
+           {source ? <Button label="فتح عارض PDF" icon="file-text" onPress={() => void WebBrowser.openBrowserAsync(source).catch((cause) => setOpenError(userFacingErrorMessage(cause, "تعذر فتح ملف PDF. حاول مرة أخرى.")))} /> : <EmptyState title="لا يوجد ملف قابل للفتح" />}
         </Card>
       </StudentScreen>
     );

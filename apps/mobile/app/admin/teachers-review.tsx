@@ -44,7 +44,7 @@ export default function TeachersReview() {
 
   return (
     <AdminFrame title="مراجعة المعلمين">
-      <PageHero icon="id-card-outline" title="مراجعة المعلمين" subtitle={q.data ? (items.length ? `${items.length} طلب انضمام بانتظار قرارك` : "كل طلبات القبول مُراجعة") : undefined} />
+      <PageHero icon="id-card" title="مراجعة المعلمين" subtitle={q.data ? (items.length ? `${items.length} طلب انضمام بانتظار قرارك` : "كل طلبات القبول مُراجعة") : undefined} />
       {q.isLoading ? <ListSkeleton rows={4} /> : q.error ? <ErrorState message={safeError(q.error, "تعذّر تحميل البيانات. تحقق من الاتصال وأعد المحاولة.")} onRetry={() => void q.refetch()} />
         : !items.length ? <EmptyState title="لا طلبات معلقة" description="كل طلبات القبول مُراجعة" />
         : items.map((it) => {
@@ -58,7 +58,7 @@ export default function TeachersReview() {
                   <Text style={[styles.name, { color: colors.text }]} numberOfLines={2}>{it.name}</Text>
                   {it.phone ? <Text style={[styles.phone, { color: colors.muted }]}>{it.phone}</Text> : null}
                   <View style={styles.timeRow}>
-                    <Icon name="timer-outline" size={13} color={late ? colors.danger : colors.muted} />
+                    <Icon name="timer" size={13} color={late ? colors.danger : colors.muted} />
                     <Text style={[late ? styles.timeLate : styles.time, { color: late ? colors.danger : colors.muted }]}>منذ {it.hoursAgo} ساعة{late ? " — اقتربت مهلة 24س!" : ""}</Text>
                   </View>
                 </View>
@@ -67,7 +67,7 @@ export default function TeachersReview() {
                 <Badge label={it.videoUrl ? "فيديو تعريفي مرفق" : "لا فيديو مرفق"} tone={it.videoUrl ? "gold" : "danger"} />
                 <Badge label={it.certificates.length ? `${it.certificates.length} شهادة` : "لا شهادات"} tone={it.certificates.length ? "info" : "muted"} />
               </View>
-              <Button label="تشغيل ومراجعة" icon="play-circle-outline" onPress={() => { setSelected(it); setNotes(""); }} />
+              <Button label="تشغيل ومراجعة" icon="video" onPress={() => { setSelected(it); setNotes(""); }} />
               {it.answers ? (
                 <View style={[styles.answersWrap, { borderTopColor: colors.border }]}>
                   <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setExpanded((c) => ({ ...c, [it.teacherId]: !open }))} style={styles.answersToggle}>
@@ -88,9 +88,9 @@ export default function TeachersReview() {
 
       <AdminSheet visible={!!selected} title={selected?.name ?? ""} subtitle="مراجعة طلب انضمام معلم" onClose={close} dirty={!!notes.trim()} busy={kyc.pending}
         footer={<View style={styles.footer}>
-          <ConfirmButton primary label="اعتماد" icon="checkmark-outline" disabled={kyc.pending} loading={kyc.pending && kyc.decision === "approve"} title={KYC_CONFIRM.approve.title} itemName={selected?.name} impact={KYC_CONFIRM.approve.impact} confirmLabel={KYC_CONFIRM.approve.label} onConfirm={() => review("approve")} />
-          <ConfirmButton danger label="رفض" icon="close-outline" disabled={kyc.pending} loading={kyc.pending && kyc.decision === "reject"} title={KYC_CONFIRM.reject.title} itemName={selected?.name} impact={KYC_CONFIRM.reject.impact} confirmLabel={KYC_CONFIRM.reject.label} onConfirm={() => review("reject")} />
-          <Button label="طلب معلومات" variant="secondary" icon="information-circle-outline" disabled={kyc.pending || !notes.trim()} loading={kyc.pending && kyc.decision === "request_info"} onPress={() => review("request_info")} />
+          <ConfirmButton primary label="اعتماد" icon="check" disabled={kyc.pending} loading={kyc.pending && kyc.decision === "approve"} title={KYC_CONFIRM.approve.title} itemName={selected?.name} impact={KYC_CONFIRM.approve.impact} confirmLabel={KYC_CONFIRM.approve.label} onConfirm={() => review("approve")} />
+          <ConfirmButton danger label="رفض" icon="x" disabled={kyc.pending} loading={kyc.pending && kyc.decision === "reject"} title={KYC_CONFIRM.reject.title} itemName={selected?.name} impact={KYC_CONFIRM.reject.impact} confirmLabel={KYC_CONFIRM.reject.label} onConfirm={() => review("reject")} />
+          <Button label="طلب معلومات" variant="secondary" icon="info" disabled={kyc.pending || !notes.trim()} loading={kyc.pending && kyc.decision === "request_info"} onPress={() => review("request_info")} />
         </View>}>
         {selected ? <>
           {selected.specialization || selected.experienceYears != null || selected.bio ? (
@@ -103,9 +103,9 @@ export default function TeachersReview() {
           {selected.videoUrl ? <LibraryMediaPlayer source={selected.videoUrl} contentType="video" /> : (
             <View style={[styles.noVideo, { backgroundColor: tint, borderColor: colors.border }]}><Text style={[styles.infoText, { color: colors.muted }]}>لا فيديو مرفق</Text></View>
           )}
-          <View style={styles.sectionHead}><Icon name="ribbon-outline" size={15} color={colors.text} /><Text style={[styles.sectionTitle, { color: colors.text }]}>الشهادات والمؤهلات</Text></View>
+          <View style={styles.sectionHead}><Icon name="certificate" size={15} color={colors.text} /><Text style={[styles.sectionTitle, { color: colors.text }]}>الشهادات والمؤهلات</Text></View>
           {selected.certificates.length ? selected.certificates.map((c) => (
-            <Button key={c.id} label={c.title || "شهادة بدون عنوان"} variant="secondary" icon="document-text-outline" onPress={() => void openCertificate(c.filePath)} />
+            <Button key={c.id} label={c.title || "شهادة بدون عنوان"} variant="secondary" icon="file-text" onPress={() => void openCertificate(c.filePath)} />
           )) : <Text style={[styles.infoText, { color: colors.muted }]}>لا شهادات مرفوعة</Text>}
           <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 12 }]}>ملاحظات المراجعة</Text>
           <TextInput value={notes} onChangeText={setNotes} multiline maxLength={500} placeholder="ما الذي ينقص هذا الطلب؟" placeholderTextColor={colors.muted} textAlignVertical="top"

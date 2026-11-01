@@ -83,8 +83,8 @@ export default function Sharia() {
           <AdminRow key={subject.id ?? subject.key} title={subject.name} subtitle={`${subject.key} · ${subject.levelCount ?? 0} مستويات`} muted={subject.isActive === false}
             badges={<Badge label={subject.isActive === false ? "معطلة" : "مفعلة"} tone={subject.isActive === false ? "danger" : "success"} />}
             actions={subject.id ? <>
-              <IconAction icon="create-outline" label={`تعديل ${subject.name}`} onPress={() => setEdit({ ...subject })} />
-              <IconAction icon="trash-outline" tone="danger" label={`حذف ${subject.name}`} onPress={() => setDeleting(subject)} />
+              <IconAction icon="edit" label={`تعديل ${subject.name}`} onPress={() => setEdit({ ...subject })} />
+              <IconAction icon="trash" tone="danger" label={`حذف ${subject.name}`} onPress={() => setDeleting(subject)} />
             </> : undefined} />
         ))) : null}
         {tab === "levels" ? <>
@@ -92,8 +92,8 @@ export default function Sharia() {
           {!levelRows.length ? <EmptyState title="لا توجد مستويات لهذه المادة" description="أضف المستويات من صفحة المستويات." /> : levelRows.map((level, index) => (
             <AdminRow key={level.id} title={`${level.orderIndex}. ${level.name}`} subtitle={`${selectedSubject?.name ?? "—"} · ${level.isActive === false ? "معطل" : "مفعل"} · ${level.isHidden ? "مخفي" : "ظاهر"}`}
               actions={<>
-                <IconAction icon="arrow-up-outline" label={`نقل ${level.name} لأعلى`} disabled={index === 0 || reorder.isPending} onPress={() => moveLevel(index, -1)} />
-                <IconAction icon="arrow-down-outline" label={`نقل ${level.name} لأسفل`} disabled={index === levelRows.length - 1 || reorder.isPending} onPress={() => moveLevel(index, 1)} />
+                <IconAction icon="chevron-right" label={`نقل ${level.name} لأعلى`} disabled={index === 0 || reorder.isPending} onPress={() => moveLevel(index, -1)} />
+                <IconAction icon="chevron-left" label={`نقل ${level.name} لأسفل`} disabled={index === levelRows.length - 1 || reorder.isPending} onPress={() => moveLevel(index, 1)} />
               </>} />
           ))}
         </> : null}

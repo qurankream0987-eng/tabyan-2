@@ -11,10 +11,10 @@ import { SoftPressable } from "./soft-pressable";
 import { useKeyboardFrame } from "../../lib/keyboard";
 import designTokens from "../../constants/colors";
 import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from "react-native-svg";
-import { GlowBackground } from "./glow";
 import { PageSkeleton } from "./skeleton";
 
 export { SvgIcon, type IconName as SvgIconName } from "./svg-icon";
+import { SvgIcon, resolveIcon } from "./svg-icon";
 export { PageHero } from "./page-hero";
 export { SoftPressable } from "./soft-pressable";
 export { Skeleton, PageSkeleton } from "./skeleton";
@@ -32,8 +32,11 @@ const PRIMARY_GRADIENT = { light: ["#A02040", "#800020", "#6B0018"], dark: ["#EB
 /** Web `.card-bubble` / `.glass` border: thin burgundy by day, gold by night. */
 export const cardBorder = (isDark: boolean) => (isDark ? "rgba(212,175,55,0.28)" : "rgba(128,0,32,0.18)");
 
+/** Draws the web glyph for the name (web or legacy Ionicons); Ionicons only for names the web set lacks. */
 export function Icon({ name, size = 22, color, style }: { name: string; size?: number; color?: string; style?: StyleProp<TextStyle> }) {
   const { colors } = useTheme();
+  const web = resolveIcon(name);
+  if (web) return <View style={style as StyleProp<ViewStyle>}><SvgIcon name={web.name} rotate={web.rotate} size={size} color={color ?? colors.primary} /></View>;
   return <Ionicons name={name as IconName} size={size} color={color ?? colors.primary} style={style} />;
 }
 
@@ -91,7 +94,6 @@ export function Screen({ children, scroll = true, scrollEnabled = true, contentS
       {studentTabTitle ? <Header title={studentTabTitle} menu="student" home={pathname === "/student/home"} /> : null}
       {/* Always wrapped: swapping the tree when the keyboard opens would remount the field and close it. */}
       <View ref={keyboardAreaRef} style={[styles.keyboardArea, { paddingBottom: keyboardInset, backgroundColor: colors.background }]}>
-        {Platform.OS === "web" ? null : <GlowBackground />}
         {content}
       </View>
     </>
@@ -146,7 +148,7 @@ export function Header({ title, subtitle, back = false, right, menu, home = fals
             onPress={() => router.push(notificationPath as never)}
             style={[styles.iconButton, headerActionSurface]}
           >
-            <Icon name="notifications-outline" color={colors.primary} />
+            <Icon name="bell" color={colors.primary} />
             {(unreadQuery.data?.count ?? 0) > 0 ? (
               <View style={[styles.notificationBadge, { backgroundColor: colors.danger }]}>
                 <Text style={styles.notificationBadgeText}>{unreadQuery.data?.count}</Text>
@@ -174,11 +176,11 @@ export function Header({ title, subtitle, back = false, right, menu, home = fals
       <View style={[styles.headerSide, { minWidth: sideWidth }]} onLayout={(event) => measureSide(event.nativeEvent.layout.width)}>
         {menu ? (
           <SoftPressable accessibilityLabel="القائمة" onPress={() => setMenuOpen(true)} style={[styles.iconButton, headerActionSurface]}>
-            <Icon name="menu-outline" color={colors.primary} />
+            <Icon name="menu" color={colors.primary} />
           </SoftPressable>
         ) : back ? (
           <SoftPressable accessibilityLabel="رجوع" onPress={() => router.canGoBack() ? router.back() : router.replace("/")} style={[styles.iconButton, headerActionSurface]}>
-            <Icon name="arrow-forward" color={colors.primary} />
+            <Icon name="arrow-right" color={colors.primary} />
           </SoftPressable>
         ) : null}
       </View>
@@ -243,9 +245,9 @@ export function Button({ label, onPress, variant = "primary", icon, disabled = f
 }
 
 const THEME_OPTIONS: { value: ThemePreference; label: string; icon: string }[] = [
-  { value: "system", label: "تلقائي", icon: "phone-portrait-outline" },
-  { value: "light", label: "فاتح", icon: "sunny-outline" },
-  { value: "dark", label: "داكن", icon: "moon-outline" },
+  { value: "system", label: "تلقائي", icon: "settings" },
+  { value: "light", label: "فاتح", icon: "sun" },
+  { value: "dark", label: "داكن", icon: "moon" },
 ];
 
 /** Light/dark choice for settings screens; "تلقائي" follows the device. */
@@ -332,7 +334,7 @@ export function EmptyState({ title, description, action, onAction }: { title: st
 
 export function ErrorState({ onRetry, message = "تعذر الوصول إلى البيانات. تحقق من الاتصال وحاول مرة أخرى." }: { onRetry?: () => void; message?: string }) {
   const { colors } = useTheme();
-  return <Card style={styles.empty}><Icon name="cloud-offline-outline" size={38} color={colors.danger} /><Text style={[styles.emptyTitle, { color: colors.text }]}>حدث خطأ مؤقت</Text><Text style={[styles.emptyDescription, { color: colors.muted }]}>{message}</Text>{onRetry ? <Button label="إعادة المحاولة" onPress={onRetry} variant="secondary" icon="refresh-outline" /> : null}</Card>;
+  return <Card style={styles.empty}><Icon name="wifi-off" size={38} color={colors.danger} /><Text style={[styles.emptyTitle, { color: colors.text }]}>حدث خطأ مؤقت</Text><Text style={[styles.emptyDescription, { color: colors.muted }]}>{message}</Text>{onRetry ? <Button label="إعادة المحاولة" onPress={onRetry} variant="secondary" icon="refresh" /> : null}</Card>;
 }
 
 export type BadgeTone = "gold" | "success" | "danger" | "muted" | "info" | "warning" | "live";
@@ -355,7 +357,7 @@ export function Badge({ label, tone = "gold", style }: { label: string; tone?: B
 
 export function FeatureTile({ title, description, icon, onPress, accent = false, style }: { title: string; description?: string; icon: string; onPress: () => void; accent?: boolean; style?: StyleProp<ViewStyle> }) {
   const { colors, isDark } = useTheme();
-  return <SoftPressable accessibilityRole="button" onPress={onPress} style={[styles.tile, { backgroundColor: colors.card, borderColor: accent ? `${palette.gold}88` : cardBorder(isDark), shadowColor: isDark ? "#000" : palette.burgundy }, style]}><View style={[styles.tileIcon, { backgroundColor: accent ? `${palette.gold}22` : colors.input }]}><Icon name={icon} size={25} color={accent ? palette.gold : colors.primary} /></View><View style={styles.tileBody}><Text style={[styles.tileTitle, { color: colors.text }]}>{title}</Text>{description ? <Text numberOfLines={2} style={[styles.tileDescription, { color: colors.muted }]}>{description}</Text> : null}</View><Icon name="chevron-back" size={18} color={colors.muted} /></SoftPressable>;
+  return <SoftPressable accessibilityRole="button" onPress={onPress} style={[styles.tile, { backgroundColor: colors.card, borderColor: accent ? `${palette.gold}88` : cardBorder(isDark), shadowColor: isDark ? "#000" : palette.burgundy }, style]}><View style={[styles.tileIcon, { backgroundColor: accent ? `${palette.gold}22` : colors.input }]}><Icon name={icon} size={25} color={accent ? palette.gold : colors.primary} /></View><View style={styles.tileBody}><Text style={[styles.tileTitle, { color: colors.text }]}>{title}</Text>{description ? <Text numberOfLines={2} style={[styles.tileDescription, { color: colors.muted }]}>{description}</Text> : null}</View><Icon name="arrow-left" size={18} color={colors.muted} /></SoftPressable>;
 }
 
 const styles = StyleSheet.create({

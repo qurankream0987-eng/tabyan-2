@@ -74,7 +74,7 @@ export default function Login() {
             onPress={() => router.canGoBack() ? router.back() : router.replace("/")}
             style={[styles.closeButton, { backgroundColor: colors.card, borderColor: colors.border }]}
           >
-            <Icon name="close-outline" size={21} color={colors.primary} />
+            <Icon name="x" size={21} color={colors.primary} />
           </Pressable>
           <Image source={isDark ? require("../../assets/images/logo-dark.png") : require("../../assets/images/logo-light.png")} resizeMode="contain" style={styles.logo} accessibilityLabel="تبيان" />
           <Text style={[styles.title, { color: colors.text }]}>
@@ -89,7 +89,7 @@ export default function Login() {
           </Text>
           {params.reason === "existing-account" && !staffLogin ? (
             <View style={[styles.notice, { backgroundColor: colors.input, borderColor: colors.border }]}>
-              <Icon name="information-circle-outline" size={18} color={colors.primary} />
+              <Icon name="info" size={18} color={colors.primary} />
               <Text style={[styles.noticeText, { color: colors.text }]}>
                 هذا الرقم مرتبط بحساب موجود. أدخل كلمة السر لتسجيل الدخول؛ لن تُنشأ كلمة سر جديدة.
               </Text>
@@ -124,7 +124,7 @@ export default function Login() {
             style={styles.remember}
           >
             <View style={[styles.check, { borderColor: rememberMe ? colors.primary : colors.border, backgroundColor: rememberMe ? colors.primary : "transparent" }]}>
-              {rememberMe ? <Icon name="checkmark" size={14} color={colors.primaryText} /> : null}
+              {rememberMe ? <Icon name="check" size={14} color={colors.primaryText} /> : null}
             </View>
             <Text style={[styles.rememberText, { color: colors.muted }]}>تذكرني على هذا الجهاز</Text>
           </Pressable>

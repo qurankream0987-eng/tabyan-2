@@ -78,7 +78,7 @@ export default function Notifications() {
 
       {tab === "create" ? (
         <ScrollView showsVerticalScrollIndicator={false}>
-          <Button label="إشعار جديد" icon="add-outline" onPress={() => { create.reset(); setCreating(true); }} />
+          <Button label="إشعار جديد" icon="plus" onPress={() => { create.reset(); setCreating(true); }} />
           <AdminSheet visible={creating} title="إشعار جديد" onClose={() => setCreating(false)} dirty={dirty} busy={create.isPending}
             footer={(requestClose) => <SheetFooter primaryLabel="إرسال الإشعار" onSecondary={requestClose} loading={create.isPending}
               disabled={title.trim().length < 3 || (audience === "specific_level" && !target) || (audience === "specific_user" && !target.trim())}
