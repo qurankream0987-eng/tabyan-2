@@ -1,14 +1,17 @@
 import { useRouter } from "expo-router";
 import { formatDateTime } from "../../../lib/format";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Card, ErrorState, Icon, LoadingState, ProgressBar, Screen } from "../../../components/ui";
+import Svg, { Defs, Ellipse, RadialGradient, Stop } from "react-native-svg";
+import { Button, Card, EmptyState, ErrorState, Icon, LoadingState, ProgressBar, Screen, SoftPressable } from "../../../components/ui";
 import SectionIcon, { type SectionIconName } from "../../../components/ui/section-icon";
+import { assignmentRange } from "../../../components/teacher/recitation-assignments";
 import { useAuth } from "../../../lib/auth";
 import { trpc } from "../../../lib/trpc";
 import { useTheme, palette } from "../../../lib/theme";
 
 // ── بنية الرئيسية مطابقة للموقع (StudentHome.tsx):
-//    1) تحية  2) آية اليوم  3) بطاقة الواجب لكل مسار مسجّل  4) بطاقات المسارات غير المسجّلة  5) تذكير اختبار القبول
+//    1) تحية  2) آية اليوم  3) الإحصائيات  4) واجبات التسميع المعلقة  5) دروس اليوم
+//    6) بطاقة الحلقة القادمة لكل مسار مسجّل  7) بطاقات المسارات غير المسجّلة  8) تذكير اختبار القبول
 const PATH_ORDER = ["quran", "tajweed", "sharia"] as const;
 type LearningPathKey = (typeof PATH_ORDER)[number];
 
@@ -26,12 +29,17 @@ const SESSION_TYPE_TO_PATH: Record<string, LearningPathKey> = {
   sharia_fiqh: "sharia", sharia_aqeedah: "sharia", sharia_seerah: "sharia",
 };
 
+// آية احتياطية تظهر فقط إذا تعذر الوصول للخادم (كما في الموقع)
+const FALLBACK_VERSE = { text: "إِنَّ اللَّهَ مَعَ الَّذِينَ اتَّقَوا وَّالَّذِينَ هُم مُّحْسِنُونَ", surahName: "النحل", ayahNumber: 128 };
+
 export default function StudentHome() {
   const { token, name } = useAuth();
   const { colors, categories, isDark } = useTheme();
   const router = useRouter();
   const dashboard = trpc.student.dashboard.useQuery(undefined, { enabled: !!token, retry: 1, retryDelay: 800 });
+  const settings = trpc.student.settings.useQuery(undefined, { enabled: !!token, staleTime: 60_000 });
   const verse = trpc.dailyVerse.today.useQuery(undefined, { staleTime: 30 * 60_000, retry: 1 });
+  const assignments = trpc.recitationAssignments.mine.useQuery(undefined, { enabled: !!token });
 
   if (dashboard.isLoading) return <Screen><LoadingState /></Screen>;
   if (dashboard.error && !dashboard.data) return <Screen><ErrorState onRetry={() => void dashboard.refetch()} /></Screen>;
@@ -41,19 +49,27 @@ export default function StudentHome() {
   const levelName = typeof d.levelName === "string" && d.levelName && d.levelName !== "—" ? d.levelName : null;
   const enrolledPaths = PATH_ORDER.filter((p) => Array.isArray(d.enrolledPaths) && d.enrolledPaths.includes(p));
   const upcoming = Array.isArray(d.upcoming) ? d.upcoming : [];
+  const todayLessons: Array<{ id: string; title: string }> = Array.isArray(d.todayLessons) ? d.todayLessons : [];
+  const stats = { totalJuz: Number(d.stats?.totalJuz ?? 0), sessionsCount: Number(d.stats?.sessionsCount ?? 0), avgScore: Number(d.stats?.avgScore ?? 0) };
   const placementStatus = d.student?.placementTestStatus;
+  const showVerse = (settings.data as any)?.ayahNotification !== false;
+  const pendingAssignments = (assignments.data ?? []).filter((row: any) => row.assignment?.status === "assigned");
 
   const upcomingByPath: Record<LearningPathKey, any[]> = { quran: [], tajweed: [], sharia: [] };
   for (const s of upcoming) {
     const p = SESSION_TYPE_TO_PATH[String(s?.sessionType ?? "")];
     if (p) upcomingByPath[p].push(s);
   }
+  const v = (verse.data as any)?.verse ?? verse.data;
+  const shownVerse = v?.text && v?.surahName && v?.ayahNumber != null ? v : FALLBACK_VERSE;
+  // Web --home-feature-surface: solid burgundy by day, deep wine by night.
+  const featureSurface = isDark ? "#42121F" : palette.burgundy;
 
   return (
     <Screen>
       {/* 1. التحية */}
       <View style={styles.greeting}>
-        <Text style={[styles.greetTitle, { color: colors.text }]}>أهلاً، {name ? name.split(" ")[0] : "طالبنا"}</Text>
+        <Text style={[styles.greetTitle, { color: isDark ? palette.gold : palette.burgundy }]}>أهلاً، {name ? name.split(" ")[0] : "طالبنا"}</Text>
         <Text style={[styles.greetSub, { color: colors.muted }]}>
           {levelName ? `مستواك الحالي: ${levelName}` : "أكمل إعداد حسابك لتبدأ رحلتك القرآنية"}
         </Text>
@@ -68,41 +84,85 @@ export default function StudentHome() {
         ) : null}
       </View>
 
-      {/* 2. آية اليوم — تُعرض فقط ببيانات حقيقية مكتملة من الخادم، بلا بدائل ثابتة */}
-      {(() => {
-        const v = (verse.data as any)?.verse ?? verse.data;
-        if (!v?.text || !v?.surahName || v?.ayahNumber == null) return null;
-        return (
-          <Card style={[styles.verseCard, { backgroundColor: isDark ? palette.night : palette.burgundy, borderColor: isDark ? colors.border : palette.burgundy }]}>
-            <Text style={styles.verseChip}>آية اليوم</Text>
-            <Text style={styles.verseText}>﴿ {String(v.text)} ﴾</Text>
-            <Text style={styles.verseSource}>سورة {String(v.surahName)}، آية {String(v.ayahNumber)}</Text>
-          </Card>
-        );
-      })()}
+      {/* 2. آية اليوم — تُعرض فقط عند تفعيلها من الحساب، مع توهج ذهبي من الأعلى كما في الموقع */}
+      {showVerse ? (
+        <Card style={[styles.verseCard, { backgroundColor: featureSurface, borderColor: featureSurface }]}>
+          <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+            <Svg width="100%" height="100%">
+              <Defs>
+                <RadialGradient id="verseGlow" cx="50%" cy="0%" r="70%">
+                  <Stop offset="0" stopColor={palette.gold} stopOpacity={0.28} />
+                  <Stop offset="1" stopColor={palette.gold} stopOpacity={0} />
+                </RadialGradient>
+              </Defs>
+              <Ellipse cx="50%" cy="0%" rx="80%" ry="90%" fill="url(#verseGlow)" />
+            </Svg>
+          </View>
+          <View style={styles.verseChip}><Text style={styles.verseChipText}>آية اليوم</Text></View>
+          <Text style={styles.verseText}>﴿ {String(shownVerse.text)} ﴾</Text>
+          <Text style={styles.verseSource}>سورة {String(shownVerse.surahName)}، آية {String(shownVerse.ayahNumber)}</Text>
+        </Card>
+      ) : null}
 
-      {/* 3. الواجب — بطاقة مستقلة لكل مسار مسجّل له موعد قادم */}
+      {/* 3. الإحصائيات */}
+      <View style={styles.statsRow}>
+        {[
+          ["الأجزاء المحفوظة", stats.totalJuz],
+          ["الجلسات المكتملة", stats.sessionsCount],
+          ["متوسط التقييم", stats.avgScore],
+        ].map(([label, value]) => (
+          <Card key={String(label)} style={styles.statCard}>
+            <Text style={[styles.statLabel, { color: colors.muted }]}>{label}</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
+          </Card>
+        ))}
+      </View>
+
+      {/* 4. واجبات التسميع التي لم تُسلَّم بعد */}
+      {pendingAssignments.length ? (
+        <SoftPressable accessibilityRole="button" accessibilityLabel="واجبات التسميع" onPress={() => router.push("/student/recitation" as never)}>
+          <Card style={[styles.assignmentCard, { borderRightColor: palette.gold }]}>
+            <View style={[styles.pathIcon, { backgroundColor: `${palette.gold}26` }]}><Icon name="mic-outline" size={22} color={isDark ? palette.gold : palette.goldDark} /></View>
+            <View style={styles.assignmentBody}>
+              <Text style={[styles.assignmentTitle, { color: colors.text }]}>واجبات التسميع{pendingAssignments.length > 1 ? ` (${pendingAssignments.length})` : ""}</Text>
+              <Text numberOfLines={1} style={[styles.assignmentSub, { color: colors.muted }]}>{assignmentRange(pendingAssignments[0].assignment)}</Text>
+            </View>
+            <Icon name="chevron-back" size={17} color={colors.muted} />
+          </Card>
+        </SoftPressable>
+      ) : null}
+
+      {/* 5. دروس اليوم */}
+      {todayLessons.length ? todayLessons.map((lesson) => (
+        <SoftPressable key={lesson.id} accessibilityRole="button" onPress={() => router.push(`/student/library/${lesson.id}` as never)}>
+          <Card style={styles.lessonCard}>
+            <Text style={[styles.lessonTitle, { color: colors.text }]}>{lesson.title}</Text>
+            <Icon name="chevron-back" size={16} color={colors.muted} />
+          </Card>
+        </SoftPressable>
+      )) : <EmptyState title="لا دروس لهذا اليوم" />}
+
+      {/* 6. الحلقة القادمة — بطاقة مستقلة لكل مسار مسجّل له موعد قادم */}
       {enrolledPaths.map((p) => {
         const next = upcomingByPath[p][0];
         if (!next) return null;
         return (
-          <Card key={p} style={[styles.dutyCard, { backgroundColor: isDark ? palette.night : palette.burgundy, borderColor: isDark ? colors.border : palette.burgundy }]}>
+          <Card key={p} style={[styles.dutyCard, { backgroundColor: featureSurface, borderColor: featureSurface }]}>
             <Text style={styles.dutyTitle}>الواجب</Text>
-            <Text style={styles.dutyMeta}>
-              {next.levelName ? `${next.levelName} — ` : ""}{String(next.teacherName ?? "معلمك")} — {formatDateTime(next.scheduledAt ?? next.date) || "موعد قادم"}
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.push(`/student/session/${next.id}` as never)}
-              style={({ pressed }) => [styles.dutyBtn, { backgroundColor: palette.gold, opacity: pressed ? 0.88 : 1 }]}
-            >
-              <Text style={[styles.dutyBtnText, { color: palette.burgundy }]}>{next.status === "in_progress" ? "دخول الحلقة" : "عرض تفاصيل الحلقة"}</Text>
-            </Pressable>
+            {next.surahName || next.topic ? (
+              <View style={styles.dutyChip}><Icon name="book-outline" size={14} color={palette.gold} /><Text style={styles.dutyChipText}>{String(next.topic ?? next.surahName)}</Text></View>
+            ) : null}
+            <View style={styles.dutyMetaRow}>
+              {next.levelName ? <View style={styles.dutyMetaItem}><Icon name="library-outline" size={13} color={palette.gold} /><Text style={styles.dutyMeta}>{String(next.levelName)}</Text></View> : null}
+              <View style={styles.dutyMetaItem}><Icon name="person-outline" size={13} color={palette.gold} /><Text style={styles.dutyMeta}>{String(next.teacherName ?? "معلمك")}</Text></View>
+              <View style={styles.dutyMetaItem}><Icon name="time-outline" size={13} color={palette.gold} /><Text style={styles.dutyMeta}>{formatDateTime(next.scheduledAt ?? next.date) || "موعد قادم"}</Text></View>
+            </View>
+            <Button label="ادخل إلى الحلقة" icon="videocam-outline" onPress={() => router.push(`/student/session/${next.id}` as never)} style={styles.dutyBtn} />
           </Card>
         );
       })}
 
-      {/* 4. بطاقات المسارات غير المسجّلة — حد جانبي بلون هوية المسار */}
+      {/* 7. بطاقات المسارات غير المسجّلة — حد جانبي بلون هوية المسار */}
       {LEARNING_PATHS.filter((p) => !enrolledPaths.includes(p.path)).map((p) => {
         const tint = categories[p.path];
         return (
@@ -120,7 +180,7 @@ export default function StudentHome() {
         );
       })}
 
-      {/* 5. تذكير اختبار تحديد المستوى */}
+      {/* 8. تذكير اختبار تحديد المستوى */}
       {placementStatus && placementStatus !== "approved" ? (
         <Card style={styles.placementCard}>
           <View style={[styles.pathIcon, { backgroundColor: `${palette.gold}1f` }]}>
@@ -145,21 +205,35 @@ export default function StudentHome() {
 
 const styles = StyleSheet.create({
   greeting: { paddingTop: 10, paddingBottom: 6, alignItems: "flex-end" },
-  greetTitle: { fontFamily: "Amiri_700Bold", fontSize: 27, textAlign: "right" },
+  greetTitle: { fontFamily: "Amiri_700Bold", fontSize: 30, lineHeight: 44, textAlign: "right" },
   greetSub: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13, marginTop: 3, textAlign: "right" },
   progressBlock: { alignSelf: "stretch", marginTop: 12 },
   progressHead: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
   progressLabel: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12 },
   progressValue: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 12 },
-  verseCard: { alignItems: "center", paddingVertical: 18 },
-  verseChip: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, color: palette.gold, marginBottom: 8 },
-  verseText: { fontFamily: "Amiri_400Regular", fontSize: 19, lineHeight: 34, color: palette.gold, textAlign: "center" },
-  verseSource: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, color: palette.gold, marginTop: 6 },
-  dutyCard: { gap: 8 },
-  dutyTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 20, color: palette.gold, textAlign: "right" },
-  dutyMeta: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12.5, color: palette.gold, textAlign: "right" },
-  dutyBtn: { borderRadius: 999, paddingVertical: 11, alignItems: "center", marginTop: 4 },
-  dutyBtnText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13.5 },
+  verseCard: { alignItems: "center", paddingVertical: 20, overflow: "hidden" },
+  verseChip: { backgroundColor: `${palette.gold}26`, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 3, marginBottom: 10 },
+  verseChipText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, lineHeight: 24, color: palette.gold },
+  verseText: { fontFamily: "Amiri_400Regular", fontSize: 20, lineHeight: 38, color: palette.gold, textAlign: "center", paddingHorizontal: 8 },
+  verseSource: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13, lineHeight: 22, color: palette.gold, marginTop: 6 },
+  statsRow: { flexDirection: "row-reverse", gap: 10 },
+  statCard: { flex: 1, alignItems: "center", paddingVertical: 14, paddingHorizontal: 6 },
+  statLabel: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, lineHeight: 17, textAlign: "center" },
+  statValue: { fontFamily: "Amiri_700Bold", fontSize: 26, lineHeight: 36, marginTop: 4 },
+  assignmentCard: { flexDirection: "row-reverse", alignItems: "center", gap: 12, borderRightWidth: 4 },
+  assignmentBody: { flex: 1, minWidth: 0 },
+  assignmentTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, textAlign: "right" },
+  assignmentSub: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, marginTop: 2, textAlign: "right" },
+  lessonCard: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", paddingVertical: 12 },
+  lessonTitle: { flex: 1, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 14, textAlign: "right" },
+  dutyCard: { gap: 10 },
+  dutyTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 22, lineHeight: 34, color: palette.gold, textAlign: "right" },
+  dutyChip: { alignSelf: "flex-end", flexDirection: "row-reverse", alignItems: "center", gap: 6, backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
+  dutyChipText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, color: palette.gold },
+  dutyMetaRow: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 12, alignItems: "center" },
+  dutyMetaItem: { flexDirection: "row-reverse", alignItems: "center", gap: 5 },
+  dutyMeta: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12.5, color: palette.gold },
+  dutyBtn: { marginTop: 4 },
   pathCard: { flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
   pathIcon: { width: 44, height: 44, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   pathTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 15.5, flex: 1, textAlign: "right" },

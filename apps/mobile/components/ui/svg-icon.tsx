@@ -515,7 +515,7 @@ const PATHS: Record<IconName, ReactNode> = {
 };
 
 export function isSvgIconName(name: string): name is IconName {
-  return name in PATHS;
+  return Object.hasOwn(PATHS, name);
 }
 
 export function SvgIcon({ name, size = 20, color = "#800020", strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {

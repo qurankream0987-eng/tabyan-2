@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { usePathname, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import { useTheme, palette, type ThemePreference } from "../../lib/theme";
 import { NavigationMenu } from "./navigation-menu";
@@ -10,12 +10,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SoftPressable } from "./soft-pressable";
 import { useKeyboardFrame } from "../../lib/keyboard";
 import designTokens from "../../constants/colors";
-import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
+import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { GlowBackground } from "./glow";
 import { PageSkeleton } from "./skeleton";
 
 export { SvgIcon, type IconName as SvgIconName } from "./svg-icon";
 export { PageHero } from "./page-hero";
+export { SoftPressable } from "./soft-pressable";
 export { Skeleton, PageSkeleton } from "./skeleton";
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -201,11 +202,13 @@ export function Button({ label, onPress, variant = "primary", icon, disabled = f
   const { colors, mode, isDark } = useTheme();
   // Web `.btn-bubble`: a full pill; primary carries a gradient, secondary a tinted fill with a 1.5px border.
   const tint = isDark ? "212,175,55" : "128,0,32";
-  const background = variant === "primary" ? PRIMARY_GRADIENT[mode][1] : variant === "danger" ? colors.danger : variant === "secondary" ? `rgba(${tint},${isDark ? 0.09 : 0.07})` : "transparent";
-  const foreground = variant === "danger" ? designTokens.modes[mode].destructiveForeground : variant === "primary" ? (isDark ? palette.night : "#FFFFFF") : colors.primary;
-  const borderColor = variant === "secondary" ? `rgba(${tint},${isDark ? 0.28 : 0.22})` : variant === "quiet" ? "transparent" : background;
+  const background = variant === "primary" ? PRIMARY_GRADIENT[mode][1] : variant === "danger" ? `${colors.danger}1A` : variant === "secondary" ? `rgba(${tint},${isDark ? 0.09 : 0.07})` : "transparent";
+  const foreground = variant === "danger" ? colors.danger : variant === "primary" ? (isDark ? palette.night : "#FFFFFF") : colors.primary;
+  const borderColor = variant === "secondary" ? `rgba(${tint},${isDark ? 0.28 : 0.22})` : variant === "danger" ? `${colors.danger}40` : variant === "quiet" ? "transparent" : background;
   // The gradient needs real pixel sizes; percentages inside the Svg do not track the pill.
   const [size, setSize] = useState({ width: 0, height: 0 });
+  // Gradient ids are global on the web build; keep them unique per button.
+  const gradientId = useId();
   return (
     <SoftPressable testID={testID} accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, busy: loading }} disabled={disabled || loading} onPress={onPress}
       onLayout={variant === "primary" ? (event) => { const { width, height } = event.nativeEvent.layout; setSize((current) => (current.width === width && current.height === height ? current : { width, height })); } : undefined}
@@ -216,18 +219,18 @@ export function Button({ label, onPress, variant = "primary", icon, disabled = f
       {variant === "primary" && size.width > 0 ? (
         <Svg pointerEvents="none" style={StyleSheet.absoluteFill} width={size.width} height={size.height}>
           <Defs>
-            <LinearGradient id="btn" x1="0" y1="0" x2={size.width} y2={size.height * 0.6} gradientUnits="userSpaceOnUse">
+            <LinearGradient id={`btn-${gradientId}`} x1="0" y1="0" x2={size.width} y2={size.height * 0.6} gradientUnits="userSpaceOnUse">
               <Stop offset="0" stopColor={PRIMARY_GRADIENT[mode][0]} />
               <Stop offset="0.52" stopColor={PRIMARY_GRADIENT[mode][1]} />
               <Stop offset="1" stopColor={PRIMARY_GRADIENT[mode][2]} />
             </LinearGradient>
-            <LinearGradient id="sheen" x1="0" y1="0" x2="0" y2={size.height} gradientUnits="userSpaceOnUse">
+            <LinearGradient id={`sheen-${gradientId}`} x1="0" y1="0" x2="0" y2={size.height} gradientUnits="userSpaceOnUse">
               <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.26} />
               <Stop offset="0.5" stopColor="#FFFFFF" stopOpacity={0} />
             </LinearGradient>
           </Defs>
-          <Rect x={0} y={0} width={size.width} height={size.height} fill="url(#btn)" />
-          <Rect x={0} y={0} width={size.width} height={size.height} fill="url(#sheen)" />
+          <Rect x={0} y={0} width={size.width} height={size.height} fill={`url(#btn-${gradientId})`} />
+          <Rect x={0} y={0} width={size.width} height={size.height} fill={`url(#sheen-${gradientId})`} />
         </Svg>
       ) : null}
       {loading ? <ActivityIndicator color={foreground} /> : null}
@@ -299,12 +302,23 @@ export function LoadingState({ label = "جارٍ التحميل…", spinner = f
   return <View style={styles.state}><ActivityIndicator color={colors.primary} size="large" /><Text style={[styles.stateText, { color: colors.muted }]}>{label}</Text></View>;
 }
 
+/** Web EmptyState diamond: an outlined square turned 45° around a filled dot. */
+function EmptyDiamond() {
+  return (
+    <Svg width={44} height={44} viewBox="0 0 44 44" fill="none">
+      <Rect x={10} y={10} width={24} height={24} rx={2} stroke={palette.gold} strokeWidth={1.6} transform="rotate(45 22 22)" />
+      <Rect x={15} y={15} width={14} height={14} rx={1} stroke={palette.burgundy} strokeWidth={1.4} transform="rotate(45 22 22)" />
+      <Circle cx={22} cy={22} r={3} fill={palette.burgundy} />
+    </Svg>
+  );
+}
+
 /** Web EmptyState: a bare gold diamond in a soft glow, an Amiri title, no card. */
-export function EmptyState({ title, description, action, onAction, icon = "diamond-outline" }: { title: string; description?: string; action?: string; onAction?: () => void; icon?: string }) {
+export function EmptyState({ title, description, action, onAction }: { title: string; description?: string; action?: string; onAction?: () => void; /** Kept for callers; the web always shows the gold diamond. */ icon?: string }) {
   const { colors, isDark } = useTheme();
   return (
     <View style={styles.empty}>
-      <View style={[styles.emptyGlow, { backgroundColor: `${palette.gold}${isDark ? "26" : "1F"}` }]}><Icon name={icon} size={40} color={palette.gold} /></View>
+      <View style={[styles.emptyGlow, { backgroundColor: `${palette.gold}${isDark ? "26" : "1F"}` }]}><EmptyDiamond /></View>
       <Text style={[styles.emptyTitle, { color: isDark ? palette.gold : palette.burgundy }]}>{title}</Text>
       {description ? <Text style={[styles.emptyDescription, { color: colors.muted }]}>{description}</Text> : null}
       {action ? <Button label={action} onPress={onAction} variant="secondary" /> : null}
@@ -346,7 +360,7 @@ const styles = StyleSheet.create({
   keyboardArea: { flex: 1 },
   transparent: { backgroundColor: "transparent" },
   avatar: { width: 40, height: 40, borderRadius: 20, borderWidth: 2, alignItems: "center", justifyContent: "center" },
-  avatarText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, lineHeight: 18 },
+  avatarText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, lineHeight: 17, includeFontPadding: false },
   buttonLift: { shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 3 },
   emptyGlow: { width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", marginBottom: 2 },
   tabScrollContent: { paddingBottom: 104 },

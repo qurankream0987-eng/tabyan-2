@@ -73,7 +73,7 @@ export default function StudentTabsLayout() {
     <Tabs screenOptions={common} initialRouteName="home">
       <Tabs.Screen name="account" options={options("account")} />
       <Tabs.Screen
-        name="mushaf"
+        name="mushaf-tab"
         options={options("mushaf")}
         // The reader is a full-screen stack route; the tab only opens it.
         listeners={{ tabPress: (event) => { event.preventDefault(); router.push("/student/mushaf"); } }}
