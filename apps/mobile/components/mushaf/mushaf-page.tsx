@@ -230,8 +230,9 @@ function SurahBanner({ name, number, ayahs, width, rowH }: { name: string; numbe
   const medallionW = width * 0.12;
   const medallion = (value: number | undefined, caption: string, centerX: number) => value === undefined ? null : (
     <View style={[styles.medallion, { left: width * centerX - medallionW / 2, width: medallionW }]}>
-      <Text style={[styles.medallionCaption, { fontSize: bandH * 0.17 }]} numberOfLines={1}>{caption}</Text>
-      <Text style={[styles.medallionValue, { fontSize: bandH * 0.3 }]} numberOfLines={1}>{toArabicDigits(value)}</Text>
+      {/* Explicit line boxes keep the caption and the number stacked on the medallion's centre. */}
+      <Text style={[styles.medallionCaption, { fontSize: bandH * 0.2, lineHeight: bandH * 0.3 }]} numberOfLines={1}>{caption}</Text>
+      <Text style={[styles.medallionValue, { fontSize: bandH * 0.36, lineHeight: bandH * 0.44 }]} numberOfLines={1}>{toArabicDigits(value)}</Text>
     </View>
   );
   return (
@@ -261,8 +262,8 @@ const styles = StyleSheet.create({
   surahBand: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
   surahTitle: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center", textAlignVertical: "center" },
   medallion: { position: "absolute", top: 0, bottom: 0, alignItems: "center", justifyContent: "center" },
-  medallionCaption: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ornament, includeFontPadding: false },
-  medallionValue: { fontFamily: "Amiri_700Bold", color: MUSHAF_COLORS.ink, includeFontPadding: false },
+  medallionCaption: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center" },
+  medallionValue: { fontFamily: "Amiri_700Bold", color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center" },
   basmalah: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false },
   mistake: { color: MUSHAF_COLORS.mistake, textDecorationLine: "underline" },
   skipped: { color: MUSHAF_COLORS.skipped, textDecorationLine: "underline" },
