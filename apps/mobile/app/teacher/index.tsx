@@ -1,28 +1,19 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Card, FeatureTile, Icon } from "../../components/ui";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Card, EmptyState, Icon } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
 import { TeacherScreen, OfflineNotice } from "../../components/teacher/teacher-screen";
 import { assignmentRange } from "../../components/teacher/recitation-assignments";
+import { formatDateTime } from "../../lib/format";
 import { useTheme, palette } from "../../lib/theme";
-
-const TEACHER_DESTINATIONS = [
-  ["schedule", "جدولي", "calendar-outline"],
-  ["students", "طلابي", "people-outline"],
-  ["recordings", "حلقاتي المُسجَّلة", "videocam-outline"],
-  ["fatwas", "فتاواي", "scale-outline"],
-  ["evaluations", "تقييماتي", "bar-chart-outline"],
-  ["broadcast", "الإشعارات الجماعية", "notifications-outline"],
-  ["settings", "الإعدادات", "settings-outline"],
-] as const;
 
 // ── لوحة المعلم مطابقة للموقع (TeacherHome.tsx):
 //    ترحيب → 4 مؤشرات → حصتك القادمة → ملخص الأسبوع → إجراءان سريعان — كل البيانات من teacher.dashboard
 export default function TeacherHome() {
   const { token, name } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const router = useRouter();
   const q = trpc.teacher.dashboard.useQuery(undefined, { enabled: !!token });
   const reviewQueue = trpc.recitationAssignments.reviewQueue.useQuery(undefined, { enabled: !!token });
@@ -32,7 +23,6 @@ export default function TeacherHome() {
   const d = (q.data ?? {}) as any;
   const summary = d.summary ?? {};
   const isMufti = d.teacher?.isMufti === true;
-  const destinations = TEACHER_DESTINATIONS.filter(([path]) => path !== "fatwas" || isMufti);
 
   const stats = [
     { v: d.weekCount, l: "حصص الأسبوع", icon: "calendar-outline" },
@@ -47,6 +37,7 @@ export default function TeacherHome() {
 
       {/* ترحيب + مؤشرات */}
       <Card accent style={styles.hero}>
+        <Image source={isDark ? require("../../assets/images/logo-dark.png") : require("../../assets/images/logo-light.png")} resizeMode="contain" style={styles.heroLogo} accessibilityLabel="تبيان" />
         <Text style={[styles.heroTitle, { color: colors.text }]}>مرحباً {name ?? "أيها المعلم"}</Text>
         <Text style={[styles.heroSub, { color: colors.muted }]}>«خيركم من تعلّم القرآن وعلّمه»</Text>
         <View style={styles.statsGrid}>
@@ -63,7 +54,7 @@ export default function TeacherHome() {
       {/* حصتك القادمة */}
       <Text style={[styles.sectionTitle, { color: colors.primary }]}>حصتك القادمة</Text>
       {!d.nextSession ? (
-        <Card><Text style={[styles.emptyText, { color: colors.muted }]}>لا حصص قادمة — سيظهر هنا أقرب موعد</Text></Card>
+        <EmptyState title="لا حصص قادمة" description="سيظهر هنا أقرب موعد" />
       ) : (
         <Card style={{ borderColor: `${palette.gold}40`, borderWidth: 2 }}>
           <View style={styles.nextRow}>
@@ -86,26 +77,28 @@ export default function TeacherHome() {
         </Card>
       )}
 
-      {/* واجبات تسميع سلّمها الطلاب وتنتظر تقييم المعلم */}
-      {reviewQueue.data?.length ? (
-        <Card>
-          <Text style={[styles.sectionTitle, { color: colors.primary, marginBottom: 8 }]}>تسميعات بانتظار مراجعتك</Text>
-          {reviewQueue.data.map(({ assignment, studentName }) => (
+      {/* واجبات تسميع سلّمها الطلاب وتنتظر تقييم المعلم (web ReviewQueueSection) */}
+      {reviewQueue.data ? (
+        <>
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>تسميعات بانتظار المراجعة</Text>
+          {reviewQueue.data.length === 0 ? (
+            <Card><Text style={[styles.emptyText, { color: colors.muted }]}>لا تسميعات بانتظار مراجعتك</Text></Card>
+          ) : reviewQueue.data.map(({ assignment, studentName }) => (
             <Pressable
               key={assignment.id}
               accessibilityRole="button"
               onPress={() => router.push(`/teacher/students/${assignment.studentId}` as never)}
               style={({ pressed }) => [styles.reviewRow, { backgroundColor: `${colors.primary}0c`, opacity: pressed ? 0.85 : 1 }]}
             >
-              <Icon name="mic-outline" size={18} color={colors.primary} />
+              <View style={[styles.reviewIcon, { backgroundColor: `${colors.primary}14` }]}><Icon name="mic-outline" size={18} color={colors.primary} /></View>
               <View style={styles.reviewText}>
                 <Text style={[styles.reviewTitle, { color: colors.text }]} numberOfLines={1}>{studentName}</Text>
-                <Text style={[styles.reviewDetail, { color: colors.muted }]} numberOfLines={1}>{assignmentRange(assignment)}</Text>
+                <Text style={[styles.reviewDetail, { color: colors.muted }]} numberOfLines={1}>{assignmentRange(assignment)}{assignment.submittedAt ? ` · ${formatDateTime(assignment.submittedAt)}` : ""}</Text>
               </View>
               <Icon name="chevron-back" size={16} color={colors.muted} />
             </Pressable>
           ))}
-        </Card>
+        </>
       ) : null}
 
       {/* ملخص الأسبوع */}
@@ -147,23 +140,18 @@ export default function TeacherHome() {
           </Card>
         </Pressable>
       </View>
-
-      <Text style={[styles.navTitle, { color: colors.primary }]}>مسارات لوحة المعلم</Text>
-      <View style={styles.navList}>
-         {destinations.map(([path, title, icon]) => (
-          <FeatureTile key={path} title={title} icon={icon} onPress={() => router.push(`/teacher/${path}` as never)} />
-        ))}
-      </View>
     </TeacherScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  reviewRow: { flexDirection: "row-reverse", alignItems: "center", gap: 10, borderRadius: 12, padding: 10, marginTop: 6 },
+  reviewRow: { flexDirection: "row-reverse", alignItems: "center", gap: 10, borderRadius: 16, padding: 12, marginBottom: 8 },
+  reviewIcon: { width: 40, height: 40, borderRadius: 13, alignItems: "center", justifyContent: "center" },
   reviewText: { flex: 1, minWidth: 0 },
   reviewTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, textAlign: "right" },
   reviewDetail: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right" },
   hero: { alignItems: "center", paddingVertical: 20 },
+  heroLogo: { width: 96, height: 48, marginBottom: 10 },
   heroTitle: { fontFamily: "Amiri_700Bold", fontSize: 23 },
   heroSub: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11.5, marginTop: 3 },
   statsGrid: { flexDirection: "row", gap: 7, marginTop: 16, alignSelf: "stretch" },
@@ -187,16 +175,8 @@ const styles = StyleSheet.create({
   quickCell: { alignItems: "center", gap: 6, paddingVertical: 16 },
   quickTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, textAlign: "center" },
   quickSub: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 10.5, lineHeight: 15, alignSelf: "stretch", textAlign: "center" },
-  navTitle: { fontFamily: "Amiri_700Bold", fontSize: 19, textAlign: "right", marginTop: 20, marginBottom: 5 },
-  navList: { gap: 0 },
   countdown: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 10, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 5, overflow: "hidden" },
 });
-
-function formatDateTime(value: unknown) {
-  const date = new Date(String(value ?? ""));
-  if (Number.isNaN(date.getTime())) return String(value ?? "");
-  return `${date.toLocaleDateString("ar-SA-u-nu-latn", { day: "numeric", month: "long" })} — ${date.toLocaleTimeString("ar-SA-u-nu-latn", { hour: "2-digit", minute: "2-digit" })}`;
-}
 
 function CountdownChip({ deadline, colors }: { deadline: string | Date; colors: ReturnType<typeof useTheme>["colors"] }) {
   const [now, setNow] = useState(Date.now());

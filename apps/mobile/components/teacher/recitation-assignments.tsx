@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import { FlatList, Modal, Platform, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@workspace/tabyan-trpc/types";
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
 import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
-import { Button, Card } from "../ui";
+import { Badge, Button, Card, Icon, type BadgeTone } from "../ui";
 import { trpc } from "../../lib/trpc";
 import { confirmAr } from "../../lib/confirm";
+import { toast } from "../../lib/toast";
+import { formatDate, formatDateTime, formatDuration } from "../../lib/format";
 import { loadRangeWords } from "../../lib/mushaf/mushaf-assets";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
-import { useTheme } from "../../lib/theme";
+import { palette, useTheme } from "../../lib/theme";
 import { useAuth } from "../../lib/auth";
 import { RecordingPlaybackError, RecordingPlayer } from "../../lib/recitation/recording-player";
 
@@ -19,11 +22,16 @@ type Assignment = inferRouterOutputs<AppRouter>["recitationAssignments"]["forStu
 type Colors = ReturnType<typeof useTheme>["colors"];
 type HideMode = Assignment["hideMode"];
 
-const HIDE_MODES: { value: HideMode; label: string }[] = [
-  { value: "progressive_reveal", label: "تسميع" },
-  { value: "first_word", label: "أول كلمة" },
-  { value: "visible_review", label: "مراجعة بالنظر" },
+/** Web ASSIGNMENT_HIDE_MODES: the modes a teacher picks from, with the hint under the picker. */
+const HIDE_MODES: { value: HideMode; label: string; hint: string }[] = [
+  { value: "progressive_reveal", label: "تسميع", hint: "النص مخفي ويظهر كلما سمّع الطالب" },
+  { value: "first_word", label: "أول كلمة", hint: "تظهر أول كلمة من كل آية فقط" },
+  { value: "visible_review", label: "مراجعة بالنظر", hint: "النص ظاهر — يقرأ الطالب من المصحف" },
 ];
+
+export function assignmentHideModeLabel(mode: HideMode | string | null | undefined) {
+  return HIDE_MODES.find((m) => m.value === mode)?.label ?? (mode === "full_hide" ? "إخفاء كامل" : String(mode ?? ""));
+}
 
 const STATUS_LABELS: Record<Assignment["status"], string> = {
   assigned: "لم يُسلَّم",
@@ -31,19 +39,29 @@ const STATUS_LABELS: Record<Assignment["status"], string> = {
   reviewed: "قيّمته",
   cancelled: "أُلغي",
 };
+const STATUS_TONE: Record<Assignment["status"], BadgeTone> = { assigned: "gold", submitted: "live", reviewed: "success", cancelled: "muted" };
 
 const FLAG_LABELS = { mistake: "خطأ", skipped: "متروكة", corrected: "صحّحها", peeked: "تلميح" } as const;
+const AUTO_RESULT_NOTE = "هذه الأرقام يحسبها التطبيق آلياً على جهاز الطالب أثناء التسميع، وقد تخطئ. التقييم قرارك أنت.";
 
 export function assignmentRange(assignment: { surahId: number; startAyah: number; endAyah: number }) {
-  const name = SURAHS[assignment.surahId - 1]?.name ?? "";
+  const name = SURAHS[assignment.surahId - 1]?.name ?? `#${assignment.surahId}`;
   return assignment.startAyah === assignment.endAyah
     ? `سورة ${name} — الآية ${assignment.startAyah}`
     : `سورة ${name} — الآيات ${assignment.startAyah}–${assignment.endAyah}`;
 }
 
-function positiveInteger(value: string) {
-  const digits = normalizeDigits(value.trim());
-  return /^\d+$/.test(digits) ? Number(digits) : null;
+/** Number from a field that accepts Arabic-Indic digits; null when empty. */
+function parseNumber(value: string) {
+  const digits = normalizeDigits(value).replace(/\D/g, "");
+  return digits ? Number(digits) : null;
+}
+
+/** Like the web date field: the chosen day ends at 23:59:59 local time. */
+function endOfDay(date: Date) {
+  const due = new Date(date);
+  due.setHours(23, 59, 59, 0);
+  return due;
 }
 
 /**
@@ -57,23 +75,30 @@ export function RecitationAssignmentsSection({ studentId }: { studentId: string 
   const refetchList = list.refetch;
   useFocusEffect(useCallback(() => { if (studentId) void refetchList(); }, [studentId, refetchList]));
   const [creating, setCreating] = useState(false);
-  const refresh = () => void utils.recitationAssignments.forStudent.invalidate({ studentId });
+  const refresh = () => {
+    void utils.recitationAssignments.forStudent.invalidate({ studentId });
+    void utils.recitationAssignments.reviewQueue.invalidate();
+  };
+  const visible = (list.data ?? []).filter((a) => a.status !== "cancelled");
 
   return (
     <Card>
-      <Text style={[styles.sectionTitle, { color: colors.primary }]}>واجبات التسميع</Text>
-      <Text style={[styles.muted, { color: colors.muted }]}>
-        حدّد للطالب سورة وآيات يسمّعها من التطبيق أو الموقع، ثم راجع ما سلّمه وقيّمه بنفسك.
-      </Text>
+      <View style={styles.rowBetween}>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}><Icon name="mic-outline" size={16} color={colors.primary} /> واجبات التسميع</Text>
+        {!creating ? (
+          <Pressable accessibilityRole="button" onPress={() => setCreating(true)} style={[styles.addPill, { backgroundColor: `${colors.primary}0f` }]}>
+            <Icon name="add" size={14} color={colors.primary} />
+            <Text style={[styles.addPillText, { color: colors.primary }]}>واجب جديد</Text>
+          </Pressable>
+        ) : null}
+      </View>
       {creating ? (
         <CreateForm studentId={studentId} colors={colors} onDone={() => { setCreating(false); refresh(); }} onCancel={() => setCreating(false)} />
-      ) : (
-        <Button label="واجب تسميع جديد" icon="add-circle-outline" variant="secondary" onPress={() => setCreating(true)} />
-      )}
+      ) : null}
       {list.isLoading ? <Text style={[styles.muted, { color: colors.muted }]}>جارٍ تحميل الواجبات…</Text> : null}
       {list.isError ? <Text style={[styles.error, { color: colors.danger }]}>تعذر تحميل الواجبات.</Text> : null}
-      {list.data && list.data.length === 0 ? <Text style={[styles.muted, { color: colors.muted }]}>لا واجبات تسميع بعد</Text> : null}
-      {list.data?.map((assignment) => (
+      {list.data && visible.length === 0 && !creating ? <Text style={[styles.muted, { color: colors.muted }]}>لا واجبات تسميع لهذا الطالب بعد</Text> : null}
+      {visible.map((assignment) => (
         <AssignmentCard key={assignment.id} assignment={assignment} colors={colors} onChanged={refresh} />
       ))}
     </Card>
@@ -81,37 +106,61 @@ export function RecitationAssignmentsSection({ studentId }: { studentId: string 
 }
 
 function CreateForm({ studentId, colors, onDone, onCancel }: { studentId: string; colors: Colors; onDone: () => void; onCancel: () => void }) {
-  const [surah, setSurah] = useState("1");
+  const [surahId, setSurahId] = useState(67);
   const [start, setStart] = useState("1");
-  const [end, setEnd] = useState("7");
+  const [end, setEnd] = useState("10");
   const [hideMode, setHideMode] = useState<HideMode>("progressive_reveal");
   const [note, setNote] = useState("");
-  const [dueDays, setDueDays] = useState("");
+  const [due, setDue] = useState<Date | null>(null);
+  const [surahPickerOpen, setSurahPickerOpen] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [error, setError] = useState("");
   const create = trpc.recitationAssignments.create.useMutation({
-    onSuccess: onDone,
+    onSuccess: () => { toast("أُرسل الواجب للطالب", "success"); onDone(); },
     onError: (cause) => setError(userFacingErrorMessage(cause, "تعذر إنشاء الواجب.")),
   });
 
-  const surahId = positiveInteger(surah);
-  const meta = surahId ? SURAHS[surahId - 1] : undefined;
-  const startAyah = positiveInteger(start);
-  const endAyah = positiveInteger(end);
-  const days = dueDays ? positiveInteger(dueDays) : null;
-  const valid = !!meta && !!startAyah && !!endAyah && startAyah >= 1 && endAyah >= startAyah && endAyah <= meta.ayahs
-    && (!dueDays || (days !== null && days >= 1 && days <= 60));
+  const surah = SURAHS[surahId - 1] ?? SURAHS[0];
+  const startAyah = parseNumber(start);
+  const endAyah = parseNumber(end);
+  const rangeError = !startAyah || !endAyah
+    ? "أدخل رقم أول آية وآخر آية"
+    : startAyah < 1 || endAyah > surah.ayahs
+      ? `السورة ${surah.ayahs} آية فقط`
+      : endAyah < startAyah
+        ? "آخر آية يجب أن تكون بعد أول آية"
+        : null;
+
+  const pickSurah = (n: number) => {
+    const next = SURAHS[n - 1] ?? SURAHS[0];
+    setSurahId(next.n);
+    setStart("1");
+    setEnd(String(Math.min(10, next.ayahs)));
+    setSurahPickerOpen(false);
+  };
+  const onDatePicked = (event: DateTimePickerEvent, picked?: Date) => {
+    if (Platform.OS !== "ios") setDatePickerOpen(false);
+    if (event.type === "dismissed" || !picked) return;
+    setDue(endOfDay(picked));
+  };
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const fieldStyle = [styles.input, styles.pickerField, { borderColor: colors.border, backgroundColor: colors.input }];
 
   return (
-    <View style={[styles.form, { borderColor: colors.border }]}>
+    <View style={[styles.form, { backgroundColor: `${colors.primary}0c` }]}>
+      <Text style={[styles.label, { color: colors.muted }]}>السورة</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel="اختيار السورة" onPress={() => setSurahPickerOpen(true)} style={fieldStyle}>
+        <Text style={[styles.pickerText, { color: colors.text }]}>{surah.n}. {surah.name} — {surah.ayahs} آية</Text>
+        <Icon name="chevron-down" size={16} color={colors.muted} />
+      </Pressable>
+
       <View style={styles.fieldsRow}>
-        <Field label="رقم السورة" value={surah} onChange={setSurah} colors={colors} />
         <Field label="من آية" value={start} onChange={setStart} colors={colors} />
-        <Field label="إلى آية" value={end} onChange={setEnd} colors={colors} />
+        <Field label={`إلى آية (حتى ${surah.ayahs})`} value={end} onChange={setEnd} colors={colors} />
       </View>
-      <Text style={[styles.small, { color: meta ? colors.muted : colors.danger }]}>
-        {meta ? `سورة ${meta.name} — ${meta.ayahs} آية` : "رقم السورة من 1 إلى 114"}
-      </Text>
-      <Text style={[styles.label, { color: colors.muted }]}>طريقة العرض للطالب</Text>
+      {rangeError ? <Text style={[styles.small, { color: colors.danger }]}>{rangeError}</Text> : null}
+
+      <Text style={[styles.label, { color: colors.muted }]}>وضع العرض للطالب</Text>
       <View style={styles.fieldsRow}>
         {HIDE_MODES.map((mode) => {
           const selected = mode.value === hideMode;
@@ -121,24 +170,43 @@ function CreateForm({ studentId, colors, onDone, onCancel }: { studentId: string
               accessibilityRole="radio"
               accessibilityState={{ selected }}
               onPress={() => setHideMode(mode.value)}
-              style={[styles.choice, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? colors.selected : colors.input }]}
+              style={[styles.choice, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? colors.primary : "transparent" }]}
             >
-              <Text numberOfLines={1} style={[styles.choiceLabel, { color: selected ? colors.primary : colors.text }]}>{mode.label}</Text>
+              <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.choiceLabel, { color: selected ? colors.primaryText : colors.muted }]}>{mode.label}</Text>
             </Pressable>
           );
         })}
       </View>
+      <Text style={[styles.small, { color: colors.muted }]}>{HIDE_MODES.find((m) => m.value === hideMode)?.hint}</Text>
+
+      <Text style={[styles.label, { color: colors.muted }]}>ملاحظة للطالب (اختياري)</Text>
       <TextInput
         value={note}
         onChangeText={setNote}
         maxLength={500}
         multiline
-        placeholder="ملاحظة للطالب (اختياري)"
+        placeholder="مثال: ركّز على أحكام المد"
         placeholderTextColor={colors.muted}
         style={[styles.input, styles.noteInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]}
         textAlign="right"
       />
-      <Field label="مهلة التسليم بالأيام (اختياري)" value={dueDays} onChange={setDueDays} colors={colors} />
+
+      <Text style={[styles.label, { color: colors.muted }]}>موعد التسليم (اختياري)</Text>
+      <View style={styles.fieldsRow}>
+        <Pressable accessibilityRole="button" accessibilityLabel="اختيار موعد التسليم" onPress={() => setDatePickerOpen(true)} style={[...fieldStyle, styles.flex]}>
+          <Text style={[styles.pickerText, { color: due ? colors.text : colors.muted }]}>{due ? formatDate(due) : "بدون موعد"}</Text>
+          <Icon name="calendar-outline" size={16} color={colors.muted} />
+        </Pressable>
+        {due ? (
+          <Pressable accessibilityRole="button" accessibilityLabel="إزالة الموعد" onPress={() => setDue(null)} style={[styles.clearDate, { borderColor: colors.border }]}>
+            <Icon name="close" size={16} color={colors.muted} />
+          </Pressable>
+        ) : null}
+      </View>
+      {datePickerOpen ? (
+        <DateTimePicker value={due ?? today} mode="date" minimumDate={today} display={Platform.OS === "ios" ? "spinner" : "default"} onChange={onDatePicked} />
+      ) : null}
+
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
       <View style={styles.fieldsRow}>
         <View style={styles.flex}>
@@ -146,31 +214,53 @@ function CreateForm({ studentId, colors, onDone, onCancel }: { studentId: string
             label="إرسال الواجب"
             icon="send-outline"
             loading={create.isPending}
-            disabled={!valid || create.isPending}
+            disabled={!!rangeError || create.isPending}
             onPress={() => {
+              if (rangeError || !startAyah || !endAyah) return;
               setError("");
-              create.mutate({
-                studentId,
-                surahId: surahId!,
-                startAyah: startAyah!,
-                endAyah: endAyah!,
-                hideMode,
-                note: note.trim() || undefined,
-                dueAt: days ? new Date(Date.now() + days * 86_400_000) : undefined,
-              });
+              create.mutate({ studentId, surahId, startAyah, endAyah, hideMode, note: note.trim() || undefined, dueAt: due ?? undefined });
             }}
           />
         </View>
-        <View style={styles.flex}><Button label="إلغاء" variant="quiet" onPress={onCancel} /></View>
+        <View style={styles.flex}><Button label="إلغاء" variant="secondary" onPress={onCancel} /></View>
       </View>
+
+      <SurahPicker visible={surahPickerOpen} selected={surahId} colors={colors} onPick={pickSurah} onClose={() => setSurahPickerOpen(false)} />
     </View>
   );
 }
 
-function clock(seconds: number) {
-  const whole = Math.max(0, Math.round(seconds));
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
+/** Bottom sheet listing every surah with its verse count (the web `<select>`). */
+function SurahPicker({ visible, selected, colors, onPick, onClose }: { visible: boolean; selected: number; colors: Colors; onPick: (n: number) => void; onClose: () => void }) {
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.backdrop}>
+        <Pressable accessibilityLabel="إغلاق" style={StyleSheet.absoluteFill} onPress={onClose} />
+        <SafeAreaView style={[styles.sheet, { backgroundColor: colors.card }]}>
+          <View style={[styles.grabber, { backgroundColor: colors.border }]} />
+          <Text style={[styles.sheetTitle, { color: colors.primary }]}>اختر السورة</Text>
+          <FlatList
+            data={SURAHS}
+            keyExtractor={(s) => String(s.n)}
+            initialScrollIndex={Math.max(0, selected - 1)}
+            getItemLayout={(_, index) => ({ length: SURAH_ROW_HEIGHT, offset: SURAH_ROW_HEIGHT * index, index })}
+            renderItem={({ item }) => {
+              const active = item.n === selected;
+              return (
+                <Pressable accessibilityRole="button" accessibilityState={{ selected: active }} onPress={() => onPick(item.n)} style={[styles.surahRow, { backgroundColor: active ? colors.selected : "transparent" }]}>
+                  <Text style={[styles.surahNumber, { color: colors.muted }]}>{item.n}</Text>
+                  <Text style={[styles.surahName, { color: active ? colors.primary : colors.text }]}>{item.name}</Text>
+                  <Text style={[styles.surahCount, { color: colors.muted }]}>{item.ayahs} آية</Text>
+                </Pressable>
+              );
+            }}
+          />
+        </SafeAreaView>
+      </View>
+    </Modal>
+  );
 }
+const SURAH_ROW_HEIGHT = 48;
 
 const RECORDING_ERRORS = {
   missing: "لا يوجد تسجيل صوتي لهذا التسميع.",
@@ -207,6 +297,7 @@ function RecordingPlayback({ objectPath, colors }: { objectPath: string; colors:
 
   return (
     <View style={styles.recording}>
+      <Text style={[styles.subheading, { color: colors.text }]}>تسجيل التسميع</Text>
       <Button
         label={loading ? "جارٍ تحميل التسجيل…" : state.playing ? "إيقاف مؤقت" : state.position > 0 ? "متابعة الاستماع" : "استمع للتسميع"}
         variant="secondary"
@@ -216,7 +307,7 @@ function RecordingPlayback({ objectPath, colors }: { objectPath: string; colors:
         onPress={() => void toggle()}
       />
       {state.duration > 0 ? (
-        <Text style={[styles.small, { color: colors.muted }]}>{clock(state.position)} / {clock(state.duration)}</Text>
+        <Text style={[styles.small, { color: colors.muted }]}>{formatDuration(state.position)} / {formatDuration(state.duration)}</Text>
       ) : null}
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
     </View>
@@ -224,78 +315,94 @@ function RecordingPlayback({ objectPath, colors }: { objectPath: string; colors:
 }
 
 function AssignmentCard({ assignment, colors, onChanged }: { assignment: Assignment; colors: Colors; onChanged: () => void }) {
-  const [score, setScore] = useState(assignment.teacherScore != null ? String(assignment.teacherScore) : "");
-  const [feedback, setFeedback] = useState(assignment.teacherFeedback ?? "");
+  const [open, setOpen] = useState(assignment.status === "submitted");
   const [error, setError] = useState("");
-  const review = trpc.recitationAssignments.review.useMutation({
-    onSuccess: onChanged,
-    onError: (cause) => setError(userFacingErrorMessage(cause, "تعذر حفظ التقييم.")),
-  });
   const cancel = trpc.recitationAssignments.cancel.useMutation({
-    onSuccess: onChanged,
+    onSuccess: () => { toast("أُلغي الواجب", "success"); onChanged(); },
     onError: (cause) => setError(userFacingErrorMessage(cause, "تعذر إلغاء الواجب.")),
   });
-  const result = assignment.result;
-  const scoreValue = positiveInteger(score);
-  const canReview = (assignment.status === "submitted" || assignment.status === "reviewed") && !!result;
+  const reviewable = assignment.status === "submitted" || assignment.status === "reviewed";
 
   return (
     <View style={[styles.assignment, { backgroundColor: `${colors.primary}0c` }]}>
-      <View style={styles.rowBetween}>
-        <Text style={[styles.title, { color: colors.text }]}>{assignmentRange(assignment)}</Text>
-        <Text style={[styles.status, { color: assignment.status === "submitted" ? colors.primary : colors.muted }]}>{STATUS_LABELS[assignment.status]}</Text>
-      </View>
-      <Text style={[styles.small, { color: colors.muted }]}>
-        {[
-          HIDE_MODES.find((mode) => mode.value === assignment.hideMode)?.label,
-          assignment.dueAt ? `التسليم قبل ${formatDate(assignment.dueAt)}` : null,
-          assignment.submittedAt ? `سُلِّم ${formatDate(assignment.submittedAt)}` : null,
-        ].filter(Boolean).join(" · ")}
-      </Text>
-      {assignment.note ? <Text style={[styles.body, { color: colors.text }]}>{assignment.note}</Text> : null}
-
-      {result ? (
-        <>
-          <Text style={[styles.body, { color: colors.text }]}>
-            قرأ {result.wordsRecited} من {result.totalWords} كلمة · أخطاء {result.confirmedMistakes} · متروكة {result.skippedWords} · صحّحها {result.correctedWords} · تلميحات {result.peekedWords} · المدة {clock(result.durationSeconds)}
-          </Text>
-          <FlaggedWords assignment={assignment} colors={colors} />
-          {assignment.audioPath ? <RecordingPlayback key={assignment.audioPath} objectPath={assignment.audioPath} colors={colors} /> : null}
-          <Text style={[styles.small, { color: colors.muted }]}>الأرقام محسوبة آلياً على جهاز الطالب؛ التقييم لك.</Text>
-        </>
-      ) : null}
-
-      {canReview ? (
-        <View style={styles.reviewBox}>
-          <Field label="التقييم من 100" value={score} onChange={setScore} colors={colors} />
-          <TextInput
-            value={feedback}
-            onChangeText={setFeedback}
-            maxLength={1000}
-            multiline
-            placeholder="ملاحظاتك للطالب (اختياري)"
-            placeholderTextColor={colors.muted}
-            style={[styles.input, styles.noteInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]}
-            textAlign="right"
-          />
-          <Button
-            label={assignment.status === "reviewed" ? "تعديل التقييم" : "حفظ التقييم"}
-            icon="checkmark-done-outline"
-            loading={review.isPending}
-            disabled={scoreValue === null || scoreValue > 100 || review.isPending}
-            onPress={() => { setError(""); review.mutate({ assignmentId: assignment.id, score: scoreValue!, feedback: feedback.trim() || undefined }); }}
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen((v) => !v)}>
+        <View style={styles.rowBetween}>
+          <Text style={[styles.title, { color: colors.primary }]}>{assignmentRange(assignment)}</Text>
+          <Badge
+            tone={STATUS_TONE[assignment.status]}
+            label={`${STATUS_LABELS[assignment.status]}${assignment.status === "reviewed" && assignment.teacherScore != null ? ` · ${assignment.teacherScore}/100` : ""}`}
           />
         </View>
+        <Text style={[styles.small, { color: colors.muted }]}>
+          {[
+            assignmentHideModeLabel(assignment.hideMode),
+            assignment.dueAt ? `التسليم قبل ${formatDate(assignment.dueAt)}` : null,
+            assignment.submittedAt ? `سُلِّم ${formatDateTime(assignment.submittedAt)}` : null,
+          ].filter(Boolean).join(" · ")}
+        </Text>
+      </Pressable>
+
+      {open ? (
+        <View style={styles.details}>
+          {assignment.note ? (
+            <View style={styles.noteRow}>
+              <Icon name="create-outline" size={12} color={colors.muted} />
+              <Text style={[styles.body, styles.flex, { color: colors.text }]}>{assignment.note}</Text>
+            </View>
+          ) : null}
+
+          {assignment.result ? (
+            <ResultView assignment={assignment} colors={colors} />
+          ) : (
+            <Text style={[styles.small, { color: colors.muted }]}>لم يسلّم الطالب هذا الواجب بعد</Text>
+          )}
+
+          {reviewable ? <ReviewForm assignment={assignment} colors={colors} onReviewed={onChanged} /> : null}
+          {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+          {assignment.status !== "reviewed" ? (
+            <Pressable
+              accessibilityRole="button"
+              disabled={cancel.isPending}
+              onPress={() => void confirmAr("إلغاء الواجب", "إلغاء هذا الواجب؟").then((ok) => { if (ok) { setError(""); cancel.mutate({ assignmentId: assignment.id }); } })}
+              style={styles.cancelLink}
+            >
+              <Icon name="close-circle-outline" size={13} color={colors.muted} />
+              <Text style={[styles.small, { color: colors.muted }]}>{cancel.isPending ? "جارٍ الإلغاء…" : "إلغاء الواجب"}</Text>
+            </Pressable>
+          ) : null}
+        </View>
       ) : null}
-      {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-      {assignment.status === "assigned" || assignment.status === "submitted" ? (
-        <Button
-          label="إلغاء الواجب"
-          variant="quiet"
-          disabled={cancel.isPending}
-          onPress={() => void confirmAr("إلغاء الواجب", "هل تريد إلغاء هذا الواجب؟").then((ok) => { if (ok) cancel.mutate({ assignmentId: assignment.id }); })}
-        />
-      ) : null}
+    </View>
+  );
+}
+
+/** The web six-tile result grid, the auto-count note, flagged words and the recording. */
+function ResultView({ assignment, colors }: { assignment: Assignment; colors: Colors }) {
+  const result = assignment.result!;
+  const tiles: { label: string; value: string; error?: boolean }[] = [
+    { label: "الكلمات المسمَّعة", value: `${result.wordsRecited}/${result.totalWords}` },
+    { label: "أخطاء", value: String(result.confirmedMistakes), error: result.confirmedMistakes > 0 },
+    { label: "تخطٍّ", value: String(result.skippedWords), error: result.skippedWords > 0 },
+    { label: "صحّحها بنفسه", value: String(result.correctedWords) },
+    { label: "تلميحات", value: String(result.peekedWords) },
+    { label: "المدة", value: formatDuration(result.durationSeconds) },
+  ];
+  return (
+    <View style={styles.result}>
+      <View style={styles.tileGrid}>
+        {tiles.map((tile) => (
+          <View key={tile.label} style={[styles.tile, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.tileValue, { color: tile.error ? colors.danger : colors.text }]}>{tile.value}</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.tileLabel, { color: colors.muted }]}>{tile.label}</Text>
+          </View>
+        ))}
+      </View>
+      <View style={styles.noteRow}>
+        <Icon name="information-circle-outline" size={12} color={colors.muted} />
+        <Text style={[styles.small, styles.flex, { color: colors.muted }]}>{AUTO_RESULT_NOTE}</Text>
+      </View>
+      <FlaggedWords assignment={assignment} colors={colors} />
+      {assignment.audioPath ? <RecordingPlayback key={assignment.audioPath} objectPath={assignment.audioPath} colors={colors} /> : null}
     </View>
   );
 }
@@ -309,7 +416,7 @@ function FlaggedWords({ assignment, colors }: { assignment: Assignment; colors: 
     enabled: flagged.length > 0,
     staleTime: Infinity,
   });
-  if (!flagged.length) return null;
+  if (!flagged.length) return <Text style={[styles.small, { color: colors.muted }]}>لم يعلّم التطبيق أي كلمة في هذا التسليم</Text>;
   const textByKey = new Map(words.data?.map((word) => [`${word.verseKey}:${word.position}`, word.displayText]) ?? []);
   const byAyah = new Map<number, typeof flagged>();
   for (const word of flagged) {
@@ -318,11 +425,96 @@ function FlaggedWords({ assignment, colors }: { assignment: Assignment; colors: 
   }
   return (
     <View style={styles.flagged}>
+      <Text style={[styles.subheading, { color: colors.text }]}>مواضع علّمها التطبيق</Text>
       {[...byAyah.entries()].sort(([a], [b]) => a - b).map(([ayah, list]) => (
-        <Text key={ayah} style={[styles.body, { color: colors.text }]}>
-          الآية {ayah}: {list.map((word) => `${textByKey.get(word.key) ?? `كلمة ${word.key.split(":")[2]}`} (${FLAG_LABELS[word.kind]})`).join("، ")}
-        </Text>
+        <View key={ayah} style={[styles.tile, styles.ayahBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.small, { color: colors.muted, fontFamily: "IBMPlexSansArabic_700Bold" }]}>الآية {ayah}</Text>
+          <View style={styles.chips}>
+            {list.map((word) => {
+              const position = word.key.split(":")[2];
+              const text = textByKey.get(word.key);
+              return (
+                <View key={word.key} style={[styles.chip, { backgroundColor: word.kind === "mistake" ? `${colors.danger}1a` : word.kind === "skipped" ? "rgba(249,115,22,0.14)" : word.kind === "corrected" ? `${palette.gold}26` : colors.input }]}>
+                  {text ? <Text style={[styles.chipWord, { color: colors.text }]}>{text}</Text> : null}
+                  <Text style={[styles.chipLabel, { color: word.kind === "mistake" ? colors.danger : colors.muted }]}>{FLAG_LABELS[word.kind]} · الكلمة {position}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
       ))}
+    </View>
+  );
+}
+
+/** Web ReviewForm: a read-only summary once reviewed, with "تعديل التقييم" to reopen the fields. */
+function ReviewForm({ assignment, colors, onReviewed }: { assignment: Assignment; colors: Colors; onReviewed: () => void }) {
+  const [editing, setEditing] = useState(assignment.status === "submitted");
+  const [score, setScore] = useState(assignment.teacherScore != null ? String(assignment.teacherScore) : "");
+  const [feedback, setFeedback] = useState(assignment.teacherFeedback ?? "");
+  const [error, setError] = useState("");
+  const review = trpc.recitationAssignments.review.useMutation({
+    onSuccess: () => { toast("أُرسل تقييمك للطالب", "success"); setEditing(false); onReviewed(); },
+    onError: (cause) => setError(userFacingErrorMessage(cause, "تعذر حفظ التقييم.")),
+  });
+  const value = parseNumber(score);
+  const valid = value !== null && value >= 0 && value <= 100;
+
+  if (!editing) {
+    return (
+      <View style={[styles.reviewBox, { borderColor: `${colors.success}40`, backgroundColor: `${colors.success}0d` }]}>
+        <View style={styles.rowBetween}>
+          <Text style={[styles.subheading, { color: colors.text }]}>تقييمك</Text>
+          <Text style={[styles.scoreValue, { color: colors.primary }]}>{assignment.teacherScore ?? "—"}/100</Text>
+        </View>
+        {assignment.teacherFeedback ? <Text style={[styles.body, { color: colors.text }]}>{assignment.teacherFeedback}</Text> : null}
+        <Pressable accessibilityRole="button" onPress={() => setEditing(true)} style={styles.editLink}>
+          <Text style={[styles.linkText, { color: colors.primary }]}>تعديل التقييم</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.reviewBox, { borderColor: `${palette.gold}4d`, backgroundColor: `${palette.gold}0d` }]}>
+      <Text style={[styles.subheading, { color: colors.text }]}>تقييمك للتسميع</Text>
+      <View style={styles.scoreRow}>
+        <TextInput
+          accessibilityLabel="الدرجة من 100"
+          value={score}
+          onChangeText={setScore}
+          keyboardType="number-pad"
+          maxLength={3}
+          placeholder="0–100"
+          placeholderTextColor={colors.muted}
+          style={[styles.input, styles.numberInput, styles.scoreInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]}
+        />
+        <Text style={[styles.small, { color: colors.muted }]}>/ 100</Text>
+      </View>
+      {score && !valid ? <Text style={[styles.small, { color: colors.danger }]}>الدرجة من 0 إلى 100</Text> : null}
+      <TextInput
+        value={feedback}
+        onChangeText={setFeedback}
+        maxLength={1000}
+        multiline
+        placeholder="ملاحظاتك للطالب (اختياري)"
+        placeholderTextColor={colors.muted}
+        style={[styles.input, styles.noteInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]}
+        textAlign="right"
+      />
+      {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+      <View style={styles.fieldsRow}>
+        <View style={styles.flex}>
+          <Button
+            label="حفظ التقييم"
+            icon="checkmark-done-outline"
+            loading={review.isPending}
+            disabled={!valid || review.isPending}
+            onPress={() => { if (!valid) return; setError(""); review.mutate({ assignmentId: assignment.id, score: value!, feedback: feedback.trim() || undefined }); }}
+          />
+        </View>
+        {assignment.status === "reviewed" ? <View style={styles.flex}><Button label="إلغاء" variant="secondary" onPress={() => setEditing(false)} /></View> : null}
+      </View>
     </View>
   );
 }
@@ -334,7 +526,7 @@ function Field({ label, value, onChange, colors }: { label: string; value: strin
       <TextInput
         accessibilityLabel={label}
         value={value}
-        onChangeText={(text) => onChange(text.replace(/\D/g, ""))}
+        onChangeText={onChange}
         keyboardType="number-pad"
         maxLength={3}
         style={[styles.input, styles.numberInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]}
@@ -343,31 +535,57 @@ function Field({ label, value, onChange, colors }: { label: string; value: strin
   );
 }
 
-function formatDate(value: unknown) {
-  const date = new Date(String(value ?? ""));
-  return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("ar-SA-u-nu-latn");
-}
-
 const styles = StyleSheet.create({
-  sectionTitle: { fontFamily: "Amiri_700Bold", fontSize: 19, textAlign: "right", marginBottom: 8 },
-  title: { flex: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, lineHeight: 22, textAlign: "right" },
-  status: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 11 },
+  sectionTitle: { fontFamily: "Amiri_700Bold", fontSize: 19, lineHeight: 30, textAlign: "right" },
+  addPill: { flexDirection: "row-reverse", alignItems: "center", gap: 4, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  addPillText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 12, lineHeight: 18 },
+  title: { flex: 1, fontFamily: "Amiri_700Bold", fontSize: 15, lineHeight: 24, textAlign: "right" },
+  subheading: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 12, lineHeight: 20, textAlign: "right" },
   body: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 21, textAlign: "right" },
-  muted: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "right", lineHeight: 21, marginBottom: 8 },
-  small: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 10, textAlign: "right", lineHeight: 18 },
-  label: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11, textAlign: "right", marginBottom: 4 },
-  error: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "right", marginVertical: 6 },
+  muted: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "right", lineHeight: 21, marginTop: 8 },
+  small: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 10.5, textAlign: "right", lineHeight: 17 },
+  label: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11, lineHeight: 17, textAlign: "right", marginBottom: 4 },
+  error: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 20, textAlign: "right", marginVertical: 4 },
+  linkText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 11, lineHeight: 18 },
   flex: { flex: 1, minWidth: 0 },
-  form: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, padding: 10, gap: 8, marginBottom: 8 },
-  fieldsRow: { flexDirection: "row-reverse", gap: 8 },
+  form: { borderRadius: 16, padding: 12, gap: 8, marginTop: 10 },
+  fieldsRow: { flexDirection: "row-reverse", gap: 8, alignItems: "flex-end" },
   input: { borderWidth: 1, borderRadius: 13, paddingHorizontal: 12, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13 },
   numberInput: { minHeight: 44, textAlign: "center" },
+  scoreRow: { flexDirection: "row-reverse", alignItems: "center", gap: 8 },
+  scoreInput: { width: 96, flex: 0 },
+  scoreValue: { fontFamily: "Amiri_700Bold", fontSize: 19, lineHeight: 28 },
   noteInput: { minHeight: 70, paddingTop: 10, textAlignVertical: "top" },
+  pickerField: { minHeight: 44, flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  pickerText: { flex: 1, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13, lineHeight: 20, textAlign: "right" },
+  clearDate: { width: 44, height: 44, borderRadius: 13, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   choice: { flex: 1, minHeight: 40, borderWidth: 1, borderRadius: 12, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
-  choiceLabel: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 12 },
-  assignment: { borderRadius: 12, padding: 10, marginTop: 8, gap: 6 },
-  rowBetween: { flexDirection: "row-reverse", alignItems: "center", gap: 8 },
-  reviewBox: { gap: 6, marginTop: 4 },
+  choiceLabel: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 12, lineHeight: 18 },
+  assignment: { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginTop: 8, gap: 4 },
+  rowBetween: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  details: { gap: 10, marginTop: 8 },
+  noteRow: { flexDirection: "row-reverse", alignItems: "flex-start", gap: 6 },
+  result: { gap: 8 },
+  tileGrid: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 6 },
+  tile: { width: "31.5%", flexGrow: 1, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 6, paddingVertical: 8, alignItems: "center" },
+  tileValue: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 15, lineHeight: 22 },
+  tileLabel: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 10, lineHeight: 15, textAlign: "center" },
+  ayahBox: { width: "100%", alignItems: "stretch", gap: 6, paddingHorizontal: 10 },
+  chips: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 6 },
+  chip: { flexDirection: "row-reverse", alignItems: "center", gap: 6, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  chipWord: { fontFamily: "Amiri_700Bold", fontSize: 14, lineHeight: 20 },
+  chipLabel: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 10, lineHeight: 15 },
+  reviewBox: { gap: 8, borderRadius: 12, borderWidth: 1, padding: 10 },
+  editLink: { alignSelf: "flex-end", minHeight: 32, justifyContent: "center" },
+  cancelLink: { flexDirection: "row-reverse", alignItems: "center", gap: 4, alignSelf: "flex-end", minHeight: 32 },
   recording: { gap: 4, marginTop: 4 },
-  flagged: { gap: 2 },
+  flagged: { gap: 6 },
+  backdrop: { flex: 1, backgroundColor: "#0008", justifyContent: "flex-end" },
+  sheet: { maxHeight: "80%", borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 12 },
+  grabber: { alignSelf: "center", width: 40, height: 4, borderRadius: 2, marginTop: 10, marginBottom: 6 },
+  sheetTitle: { fontFamily: "Amiri_700Bold", fontSize: 19, lineHeight: 30, textAlign: "center", marginBottom: 6 },
+  surahRow: { height: SURAH_ROW_HEIGHT, flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 20 },
+  surahNumber: { width: 30, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12, textAlign: "center" },
+  surahName: { flex: 1, fontFamily: "Amiri_700Bold", fontSize: 17, textAlign: "right" },
+  surahCount: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11 },
 });

@@ -1,10 +1,12 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { PanResponder, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { Button, Card } from "../../../components/ui";
+import { Button, Card, EmptyState } from "../../../components/ui";
 import { trpc } from "../../../lib/trpc";
 import { TeacherScreen } from "../../../components/teacher/teacher-screen";
-import { useTheme } from "../../../lib/theme";
+import { formatDateTime } from "../../../lib/format";
+import { palette, useTheme } from "../../../lib/theme";
+import { toast } from "../../../lib/toast";
 import { userFacingErrorMessage } from "../../../lib/user-facing-error";
 
 type ScoreSliderProps = { label: string; max: number; value: number; onChange: (value: number) => void };
@@ -40,7 +42,7 @@ function ScoreSlider({ label, max, value, onChange }: ScoreSliderProps) {
 
 export default function Evaluate() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const q = trpc.teacher.sessionRoom.useQuery({ id: String(sessionId) }, { enabled: !!sessionId, retry: false });
   const utils = trpc.useUtils();
@@ -53,14 +55,19 @@ export default function Evaluate() {
   const [recommendation, setRecommendation] = useState<"promote" | "keep" | "review">("keep");
   const evaluate = trpc.teacher.evaluate.useMutation({
     onSuccess: () => {
+      toast("حُفظ التقييم وأُشعر الطالب", "success");
       void utils.teacher.pendingEvaluations.invalidate();
       void utils.teacher.dashboard.invalidate();
       router.replace("/teacher/evaluations");
     },
+    onError: (cause) => toast(userFacingErrorMessage(cause, "تعذر حفظ التقييم. حاول مرة أخرى."), "error"),
   });
   const session = q.data as { studentName?: string; typeLabel?: string; sessionType?: string; topic?: string; scheduledAt?: string | Date } | undefined;
   const total = hifz + revision + tajweed + commitment;
+  // Web thresholds: green from 85, gold from 60, red below.
+  const totalColor = total >= 85 ? colors.success : total >= 60 ? (isDark ? palette.gold : palette.goldDark) : colors.danger;
   const canSubmit = !!sessionId && notes.length <= 500 && !evaluate.isPending;
+  const when = formatDateTime(session?.scheduledAt);
 
   return (
     <TeacherScreen title="تقييم الحصة" back loading={q.isLoading} error={!!q.error} retry={() => void q.refetch()}>
@@ -68,9 +75,9 @@ export default function Evaluate() {
         <View>
           <Card accent>
             <Text style={[styles.heading, { color: colors.text }]}>تقييم الحصة</Text>
-            <Text style={[styles.sessionText, { color: colors.muted }]}>{session.studentName ?? "الطالب"} — {session.typeLabel ?? session.sessionType ?? "حصة"}</Text>
-            {session.topic ? <Text style={[styles.sessionText, { color: colors.muted }]}>{session.topic}</Text> : null}
-            <View style={[styles.total, { backgroundColor: `${colors.primary}18` }]}><Text style={[styles.totalValue, { color: colors.primary }]}>{total}</Text><Text style={[styles.totalLabel, { color: colors.muted }]}>/100 المجموع</Text></View>
+            <Text style={[styles.sessionText, { color: colors.muted }]}>الطالب: <Text style={[styles.sessionStrong, { color: colors.text }]}>{session.studentName ?? "الطالب"}</Text> · {session.typeLabel ?? session.sessionType ?? "حصة"}{session.topic ? ` — ${session.topic}` : ""}</Text>
+            {when ? <Text style={[styles.sessionText, { color: colors.muted }]}>{when}</Text> : null}
+            <View style={[styles.total, { backgroundColor: `${palette.gold}26` }]}><Text style={[styles.totalLabel, { color: colors.text }]}>المجموع:</Text><Text style={[styles.totalValue, { color: totalColor }]}>{total}</Text><Text style={[styles.totalLabel, { color: colors.muted }]}>/100</Text></View>
           </Card>
           <Card>
             <ScoreSlider label="الحفظ الجديد" max={50} value={hifz} onChange={setHifz} />
@@ -85,25 +92,27 @@ export default function Evaluate() {
                 </Pressable>
               ))}
             </View>
+            <Text style={[styles.recommendationHint, { color: colors.muted }]}>التوصية لا تُرقّي الطالب — القرار النهائي للإدارة</Text>
             <Text style={[styles.sectionLabel, { color: colors.text }]}>ملاحظات للطالب</Text>
             <TextInput value={notes} onChangeText={setNotes} maxLength={500} multiline placeholder="نقاط القوة وما يحتاج تحسينًا…" placeholderTextColor={colors.muted} style={[styles.input, styles.textarea, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]} textAlign="right" />
             <Text style={[styles.counter, { color: colors.muted }]}>{notes.length}/500</Text>
             <TextInput value={audioNotesUrl} onChangeText={setAudioNotesUrl} placeholder="رابط ملاحظات صوتية (اختياري)" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.input }]} textAlign="left" autoCapitalize="none" />
-             {evaluate.error ? <Text style={[styles.error, { color: colors.danger }]}>{userFacingErrorMessage(evaluate.error, "تعذر حفظ التقييم. حاول مرة أخرى.")}</Text> : null}
-            <Button label={`حفظ التقييم (${total}/100)`} loading={evaluate.isPending} disabled={!canSubmit} onPress={() => evaluate.mutate({ sessionId: String(sessionId), hifzScore: hifz, revisionScore: revision, tajweedScore: tajweed, commitmentScore: commitment, notes: notes.trim() || undefined, audioNotesUrl: audioNotesUrl.trim() || undefined, recommendation })} />
+            <Button label={evaluate.isPending ? "جارٍ حفظ التقييم…" : `حفظ التقييم (${total}/100)`} loading={evaluate.isPending} disabled={!canSubmit} onPress={() => evaluate.mutate({ sessionId: String(sessionId), hifzScore: hifz, revisionScore: revision, tajweedScore: tajweed, commitmentScore: commitment, notes: notes.trim() || undefined, audioNotesUrl: audioNotesUrl.trim() || undefined, recommendation })} />
           </Card>
         </View>
-      ) : null}
+      ) : <EmptyState title="الحصة غير موجودة" />}
     </TeacherScreen>
   );
 }
 
 const styles = StyleSheet.create({
   heading: { fontFamily: "Amiri_700Bold", fontSize: 22, textAlign: "center" },
-  sessionText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "center", marginTop: 4 },
-  total: { flexDirection: "row-reverse", alignItems: "baseline", justifyContent: "center", gap: 6, borderRadius: 16, paddingVertical: 10, marginTop: 14 },
-  totalValue: { fontFamily: "Amiri_700Bold", fontSize: 30 },
+  sessionText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 20, textAlign: "center", marginTop: 4 },
+  sessionStrong: { fontFamily: "IBMPlexSansArabic_700Bold" },
+  total: { flexDirection: "row-reverse", alignItems: "baseline", alignSelf: "center", gap: 6, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 20, marginTop: 14 },
+  totalValue: { fontFamily: "Amiri_700Bold", fontSize: 30, lineHeight: 40 },
   totalLabel: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12 },
+  recommendationHint: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 10, textAlign: "right", marginTop: -4, marginBottom: 10 },
   sliderBlock: { marginBottom: 19 },
   sliderLabelRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
   sliderLabel: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 13 },
@@ -120,5 +129,4 @@ const styles = StyleSheet.create({
   input: { minHeight: 46, borderWidth: 1, borderRadius: 13, paddingHorizontal: 12, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13, marginBottom: 5 },
   textarea: { minHeight: 95, paddingTop: 12 },
   counter: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 10, textAlign: "left", marginBottom: 10 },
-  error: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, textAlign: "right", marginBottom: 8 },
 });

@@ -25,6 +25,7 @@ export default function SessionRoom() {
   const { name } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const utils = trpc.useUtils();
   const [actionError, setActionError] = useState("");
   const callRef = useRef<TeacherSessionCallHandle>(null);
   const q = trpc.teacher.sessionRoom.useQuery(
@@ -58,7 +59,9 @@ export default function SessionRoom() {
       contentType: "video/mp4",
     }, recording.accountGeneration);
     await finalizeLiveSessionRecording(String(id), finalizedRecording, recording.durationSeconds);
-  }, [id]);
+    // The recordings list is likely already mounted behind this screen; show the new one without a manual refresh.
+    void utils.teacher.myRecordings.invalidate();
+  }, [id, utils]);
 
   const finish = () => {
     Alert.alert("إنهاء الحلقة", "هل تريد إنهاء الحلقة لجميع المشاركين؟", [

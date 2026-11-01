@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Badge, Button, Card, ThemePreferencePicker } from "../../components/ui";
+import { Badge, Button, Card, ThemePreferencePicker, initials } from "../../components/ui";
 import { navigateToWelcome, useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
 import { useTheme, palette } from "../../lib/theme";
 import { TeacherScreen } from "../../components/teacher/teacher-screen";
+import { toast } from "../../lib/toast";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 import { isValidPersonName, normalizePersonName } from "@workspace/tabyan-domain/input-normalization";
 
@@ -30,9 +31,9 @@ type TeacherSettingsData = {
 };
 
 export default function Settings() {
-  const { token, signOut } = useAuth();
+  const { token, name: authName, signOut } = useAuth();
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const me = trpc.auth.me.useQuery(undefined, { enabled: !!token, retry: false });
   const settingsQuery = trpc.teacher.settings.useQuery(undefined, { enabled: !!token, retry: false });
   const kyc = trpc.teacher.kycStatus.useQuery(undefined, { enabled: !!token, retry: false });
@@ -40,7 +41,6 @@ export default function Settings() {
   const updateProfile = trpc.teacher.updateProfile.useMutation();
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
-  const [feedback, setFeedback] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const data = me.data as { fullName?: string; phone?: string; teacher?: { bio?: string | null } | null } | undefined;
   const settings = (settingsQuery.data ?? {}) as TeacherSettingsData;
@@ -53,14 +53,13 @@ export default function Settings() {
 
   const saveSetting = async (key: string, value: boolean | number | string) => {
     if (update.isPending) return;
-    setFeedback(null);
     setPendingKey(key);
     try {
       await update.mutateAsync({ [key]: value } as never);
       await settingsQuery.refetch();
-      setFeedback({ tone: "success", text: "حُفظت الإعدادات" });
+      toast("حُفظت الإعدادات", "success");
     } catch (cause) {
-      setFeedback({ tone: "error", text: userFacingErrorMessage(cause, "تعذر حفظ الإعدادات. حاول مرة أخرى.") });
+      toast(userFacingErrorMessage(cause, "تعذر حفظ الإعدادات. حاول مرة أخرى."), "error");
     } finally {
       setPendingKey(null);
     }
@@ -69,18 +68,17 @@ export default function Settings() {
   const saveProfile = async () => {
     const normalizedName = normalizePersonName(fullName);
     if (!isValidPersonName(normalizedName)) {
-      setFeedback({ tone: "error", text: "الاسم غير صالح" });
+      toast("الاسم غير صالح", "error");
       return;
     }
     setFullName(normalizedName);
-    setFeedback(null);
     setPendingKey("profile");
     try {
       await updateProfile.mutateAsync({ fullName: normalizedName, bio: bio.slice(0, 500) });
       await me.refetch();
-      setFeedback({ tone: "success", text: "حُفظ ملفك" });
+      toast("حُفظ ملفك", "success");
     } catch (cause) {
-      setFeedback({ tone: "error", text: userFacingErrorMessage(cause, "تعذر حفظ الملف. حاول مرة أخرى.") });
+      toast(userFacingErrorMessage(cause, "تعذر حفظ الملف. حاول مرة أخرى."), "error");
     } finally {
       setPendingKey(null);
     }
@@ -101,11 +99,10 @@ export default function Settings() {
 
   return (
     <TeacherScreen title="إعدادات المعلم" loading={loading} error={hasError} retry={retry}>
-      {feedback ? <Text style={[styles.feedback, { color: feedback.tone === "success" ? colors.success : colors.danger }]}>{feedback.text}</Text> : null}
       <Card style={styles.profileCard}>
-        <View style={[styles.avatar, { backgroundColor: colors.primary }]}><Text style={[styles.avatarText, { color: colors.primaryText }]}>{(fullName || "معلم").slice(0, 1)}</Text></View>
-        <Text style={[styles.profileName, { color: colors.text }]}>{fullName || "معلم"}</Text>
-        <Text style={[styles.phone, { color: colors.muted }]}>{data?.phone ?? ""}</Text>
+        <View style={[styles.avatar, { backgroundColor: colors.primary, borderColor: palette.gold }]}><Text style={[styles.avatarText, { color: colors.primaryText }]}>{initials(fullName || authName || "معلم")}</Text></View>
+        <Text style={[styles.profileName, { color: isDark ? palette.gold : palette.burgundy }]}>{fullName || authName || "معلم"}</Text>
+        {data?.phone ? <Text style={[styles.phone, { color: colors.muted }]}>{data.phone}</Text> : null}
         <View style={styles.badges}>
           <Badge label={kyc.data?.kycStatus === "approved" ? "موثّق" : kyc.data?.kycStatus === "rejected" ? "مرفوض" : kyc.data?.kycStatus === "awaiting_assessment" ? "بانتظار اختبار القبول" : kyc.data?.kycStatus === "in_progress" ? "الاختبار قيد التنفيذ" : "قيد المراجعة"} tone={kyc.data?.kycStatus === "approved" ? "success" : kyc.data?.kycStatus === "rejected" ? "danger" : "gold"} />
           {kyc.data?.isMufti ? <Badge label="مفتٍ" tone="gold" /> : null}
@@ -118,7 +115,7 @@ export default function Settings() {
         <TextInput value={fullName} onChangeText={setFullName} style={[styles.input, { color: colors.text, backgroundColor: colors.input, borderColor: colors.border }]} textAlign="right" maxLength={50} />
         <Text style={[styles.label, { color: colors.text }]}>نبذة تعريفية</Text>
         <TextInput value={bio} onChangeText={setBio} multiline maxLength={500} style={[styles.input, styles.bio, { color: colors.text, backgroundColor: colors.input, borderColor: colors.border }]} textAlign="right" />
-        <Button label={pendingKey === "profile" ? "جارٍ الحفظ…" : "حفظ الملف"} loading={pendingKey === "profile"} onPress={() => void saveProfile()} />
+        <Button label={pendingKey === "profile" ? "جارٍ حفظ الملف…" : "حفظ الملف"} loading={pendingKey === "profile"} onPress={() => void saveProfile()} />
       </Card>
 
       <Card>
@@ -170,12 +167,11 @@ function SettingOptions({ label, values, selected, pending, onSelect }: { label:
 }
 
 const styles = StyleSheet.create({
-  feedback: { fontFamily: "IBMPlexSansArabic_600SemiBold", textAlign: "right", fontSize: 12, marginBottom: 4 },
   profileCard: { alignItems: "center" },
-  avatar: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center" },
-  avatarText: { fontFamily: "Amiri_700Bold", fontSize: 30, lineHeight: 44, includeFontPadding: false },
-  profileName: { fontFamily: "Amiri_700Bold", fontSize: 21, marginTop: 6 },
-  phone: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, marginTop: 2 },
+  avatar: { width: 72, height: 72, borderRadius: 36, borderWidth: 2, alignItems: "center", justifyContent: "center" },
+  avatarText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 24, lineHeight: 32, includeFontPadding: false },
+  profileName: { fontFamily: "Amiri_700Bold", fontSize: 22, lineHeight: 34, marginTop: 6, textAlign: "center" },
+  phone: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, marginTop: 2, writingDirection: "ltr" },
   badges: { flexDirection: "row-reverse", gap: 7, marginTop: 9 },
   sectionHeading: { fontFamily: "Amiri_700Bold", fontSize: 20, lineHeight: 30, textAlign: "right", marginBottom: 8 },
   label: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 12, textAlign: "right" },

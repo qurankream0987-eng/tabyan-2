@@ -14,10 +14,14 @@ export default function Students() {
     <TeacherScreen title="طلابي" loading={q.isLoading} error={!!q.error} retry={() => void q.refetch()}>
       {!q.isLoading && <Text style={[styles.count, { color: colors.muted }]}>تتابع مسيرة {rows.length} طالب(ة)</Text>}
       {rows.length ? rows.map((s) => {
-        const scoreTone = s.lastScore != null && s.lastScore < 60 ? "danger" : s.lastScore != null && s.lastScore >= 90 ? "success" : "muted";
+        // Web MyStudents: a red accent for a student at risk (< 60), green for an excellent one (≥ 90).
+        const atRisk = s.lastScore != null && s.lastScore < 60;
+        const excellent = s.lastScore != null && s.lastScore >= 90;
+        const scoreTone = atRisk ? "danger" : excellent ? "success" : "muted";
+        const accent = atRisk ? { borderColor: `${colors.danger}4d`, shadowColor: colors.danger } : excellent ? { borderColor: `${colors.success}4d`, shadowColor: colors.success } : null;
         return (
           <Pressable key={s.studentId} onPress={() => router.push(`/teacher/students/${s.studentId}`)} style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1 })}>
-            <Card style={styles.card}>
+            <Card style={[styles.card, accent]}>
               <View style={styles.cardTop}>
                 <View style={[styles.avatar, { backgroundColor: `${colors.primary}14`, borderColor: `${colors.primary}26` }]}>
                   <Text style={[styles.avatarText, { color: colors.primary }]}>{s.name.charAt(0)}</Text>

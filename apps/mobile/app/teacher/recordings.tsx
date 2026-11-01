@@ -2,11 +2,11 @@ import { useState } from "react";
 import { formatDateTime } from "../../lib/format";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Button, Card, EmptyState, Icon } from "../../components/ui";
+import { Badge, Button, Card, EmptyState, Icon, PageHero } from "../../components/ui";
 import { LibraryMediaPlayer } from "../../components/library/library-media-player";
 import { trpc } from "../../lib/trpc";
 import { TeacherScreen } from "../../components/teacher/teacher-screen";
-import { useTheme } from "../../lib/theme";
+import { palette, useTheme } from "../../lib/theme";
 import { useAuth } from "../../lib/auth";
 import { resolveLibraryAsset } from "../../lib/media/library-media";
 
@@ -23,36 +23,39 @@ function RecordingPlayer({ recording, token }: { recording: Recording; token: st
 
 export default function Recordings() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { token } = useAuth();
   const query = trpc.teacher.myRecordings.useQuery(undefined, { retry: false });
   const rows = (query.data ?? []) as Recording[];
   const [selected, setSelected] = useState<Recording | null>(null);
+  const titleOf = (recording: Recording) => `${recording.typeLabel ?? "تسجيل حصة"}${recording.topic ? ` — ${recording.topic}` : ""}`;
 
   return (
-    <TeacherScreen title="حلقاتي المُسجَّلة" loading={query.isLoading} error={!!query.error} retry={() => void query.refetch()}>
-      <Text style={[styles.retention, { color: colors.muted }]}>
-        لا تُحذف التسجيلات بسبب مدة زمنية أثناء نشاط الحساب. عند حذف حساب الطالب، تُحذف وسائطه الخاصة المثبتة الملكية؛ وقد يبقى تسجيل مشترك لازم لسجل مشارك آخر.
-      </Text>
+    <TeacherScreen title="تسجيلات حصصي" loading={query.isLoading} error={!!query.error} retry={() => void query.refetch()}>
+      <PageHero icon="videocam-outline" title="تسجيلات حصصي" subtitle="مشاهدة فقط — الحذف صلاحية الإدارة حصراً" />
       {rows.length ? rows.map((recording) => (
         <Card key={recording.id}>
-          <Pressable onPress={() => setSelected(recording)} style={styles.row}>
-            <View style={[styles.playIcon, { backgroundColor: colors.primary }]}><Icon name="play" size={20} color={colors.primaryText} /></View>
+          <Pressable accessibilityRole="button" onPress={() => setSelected(recording)} style={styles.row}>
+            <View style={[styles.playIcon, { backgroundColor: isDark ? palette.gold : palette.burgundy }]}><Icon name="play" size={20} color={isDark ? palette.night : "#FFFFFF"} /></View>
             <View style={styles.copy}>
-              <Text style={[styles.title, { color: colors.text }]}>{recording.typeLabel ?? "تسجيل حصة"}{recording.topic ? ` — ${recording.topic}` : ""}</Text>
-              <Text style={[styles.detail, { color: colors.muted }]}>{recording.studentName ?? "—"} · {Math.round(recording.durationSeconds / 60)} د · {formatDateTime(recording.createdAt)}</Text>
+              <Text numberOfLines={1} style={[styles.title, { color: colors.text }]}>{titleOf(recording)}</Text>
+              <Text style={[styles.detail, { color: colors.muted }]}>{recording.studentName ?? "—"} · {formatDateTime(recording.createdAt)} · {Math.round(recording.durationSeconds / 60)} د</Text>
             </View>
+            {recording.hasEvaluation
+              ? <Badge label="مُقيَّمة" tone="success" />
+              : <Pressable accessibilityRole="button" hitSlop={6} onPress={() => router.push(`/teacher/evaluate/${recording.sessionId}` as never)}><Badge label="قيّم" tone="gold" /></Pressable>}
           </Pressable>
-          <View style={styles.bottomRow}>
-            {recording.hasEvaluation ? <Text style={[styles.evaluated, { color: colors.success }]}><Icon name="checkmark-circle-outline" size={14} color={colors.success} /> مُقيّمة</Text> : <Button label="قيّم" icon="create-outline" variant="secondary" onPress={() => router.push(`/teacher/evaluate/${recording.sessionId}` as never)} />}
-            <Text style={[styles.mediaHint, { color: colors.muted }]}>مشاهدة فقط</Text>
-          </View>
         </Card>
-      )) : <EmptyState title="لا توجد تسجيلات" description="ستظهر تسجيلات الحصص هنا بعد توفرها." icon="videocam-outline" />}
+      )) : <EmptyState title="لا تسجيلات بعد" description="تظهر التسجيلات بعد إنهاء الحصص" />}
       <Modal visible={!!selected} transparent animationType="slide" onRequestClose={() => setSelected(null)}>
         <View style={styles.backdrop}>
           <View style={[styles.modal, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            {selected ? <><Text style={[styles.modalTitle, { color: colors.text }]}>{selected.typeLabel ?? "تسجيل حصة"}{selected.topic ? ` — ${selected.topic}` : ""}</Text><RecordingPlayer recording={selected} token={token} /><Text style={[styles.detail, { color: colors.muted }]}>المدة المسجلة: {selected.durationSeconds} ثانية</Text><Button label="إغلاق" variant="secondary" onPress={() => setSelected(null)} /></> : null}
+            {selected ? <>
+              <Text style={[styles.modalTitle, { color: colors.primary }]}>{titleOf(selected)}</Text>
+              <RecordingPlayer recording={selected} token={token} />
+              <Text style={[styles.note, { color: colors.muted }]}>بث مباشر فقط — لا يُحذف تلقائياً ما دام الحساب نشطاً</Text>
+              <Button label="إغلاق" variant="secondary" onPress={() => setSelected(null)} />
+            </> : null}
           </View>
         </View>
       </Modal>
@@ -62,15 +65,12 @@ export default function Recordings() {
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row-reverse", alignItems: "center", gap: 11 },
-  playIcon: { width: 46, height: 46, borderRadius: 15, alignItems: "center", justifyContent: "center" },
-  copy: { flex: 1 },
+  playIcon: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  copy: { flex: 1, minWidth: 0 },
   title: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, textAlign: "right" },
-  detail: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right", marginTop: 5 },
-  retention: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right", marginBottom: 10 },
-  bottomRow: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", marginTop: 10, paddingTop: 9, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#D4AF3744" },
-  evaluated: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 11 },
-  mediaHint: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 10 },
+  detail: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right", marginTop: 4 },
   backdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "#00000066" },
-  modal: { maxHeight: "82%", borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, padding: 18 },
-  modalTitle: { fontFamily: "Amiri_700Bold", fontSize: 20, textAlign: "right", marginBottom: 12 },
+  modal: { maxHeight: "82%", borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, padding: 18, gap: 10 },
+  modalTitle: { fontFamily: "Amiri_700Bold", fontSize: 20, lineHeight: 30, textAlign: "right" },
+  note: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "center" },
 });
