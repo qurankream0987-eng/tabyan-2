@@ -30,7 +30,7 @@ const MENUS: Record<Role, MenuItem[]> = {
     { href: "/student/library", label: "مكتبتي", icon: "library-outline", section: "main" },
     { href: "/student/fatwa", label: "فتاواي", icon: "scale-outline", section: "main" },
     { href: "/student/ijazat", label: "إجازاتي", icon: "ribbon-outline", section: "main" },
-    { href: "/student/settings", label: "الإعدادات", icon: "settings-outline", section: "secondary" },
+    { href: "/student/account", label: "الإعدادات", icon: "settings-outline", section: "secondary" },
     { href: "/student/notifications", label: "الإشعارات", icon: "notifications-outline", section: "secondary" },
     { href: "/support", label: "فريق دعم تبيان", icon: "help-circle-outline", section: "secondary" },
     { href: "/privacy", label: "سياسة الخصوصية", icon: "shield-checkmark-outline", section: "secondary" },

@@ -37,10 +37,11 @@ export function Icon({ name, size = 22, color, style }: { name: string; size?: n
   return <Ionicons name={name as IconName} size={size} color={color ?? colors.primary} style={style} />;
 }
 
-export function Screen({ children, scroll = true, scrollEnabled = true, contentStyle, scrollStyle, scrollContentStyle }: { children: React.ReactNode; scroll?: boolean; scrollEnabled?: boolean; contentStyle?: StyleProp<ViewStyle>; scrollStyle?: StyleProp<ViewStyle>; scrollContentStyle?: StyleProp<ViewStyle> }) {
+export function Screen({ children, scroll = true, scrollEnabled = true, contentStyle, scrollStyle, scrollContentStyle, scrollRef: outerScrollRef }: { children: React.ReactNode; scroll?: boolean; scrollEnabled?: boolean; contentStyle?: StyleProp<ViewStyle>; scrollStyle?: StyleProp<ViewStyle>; scrollContentStyle?: StyleProp<ViewStyle>; /** Lets a screen scroll itself (e.g. to a focused card). */ scrollRef?: React.MutableRefObject<ScrollView | null> }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollView | null>(null);
+  const setScrollRef = (node: ScrollView | null) => { scrollRef.current = node; if (outerScrollRef) outerScrollRef.current = node; };
   const scrollY = useRef(0);
   const keyboardAreaRef = useRef<View>(null);
   useEffect(() => {
@@ -77,12 +78,13 @@ export function Screen({ children, scroll = true, scrollEnabled = true, contentS
     "/student/recordings": "حلقاتي",
     "/student/library": "المكتبة",
     "/student/fatwa": "الفتاوى",
+    "/student/mushaf-tab": "المصحف",
     "/student/account": "حسابي",
   };
   const studentTabTitle = tabTitles[pathname];
   const isStudentTabs = !!studentTabTitle;
   const content = scroll
-     ? <ScrollView ref={scrollRef} onScroll={(event) => { scrollY.current = event.nativeEvent.contentOffset.y; }} scrollEventThrottle={16} automaticallyAdjustKeyboardInsets scrollEnabled={scrollEnabled} style={[styles.transparent, scrollStyle]} contentContainerStyle={[styles.scrollContent, isStudentTabs ? styles.tabScrollContent : undefined, { paddingBottom: Math.max(isStudentTabs ? 120 : 40, insets.bottom + 24) }, scrollContentStyle]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">{body}</ScrollView>
+     ? <ScrollView ref={setScrollRef} onScroll={(event) => { scrollY.current = event.nativeEvent.contentOffset.y; }} scrollEventThrottle={16} automaticallyAdjustKeyboardInsets scrollEnabled={scrollEnabled} style={[styles.transparent, scrollStyle]} contentContainerStyle={[styles.scrollContent, isStudentTabs ? styles.tabScrollContent : undefined, { paddingBottom: Math.max(isStudentTabs ? 120 : 40, insets.bottom + 24) }, scrollContentStyle]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">{body}</ScrollView>
     : body;
   return (
     <>

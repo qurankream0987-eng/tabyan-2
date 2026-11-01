@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@workspace/tabyan-trpc/types";
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
-import { Badge, Button, Card, LoadingState, ProgressBar } from "../../components/ui";
+import { Badge, Button, Card, Icon, LoadingState, ProgressBar } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
+import { formatDate, formatDuration } from "../../lib/format";
 import { useTheme } from "../../lib/theme";
 import {
   NativeQuranLiveMatcher,
@@ -27,7 +28,9 @@ const ASSIGNMENT_STATUS: Record<string, string> = {
   assigned: "لم يُسلَّم بعد",
   submitted: "سُلِّم — بانتظار معلمك",
   reviewed: "قيّمه معلمك",
+  cancelled: "أُلغي",
 };
+const ASSIGNMENT_TONE: Record<string, "gold" | "muted" | "success"> = { assigned: "gold", submitted: "muted", reviewed: "success", cancelled: "muted" };
 
 function assignmentRange(assignment: { surahId: number; startAyah: number; endAyah: number }) {
   const name = SURAHS[assignment.surahId - 1]?.name ?? "";
@@ -73,6 +76,7 @@ function displayPosition(match: NativeRecitationMatch | null) {
 export default function NativeRecitationScreen() {
   const { token, role } = useAuth();
   const { colors } = useTheme();
+  const router = useRouter();
   // Opened from the Mushaf reader: start at the chosen ayah, ten ayahs at most.
   const params = useLocalSearchParams<{ surah?: string; ayah?: string }>();
   const initialSurah = SURAHS[Number(params.surah) - 1] ?? SURAHS[0];
@@ -538,6 +542,7 @@ export default function NativeRecitationScreen() {
           loading={assignments.isLoading}
           failed={!!assignments.error}
           onStart={(row) => chooseAssignment(row)}
+          onHistory={() => router.push("/student/recitation/history" as never)}
           colors={colors}
         />
       ) : null}
@@ -791,50 +796,74 @@ function AssignmentList({
   loading,
   failed,
   onStart,
+  onHistory,
   colors,
 }: {
   rows: AssignmentRow[];
   loading: boolean;
   failed: boolean;
   onStart: (assignment: AssignmentRow["assignment"]) => void;
+  onHistory: () => void;
   colors: ReturnType<typeof useTheme>["colors"];
 }) {
+  const [now] = useState(() => Date.now());
   return (
     <Card style={styles.noticeCard}>
-      <Text style={[styles.cardTitle, { color: colors.text }]}>واجبات التسميع</Text>
+      <View style={styles.assignmentHeader}>
+        <Text style={[styles.cardTitle, styles.grow, { color: colors.text }]}>واجبات التسميع</Text>
+        <Pressable accessibilityRole="button" onPress={onHistory} hitSlop={8} style={styles.historyLink}>
+          <Icon name="time-outline" size={16} color={colors.primary} />
+          <Text style={[styles.historyLinkText, { color: colors.primary }]}>سجل التسميع</Text>
+        </Pressable>
+      </View>
       {loading ? <LoadingState label="جارٍ تحميل واجباتك…" /> : null}
       {failed ? <Text style={[styles.inlineError, { color: colors.danger }]}>تعذر تحميل الواجبات.</Text> : null}
       {!loading && !failed && rows.length === 0 ? (
         <Text style={[styles.smallText, { color: colors.muted }]}>لا توجد واجبات تسميع من معلمك حالياً.</Text>
       ) : null}
-      {rows.map(({ assignment, teacherName }) => (
-        <View key={assignment.id} style={[styles.assignmentRow, { borderTopColor: colors.border }]}>
-          <View style={styles.assignmentHeader}>
-            <Text style={[styles.assignmentTitle, { color: colors.text }]}>{assignmentRange(assignment)}</Text>
-            <Badge
-              label={ASSIGNMENT_STATUS[assignment.status] ?? assignment.status}
-              tone={assignment.status === "reviewed" ? "success" : assignment.status === "submitted" ? "muted" : undefined}
-            />
-          </View>
-          <Text style={[styles.smallText, { color: colors.muted }]}>
-            {[teacherName ? `المعلم: ${teacherName}` : null, assignment.dueAt ? `التسليم قبل ${new Date(assignment.dueAt).toLocaleDateString("ar")}` : null]
-              .filter(Boolean).join(" · ")}
-          </Text>
-          {assignment.note ? <Text style={[styles.smallText, { color: colors.text }]}>{assignment.note}</Text> : null}
-          {assignment.status === "reviewed" ? (
-            <Text style={[styles.bodyText, { color: colors.success }]}>
-              تقييم معلمك: {assignment.teacherScore}/100{assignment.teacherFeedback ? ` — ${assignment.teacherFeedback}` : ""}
+      {rows.map(({ assignment, teacherName }) => {
+        const overdue = assignment.status === "assigned" && !!assignment.dueAt && new Date(assignment.dueAt).getTime() < now;
+        const result = assignment.result;
+        const canRecite = assignment.status === "assigned" || assignment.status === "submitted";
+        return (
+          <View key={assignment.id} style={[styles.assignmentRow, { borderTopColor: colors.border }]}>
+            <View style={styles.assignmentHeader}>
+              <Text style={[styles.assignmentTitle, { color: colors.text }]}>{assignmentRange(assignment)}</Text>
+              {overdue ? <Badge label="متأخر" tone="danger" /> : null}
+              <Badge label={ASSIGNMENT_STATUS[assignment.status] ?? assignment.status} tone={ASSIGNMENT_TONE[assignment.status] ?? "gold"} />
+            </View>
+            <Text style={[styles.smallText, { color: overdue ? colors.danger : colors.muted }]}>
+              {[
+                teacherName ? `المعلم: ${teacherName}` : null,
+                assignment.dueAt ? `${overdue ? "فات موعده: " : "التسليم قبل "}${formatDate(assignment.dueAt)}` : null,
+              ].filter(Boolean).join(" · ")}
             </Text>
-          ) : (
-            <Button
-              label={assignment.status === "submitted" ? "أعد التسميع" : "ابدأ التسميع"}
-              variant={assignment.status === "submitted" ? "secondary" : "primary"}
-              icon="mic-outline"
-              onPress={() => onStart(assignment)}
-            />
-          )}
-        </View>
-      ))}
+            {assignment.note ? <Text style={[styles.smallText, { color: colors.text }]}>{assignment.note}</Text> : null}
+            {assignment.status === "reviewed" ? (
+              <Text style={[styles.bodyText, { color: colors.success }]}>
+                تقييم معلمك: {assignment.teacherScore ?? "—"}/100{assignment.teacherFeedback ? ` — ${assignment.teacherFeedback}` : ""}
+              </Text>
+            ) : null}
+            {result && assignment.status !== "reviewed" ? (
+              <Text style={[styles.smallText, { color: colors.muted }]}>
+                آخر تسليم{assignment.submittedAt ? ` (${formatDate(assignment.submittedAt)})` : ""}: {result.wordsRecited} من {result.totalWords} كلمة
+                {" · "}{result.confirmedMistakes} خطأ · {result.skippedWords} تخطٍّ · {formatDuration(result.durationSeconds)}
+              </Text>
+            ) : null}
+            {canRecite ? (
+              <Button
+                label={assignment.status === "submitted" ? "أعد التسميع" : "ابدأ التسميع"}
+                variant={assignment.status === "submitted" ? "secondary" : "primary"}
+                icon="mic-outline"
+                onPress={() => onStart(assignment)}
+              />
+            ) : null}
+            {assignment.status === "submitted" ? (
+              <Text style={[styles.smallText, styles.centered, { color: colors.muted }]}>إعادة التسميع تستبدل التسليم السابق ما دام معلمك لم يقيّمه</Text>
+            ) : null}
+          </View>
+        );
+      })}
     </Card>
   );
 }
@@ -919,7 +948,11 @@ const styles = StyleSheet.create({
   modeHint: { marginTop: 6, marginBottom: 14 },
   modeLabel: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 13 },
   assignmentRow: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12, gap: 6 },
-  assignmentHeader: { flexDirection: "row-reverse", alignItems: "center", gap: 8 },
+  assignmentHeader: { flexDirection: "row-reverse", alignItems: "center", gap: 8, flexWrap: "wrap" },
+  grow: { flex: 1, minWidth: 0 },
+  centered: { textAlign: "center" },
+  historyLink: { minHeight: 36, flexDirection: "row-reverse", alignItems: "center", gap: 4, paddingHorizontal: 4 },
+  historyLinkText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 12, lineHeight: 18 },
   assignmentTitle: { flex: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, lineHeight: 22, textAlign: "right" },
   legendRow: { flexDirection: "row-reverse", flexWrap: "wrap", justifyContent: "center", gap: 12 },
   legendItem: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11, lineHeight: 18 },

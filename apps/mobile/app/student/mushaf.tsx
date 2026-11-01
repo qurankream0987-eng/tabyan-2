@@ -11,27 +11,24 @@ import {
   View,
   type ViewToken,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQuery } from "@tanstack/react-query";
-import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
+import { SURAHS, TOTAL_PAGES } from "@workspace/tabyan-domain/quran-surahs";
 import { PAGE_FIRST_VERSE, pageOfAyah } from "@workspace/tabyan-domain/mushaf-page-index";
 import { searchQuran, type QuranSearchResult } from "@workspace/tabyan-domain/quran-search";
 import { StudentScreen } from "../../components/student/student-screen";
 import { Button, Icon, LoadingState } from "../../components/ui";
 import MushafPage, { PAGE_ASPECT } from "../../components/mushaf/mushaf-page";
 import { ensurePageFont, loadMushafPage, loadSearchIndex } from "../../lib/mushaf/mushaf-assets";
+import { JUZ_START_PAGES, juzOfPage } from "../../lib/mushaf/juz";
 import { AyahAudioPlayer, DEFAULT_RECITER, RECITERS, type AyahRef, type ReciterId } from "../../lib/mushaf/ayah-audio";
+import { mushafStorage } from "../../lib/storage";
+import { toast } from "../../lib/toast";
 import { useTheme } from "../../lib/theme";
 
-const TOTAL_PAGES = 604;
 const PAGES = Array.from({ length: TOTAL_PAGES }, (_, index) => index + 1);
-const LAST_PAGE_KEY = "tabyan.mushaf.lastPage";
 const RECITER_KEY = "tabyan.mushaf.reciter";
-const JUZ_START_PAGES = [
-  1, 22, 42, 62, 82, 102, 121, 142, 162, 182, 201, 222, 242, 262, 282, 302,
-  322, 342, 362, 382, 402, 422, 442, 462, 482, 502, 522, 542, 562, 582,
-];
 
 type Colors = ReturnType<typeof useTheme>["colors"];
 
@@ -40,10 +37,13 @@ function parseVerseKey(verseKey: string): AyahRef {
   return { surah, ayah };
 }
 
-function juzOfPage(page: number) {
-  let juz = 1;
-  JUZ_START_PAGES.forEach((start, index) => { if (page >= start) juz = index + 1; });
-  return juz;
+/** `?page=N` or `?surah=N` from the index; null when absent or out of range. */
+function requestedPage(params: { page?: string; surah?: string }) {
+  const page = Number(params.page);
+  if (Number.isInteger(page) && page >= 1 && page <= TOTAL_PAGES) return page;
+  const surah = Number(params.surah);
+  if (Number.isInteger(surah) && surah >= 1 && surah <= SURAHS.length) return SURAHS[surah - 1].startPage;
+  return null;
 }
 
 function surahOfPage(page: number) {
@@ -94,6 +94,7 @@ function PagerPage({
 
 export default function MushafReaderScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ page?: string; surah?: string }>();
   const { colors } = useTheme();
   const listRef = useRef<FlatList<number>>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -102,17 +103,24 @@ export default function MushafReaderScreen() {
   const [playingAyah, setPlayingAyah] = useState<AyahRef | null>(null);
   const [audioError, setAudioError] = useState(false);
   const [reciter, setReciter] = useState<ReciterId>(DEFAULT_RECITER);
+  const [bookmarks, setBookmarks] = useState<number[]>([]);
   const [sheet, setSheet] = useState<"index" | "search" | "reciter" | null>(null);
   const playerRef = useRef<AyahAudioPlayer | null>(null);
+  // `?page=` / `?surah=` from the index; read through a ref so the mount effect stays mount-only.
+  const linkedPage = requestedPage(params);
+  const linkedPageRef = useRef(linkedPage);
+  linkedPageRef.current = linkedPage;
 
   useEffect(() => {
     let active = true;
-    void Promise.all([AsyncStorage.getItem(LAST_PAGE_KEY), AsyncStorage.getItem(RECITER_KEY)]).then(([savedPage, savedReciter]) => {
+    // A page or surah in the link wins over the saved page.
+    const wanted = linkedPageRef.current;
+    void Promise.all([mushafStorage.getLastPage(), AsyncStorage.getItem(RECITER_KEY), mushafStorage.getBookmarks()]).then(([savedPage, savedReciter, savedBookmarks]) => {
       if (!active) return;
-      const last = Number(savedPage);
-      setPage(Number.isInteger(last) && last >= 1 && last <= TOTAL_PAGES ? last : 1);
+      setPage(wanted ?? savedPage ?? 1);
+      setBookmarks(savedBookmarks);
       if (RECITERS.some((item) => item.id === savedReciter)) setReciter(savedReciter as ReciterId);
-    }).catch(() => { if (active) setPage(1); });
+    }).catch(() => { if (active) setPage(wanted ?? 1); });
     const player = new AyahAudioPlayer({
       onAyah: (ayah) => setPlayingAyah(ayah),
       onError: () => setAudioError(true),
@@ -130,8 +138,21 @@ export default function MushafReaderScreen() {
   }, [reciter]);
 
   useEffect(() => {
-    if (page !== null) void AsyncStorage.setItem(LAST_PAGE_KEY, String(page)).catch(() => undefined);
+    if (page !== null) void mushafStorage.setLastPage(page);
   }, [page]);
+
+  // A link to another page while the reader is already open (e.g. from the index tab).
+  useEffect(() => {
+    if (linkedPage !== null && page !== null && size.width > 0) goToPage(linkedPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkedPage]);
+
+  async function toggleBookmark() {
+    if (!page) return;
+    const next = await mushafStorage.toggleBookmark(page);
+    setBookmarks(next);
+    toast(next.includes(page) ? `أُضيفت علامة على صفحة ${page}` : `أُزيلت العلامة من صفحة ${page}`, "success");
+  }
 
   // Playback follows onto the next page, like the web reader.
   const playingPage = playingAyah ? pageOfAyah(playingAyah.surah, playingAyah.ayah) : null;
@@ -265,6 +286,12 @@ export default function MushafReaderScreen() {
             colors={colors}
           />
           <ToolbarButton icon="person-outline" label="القارئ" onPress={() => setSheet("reciter")} colors={colors} />
+          <ToolbarButton
+            icon={page !== null && bookmarks.includes(page) ? "bookmark" : "bookmark-outline"}
+            label="علامة"
+            onPress={() => void toggleBookmark()}
+            colors={colors}
+          />
           <ToolbarButton
             icon="mic-outline"
             label="تسميع"

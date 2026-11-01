@@ -1,11 +1,19 @@
 import { AudioContext } from "react-native-audio-api";
 import type { NativeRecitationCue } from "./native-recitation-feedback";
+import { storage } from "../storage";
 
 /** Existing audio dependency; synthesized short tones, no downloaded assets. */
 export class NativeRecitationCuePlayer {
   private context: AudioContext | null = null;
 
+  constructor() {
+    // Warm the cached preference so later tones can check it without waiting.
+    void storage.getRecitationCuesEnabled();
+  }
+
   async play(cue: NativeRecitationCue) {
+    // The account settings toggle («أصوات التنبيه أثناء التسميع») silences every cue.
+    if (!(await storage.getRecitationCuesEnabled())) return;
     try {
       const context = this.context ??= new AudioContext();
       if (context.state === "suspended") await context.resume();

@@ -181,7 +181,7 @@ export default function PrivacyScreen() {
                         icon="settings-outline"
                         variant="secondary"
                         style={styles.actionButton}
-                        onPress={() => router.push("/student/settings?focus=delete" as never)}
+                        onPress={() => router.push("/student/account?focus=delete" as never)}
                       />
                     ) : null}
                     {section.id === "contact" ? (

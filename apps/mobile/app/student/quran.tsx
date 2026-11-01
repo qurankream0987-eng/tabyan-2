@@ -16,34 +16,34 @@ function menuBadge(qiraat: QiraatPath): { label: string; locked: boolean } {
   return { label: "يتطلب إجازة", locked: true };
 }
 
-export default function Quran({ allPaths = false }: { allPaths?: boolean }) {
+export default function Quran() {
   const { token } = useAuth();
   const { colors, isDark, categories } = useTheme();
   const router = useRouter();
   const paths = trpc.student.paths.useQuery(undefined, { enabled: !!token });
+  // عدّاد الواجبات المعلّقة كما على الموقع (QuranMenu): «N بانتظار تسميعك».
+  const assignments = trpc.recitationAssignments.mine.useQuery(undefined, { enabled: !!token });
+  const pendingAssignments = (assignments.data ?? []).filter((row) => row.assignment.status === "assigned").length;
 
-  const title = allPaths ? "المسارات التعليمية" : "القرآن الكريم";
-  const subtitle = allPaths ? "اختر مسارك وابدأ رحلة الإتقان" : "اختر مسارك القرآني";
+  const title = "القرآن الكريم";
+  const subtitle = "اختر مسارك القرآني";
   if (paths.isLoading) return <StudentScreen title={title} subtitle={subtitle}><LoadingState /></StudentScreen>;
   if (paths.error) return <StudentScreen title={title} subtitle={subtitle}><ErrorState onRetry={() => void paths.refetch()} /></StudentScreen>;
 
   const qiraat = paths.data?.qiraat as QiraatPath;
   const qiraatBadge = menuBadge(qiraat);
 
-  // أيقونات SVG الحقيقية المطابقة للموقع (QuranMenu): hifz / tilawah / qiraat
+  // المصحف ومواقيت الصلاة والقبلة أولاً (إضافة الهاتف)، ثم ترتيب الموقع (QuranMenu):
+  // حفظ ومراجعة، تصحيح التلاوة، واجبات التسميع، القراءات — بأيقونات SVG المطابقة.
   const sections: Array<{ href: string; icon: SectionIconName; title: string; badge?: { label: string; locked: boolean } }> = [
-    { href: "/student/mushaf", icon: "quran", title: "المصحف" },
+    { href: "/student/mushaf-tab", icon: "quran", title: "المصحف" },
     { href: "/student/prayer-times", icon: "mosque", title: "مواقيت الصلاة" },
     { href: "/student/qibla", icon: "moon", title: "اتجاه القبلة" },
-    { href: "/student/recitation", icon: "hifz", title: "واجبات التسميع" },
     { href: "/student/levels/quran", icon: "hifz", title: "حفظ ومراجعة القرآن" },
     { href: "/student/tilawah", icon: "tilawah", title: "تصحيح التلاوة" },
+    { href: "/student/recitation", icon: "graduation", title: "واجبات التسميع", badge: pendingAssignments ? { label: `${pendingAssignments} بانتظار تسميعك`, locked: false } : undefined },
     { href: "/student/ijazat", icon: "qiraat", title: "القراءات", badge: qiraatBadge },
   ];
-  if (allPaths) sections.push(
-    { href: "/student/levels/tajweed", icon: "tajweed", title: "دروس التجويد" },
-    { href: "/student/sharia", icon: "sharia", title: "الدروس الشرعية" },
-  );
 
   return (
     <StudentScreen title={title} subtitle={subtitle}>

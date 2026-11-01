@@ -103,7 +103,7 @@ export default function SupportScreen() {
           <Card>
             <Text accessibilityRole="header" style={[styles.accountHeading, { color: colors.text }]}>إدارة الحساب</Text>
             <Text style={[styles.copy, { color: colors.muted, marginBottom: 12 }]}>يمكنك الوصول إلى مسار حذف الحساب من إعدادات حساب الطالب.</Text>
-            <Button label="الانتقال إلى حذف الحساب" icon="trash-outline" variant="danger" onPress={() => router.push("/student/settings?focus=delete" as never)} />
+            <Button label="الانتقال إلى حذف الحساب" icon="trash-outline" variant="danger" onPress={() => router.push("/student/account?focus=delete" as never)} />
           </Card>
         ) : null}
 

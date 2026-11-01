@@ -1,4 +1,4 @@
-import { Tabs, useRouter } from "expo-router";
+import { Tabs } from "expo-router";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SvgIcon, type SvgIconName } from "../../../components/ui";
@@ -18,7 +18,6 @@ const TABS: Record<string, [SvgIconName, string]> = {
 export default function StudentTabsLayout() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const active = isDark ? palette.gold : palette.burgundy;
   const barBottom = Math.max(10, insets.bottom + 6);
   const barHeight = 70;
@@ -72,12 +71,8 @@ export default function StudentTabsLayout() {
   return (
     <Tabs screenOptions={common} initialRouteName="home">
       <Tabs.Screen name="account" options={options("account")} />
-      <Tabs.Screen
-        name="mushaf-tab"
-        options={options("mushaf")}
-        // The reader is a full-screen stack route; the tab only opens it.
-        listeners={{ tabPress: (event) => { event.preventDefault(); router.push("/student/mushaf"); } }}
-      />
+      {/* The index; the full-screen reader is the stack route /student/mushaf. */}
+      <Tabs.Screen name="mushaf-tab" options={options("mushaf")} />
       <Tabs.Screen name="fatwa" options={options("fatwa")} />
       <Tabs.Screen name="library" options={options("library")} />
       <Tabs.Screen name="recordings" options={options("recordings")} />
