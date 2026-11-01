@@ -37,7 +37,7 @@ export default function Broadcast() {
   const schedules = audiences?.schedules ?? [];
   const selected = scheduleId ? schedules.find((item) => item.id === scheduleId) : undefined;
   const selectedLabel = selected ? `${selected.typeLabel} (${selected.studentCount} طالب)` : `جميع طلابي (${audiences?.allCount ?? 0} طالب)`;
-  const canSend = title.trim().length > 0 && body.trim().length > 0 && title.length <= TITLE_MAX && body.length <= BODY_MAX;
+  const canSend = title.trim().length >= 3 && body.trim().length > 0 && title.length <= TITLE_MAX && body.length <= BODY_MAX;
 
   const review = () => {
     if (!title.trim()) { toast("العنوان مطلوب", "error"); return; }

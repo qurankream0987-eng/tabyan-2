@@ -139,7 +139,8 @@ function CreateForm({ studentId, colors, onDone, onCancel }: { studentId: string
     setSurahPickerOpen(false);
   };
   const onDatePicked = (event: DateTimePickerEvent, picked?: Date) => {
-    if (Platform.OS !== "ios") setDatePickerOpen(false);
+    // Android closes its dialog itself; the iOS spinner stays until a date is chosen.
+    setDatePickerOpen(false);
     if (event.type === "dismissed" || !picked) return;
     setDue(endOfDay(picked));
   };

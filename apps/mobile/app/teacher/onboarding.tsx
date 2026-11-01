@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { formatDate } from "../../lib/format";
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
 import * as DocumentPicker from "expo-document-picker";
-import { Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import { useRouter } from "expo-router";
 import { Badge, Button, Card, EmptyState, ErrorState, Icon, LoadingState, PageHero, SoftPressable } from "../../components/ui";
 import { LibraryMediaPlayer, LocalVideoPreview } from "../../components/library/library-media-player";
@@ -319,7 +320,11 @@ function UploadProgress({ value, colors }: { value: number; colors: ReturnType<t
 
 function Certificates({ certificates, loading, error, title, onTitleChange, onPick, deleteId, setDeleteId, onDelete, disabled = false, deleting = false, token }: { certificates?: Certificate[]; loading: boolean; error: unknown; title: string; onTitleChange: (value: string) => void; onPick: () => void; deleteId: string | null; setDeleteId: (id: string | null) => void; onDelete: (id: string) => void; disabled?: boolean; deleting?: boolean; token: string | null }) {
   const { colors } = useTheme();
-  const view = (certificate: Certificate) => void Linking.openURL(resolveLibraryAsset(certificate.filePath, token)).catch(() => toast("تعذر فتح الشهادة. حاول مرة أخرى.", "error"));
+  // In-app browser: the capability URL carries the session token, so it must not reach the system browser history.
+  const view = (certificate: Certificate) => {
+    if (!token) { toast("سجّل الدخول مجددًا لعرض الشهادة.", "error"); return; }
+    void WebBrowser.openBrowserAsync(resolveLibraryAsset(certificate.filePath, token)).catch(() => toast("تعذر فتح الشهادة. حاول مرة أخرى.", "error"));
+  };
   return (
     <Card>
       <Text style={[styles.sectionTitle, { color: colors.primary }]}><Icon name="ribbon-outline" size={17} color={colors.primary} /> شهادات ومؤهلات (اختياري)</Text>
