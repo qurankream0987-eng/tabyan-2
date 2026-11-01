@@ -158,13 +158,13 @@ function MushafPage({
       {marginH > 0 && fontSize > 0 ? (
         <>
           <View style={[styles.marginRow, { top: 0, height: marginH }]} pointerEvents="none">
-            <Text style={[styles.marginText, { fontSize: marginFont }]} numberOfLines={1}>{JUZ_LIST[data.j - 1]?.name ?? ""}</Text>
-            <Text style={[styles.marginText, { fontSize: marginFont }]} numberOfLines={1}>
+            <Text allowFontScaling={false} style={[styles.marginText, { fontSize: marginFont }]} numberOfLines={1}>{JUZ_LIST[data.j - 1]?.name ?? ""}</Text>
+            <Text allowFontScaling={false} style={[styles.marginText, { fontSize: marginFont }]} numberOfLines={1}>
               {lastVerse ? vocalizedSurahTitle(lastVerse.c, SURAHS[lastVerse.c - 1]?.name ?? "") : ""}
             </Text>
           </View>
           <View style={[styles.marginRow, styles.marginFooter, { bottom: 0, height: marginH }]} pointerEvents="none">
-            <Text style={[styles.marginText, { fontSize: marginFont }]}>{toArabicDigits(data.p)}</Text>
+            <Text allowFontScaling={false} style={[styles.marginText, { fontSize: marginFont }]}>{toArabicDigits(data.p)}</Text>
           </View>
         </>
       ) : null}
@@ -173,6 +173,7 @@ function MushafPage({
           {wordLines.map((line) => (
             <Text
               key={line.line}
+              allowFontScaling={false}
               style={[styles.measureText, { fontFamily: family, fontSize: MEASURE_SIZE }]}
               onTextLayout={(event) => onMeasure(line.line, event)}
             >
@@ -193,7 +194,7 @@ function MushafPage({
         if (line.kind === "basmalah") {
           return (
             <View key={`b-${line.line}`} style={[styles.row, { top, height: layout.wordRowH }]}>
-              <Text style={[styles.basmalah, { fontSize: Math.min(fontSize * 1.1, titleRowH * 0.62) }]} numberOfLines={1}>
+              <Text allowFontScaling={false} style={[styles.basmalah, { fontSize: Math.min(fontSize * 1.1, titleRowH * 0.62) }]} numberOfLines={1}>
                 {BASMALAH_TEXT}
               </Text>
             </View>
@@ -201,7 +202,7 @@ function MushafPage({
         }
         return (
           <View key={`l-${line.line}`} style={[styles.row, { top, height: layout.wordRowH }]}>
-            <Text style={[styles.wordLine, { fontFamily: family, fontSize }]}>
+            <Text allowFontScaling={false} style={[styles.wordLine, { fontFamily: family, fontSize }]}>
               {line.words!.map((word, index) => (
                 <Text
                   key={`${word.verseKey}:${word.position}`}
@@ -231,15 +232,15 @@ function SurahBanner({ name, number, ayahs, width, rowH }: { name: string; numbe
   const medallion = (value: number | undefined, caption: string, centerX: number) => value === undefined ? null : (
     <View style={[styles.medallion, { left: width * centerX - medallionW / 2, width: medallionW }]}>
       {/* Explicit line boxes keep the caption and the number stacked on the medallion's centre. */}
-      <Text style={[styles.medallionCaption, { fontSize: bandH * 0.2, lineHeight: bandH * 0.3 }]} numberOfLines={1}>{caption}</Text>
-      <Text style={[styles.medallionValue, { fontSize: bandH * 0.36, lineHeight: bandH * 0.44 }]} numberOfLines={1}>{toArabicDigits(value)}</Text>
+      <Text allowFontScaling={false} style={[styles.medallionCaption, { fontSize: bandH * 0.2, lineHeight: bandH * 0.3 }]} numberOfLines={1}>{caption}</Text>
+      <Text allowFontScaling={false} style={[styles.medallionValue, { fontSize: bandH * 0.36, lineHeight: bandH * 0.44 }]} numberOfLines={1}>{toArabicDigits(value)}</Text>
     </View>
   );
   return (
     <View style={[styles.surahBand, { width, height: bandH }]}>
       <Image source={SURAH_ORNAMENT} resizeMode="stretch" style={{ position: "absolute", top: 0, left: 0, width, height: bandH }} accessible={false} />
       {/* The line box spans the band so Amiri diacritics are not clipped above the letters. */}
-      <Text style={[styles.surahTitle, { fontSize: bandH * 0.42, lineHeight: bandH, width: width * 0.48 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+      <Text allowFontScaling={false} style={[styles.surahTitle, { fontSize: bandH * 0.42, lineHeight: bandH, width: width * 0.48 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
         {number !== undefined ? vocalizedSurahTitle(number, name) : `سُورَةُ ${name}`}
       </Text>
       {medallion(number, "ترتيبها", 812 / 932)}
