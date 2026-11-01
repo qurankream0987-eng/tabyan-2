@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@workspace/tabyan-trpc/types";
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
+import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 import { Button, Card } from "../ui";
 import { trpc } from "../../lib/trpc";
 import { confirmAr } from "../../lib/confirm";
@@ -41,7 +42,8 @@ export function assignmentRange(assignment: { surahId: number; startAyah: number
 }
 
 function positiveInteger(value: string) {
-  return /^\d+$/.test(value) ? Number(value) : null;
+  const digits = normalizeDigits(value.trim());
+  return /^\d+$/.test(digits) ? Number(digits) : null;
 }
 
 /**

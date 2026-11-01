@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { fatwaStatusLabel } from "../../lib/format";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Button, Card, EmptyState, Icon } from "../../components/ui";
 import { trpc } from "../../lib/trpc";
@@ -63,7 +64,7 @@ export default function Fatwas() {
         </Pressable>
       )) : <EmptyState title="لا أسئلة معلقة" />}
       {answered.length ? <Text style={[styles.sectionTitle, { color: colors.text }]}>أجبت عنها</Text> : null}
-      {answered.map((fatwa) => <Card key={fatwa.id}><Text style={[styles.category, { color: colors.primary }]}>{categoryLabels[fatwa.category] ?? fatwa.category} · {fatwa.answerStatus ?? fatwa.status}</Text><Text style={[styles.question, { color: colors.text }]} numberOfLines={2}>{fatwa.questionText}</Text></Card>)}
+      {answered.map((fatwa) => <Card key={fatwa.id}><Text style={[styles.category, { color: colors.primary }]}>{categoryLabels[fatwa.category] ?? fatwa.category} · {fatwaStatusLabel(fatwa.answerStatus ?? fatwa.status)}</Text><Text style={[styles.question, { color: colors.text }]} numberOfLines={2}>{fatwa.questionText}</Text></Card>)}
 
       <Modal visible={!!selected} transparent animationType="slide" onRequestClose={() => setSelected(null)}>
         <KeyboardAvoidingView behavior="padding" style={styles.backdrop}>

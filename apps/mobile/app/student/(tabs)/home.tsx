@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { formatDateTime } from "../../../lib/format";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Card, ErrorState, Icon, LoadingState, ProgressBar, Screen } from "../../../components/ui";
 import SectionIcon, { type SectionIconName } from "../../../components/ui/section-icon";
@@ -88,7 +89,7 @@ export default function StudentHome() {
           <Card key={p} style={[styles.dutyCard, { backgroundColor: isDark ? palette.night : palette.burgundy, borderColor: isDark ? colors.border : palette.burgundy }]}>
             <Text style={styles.dutyTitle}>الواجب</Text>
             <Text style={styles.dutyMeta}>
-              {next.levelName ? `${next.levelName} — ` : ""}{String(next.teacherName ?? "معلمك")} — {String(next.scheduledAt ?? next.date ?? "موعد قادم")}
+              {next.levelName ? `${next.levelName} — ` : ""}{String(next.teacherName ?? "معلمك")} — {formatDateTime(next.scheduledAt ?? next.date) || "موعد قادم"}
             </Text>
             <Pressable
               accessibilityRole="button"

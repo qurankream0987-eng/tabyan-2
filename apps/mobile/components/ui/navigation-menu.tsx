@@ -29,6 +29,8 @@ const MENUS: Record<Role, MenuItem[]> = {
     { href: "/student/library", label: "مكتبتي", icon: "library-outline", section: "main" },
     { href: "/student/fatwa", label: "فتاواي", icon: "scale-outline", section: "main" },
     { href: "/student/ijazat", label: "إجازاتي", icon: "ribbon-outline", section: "main" },
+    { href: "/student/prayer-times", label: "مواقيت الصلاة", icon: "time-outline", section: "main" },
+    { href: "/student/qibla", label: "اتجاه القبلة", icon: "compass-outline", section: "main" },
     { href: "/student/settings", label: "الإعدادات", icon: "settings-outline", section: "secondary" },
     { href: "/student/notifications", label: "الإشعارات", icon: "notifications-outline", section: "secondary" },
     { href: "/student/help", label: "المساعدة والدعم", icon: "help-circle-outline", section: "secondary" },

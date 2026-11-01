@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { formatDateTime } from "../../../lib/format";
 import { StyleSheet, Text, View } from "react-native";
 import { useAuth } from "../../../lib/auth";
 import { resolveLibraryAsset } from "../../../lib/media/library-media";
@@ -31,7 +32,7 @@ export default function Session() {
             tone={d.status === "completed" ? "success" : d.status === "cancelled" ? "danger" : "gold"}
           />
         </View>
-        <Text style={[styles.meta, { color: colors.muted }]}>{String(d.scheduledAt)}</Text>
+        <Text style={[styles.meta, { color: colors.muted }]}>{formatDateTime(d.scheduledAt) || "موعد غير محدد"}</Text>
         {d.teacherName ? <Text style={[styles.meta, { color: colors.muted }]}>المعلم: {String(d.teacherName)}</Text> : null}
         <Text style={[styles.note, { color: colors.muted }]}>
           {d.status === "in_progress" ? "هذه الحلقة جارية. يمكنك الدخول بعد السماح بالكاميرا والميكروفون." : "يعرض هذا القسم تفاصيل الموعد والتسجيلات السابقة. سيظهر الدخول الحي عند بدء الحلقة."}

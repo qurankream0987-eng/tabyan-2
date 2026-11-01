@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateTime } from "../../lib/format";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Button, Card, EmptyState, Icon } from "../../components/ui";
@@ -39,7 +40,7 @@ export default function Recordings() {
             <View style={[styles.playIcon, { backgroundColor: colors.primary }]}><Icon name="play" size={20} color={colors.primaryText} /></View>
             <View style={styles.copy}>
               <Text style={[styles.title, { color: colors.text }]}>{recording.typeLabel ?? "تسجيل حصة"}{recording.topic ? ` — ${recording.topic}` : ""}</Text>
-              <Text style={[styles.detail, { color: colors.muted }]}>{recording.studentName ?? "—"} · {Math.round(recording.durationSeconds / 60)} د · {String(recording.createdAt)}</Text>
+              <Text style={[styles.detail, { color: colors.muted }]}>{recording.studentName ?? "—"} · {Math.round(recording.durationSeconds / 60)} د · {formatDateTime(recording.createdAt)}</Text>
             </View>
           </Pressable>
           <View style={styles.bottomRow}>

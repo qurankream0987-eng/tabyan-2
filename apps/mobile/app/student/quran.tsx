@@ -33,6 +33,8 @@ export default function Quran({ allPaths = false }: { allPaths?: boolean }) {
   // أيقونات SVG الحقيقية المطابقة للموقع (QuranMenu): hifz / tilawah / qiraat
   const sections: Array<{ href: string; icon: SectionIconName; title: string; badge?: { label: string; locked: boolean } }> = [
     { href: "/student/mushaf", icon: "quran", title: "المصحف" },
+    { href: "/student/prayer-times", icon: "mosque", title: "مواقيت الصلاة" },
+    { href: "/student/qibla", icon: "moon", title: "اتجاه القبلة" },
     { href: "/student/recitation", icon: "hifz", title: "واجبات التسميع" },
     { href: "/student/levels/quran", icon: "hifz", title: "حفظ ومراجعة القرآن" },
     { href: "/student/tilawah", icon: "tilawah", title: "تصحيح التلاوة" },

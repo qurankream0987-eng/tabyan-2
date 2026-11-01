@@ -7,8 +7,7 @@ import { useTheme, palette } from "../../lib/theme";
 import { trpc } from "../../lib/trpc";
 import { useAuth } from "../../lib/auth";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
-import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
-import { resolveNativeLoginMethod, type NativeLoginRole } from "../../lib/account/native-login-method";
+import { normalizeLoginIdentifier, resolveNativeLoginMethod, type NativeLoginRole } from "../../lib/account/native-login-method";
 
 function errorMessage(error: unknown) {
   return userFacingErrorMessage(error, "تعذر تسجيل الدخول. تحقق من بياناتك.");
@@ -37,10 +36,9 @@ export default function Login() {
 
   const submitLogin = async () => {
     setError("");
-    const rawValue = identifier.trim();
-    const value = !staffLogin && !rawValue.includes("@") ? normalizeDigits(rawValue) : rawValue;
+    const value = normalizeLoginIdentifier(identifier);
     if (!value || !password) {
-      setError(staffLogin ? "أدخل اسم المستخدم وكلمة السر" : "أدخل رقم الهاتف أو البريد الإلكتروني وكلمة السر");
+      setError(loginRole === "admin" ? "أدخل اسم المستخدم وكلمة السر" : loginRole === "teacher" ? "أدخل اسم المستخدم أو رقم الهاتف وكلمة السر" : "أدخل رقم الهاتف أو البريد الإلكتروني وكلمة السر");
       return;
     }
     try {
@@ -85,7 +83,9 @@ export default function Login() {
           <Text style={[styles.description, { color: colors.muted }]}>
             {!staffLogin
               ? "استخدم رقم الهاتف أو البريد الإلكتروني مع كلمة السر"
-              : "استخدم اسم المستخدم وكلمة السر"}
+              : loginRole === "teacher"
+                ? "استخدم اسم المستخدم أو رقم الهاتف مع كلمة السر"
+                : "استخدم اسم المستخدم وكلمة السر"}
           </Text>
           {params.reason === "existing-account" && !staffLogin ? (
             <View style={[styles.notice, { backgroundColor: colors.input, borderColor: colors.border }]}>
@@ -98,7 +98,7 @@ export default function Login() {
           <TextInput
             value={identifier}
             onChangeText={(value) => { setIdentifier(value); setError(""); }}
-            placeholder={!staffLogin ? "الهاتف أو البريد الإلكتروني" : "اسم المستخدم"}
+            placeholder={!staffLogin ? "الهاتف أو البريد الإلكتروني" : loginRole === "teacher" ? "اسم المستخدم أو رقم الهاتف" : "اسم المستخدم"}
             placeholderTextColor={colors.muted}
             autoCapitalize="none"
             keyboardType="default"

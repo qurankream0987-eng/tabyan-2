@@ -59,7 +59,7 @@ export default function TeacherRecordings() {
           <div>
             <h3 className="font-amiri text-lg text-burgundy mb-2">{open.typeLabel}{open.topic ? ` — ${open.topic}` : ""}</h3>
             <PrivateMediaPlayer source={open.videoUrl} className="w-full rounded-xl bg-night max-h-80" />
-            <p className="text-[11px] text-muted-foreground font-readex mt-1 text-center">بث مباشر فقط — يُحذف تلقائياً بعد 6 أشهر</p>
+            <p className="text-[11px] text-muted-foreground font-readex mt-1 text-center">بث مباشر فقط — لا يُحذف تلقائياً ما دام الحساب نشطاً</p>
           </div>
         )}
       </Modal>

@@ -1,8 +1,10 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { formatDateTime } from "../../../lib/format";
 import { Alert, Text } from "react-native";
 import { useCallback, useRef, useState } from "react";
 import { Badge, Button, Card, EmptyState } from "../../../components/ui";
 import { trpc } from "../../../lib/trpc";
+import { useAuth } from "../../../lib/auth";
 import { TeacherScreen } from "../../../components/teacher/teacher-screen";
 import { useTheme } from "../../../lib/theme";
 import TeacherSessionCall, { type TeacherSessionCallHandle } from "../../../components/call/teacher-session-call";
@@ -20,6 +22,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function SessionRoom() {
   const { colors } = useTheme();
+  const { name } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [actionError, setActionError] = useState("");
@@ -82,7 +85,7 @@ export default function SessionRoom() {
             <Text style={{ textAlign: "right", fontWeight: "bold", fontSize: 18, marginTop: 12, color: colors.text }}>{s.typeLabel ?? s.sessionType}</Text>
             {s.topic ? <Text style={{ textAlign: "right", color: colors.text, marginTop: 5 }}>{s.topic}</Text> : null}
             <Text style={{ textAlign: "right", color: colors.text, marginTop: 5 }}>الطالب: {s.studentName}</Text>
-            <Text style={{ textAlign: "right", color: colors.muted, marginTop: 5 }}>{String(s.scheduledAt)} · {s.durationMinutes} دقيقة</Text>
+            <Text style={{ textAlign: "right", color: colors.muted, marginTop: 5 }}>{formatDateTime(s.scheduledAt) || "موعد غير محدد"} · {s.durationMinutes} دقيقة</Text>
             <Text style={{ textAlign: "right", color: colors.muted, marginTop: 10 }}>
               {s.status === "in_progress" ? "الحلقة جارية. استخدم غرفة الاتصال أدناه." : s.status === "completed" ? "انتهت الحلقة ويمكنك حفظ تقييم الطالب." : s.status === "cancelled" ? "أُلغيت هذه الحلقة." : "ابدأ الحلقة عندما يحين الموعد ليتمكن الطالب من الدخول."}
             </Text>
@@ -94,7 +97,7 @@ export default function SessionRoom() {
                 ref={callRef}
                 sessionId={String(id)}
                 sessionStatus={String(s.status)}
-                displayName="المعلم"
+                displayName={name ?? "المعلم"}
                 recordingEnabled={s.recordingEnabled === true}
                 isTeacher
                 onRecordingReady={saveRecording}

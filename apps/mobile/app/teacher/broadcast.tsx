@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateTime } from "../../lib/format";
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Button, Card, EmptyState, LoadingState } from "../../components/ui";
 import { trpc } from "../../lib/trpc";
@@ -49,7 +50,7 @@ export default function Broadcast() {
         {sentMessage ? <Text style={[styles.success, { color: colors.success }]}>{sentMessage}</Text> : null}
          {send.error ? <Text style={[styles.error, { color: colors.danger }]}>{userFacingErrorMessage(send.error, "تعذر إرسال الإشعار. حاول مرة أخرى.")}</Text> : null}
       </Card>}
-      {historyQ.isLoading ? <LoadingState /> : historyQ.data?.length ? historyQ.data.map((item) => <Card key={item.id}><Text style={[styles.historyTitle, { color: colors.text }]}>{item.title}</Text><Text style={[styles.detail, { color: colors.muted }]}>{item.body}</Text><Text style={[styles.detail, { color: colors.muted }]}>{item.audience === "all" ? "جميع الطلاب" : "حلقة محددة"} · {item.recipientCount} طالبًا · {String(item.createdAt)}</Text></Card>) : <EmptyState title="لا إشعارات سابقة" description="أول إشعار جماعي ترسله سيظهر هنا." />}
+      {historyQ.isLoading ? <LoadingState /> : historyQ.data?.length ? historyQ.data.map((item) => <Card key={item.id}><Text style={[styles.historyTitle, { color: colors.text }]}>{item.title}</Text><Text style={[styles.detail, { color: colors.muted }]}>{item.body}</Text><Text style={[styles.detail, { color: colors.muted }]}>{item.audience === "all" ? "جميع الطلاب" : "حلقة محددة"} · {item.recipientCount} طالبًا · {formatDateTime(item.createdAt)}</Text></Card>) : <EmptyState title="لا إشعارات سابقة" description="أول إشعار جماعي ترسله سيظهر هنا." />}
       <Modal visible={confirmOpen} transparent animationType="fade" onRequestClose={() => setConfirmOpen(false)}>
         <View style={styles.backdrop}><View style={[styles.confirm, { backgroundColor: colors.card, borderColor: colors.border }]}><Text style={[styles.heading, { color: colors.text }]}>تأكيد الإرسال</Text><Text style={[styles.confirmText, { color: colors.muted }]}>سيُرسل الإشعار إلى {selected ? `${selected.typeLabel} (${selected.studentCount} طالب)` : `جميع طلابي (${audiences?.allCount ?? 0} طالب)`}</Text><Card><Text style={[styles.historyTitle, { color: colors.text }]}>{title}</Text><Text style={[styles.detail, { color: colors.muted }]}>{body}</Text></Card><Button label="إلغاء" variant="secondary" disabled={send.isPending} onPress={() => setConfirmOpen(false)} /><Button label="تأكيد الإرسال" loading={send.isPending} disabled={send.isPending} onPress={() => send.mutate({ title: title.trim(), body: body.trim(), scheduleId: scheduleId ?? undefined })} /></View></View>
       </Modal>
