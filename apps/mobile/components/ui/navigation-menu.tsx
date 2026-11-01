@@ -1,4 +1,4 @@
-import { Animated, Easing, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, Image, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -20,7 +20,7 @@ function MenuIcon({ name, size, color }: { name: string; size: number; color: st
   return <Ionicons name={name as keyof typeof Ionicons.glyphMap} size={size} color={color} />;
 }
 
-const MENUS: Record<Role, MenuItem[]> = {
+export const MENUS: Record<Role, MenuItem[]> = {
   student: [
     { href: "/student/path", label: "المسارات التعليمية", icon: "git-branch-outline", section: "main" },
     { href: "/student/account", label: "الملف الشخصي", icon: "person-outline", section: "main" },
@@ -71,19 +71,21 @@ const MENUS: Record<Role, MenuItem[]> = {
   ],
 };
 
-const ROLE_LABELS: Record<Role, string> = {
+export const ROLE_LABELS: Record<Role, string> = {
   student: "طالب",
   teacher: "لوحة المعلم",
   admin: "لوحة الإشراف",
 };
 
-export function NavigationMenu({ role, visible, onClose }: { role: Role; visible: boolean; onClose: () => void }) {
-  const { colors, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
-  const reduceMotion = useReducedMotion();
-  const { name, signOut } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname();
+/** Tablets (≥ 900dp) get a permanent sidebar instead of the hamburger drawer. */
+export const SIDEBAR_MIN_WIDTH = 900;
+export const SIDEBAR_WIDTH = 256;
+export function useSidebarLayout() {
+  return useWindowDimensions().width >= SIDEBAR_MIN_WIDTH;
+}
+
+/** The role's menu items: support and privacy follow settings, fatwas only for muftis. */
+function useRoleMenuItems(role: Role): MenuItem[] {
   const teacherCapability = trpc.teacher.kycStatus.useQuery(undefined, { enabled: role === "teacher", retry: false });
   // Support and privacy follow the settings entry on every role, like the web shells.
   const roleItems = role === "student" ? MENUS[role] : MENUS[role].flatMap((item) => item.href === `/${role}/settings`
@@ -93,9 +95,81 @@ export function NavigationMenu({ role, visible, onClose }: { role: Role; visible
         { href: "/privacy", label: "سياسة الخصوصية", icon: "shield-checkmark-outline", section: item.section },
       ]
     : [item]);
-  const items = role === "teacher" && teacherCapability.data?.isMufti !== true
+  return role === "teacher" && teacherCapability.data?.isMufti !== true
     ? roleItems.filter((item) => item.href !== "/teacher/fatwas")
     : roleItems;
+}
+
+function isActiveItem(item: MenuItem, pathname: string) {
+  return item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+}
+
+/**
+ * Permanent right-side sidebar for wide screens: logo, role label, the same
+ * items as the drawer with the solid active row, and logout at the bottom.
+ */
+export function RoleSidebar({ role }: { role: Role }) {
+  const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { name, signOut } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const items = useRoleMenuItems(role);
+  const activeBackground = isDark ? palette.gold : colors.primary;
+  const activeForeground = isDark ? palette.night : "#FFFFFF";
+  const logout = async () => { await signOut(); navigateToWelcome(router); };
+  return (
+    <View style={[styles.sidebar, { backgroundColor: colors.card, borderLeftColor: colors.border, paddingTop: insets.top + 12, paddingBottom: insets.bottom }]}>
+      <View style={[styles.sidebarHeader, { borderBottomColor: colors.border }]}>
+        <Image source={isDark ? require("../../assets/images/logo-dark.png") : require("../../assets/images/logo-light.png")} resizeMode="contain" style={styles.sidebarLogo} accessibilityLabel="تبيان" />
+        <Text style={[styles.sidebarRole, { color: isDark ? palette.gold : palette.burgundy }]}>{ROLE_LABELS[role]}</Text>
+        <Text numberOfLines={1} style={[styles.sidebarName, { color: colors.muted }]}>{name ?? "مستخدم تبيان"}</Text>
+      </View>
+      <ScrollView style={styles.menuScroll} contentContainerStyle={styles.menuContent} showsVerticalScrollIndicator={false}>
+        {items.map((item, index) => {
+          const active = isActiveItem(item, pathname);
+          const separator = index > 0 && item.section !== items[index - 1]?.section;
+          return (
+            <View key={`${item.href}:${item.label}`}>
+              {separator ? <View style={[styles.separator, { backgroundColor: colors.border }]} /> : null}
+              <Pressable accessibilityRole="button" accessibilityState={{ selected: active }} onPress={() => router.push(item.href as never)}
+                style={({ pressed }) => [styles.menuItem, { backgroundColor: active ? activeBackground : "transparent", opacity: pressed ? 0.82 : 1 }]}>
+                <MenuIcon name={item.icon} size={19} color={active ? activeForeground : colors.muted} />
+                <Text style={[styles.menuText, { color: active ? activeForeground : colors.text }]}>{item.label}</Text>
+              </Pressable>
+            </View>
+          );
+        })}
+      </ScrollView>
+      <View style={[styles.footer, { borderTopColor: colors.border }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="تسجيل الخروج" onPress={() => void logout()} style={({ pressed }) => [styles.logout, { opacity: pressed ? 0.78 : 1 }]}>
+          <MenuIcon name="log-out-outline" size={19} color={colors.danger} />
+          <Text style={[styles.logoutText, { color: colors.danger }]}>تسجيل الخروج</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+/** Wide layout: the sidebar sits at the right (reading start) and the page fills the rest. */
+export function SidebarLayout({ role, children }: { role: Role; children: React.ReactNode }) {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.sidebarLayout, { backgroundColor: colors.background }]}>
+      <RoleSidebar role={role} />
+      <View style={styles.sidebarPage}>{children}</View>
+    </View>
+  );
+}
+
+export function NavigationMenu({ role, visible, onClose }: { role: Role; visible: boolean; onClose: () => void }) {
+  const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
+  const reduceMotion = useReducedMotion();
+  const { name, signOut } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const items = useRoleMenuItems(role);
 
   // Slide in from the right edge, like the web drawer; the modal stays mounted
   // until the slide-out finishes.
@@ -154,10 +228,10 @@ export function NavigationMenu({ role, visible, onClose }: { role: Role; visible
             keyboardShouldPersistTaps="handled"
           >
             {items.map((item, index) => {
-              const active = item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const active = isActiveItem(item, pathname);
               const separator = index > 0 && item.section !== items[index - 1]?.section;
               return (
-                <View key={item.href} style={separator ? styles.withSeparator : undefined}>
+                <View key={`${item.href}:${item.label}`} style={separator ? styles.withSeparator : undefined}>
                   {separator ? <View style={[styles.separator, { backgroundColor: colors.border }]} /> : null}
                   <Pressable
                     accessibilityRole="button"
@@ -211,6 +285,13 @@ const styles = StyleSheet.create({
   menuItem: { minHeight: 48, borderRadius: 16, paddingHorizontal: 14, flexDirection: "row-reverse", alignItems: "center", gap: 11 },
   menuText: { flex: 1, fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 13, textAlign: "right" },
 
+  sidebarLayout: { flex: 1, flexDirection: "row-reverse" },
+  sidebarPage: { flex: 1, minWidth: 0 },
+  sidebar: { width: SIDEBAR_WIDTH, borderLeftWidth: StyleSheet.hairlineWidth },
+  sidebarHeader: { alignItems: "center", gap: 4, paddingHorizontal: 16, paddingBottom: 14, borderBottomWidth: StyleSheet.hairlineWidth },
+  sidebarLogo: { width: 64, height: 64, marginBottom: 4 },
+  sidebarRole: { fontFamily: "Amiri_700Bold", fontSize: 18, lineHeight: 27 },
+  sidebarName: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, lineHeight: 17, maxWidth: "100%" },
   footer: { padding: 12, borderTopWidth: StyleSheet.hairlineWidth },
   logout: { minHeight: 48, borderRadius: 16, paddingHorizontal: 14, flexDirection: "row-reverse", alignItems: "center", gap: 11 },
   logoutText: { flex: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, textAlign: "right" },

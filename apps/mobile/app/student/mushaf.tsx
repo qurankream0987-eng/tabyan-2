@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
   audioText: { flex: 1, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12, textAlign: "right" },
   toolbar: { flexDirection: "row-reverse", borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 6 },
   toolbarButton: { flex: 1, alignItems: "center", gap: 2, paddingVertical: 4 },
-  toolbarLabel: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11 },
+  toolbarLabel: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11, lineHeight: 16, alignSelf: "stretch", textAlign: "center" },
   sheetHost: { flex: 1 },
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)" },
   sheet: { maxHeight: "80%", borderTopLeftRadius: 20, borderTopRightRadius: 20, borderWidth: StyleSheet.hairlineWidth, padding: 16, gap: 12 },

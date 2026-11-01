@@ -174,7 +174,8 @@ const styles = StyleSheet.create({
   segment: { flex: 1, minHeight: 40, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   segmentSelected: { shadowColor: "#000", shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   segmentText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13 },
-  resume: { flexDirection: "row-reverse", alignItems: "center", gap: 12, borderRadius: 22, borderWidth: 1, padding: 14, marginBottom: 14, shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
+  // No elevation: Android draws it through the translucent gold fill as a pale rectangle.
+  resume: { flexDirection: "row-reverse", alignItems: "center", gap: 12, borderRadius: 22, borderWidth: 1, padding: 14, marginBottom: 14 },
   resumeIcon: { width: 44, height: 44, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   resumeKicker: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right" },
   resumeTitle: { fontFamily: "Amiri_700Bold", fontSize: 18, lineHeight: 27, textAlign: "right" },

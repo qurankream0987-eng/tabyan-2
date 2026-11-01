@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
   hero: { borderRadius: 24, borderWidth: 1, overflow: "hidden", shadowOpacity: 0.14, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 3 },
   heroTop: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12, alignItems: "center", gap: 4 },
   inlineRow: { flexDirection: "row-reverse", alignItems: "center", gap: 6 },
-  heroLabel: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 18 },
+  heroLabel: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 18, flexShrink: 1 },
   countdown: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 44, lineHeight: 60, letterSpacing: 3, fontVariant: ["tabular-nums"], writingDirection: "ltr", textShadowRadius: 16, textShadowOffset: { width: 0, height: 2 } },
   divider: { height: StyleSheet.hairlineWidth * 2, marginHorizontal: 20 },
   datesRow: { paddingHorizontal: 20, paddingVertical: 12, flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", gap: 8 },
