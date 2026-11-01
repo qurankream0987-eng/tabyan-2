@@ -1,6 +1,7 @@
 import { memo, useMemo, useState } from "react";
 import { Image, StyleSheet, Text, View, type NativeSyntheticEvent, type TextLayoutEventData } from "react-native";
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
+import { vocalizedSurahTitle } from "@workspace/tabyan-domain/quran-surah-names";
 import { buildPageLines, type LineWord, type MushafPageData } from "@workspace/tabyan-domain/mushaf-page-data";
 import { computePageLayout, LINE_COUNT, maxFontSizeFor, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
 import { pageFontFamily } from "../../lib/mushaf/mushaf-assets";
@@ -159,7 +160,7 @@ function MushafPage({
           <View style={[styles.marginRow, { top: 0, height: marginH }]} pointerEvents="none">
             <Text style={[styles.marginText, { fontSize: marginFont }]} numberOfLines={1}>{JUZ_LIST[data.j - 1]?.name ?? ""}</Text>
             <Text style={[styles.marginText, { fontSize: marginFont }]} numberOfLines={1}>
-              {lastVerse ? `سُورَةُ ${SURAHS[lastVerse.c - 1]?.name ?? ""}` : ""}
+              {lastVerse ? vocalizedSurahTitle(lastVerse.c, SURAHS[lastVerse.c - 1]?.name ?? "") : ""}
             </Text>
           </View>
           <View style={[styles.marginRow, styles.marginFooter, { bottom: 0, height: marginH }]} pointerEvents="none">
@@ -236,8 +237,9 @@ function SurahBanner({ name, number, ayahs, width, rowH }: { name: string; numbe
   return (
     <View style={[styles.surahBand, { width, height: bandH }]}>
       <Image source={SURAH_ORNAMENT} resizeMode="stretch" style={{ position: "absolute", top: 0, left: 0, width, height: bandH }} accessible={false} />
-      <Text style={[styles.surahTitle, { fontSize: bandH * 0.5, width: width * 0.48 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
-        سُورَةُ {name}
+      {/* The line box spans the band so Amiri diacritics are not clipped above the letters. */}
+      <Text style={[styles.surahTitle, { fontSize: bandH * 0.42, lineHeight: bandH, width: width * 0.48 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+        {number !== undefined ? vocalizedSurahTitle(number, name) : `سُورَةُ ${name}`}
       </Text>
       {medallion(number, "ترتيبها", 812 / 932)}
       {medallion(ayahs, "آياتها", 120 / 932)}
@@ -257,7 +259,7 @@ const styles = StyleSheet.create({
   row: { position: "absolute", left: 0, right: 0, alignItems: "center", justifyContent: "center" },
   wordLine: { color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center" },
   surahBand: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
-  surahTitle: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center" },
+  surahTitle: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center", textAlignVertical: "center" },
   medallion: { position: "absolute", top: 0, bottom: 0, alignItems: "center", justifyContent: "center" },
   medallionCaption: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ornament, includeFontPadding: false },
   medallionValue: { fontFamily: "Amiri_700Bold", color: MUSHAF_COLORS.ink, includeFontPadding: false },

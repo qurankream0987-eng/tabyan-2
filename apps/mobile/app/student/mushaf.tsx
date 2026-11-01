@@ -18,10 +18,10 @@ import { useQuery } from "@tanstack/react-query";
 import { SURAHS, TOTAL_PAGES } from "@workspace/tabyan-domain/quran-surahs";
 import { PAGE_FIRST_VERSE, pageOfAyah } from "@workspace/tabyan-domain/mushaf-page-index";
 import { searchQuran, type QuranSearchResult } from "@workspace/tabyan-domain/quran-search";
-import { Button, Header, Icon, LoadingState } from "../../components/ui";
+import { Button, Icon, LoadingState } from "../../components/ui";
 import MushafPage, { MUSHAF_COLORS, PAGE_ASPECT } from "../../components/mushaf/mushaf-page";
 import { ensurePageFont, loadMushafPage, loadSearchIndex } from "../../lib/mushaf/mushaf-assets";
-import { JUZ_START_PAGES, juzOfPage } from "../../lib/mushaf/juz";
+import { JUZ_START_PAGES } from "../../lib/mushaf/juz";
 import { AyahAudioPlayer, DEFAULT_RECITER, RECITERS, type AyahRef, type ReciterId } from "../../lib/mushaf/ayah-audio";
 import { mushafStorage } from "../../lib/storage";
 import { toast } from "../../lib/toast";
@@ -46,9 +46,6 @@ function requestedPage(params: { page?: string; surah?: string }) {
   return null;
 }
 
-function surahOfPage(page: number) {
-  return SURAHS[Number(PAGE_FIRST_VERSE[page - 1].split(":")[0]) - 1];
-}
 
 /** One page of the pager: loads its data and font, and fills the screen with the paper. */
 function PagerPage({
@@ -196,7 +193,6 @@ export default function MushafReaderScreen() {
   }
 
   const highlightVerseKey = playingAyah ? `${playingAyah.surah}:${playingAyah.ayah}` : selectedVerse;
-  const currentSurah = page ? surahOfPage(page) : null;
   const selected = selectedVerse ? parseVerseKey(selectedVerse) : null;
   const reciterName = RECITERS.find((item) => item.id === reciter)?.name ?? "";
 
@@ -237,19 +233,6 @@ export default function MushafReaderScreen() {
           ) : <LoadingState label="جارٍ فتح المصحف…" />}
         </View>
 
-        {chrome ? (
-          <View style={[styles.topChrome, { backgroundColor: colors.background }]}>
-            <Header title="المصحف" back />
-            <View style={[styles.infoBar, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.infoText, { color: colors.primary }]} numberOfLines={1}>
-                {currentSurah ? `سورة ${currentSurah.name}` : ""}
-              </Text>
-              <Text style={[styles.infoText, { color: colors.muted }]} numberOfLines={1}>
-                {page ? `الجزء ${juzOfPage(page)} · صفحة ${page}` : ""}
-              </Text>
-            </View>
-          </View>
-        ) : null}
 
         <View
           style={[styles.bottomChrome, { paddingBottom: insets.bottom, backgroundColor: chrome || selected || playingAyah || audioError ? colors.card : "transparent" }]}
@@ -325,6 +308,8 @@ export default function MushafReaderScreen() {
             }}
             colors={colors}
           />
+          {/* No app header on the page: leaving the mushaf lives in the toolbar. */}
+          <ToolbarButton icon="x" label="إغلاق" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} colors={colors} />
         </View> : null}
         </View>
       </View>
@@ -507,18 +492,7 @@ const styles = StyleSheet.create({
   // Printed paper in both themes; the chrome floats over it.
   root: { flex: 1, backgroundColor: MUSHAF_COLORS.paper },
   flex: { flex: 1 },
-  topChrome: { position: "absolute", top: 0, left: 0, right: 0 },
   bottomChrome: { position: "absolute", bottom: 0, left: 0, right: 0 },
-  infoBar: {
-    flexDirection: "row-reverse",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  infoText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 13, flexShrink: 1 },
   pager: { flex: 1 },
   pageHost: { flex: 1, alignItems: "center", justifyContent: "center" },
   pageMessage: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 24 },

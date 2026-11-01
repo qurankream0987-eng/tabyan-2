@@ -20,6 +20,7 @@ import { toArabicDigits } from "@/lib/mushaf/format";
 import { buildPageLines, type MushafPageData, type LineWord } from "@/lib/mushaf/types";
 import { getWordPresentationStyle, type WordFeedbackState } from "@/lib/mushaf/word-presentation";
 import { JUZ_LIST, SURAHS } from "@/lib/quran-data";
+import { vocalizedSurahTitle } from "@workspace/tabyan-domain/quran-surah-names";
 import type { HideMode } from "@/lib/recitation-types";
 
 const BASMALAH_TEXT = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ";
@@ -34,7 +35,7 @@ function pageMarginLabels(data: MushafPageData): { juz: string; surah: string } 
   const last = data.v[data.v.length - 1];
   return {
     juz: JUZ_LIST[data.j - 1]?.name ?? "",
-    surah: last ? `سُورَةُ ${SURAHS[last.c - 1]?.name ?? ""}` : "",
+    surah: last ? vocalizedSurahTitle(last.c, SURAHS[last.c - 1]?.name ?? "") : "",
   };
 }
 

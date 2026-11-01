@@ -3,6 +3,7 @@ import { toArabicDigits } from "@/lib/mushaf/format";
 import { fitMeasuredTitle, measureInk } from "@/lib/mushaf/title-fit";
 import { createFrameScheduler } from "@/lib/mushaf/frame-scheduler";
 import SurahHeaderOrnament from "./SurahHeaderOrnament";
+import { vocalizedSurahTitle } from "@workspace/tabyan-domain/quran-surah-names";
 
 export type SurahHeaderVariant = "standard" | "opening";
 
@@ -31,7 +32,8 @@ export default function SurahHeaderFrame({ surahName, rowH, surahNumber, ayahCou
   const titleRef = useRef<HTMLSpanElement>(null);
   const [fit, setFit] = useState<{ fontSize: number; dx: number; dy: number } | null>(null);
   const [failed, setFailed] = useState(false);
-  const text = `سُورَةُ ${surahName}`;
+  // Vocalised like the printed header when the surah number is known.
+  const text = surahNumber !== undefined ? vocalizedSurahTitle(surahNumber, surahName) : `سُورَةُ ${surahName}`;
   useLayoutEffect(() => {
     const el = bodyRef.current;
     const title = titleRef.current;
