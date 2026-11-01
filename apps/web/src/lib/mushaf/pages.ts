@@ -11,37 +11,47 @@ export const TOTAL_PAGES = 604;
 /** نسبة عرض/ارتفاع صفحة الطبعة المدنية */
 export const PAGE_ASPECT = 622 / 917;
 
-/** Phones fit to available width and scroll vertically; wider screens also fit by height. */
+/** Phones fill the viewport edge to edge (mode "fill"); wider screens centre an aspect-true leaf. */
 export const PAGE_SIDE_MARGIN = 4;
 export const DESKTOP_MIN_W = 768;
 export const DESKTOP_MAX_PAGE_W = 720;
 export const SHORT_LANDSCAPE_MAX_W = 1024;
 export const SHORT_LANDSCAPE_MAX_H = 500;
 export const PAGE_VERTICAL_MARGIN = 0;
-/** Narrow reading stages have 8px of CSS padding at both the top and bottom. */
-export const NARROW_STAGE_PADDING = 8;
+/** Narrow reading stages have no CSS padding; the paper itself is the stage. */
+export const NARROW_STAGE_PADDING = 0;
+/**
+ * هامش الورقة العلوي/السفلي (بالبكسل) خارج شبكة أسطر QCF: سطر «الجزء · السورة»
+ * في الأعلى ورقم الصفحة في الأسفل، كما في هوامش الطبعة المدنية. ارتفاع الورقة =
+ * كتلة الأسطر (622/917) + هذان الهامشان.
+ */
+export const PAGE_FRAME_INSET = 28;
 
 export interface MushafPageFit {
   w: number;
   h: number;
-  mode: "aspect";
+  /** "fill": paper spans the whole phone viewport; "aspect": printed proportions, centred. */
+  mode: "aspect" | "fill";
 }
 
 export function computeMushafPageFit(boxW: number, boxH: number): MushafPageFit {
   if (boxW <= 16 || boxH <= 16) {
     return { w: 0, h: 0, mode: "aspect" };
   }
-  const available = Math.max(0, boxW - PAGE_SIDE_MARGIN * 2);
-  // Phones (including wide, short landscape viewports) use available width and scroll vertically.
+  // Phones (including wide, short landscape viewports) take the full width; the paper
+  // stretches to the viewport height (the 15 lines spread out) and only grows taller
+  // than it — scrolling vertically — when the width-fitted glyphs would not fit.
   const phoneViewport = boxW < DESKTOP_MIN_W
     || (boxW < SHORT_LANDSCAPE_MAX_W && boxH < SHORT_LANDSCAPE_MAX_H);
   if (phoneViewport) {
-    return { w: available, h: available / PAGE_ASPECT, mode: "aspect" };
+    const printedH = boxW / PAGE_ASPECT + PAGE_FRAME_INSET * 2;
+    return { w: boxW, h: Math.max(boxH, printedH), mode: "fill" };
   }
-  const availableHeight = Math.max(0, boxH - PAGE_VERTICAL_MARGIN * 2);
+  const available = Math.max(0, boxW - PAGE_SIDE_MARGIN * 2);
+  const availableHeight = Math.max(0, boxH - PAGE_VERTICAL_MARGIN * 2 - PAGE_FRAME_INSET * 2);
   if (availableHeight === 0) return { w: 0, h: 0, mode: "aspect" };
   const w = Math.min(available, availableHeight * PAGE_ASPECT, DESKTOP_MAX_PAGE_W);
-  return { w, h: w / PAGE_ASPECT, mode: "aspect" };
+  return { w, h: w / PAGE_ASPECT + PAGE_FRAME_INSET * 2, mode: "aspect" };
 }
 
 const CACHE_NAME = "tabyan-mushaf-v2";

@@ -148,7 +148,8 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
   const [size, setSize]     = useState({ w: 0, h: 0 });
   const [data, setData]     = useState<MushafPageData | null>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
-  const [barsVisible, setBarsVisible] = useState(true);
+  // أدوات القارئ مخفية افتراضياً (ورقة مطبوعة فقط)؛ نقرة على الورقة تُظهرها فوقها.
+  const [barsVisible, setBarsVisible] = useState(false);
   const seq    = useRef(0);
   const navDir = useRef<"next" | "prev" | null>(null);
 
@@ -460,7 +461,7 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
 
   // ── Focus Mode — timer auto-hide ─────────────────────────────────────────
   const timerRef         = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const barsVisibleRef   = useRef(true);
+  const barsVisibleRef   = useRef(false);
   const sessionActiveRef = useRef(false);
   const activeSheetRef   = useRef<ActiveSheet>(null);
   const testActiveRef    = useRef(false);
@@ -488,18 +489,23 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
 
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
-  // Sheet مفتوح → أوقف التايمر؛ مغلق → أعد التشغيل
+  /** يُعيد عدّ الإخفاء فقط إن كانت الأدوات ظاهرة — لا يُظهرها (الإظهار بالنقرة وحدها). */
+  const nudgeFocusTimer = useCallback(() => {
+    if (barsVisibleRef.current) resetFocusTimer();
+  }, [resetFocusTimer]);
+
+  // Sheet مفتوح → أوقف التايمر؛ مغلق → أعد العدّ إن كانت الأدوات ظاهرة
   useEffect(() => {
     if (chromePinned) {
       if (timerRef.current) clearTimeout(timerRef.current);
       setBarsVisible(true);
     } else {
-      resetFocusTimer();
+      nudgeFocusTimer();
     }
-  }, [chromePinned, resetFocusTimer]);
+  }, [chromePinned, nudgeFocusTimer]);
 
-  // بدء التايمر عند تغيّر الصفحة
-  useEffect(() => { resetFocusTimer(); }, [page, resetFocusTimer]);
+  // تقليب الصفحة لا يُظهر الأدوات؛ يُعيد العدّ فقط إن كانت ظاهرة
+  useEffect(() => { nudgeFocusTimer(); }, [page, nudgeFocusTimer]);
 
   // ── التنقل ───────────────────────────────────────────────────────────────
   const go = useCallback((p: number) => {
@@ -673,13 +679,13 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (chromePinnedRef.current || e.defaultPrevented) return; // dismiss overlays before closing reader
-      if (e.key === "ArrowLeft")  { next(); resetFocusTimer(); }
-      else if (e.key === "ArrowRight") { prev(); resetFocusTimer(); }
+      if (e.key === "ArrowLeft")  { next(); nudgeFocusTimer(); }
+      else if (e.key === "ArrowRight") { prev(); nudgeFocusTimer(); }
       else if (e.key === "Escape") handleClose();
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [next, prev, handleClose, resetFocusTimer]);
+  }, [next, prev, handleClose, nudgeFocusTimer]);
 
   const retry = useCallback(() => startLoad(page), [page, startLoad]);
 
@@ -1802,8 +1808,9 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
   const testScreenOpen = testActive && !!test.state;
   const shellBlocked = activeSheet !== null || rec.phase === "setup" || rec.phase === "result"
     || testScreenOpen || !!test.state?.finished || voiceSearchActive || !!ayahMenu || showSessionSettings;
-  // The primary action stays reachable in focus mode; hide only behind a modal.
-  const shellHidden = shellBlocked;
+  // الأزرار العائمة تتبع أدوات القارئ (نقرة تُظهرها)، إلا أثناء جلسة جارية فزر الإيقاف يبقى
+  // في متناول اليد؛ وتُخفى دائماً خلف نافذة.
+  const shellHidden = shellBlocked || (!barsVisible && !sessionActive);
   const reciteSession = sessionActive && !voiceSearchActive;
   const sessionWaiting = aiPhase === "PREPARING" || aiPhase === "REQUESTING_MIC" || aiPhase === "RECONNECTING" || aiPhase === "PROCESSING";
 
@@ -1931,7 +1938,7 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
     <div
       className="tby-reader fixed inset-0 z-[100] flex flex-col"
       data-fit={fit.mode}
-      data-chrome="reserved"
+      data-chrome={barsVisible ? "shown" : "hidden"}
       data-mode={mode}
       data-zoomed={zoomPan.zoomedIn}
       dir="rtl"

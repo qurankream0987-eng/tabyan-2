@@ -7,8 +7,9 @@
 
 .tby-reader {
   /* The reader keeps its warm paper while its chrome uses Tabyan burgundy and gold. */
-  --mushaf-paper: #fdfaf2;
-  --mushaf-ground: var(--cream, #fdfaf2);
+  --mushaf-paper: #f6f1e3;
+  /* أرضية زيتونية داكنة هادئة خارج الورقة (مكتب الشاشات الواسعة، والتمرير الزائد على الهاتف). */
+  --mushaf-ground: #4a4d3b;
   --mushaf-ink: #000;
   --mushaf-orn: var(--burgundy, #800020);
   --mushaf-orn-accent: var(--gold, #d4af37);
@@ -53,7 +54,7 @@
 
 /* ── صفحة المصحف ─────────────────────────────────────────────────── */
 .tby-mushaf-paper {
-  --mushaf-paper: #fdfaf2;
+  --mushaf-paper: #f6f1e3;
   --mushaf-ink: #000;
   position: relative;
   isolation: isolate;
@@ -549,7 +550,7 @@
 }
 
 /* ── Page placement ─────────────────────────────────────────────────────── */
-.tby-reader { --mushaf-paper: #fdfaf2; }
+.tby-reader { --mushaf-paper: #f6f1e3; }
 .tby-reading-stage > * { margin-block: auto; }
 
 /* ── Printed surah opening ─────────────────────────────────────────────── */
@@ -1873,8 +1874,10 @@
   .tby-page-frame-rule { border-radius: 0; box-shadow: inset 0 1px 0 color-mix(in srgb, var(--mushaf-orn-accent) 45%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--mushaf-orn-accent) 45%, transparent); }
 }
 @media (min-width: 768px) {
-  .tby-reader[data-fit="aspect"] { background: color-mix(in srgb, var(--mushaf-ground) 90%, var(--mushaf-orn) 6%); }
-  .tby-reader[data-mode]:not([data-zoomed="true"]) .tby-reading-stage { padding-block: 16px 20px; }
+  /* النسب تجمع إلى 100٪ كي تبقى الأرضية معتمة فلا تشفّ واجهة التطبيق من خلفها. */
+  .tby-reader[data-fit="aspect"] { background: color-mix(in srgb, var(--mushaf-ground) 94%, var(--mushaf-orn)); }
+  /* الورقة تُقاس على المسرح كله؛ الهوامش المحجوزة للأدوات أعلى وأسفل تكفي مسافةً. */
+  .tby-reader[data-mode]:not([data-zoomed="true"]) .tby-reading-stage { padding-block: 0; }
   .tby-page-frame { box-shadow: 0 1px 2px rgba(76, 9, 27, .08), 0 18px 40px -22px rgba(76, 9, 27, .35); border-radius: var(--mushaf-radius, 6px); }
 }
 
@@ -1924,4 +1927,49 @@
 .tby-reader .tby-audio-reciter select {
   border-bottom: 1px solid var(--mushaf-chrome-border);
   border-radius: 0;
+}
+
+/* ═══ ورقة الطبعة المدنية ملء الشاشة ══════════════════════════════════
+   الهاتف: الورقة تملأ الشاشة من الحافة إلى الحافة (data-fit="fill")، وأدوات القارئ
+   (الشريط العلوي والأزرار العائمة) مخفية افتراضياً وتعلو الورقة عند إظهارها بنقرة —
+   لا تُزيحها. هامشا الورقة (الجزء · السورة / رقم الصفحة) خارج شبكة أسطر QCF. */
+.tby-page-margin {
+  position: absolute;
+  inset-inline: 4.5%;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+  color: var(--mushaf-ink);
+  font-family: "Tabyan Surah Amiri", var(--font-amiri), serif;
+  font-synthesis: none;
+  font-size: 15px;
+  line-height: 1;
+  white-space: nowrap;
+  transition: opacity 200ms ease;
+}
+.tby-page-margin--top { top: 0; }
+.tby-page-margin--bottom { bottom: 0; justify-content: center; font-size: 14px; font-variant-numeric: tabular-nums; }
+.tby-page-margin > span { overflow: hidden; text-overflow: ellipsis; }
+
+.tby-reader[data-fit="fill"] { --mushaf-radius: 0; background: var(--mushaf-paper); }
+.tby-reader[data-fit="fill"] .tby-page-frame-rule,
+.tby-reader[data-fit="fill"] .tby-page-frame-corner { display: none; }
+.tby-reader[data-fit="fill"] .tby-mushaf-paper { box-shadow: none; }
+
+@media (max-width: 767px) {
+  /* لا هوامش محجوزة للأدوات: منطقة القراءة هي الشاشة كلها (ما عدا المناطق الآمنة). */
+  .tby-reader,
+  .tby-reader[data-mode] {
+    --reader-top: env(safe-area-inset-top, 0px);
+    --reader-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* اللوحات الفعلية (شريط الجلسة، مشغّل الاستماع) تبقى محجوزة كي لا تغطي آخر الأسطر. */
+  .tby-reader[data-mode]:has(.tby-session-bar) { --reader-bottom: var(--reader-session-height, 104px); }
+  .tby-reader[data-mode]:has(.tby-audio-dock) { --reader-bottom: calc(var(--fab-size) + 136px + env(safe-area-inset-bottom, 0px)); }
+  .tby-reader[data-mode]:not([data-zoomed="true"]) .tby-reading-stage { padding-block: 0; }
+  .tby-reader .tby-reader-viewport { scroll-padding-block-end: 0; }
+  .tby-reader .tby-page-margin { inset-inline: 14px; }
 }

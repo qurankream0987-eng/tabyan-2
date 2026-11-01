@@ -13,17 +13,30 @@
 import { Fragment, memo, useLayoutEffect, useMemo, useState } from "react";
 import SurahHeaderFrame from "./SurahHeaderFrame";
 import footerReference from "../../assets/mushaf/surah-footer-tabyan-burgundy.png";
-import { PAGE_ASPECT } from "@/lib/mushaf/pages";
+import { PAGE_ASPECT, PAGE_FRAME_INSET } from "@/lib/mushaf/pages";
 import { computePageLayout, LINE_COUNT, maxFontSizeFor, type PageVariant } from "@/lib/mushaf/page-layout";
 import { pageFontFamily } from "@/lib/mushaf/fonts";
 import { toArabicDigits } from "@/lib/mushaf/format";
 import { buildPageLines, type MushafPageData, type LineWord } from "@/lib/mushaf/types";
 import { getWordPresentationStyle, type WordFeedbackState } from "@/lib/mushaf/word-presentation";
+import { JUZ_LIST, SURAHS } from "@/lib/quran-data";
 import type { HideMode } from "@/lib/recitation-types";
 
 const BASMALAH_TEXT = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ";
 /** حبر أسود وورق عاجي ثابتان — لون فقط، دون تغيير هندسة الصفحة. */
 const INK = "var(--mushaf-ink, #000)";
+
+/**
+ * هامش الورقة المطبوع: «الجزء السادس» يميناً، و«سُورَةُ …» يساراً باسم سورة آخر آية في
+ * الصفحة (كما في الطبعة المدنية)، ورقم الصفحة أسفل الوسط. كله خارج شبكة أسطر QCF.
+ */
+function pageMarginLabels(data: MushafPageData): { juz: string; surah: string } {
+  const last = data.v[data.v.length - 1];
+  return {
+    juz: JUZ_LIST[data.j - 1]?.name ?? "",
+    surah: last ? `سُورَةُ ${SURAHS[last.c - 1]?.name ?? ""}` : "",
+  };
+}
 
 /** حالة التسميع الممرَّرة من MushafReader */
 export interface RecitationPageProps {
@@ -104,7 +117,9 @@ function MushafPage({
   revealedGlobalWords?: Map<string, number>;
   audioVerseKey?: string | null;
 }) {
-  const height = heightProp ?? width / PAGE_ASPECT;
+  // الورقة = كتلة الأسطر + هامشا الترويسة ورقم الصفحة؛ هندسة QCF تُحسب على كتلة الأسطر وحدها.
+  const paperH = heightProp ?? width / PAGE_ASPECT + PAGE_FRAME_INSET * 2;
+  const height = paperH - PAGE_FRAME_INSET * 2;
   const family = pageFontFamily(data.p);
   const lines = useMemo(() => buildPageLines(data), [data]);
   const rowCount = Math.max(1, ...lines.map((line) => line.line));
@@ -116,6 +131,7 @@ function MushafPage({
     [lines, rowCount, height, pageVariant],
   );
   const rowH = layout.wordRowH;
+  const margin = useMemo(() => pageMarginLabels(data), [data]);
 
   const wordPositions = useMemo(() => {
     const map = new Map<string, number[]>();
@@ -155,14 +171,28 @@ function MushafPage({
     <div
       dir="rtl"
       className="tby-mushaf-paper relative mx-auto"
-      style={{ width, height: layout.paperH, opacity: fontSize > 0 ? 1 : 0, transition: "opacity 120ms ease" }}
+      style={{ width, height: layout.paperH + PAGE_FRAME_INSET * 2, opacity: fontSize > 0 ? 1 : 0, transition: "opacity 120ms ease" }}
       data-mushaf-page={data.p}
       data-mushaf-variant={layout.variant}
     >
       {fontSize > 0 && (
         <>
+        {/* هامش الترويسة: الجزء يميناً والسورة يساراً — يُخفى مع الترويسات في اختبار الحفظ */}
+        <div
+          className="tby-page-margin tby-page-margin--top"
+          style={{ height: PAGE_FRAME_INSET, opacity: recitation?.maskHeaders ? 0 : 1 }}
+          aria-hidden="true"
+        >
+          <span>{margin.juz}</span>
+          <span>{margin.surah}</span>
+        </div>
+        {layout.variant !== "opening" && (
+          <div className="tby-page-margin tby-page-margin--bottom" style={{ height: PAGE_FRAME_INSET }} aria-hidden="true">
+            <span>{toArabicDigits(data.p)}</span>
+          </div>
+        )}
         {lines.map((m) => {
-          const top = layout.tops.get(m.line) ?? 0;
+          const top = PAGE_FRAME_INSET + (layout.tops.get(m.line) ?? 0);
 
           if (m.kind === "surah-header") {
             // برواز زخرفي كامل بهوية تبيان (P0) — مكوّن مستقل، في سطر بداية
