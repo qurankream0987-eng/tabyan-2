@@ -15,6 +15,9 @@ export default function QuranMenu() {
   const pendingAssignments = (assignments.data ?? []).filter((r) => r.assignment.status === "assigned").length;
 
   const sections: Array<{ to: string; icon: SectionIconName; title: string; badge?: string; locked?: boolean }> = [
+    { to: "/student/mushaf-fahd", icon: "quran", title: "المصحف" },
+    { to: "/student/prayer-times", icon: "mosque", title: "مواقيت الصلاة" },
+    { to: "/student/qibla", icon: "moon", title: "اتجاه القبلة" },
     { to: "/student/levels/quran", icon: "hifz", title: "حفظ ومراجعة القرآن" },
     { to: "/student/tilawah", icon: "tilawah", title: "تصحيح التلاوة" },
     {
@@ -66,6 +69,18 @@ export default function QuranMenu() {
           </Link>
         ))}
       </div>
+
+      {/* التسميع الحي العام يجري داخل المصحف عبر زر «تسميع» */}
+      <GlassCard className="p-4 rounded-[28px] stagger-in" style={{ animationDelay: `${sections.length * 80}ms` }}>
+        <h2 className="font-readex font-bold text-base text-foreground mb-1">تسميع حي عام</h2>
+        <p className="font-readex text-xs text-muted-foreground leading-relaxed mb-3">
+          تتبّع موضع القراءة في جلسة عامة. لا تُسجّل هذه الجلسة إكمال واجب أو تقييماً.
+        </p>
+        <Link to="/student/mushaf-fahd" className="flex items-center justify-center gap-2 w-full py-2.5 btn-bubble btn-primary-bubble font-readex text-sm font-bold">
+          <Icon name="mic" size={16} />
+          فتح التسميع الحي
+        </Link>
+      </GlassCard>
     </div>
   );
 }
