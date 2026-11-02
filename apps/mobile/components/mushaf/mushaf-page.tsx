@@ -6,7 +6,7 @@ import { buildPageLines, type LineWord, type MushafPageData } from "@workspace/t
 import { computePageLayout, LINE_COUNT, maxFontSizeFor, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
 import { pageFontFamily } from "../../lib/mushaf/mushaf-assets";
 import { JUZ_LIST } from "../../lib/mushaf/juz";
-import { SURAH_BANNER_MEDALLION, surahBannerLayout } from "@workspace/tabyan-domain/surah-banner";
+import { surahBannerLayout } from "@workspace/tabyan-domain/surah-banner";
 import { SurahBannerArt } from "./surah-banner-art";
 import type { NativeWordFeedback } from "../../lib/recitation/native-recitation";
 
@@ -187,7 +187,7 @@ function MushafPage({
         if (line.kind === "surah-header") {
           return (
             <View key={`h-${line.line}`} style={[styles.row, { top, height: titleRowH }]}>
-              <SurahBanner name={line.surahName ?? ""} number={line.surahNumber} ayahs={line.ayahCount} width={width * 0.94} rowH={titleRowH} />
+              <SurahBanner name={line.surahName ?? ""} number={line.surahNumber} width={width * 0.94} rowH={titleRowH} />
             </View>
           );
         }
@@ -224,19 +224,11 @@ export default memo(MushafPage);
 
 /**
  * The web SurahHeaderFrame: the ornament stretched over the title row, the surah name
- * in the cartouche and its order / ayah count in the two medallions (right / left).
+ * in the cartouche; the two medallions stay plain ornaments.
  */
-function SurahBanner({ name, number, ayahs, width, rowH }: { name: string; number?: number; ayahs?: number; width: number; rowH: number }) {
+function SurahBanner({ name, number, width, rowH }: { name: string; number?: number; width: number; rowH: number }) {
   const bandH = Math.min(rowH * 0.92, width * 0.165);
   const layout = surahBannerLayout(width / bandH);
-  const medallionW = width * (2 * SURAH_BANNER_MEDALLION.r) / layout.viewWidth;
-  const medallion = (value: number | undefined, caption: string, centerX: number) => value === undefined ? null : (
-    <View style={[styles.medallion, { left: width * centerX - medallionW / 2, width: medallionW }]}>
-      {/* Explicit line boxes keep the caption and the number stacked on the medallion's centre. */}
-      <Text allowFontScaling={false} style={[styles.medallionCaption, { fontSize: bandH * 0.17, lineHeight: bandH * 0.24 }]} numberOfLines={1}>{caption}</Text>
-      <Text allowFontScaling={false} style={[styles.medallionValue, { fontSize: bandH * 0.28, lineHeight: bandH * 0.34 }]} numberOfLines={1}>{toArabicDigits(value)}</Text>
-    </View>
-  );
   return (
     <View style={[styles.surahBand, { width, height: bandH }]}>
       <SurahBannerArt width={width} height={bandH} />
@@ -244,8 +236,6 @@ function SurahBanner({ name, number, ayahs, width, rowH }: { name: string; numbe
       <Text allowFontScaling={false} style={[styles.surahTitle, { fontSize: bandH * 0.42, lineHeight: bandH, width: width * (layout.titleRight - layout.titleLeft) * 0.94 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
         {number !== undefined ? vocalizedSurahTitle(number, name) : `سُورَةُ ${name}`}
       </Text>
-      {medallion(number, "ترتيبها", layout.orderFrac)}
-      {medallion(ayahs, "آياتها", layout.ayahsFrac)}
     </View>
   );
 }
@@ -263,9 +253,6 @@ const styles = StyleSheet.create({
   wordLine: { color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center" },
   surahBand: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
   surahTitle: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center", textAlignVertical: "center" },
-  medallion: { position: "absolute", top: 0, bottom: 0, alignItems: "center", justifyContent: "center" },
-  medallionCaption: { fontFamily: "Amiri_400Regular", color: "#6B5A2E", includeFontPadding: false, textAlign: "center" },
-  medallionValue: { fontFamily: "Amiri_700Bold", color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center" },
   basmalah: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false },
   mistake: { color: MUSHAF_COLORS.mistake, textDecorationLine: "underline" },
   skipped: { color: MUSHAF_COLORS.skipped, textDecorationLine: "underline" },

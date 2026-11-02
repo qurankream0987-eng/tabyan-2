@@ -1,9 +1,8 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { toArabicDigits } from "@/lib/mushaf/format";
 import { fitMeasuredTitle, measureInk } from "@/lib/mushaf/title-fit";
 import { createFrameScheduler } from "@/lib/mushaf/frame-scheduler";
 import SurahHeaderOrnament from "./SurahHeaderOrnament";
-import { SURAH_BANNER_MEDALLION, surahBannerLayout } from "@workspace/tabyan-domain/surah-banner";
+import { surahBannerLayout } from "@workspace/tabyan-domain/surah-banner";
 import { vocalizedSurahTitle } from "@workspace/tabyan-domain/quran-surah-names";
 
 export type SurahHeaderVariant = "standard" | "opening";
@@ -22,8 +21,7 @@ interface Props {
  * ترويسة السورة — إطار مطبوع هادئ يحافظ على موضع سطر QCF المخصص للعنوان.
  * نسخة الزخرفة الأصلية بلا نص مطبوع؛ العنوان الحي يُقاس داخل صف الترويسة، دون مساس بأسطر QCF.
  */
-export default function SurahHeaderFrame({ surahName, rowH, surahNumber, ayahCount, width = 0, variant = "standard" }: Props) {
-  const showMeta = surahNumber !== undefined && ayahCount !== undefined;
+export default function SurahHeaderFrame({ surahName, rowH, surahNumber, width = 0, variant = "standard" }: Props) {
   const bandH = variant === "opening" && width > 0
     ? width * 0.94 * (154 / 932)
     : rowH * (variant === "opening" ? 0.86 : 0.8);
@@ -47,7 +45,6 @@ export default function SurahHeaderFrame({ surahName, rowH, surahNumber, ayahCou
     return () => ro.disconnect();
   }, []);
   const banner = surahBannerLayout(aspect);
-  const sideW = (2 * SURAH_BANNER_MEDALLION.r) / banner.viewWidth;
   const text = surahNumber !== undefined ? vocalizedSurahTitle(surahNumber, surahName) : `سُورَةُ ${surahName}`;
   useLayoutEffect(() => {
     const el = bodyRef.current;
@@ -88,14 +85,11 @@ export default function SurahHeaderFrame({ surahName, rowH, surahNumber, ayahCou
       style={{
         height: bandH,
         ["--band-h" as string]: `${bandH}px`,
-        // Medallion text sits on the drawn medallions; the title fills the cartouche.
-        ["--sb-side-w" as string]: `${sideW * 100}%`,
-        ["--sb-side-inset" as string]: `${(banner.ayahsFrac - sideW / 2) * 100}%`,
+        // The title fills the cartouche.
         ["--sb-title-w" as string]: `${(banner.titleRight - banner.titleLeft) * 100}%`,
       }}
     >
       <SurahHeaderOrnament aspect={aspect} />
-      <HeaderSide side="start" caption="ترتيبها" value={showMeta ? toArabicDigits(surahNumber!) : null} />
       <div className="tby-surah-cartouche">
         <div ref={bodyRef} className="tby-surah-cartouche-body">
           <span ref={titleRef} className="tby-surah-title" style={{ fontSize: fit?.fontSize ?? maxTitle * 0.6, fontWeight: 400, lineHeight: 1, visibility: fit || failed ? "visible" : "hidden", top: fit?.dy ?? 0, left: fit?.dx ?? 0, maxWidth: "none" }}>
@@ -103,25 +97,7 @@ export default function SurahHeaderFrame({ surahName, rowH, surahNumber, ayahCou
           </span>
         </div>
       </div>
-      <HeaderSide side="end" caption="آياتها" value={showMeta ? toArabicDigits(ayahCount!) : null} />
     </div>
   );
 }
 
-/** A light page-edge finial and a quiet metadata label on each side of the title. */
-function HeaderSide({ side, caption, value }: { side: "start" | "end"; caption: string; value: string | null }) {
-  return (
-    <span className="tby-surah-side" data-side={side} aria-label={value ? `${caption} ${value}` : undefined} aria-hidden={value ? undefined : true}>
-      <svg className="tby-surah-finial" viewBox="0 0 12 12" aria-hidden focusable="false">
-        <path d="M6 1.5 10.5 6 6 10.5 1.5 6z" className="tby-orn-line" fill="var(--mushaf-paper)" />
-        <circle cx="6" cy="6" r="1" className="tby-orn-dot" />
-      </svg>
-      {value && (
-        <span className="tby-surah-detail">
-          <span className="tby-surah-detail-caption">{caption}</span>
-          <span className="tby-surah-detail-value">{value}</span>
-        </span>
-      )}
-    </span>
-  );
-}

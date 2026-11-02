@@ -95,3 +95,15 @@ export function surahBannerLayout(aspect: number) {
     titleRight: (688.2 + dx) / viewWidth,
   };
 }
+
+/** An eight-petal rosette filling a medallion centred at `cx` (petals as one path, plus the heart). */
+export function surahBannerRosette(cx: number): { petals: string; heart: { cx: number; cy: number; r: number } } {
+  const cy = SURAH_BANNER_MEDALLION.cy;
+  const petals = Array.from({ length: 8 }, (_, i) => {
+    const a = (i * Math.PI) / 4;
+    const tip = 30, side = 9, base = 7;
+    const p = (r: number, da: number) => [cx + r * Math.sin(a + da), cy - r * Math.cos(a + da)].map((n) => +n.toFixed(1)).join(" ");
+    return `M${p(base, 0)}Q${p(side * 1.9, -0.42)} ${p(tip, 0)}Q${p(side * 1.9, 0.42)} ${p(base, 0)}Z`;
+  }).join("");
+  return { petals, heart: { cx, cy, r: 6.5 } };
+}

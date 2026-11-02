@@ -4,6 +4,7 @@ import {
   SURAH_BANNER_MEDALLION as MED,
   SURAH_BANNER_TILE as TILE,
   surahBannerLayout,
+  surahBannerRosette,
 } from "@workspace/tabyan-domain/surah-banner";
 
 /**
@@ -42,6 +43,8 @@ export default function SurahHeaderOrnament({ aspect }: { aspect: number }) {
           <polygon points={star} fill={C.star} stroke={`url(#${gold})`} strokeWidth={2} />
           <circle cx={cx} cy={MED.cy} r={MED.r} fill={C.ivory} stroke={`url(#${gold})`} strokeWidth={3} />
           <circle cx={cx} cy={MED.cy} r={MED.innerR} fill="none" stroke={C.gold} strokeWidth={0.9} />
+          <path d={surahBannerRosette(cx).petals} fill={C.leaf} stroke={`url(#${gold})`} strokeWidth={1.2} />
+          <circle {...surahBannerRosette(cx).heart} fill={C.bud} stroke={C.budEdge} strokeWidth={0.8} />
         </g>
       ))}
       <path d={l.cartouche} fill={C.ivory} stroke={`url(#${gold})`} strokeWidth={3.5} />

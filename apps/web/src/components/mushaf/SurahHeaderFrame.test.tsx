@@ -13,7 +13,9 @@ describe("Surah title-only ornament", () => {
       expect(html).not.toContain("font-quran");
       // Shared vector ornament: patterned band, two medallions and the cartouche.
       expect(html).toContain("<pattern");
-      expect(html.match(/<circle cx="[\d.]+" cy="70"/g)?.length).toBe(4);
+      // Each medallion: outer ring, inner ring and the rosette's heart.
+      expect(html.match(/<circle cx="[\d.]+" cy="70"/g)?.length).toBe(6);
+      expect(html).not.toContain("ترتيبها");
     }
   });
   it("preserves the existing header band geometry for both page variants", () => {
