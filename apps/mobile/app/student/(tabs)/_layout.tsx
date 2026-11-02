@@ -64,7 +64,6 @@ export default function StudentTabsLayout() {
       <View style={[styles.pill, focused ? { backgroundColor: activeFill } : null]}>
         <View style={styles.icon}>
           <SvgIcon name={TABS[key][0]} size={23} color={color} />
-          {focused ? <View style={styles.activeBar} /> : null}
         </View>
         <Text numberOfLines={1} allowFontScaling={false} style={[styles.label, { color, fontFamily: focused ? "IBMPlexSansArabic_700Bold" : "IBMPlexSansArabic_500Medium" }]}>{TABS[key][1]}</Text>
       </View>
@@ -88,7 +87,6 @@ export default function StudentTabsLayout() {
 
 const styles = StyleSheet.create({
   pill: { flex: 1, alignSelf: "stretch", marginHorizontal: 3, borderRadius: 22, alignItems: "center", justifyContent: "center", gap: 2 },
-  icon: { alignItems: "center", justifyContent: "flex-start", height: 30, paddingTop: 1 },
-  activeBar: { position: "absolute", bottom: 1, width: 18, height: 3, borderRadius: 2, backgroundColor: palette.gold },
+  icon: { alignItems: "center", justifyContent: "center", height: 26 },
   label: { fontSize: 10, lineHeight: 14, textAlign: "center", alignSelf: "stretch" },
 });
