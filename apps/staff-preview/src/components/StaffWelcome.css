@@ -251,9 +251,6 @@
 .sw-wave-icon i:nth-child(2) { height: 20px; background: #668675; }
 .sw-wave-icon i:nth-child(3) { height: 16px; }
 .sw-wave-icon i:nth-child(4) { height: 10px; background: #668675; }
-.sw-note { margin: 5px 16px 10px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; color: var(--sw-gold-dark); border: 1px solid rgba(212,175,55,.2); border-radius: 15px; background: rgba(212,175,55,.08); }
-.sw-note p { margin: 0; color: var(--sw-muted); font-size: 11px; line-height: 1.7; }
-.sw-note strong { color: var(--sw-gold-dark); }
 .sw-sharia-row { align-items: flex-start; padding-block: 14px; }
 
 .sw-why { margin-top: 39px; }

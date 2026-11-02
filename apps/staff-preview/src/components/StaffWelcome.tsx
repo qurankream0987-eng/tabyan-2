@@ -127,10 +127,6 @@ function TajweedDetails({ onTeacherRegister }: { onTeacherRegister: () => void }
           <span><span className="sw-card-title">{name}</span><span className="sw-card-desc">{text}</span></span>
         </div>
       ))}
-      <div className="sw-note">
-        <Moon size={18} aria-hidden="true" />
-        <p>متن <strong>تحفة الأطفال</strong>: مقرر مستوى الوارثون، وعنصر تقييم اختياري في اختبار القبول</p>
-      </div>
       <SectionCta onTeacherRegister={onTeacherRegister} />
     </div>
   );
