@@ -83,3 +83,17 @@ export function computePageLayout(
   for (const [line, offset] of offsets) tops.set(line, blockTop + offset);
   return { variant: "opening", paperH: fullH, wordRowH, tops, blockTop, blockBottom: blockTop + y };
 }
+
+/** Printed paper proportions (width ÷ height) of the Madinah mushaf page. */
+export const PRINTED_PAGE_ASPECT = 622 / 917;
+/** How much airier than print the lines may be on a tall screen before the block stops growing. */
+const MAX_LINE_SPREAD = 1.05;
+
+/**
+ * Height for the 15-line grid on a full-screen page: the screen's height when it is short,
+ * but never more than the printed proportions (plus a little air) on a tall phone, so the
+ * lines stay close together like the printed page instead of spreading over the screen.
+ */
+export function readerGridHeight(width: number, available: number): number {
+  return Math.min(available, (width / PRINTED_PAGE_ASPECT) * MAX_LINE_SPREAD);
+}

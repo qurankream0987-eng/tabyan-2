@@ -14,7 +14,7 @@ import { Fragment, memo, useLayoutEffect, useMemo, useState } from "react";
 import SurahHeaderFrame from "./SurahHeaderFrame";
 import footerReference from "../../assets/mushaf/surah-footer-tabyan-burgundy.png";
 import { PAGE_ASPECT, PAGE_FRAME_INSET } from "@/lib/mushaf/pages";
-import { computePageLayout, LINE_COUNT, maxFontSizeFor, type PageVariant } from "@/lib/mushaf/page-layout";
+import { computePageLayout, LINE_COUNT, maxFontSizeFor, readerGridHeight, type PageVariant } from "@/lib/mushaf/page-layout";
 import { pageFontFamily } from "@/lib/mushaf/fonts";
 import { toArabicDigits } from "@/lib/mushaf/format";
 import { buildPageLines, type MushafPageData, type LineWord } from "@/lib/mushaf/types";
@@ -120,7 +120,10 @@ function MushafPage({
 }) {
   // الورقة = كتلة الأسطر + هامشا الترويسة ورقم الصفحة؛ هندسة QCF تُحسب على كتلة الأسطر وحدها.
   const paperH = heightProp ?? width / PAGE_ASPECT + PAGE_FRAME_INSET * 2;
-  const height = paperH - PAGE_FRAME_INSET * 2;
+  // On a tall full-screen page the line block keeps printed density and sits centred, with the
+  // juz/surah line and the page number hugging it, instead of spreading the lines over the screen.
+  const height = heightProp ? readerGridHeight(width, paperH - PAGE_FRAME_INSET * 2) : paperH - PAGE_FRAME_INSET * 2;
+  const blockTop = (paperH - height) / 2;
   const family = pageFontFamily(data.p);
   const lines = useMemo(() => buildPageLines(data), [data]);
   const rowCount = Math.max(1, ...lines.map((line) => line.line));
@@ -172,7 +175,7 @@ function MushafPage({
     <div
       dir="rtl"
       className="tby-mushaf-paper relative mx-auto"
-      style={{ width, height: layout.paperH + PAGE_FRAME_INSET * 2, opacity: fontSize > 0 ? 1 : 0, transition: "opacity 120ms ease" }}
+      style={{ width, height: paperH, opacity: fontSize > 0 ? 1 : 0, transition: "opacity 120ms ease" }}
       data-mushaf-page={data.p}
       data-mushaf-variant={layout.variant}
     >
@@ -181,19 +184,19 @@ function MushafPage({
         {/* هامش الترويسة: الجزء يميناً والسورة يساراً — يُخفى مع الترويسات في اختبار الحفظ */}
         <div
           className="tby-page-margin tby-page-margin--top"
-          style={{ height: PAGE_FRAME_INSET, opacity: recitation?.maskHeaders ? 0 : 1 }}
+          style={{ top: blockTop - PAGE_FRAME_INSET, height: PAGE_FRAME_INSET, opacity: recitation?.maskHeaders ? 0 : 1 }}
           aria-hidden="true"
         >
           <span>{margin.juz}</span>
           <span>{margin.surah}</span>
         </div>
         {layout.variant !== "opening" && (
-          <div className="tby-page-margin tby-page-margin--bottom" style={{ height: PAGE_FRAME_INSET }} aria-hidden="true">
+          <div className="tby-page-margin tby-page-margin--bottom" style={{ top: blockTop + height, bottom: "auto", height: PAGE_FRAME_INSET }} aria-hidden="true">
             <span>{toArabicDigits(data.p)}</span>
           </div>
         )}
         {lines.map((m) => {
-          const top = PAGE_FRAME_INSET + (layout.tops.get(m.line) ?? 0);
+          const top = blockTop + (layout.tops.get(m.line) ?? 0);
 
           if (m.kind === "surah-header") {
             // برواز زخرفي كامل بهوية تبيان (P0) — مكوّن مستقل، في سطر بداية
