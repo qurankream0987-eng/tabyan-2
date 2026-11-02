@@ -90,3 +90,10 @@ export function computePageLayout(
  * lines lose the airy gaps between words. Measuring and drawing must use the same gap.
  */
 export const QCF_WORD_GAP = 0.45;
+
+/**
+ * The printed basmala above each surah: the four words of 1:1 as drawn by the page-1 QCF
+ * font (the same calligraphy as the Madinah print), separated by the narrow word gap.
+ */
+export const BASMALA_FONT_PAGE = 1;
+export const BASMALA_GLYPHS = ["ﱁ", "ﱂ", "ﱃ", "ﱄ"] as const;

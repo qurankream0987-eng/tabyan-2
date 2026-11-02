@@ -43,7 +43,8 @@ export function ensurePageFont(page: number): Promise<void> {
  */
 export function retainPageFonts(current: number, radius = 3): void {
   for (const [page, face] of faces) {
-    if (Math.abs(page - current) > radius && !inflight.has(page)) {
+    // Page 1's font also draws the basmala above every surah, so it stays.
+    if (page !== 1 && Math.abs(page - current) > radius && !inflight.has(page)) {
       document.fonts.delete(face);
       faces.delete(page);
       loaded.delete(page);

@@ -10,12 +10,12 @@
  *
  * ممنوع display:none — الـ layout لا ينهار أبداً (opacity/visibility فقط).
  */
-import { Fragment, memo, useLayoutEffect, useMemo, useState } from "react";
+import { Fragment, memo, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import SurahHeaderFrame from "./SurahHeaderFrame";
 import footerReference from "../../assets/mushaf/surah-footer-tabyan-burgundy.png";
 import { PAGE_ASPECT, PAGE_FRAME_INSET } from "@/lib/mushaf/pages";
-import { computePageLayout, LINE_COUNT, maxFontSizeFor, QCF_WORD_GAP, type PageVariant } from "@/lib/mushaf/page-layout";
-import { pageFontFamily } from "@/lib/mushaf/fonts";
+import { BASMALA_FONT_PAGE, BASMALA_GLYPHS, computePageLayout, LINE_COUNT, maxFontSizeFor, QCF_WORD_GAP, type PageVariant } from "@/lib/mushaf/page-layout";
+import { ensurePageFont, pageFontFamily } from "@/lib/mushaf/fonts";
 import { toArabicDigits } from "@/lib/mushaf/format";
 import { buildPageLines, type MushafPageData, type LineWord } from "@/lib/mushaf/types";
 import { getWordPresentationStyle, type WordFeedbackState } from "@/lib/mushaf/word-presentation";
@@ -123,6 +123,15 @@ function MushafPage({
   const height = paperH - PAGE_FRAME_INSET * 2;
   const family = pageFontFamily(data.p);
   const lines = useMemo(() => buildPageLines(data), [data]);
+  // The basmala is drawn with page 1's font; until it loads, Amiri stands in.
+  const hasBasmala = lines.some((m) => m.kind === "basmalah");
+  const [basmalaReady, setBasmalaReady] = useState(false);
+  useEffect(() => {
+    if (!hasBasmala) return;
+    let live = true;
+    ensurePageFont(BASMALA_FONT_PAGE).then(() => { if (live) setBasmalaReady(true); }, () => {});
+    return () => { live = false; };
+  }, [hasBasmala]);
   const rowCount = Math.max(1, ...lines.map((line) => line.line));
   const pageVariant: PageVariant = data.p === 1 || data.p === 2 ? "opening" : "standard";
   const titleRowH = height / LINE_COUNT;
@@ -225,9 +234,16 @@ function MushafPage({
                 className="tby-basmala-row absolute flex items-center justify-center"
                 style={{ top, height: rowH, insetInline: "3%", opacity: recitation?.maskHeaders ? 0 : 1, transition: "opacity 200ms ease" }}
               >
-                <span className="font-quran whitespace-nowrap shrink-0" style={{ fontSize: Math.min(fontSize * 1.1, titleRowH * 0.62), lineHeight: 1, color: INK, position: "relative", top: "-0.1em" }}>
-                  {BASMALAH_TEXT}
-                </span>
+                {basmalaReady ? (
+                  // The printed basmala: 1:1 in the page-1 QCF font, at the size of the page's lines.
+                  <span className="tby-ayah-line whitespace-nowrap shrink-0" style={{ fontFamily: pageFontFamily(BASMALA_FONT_PAGE), fontSize, lineHeight: 1, color: INK }}>
+                    {BASMALA_GLYPHS.map((g, i) => <Fragment key={g}>{i > 0 && <span style={{ fontSize: `${QCF_WORD_GAP}em` }}> </span>}{g}</Fragment>)}
+                  </span>
+                ) : (
+                  <span className="font-quran whitespace-nowrap shrink-0" style={{ fontSize: Math.min(fontSize * 1.1, titleRowH * 0.62), lineHeight: 1, color: INK, position: "relative", top: "-0.1em" }}>
+                    {BASMALAH_TEXT}
+                  </span>
+                )}
               </div>
             );
           }

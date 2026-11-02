@@ -1,10 +1,10 @@
-import { memo, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View, type NativeSyntheticEvent, type TextLayoutEventData } from "react-native";
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
 import { vocalizedSurahTitle } from "@workspace/tabyan-domain/quran-surah-names";
 import { buildPageLines, type LineWord, type MushafPageData } from "@workspace/tabyan-domain/mushaf-page-data";
-import { computePageLayout, LINE_COUNT, maxFontSizeFor, QCF_WORD_GAP, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
-import { pageFontFamily } from "../../lib/mushaf/mushaf-assets";
+import { BASMALA_FONT_PAGE, BASMALA_GLYPHS, computePageLayout, LINE_COUNT, maxFontSizeFor, QCF_WORD_GAP, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
+import { ensurePageFont, pageFontFamily } from "../../lib/mushaf/mushaf-assets";
 import { JUZ_LIST } from "../../lib/mushaf/juz";
 import { SURAH_NAME_FONT_FAMILY, surahBannerLayout, surahNameGlyph } from "@workspace/tabyan-domain/surah-banner";
 import { useFonts } from "expo-font";
@@ -127,6 +127,15 @@ function MushafPage({
   const height = paperH - marginH * 2;
   const family = pageFontFamily(data.p);
   const lines = useMemo(() => buildPageLines(data), [data]);
+  // The basmala is drawn with page 1's font; until it loads, Amiri stands in.
+  const hasBasmala = lines.some((line) => line.kind === "basmalah");
+  const [basmalaReady, setBasmalaReady] = useState(false);
+  useEffect(() => {
+    if (!hasBasmala) return;
+    let live = true;
+    ensurePageFont(BASMALA_FONT_PAGE).then(() => { if (live) setBasmalaReady(true); }, () => {});
+    return () => { live = false; };
+  }, [hasBasmala]);
   const wordLines = lines.filter((line) => line.kind === "words");
   const rowCount = Math.max(1, ...lines.map((line) => line.line));
   const variant: PageVariant = data.p === 1 || data.p === 2 ? "opening" : "standard";
@@ -197,9 +206,19 @@ function MushafPage({
         if (line.kind === "basmalah") {
           return (
             <View key={`b-${line.line}`} style={[styles.row, { top, height: layout.wordRowH }]}>
-              <Text allowFontScaling={false} style={[styles.basmalah, { fontSize: Math.min(fontSize * 1.1, titleRowH * 0.62) }]} numberOfLines={1}>
-                {BASMALAH_TEXT}
-              </Text>
+              {basmalaReady ? (
+                // The printed basmala: 1:1 in the page-1 QCF font, at the size of the page's lines.
+                <Text allowFontScaling={false} style={[styles.wordLine, { fontFamily: pageFontFamily(BASMALA_FONT_PAGE), fontSize }, styles.boldInk]} numberOfLines={1}>
+                  {BASMALA_GLYPHS.map((glyph, index) => [
+                    index > 0 ? <Text key={`g${index}`} style={{ fontSize: fontSize * QCF_WORD_GAP }}> </Text> : null,
+                    <Text key={glyph}>{glyph}</Text>,
+                  ])}
+                </Text>
+              ) : (
+                <Text allowFontScaling={false} style={[styles.basmalah, { fontSize: Math.min(fontSize * 1.1, titleRowH * 0.62) }]} numberOfLines={1}>
+                  {BASMALAH_TEXT}
+                </Text>
+              )}
             </View>
           );
         }
