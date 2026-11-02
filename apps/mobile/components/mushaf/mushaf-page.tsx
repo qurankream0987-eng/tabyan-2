@@ -6,7 +6,7 @@ import { buildPageLines, type LineWord, type MushafPageData } from "@workspace/t
 import { BASMALA_FONT_PAGE, BASMALA_GLYPHS, basmalaScale, computePageLayout, LINE_COUNT, maxFontSizeFor, QCF_WORD_GAP, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
 import { ensurePageFont, pageFontFamily } from "../../lib/mushaf/mushaf-assets";
 import { JUZ_LIST } from "../../lib/mushaf/juz";
-import { SURAH_NAME_FONT_FAMILY, surahBannerLayout, surahNameGlyph } from "@workspace/tabyan-domain/surah-banner";
+import { SURAH_NAME_FONT_FAMILY, SURAH_TITLE_STRETCH, surahBannerLayout, surahNameGlyph } from "@workspace/tabyan-domain/surah-banner";
 import { useFonts } from "expo-font";
 import { SurahBannerArt } from "./surah-banner-art";
 import type { NativeWordFeedback } from "../../lib/recitation/native-recitation";
@@ -20,14 +20,14 @@ const BASMALAH_TEXT = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱ
 const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
 const toArabicDigits = (value: number) => String(value).replace(/\d/g, (digit) => ARABIC_DIGITS[Number(digit)]);
 
-/** Brand maroon ink on the brand cream paper in both app themes, as on the web. */
+/** Printed black ink on the brand cream paper in both app themes, as on the web. */
 export const MUSHAF_COLORS = {
   paper: "#F5EFE0",
   frame: "#E6D5B8",
-  ink: "#4C091B",
+  ink: "#000000",
   /** Surah ornament captions and the page margins (brand burgundy). */
   ornament: "#800020",
-  outOfRange: "rgba(76, 9, 27, 0.25)",
+  outOfRange: "rgba(0, 0, 0, 0.25)",
   current: "#800020",
   correct: "#2F4A3A",
   pending: "#6B5B4B",
@@ -256,15 +256,15 @@ function SurahBanner({ name, number, width, rowH }: { name: string; number?: num
   // The printed mushaf's header calligraphy: one glyph per surah. Amiri stands in until it loads.
   const [fontReady] = useFonts({ [SURAH_NAME_FONT_FAMILY]: require("../../assets/fonts/sura-names.ttf") });
   const calligraphy = fontReady && number !== undefined;
-  // The glyphs draw about 0.75 em tall and up to 2.5 em wide (surah 83); fit both ways inside the cartouche.
+  // The glyphs draw about 0.75 em tall and up to 2.5 em wide (surah 83), then are stretched; fit both ways inside the cartouche.
   const box = { left: width * layout.title.left, width: width * layout.title.width, top: bandH * layout.title.top, height: bandH * layout.title.height };
-  const glyphSize = Math.min((box.height * 0.92) / 0.75, (box.width * 0.96) / 2.5);
+  const glyphSize = Math.min((box.height * 0.92) / 0.75, (box.width * 0.96) / (2.5 * SURAH_TITLE_STRETCH));
   return (
     <View style={[styles.surahBand, { width, height: bandH }]}>
       <SurahBannerArt width={width} height={bandH} />
       <View style={[styles.titleBox, box]}>
         {calligraphy ? (
-          <Text allowFontScaling={false} accessibilityLabel={`سورة ${name}`} style={[styles.surahGlyph, { fontSize: glyphSize, lineHeight: box.height }]} numberOfLines={1}>
+          <Text allowFontScaling={false} accessibilityLabel={`سورة ${name}`} style={[styles.surahGlyph, { fontSize: glyphSize, lineHeight: box.height, transform: [{ scaleX: SURAH_TITLE_STRETCH }] }]} numberOfLines={1}>
             {surahNameGlyph(number)}
           </Text>
         ) : (

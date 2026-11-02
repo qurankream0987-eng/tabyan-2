@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { fitMeasuredTitle, measureInk } from "@/lib/mushaf/title-fit";
 import { createFrameScheduler } from "@/lib/mushaf/frame-scheduler";
 import SurahHeaderOrnament from "./SurahHeaderOrnament";
-import { SURAH_NAME_FONT_FAMILY, surahBannerLayout, surahNameGlyph } from "@workspace/tabyan-domain/surah-banner";
+import { SURAH_NAME_FONT_FAMILY, SURAH_TITLE_STRETCH, surahBannerLayout, surahNameGlyph } from "@workspace/tabyan-domain/surah-banner";
 
 export type SurahHeaderVariant = "standard" | "opening";
 
@@ -60,7 +60,9 @@ export default function SurahHeaderFrame({ surahName, rowH, surahNumber, width =
       const w = el.clientWidth, h = el.clientHeight;
       if (w <= 0 || h <= 0) return;
       // Real ink, including Arabic diacritics, stays inside the vector's ivory panel.
-      const r = fitMeasuredTitle(size => measureInk(text, family, 400, size), w * 0.92, h * (calligraphy ? 0.94 : 0.80), maxTitle);
+      // The calligraphy is drawn stretched, so its ink is measured at the stretched width.
+      const stretch = calligraphy ? SURAH_TITLE_STRETCH : 1;
+      const r = fitMeasuredTitle(size => { const m = measureInk(text, family, 400, size); return m && { ...m, left: m.left * stretch, right: m.right * stretch }; }, w * 0.92, h * (calligraphy ? 0.94 : 0.80), maxTitle);
       if (!r) { console.warn("[SurahHeaderFrame] canvas text measurement unavailable"); setFailed(true); return; }
       setFailed(false);
       setFit(previous => previous?.fontSize === r.fontSize && previous.dx === r.dx && previous.dy === r.dy ? previous : r);
@@ -94,7 +96,7 @@ export default function SurahHeaderFrame({ surahName, rowH, surahNumber, width =
       <SurahHeaderOrnament aspect={aspect} />
       <div className="tby-surah-cartouche">
         <div ref={bodyRef} className="tby-surah-cartouche-body">
-          <span ref={titleRef} className="tby-surah-title" aria-label={calligraphy ? `سورة ${surahName}` : undefined} style={{ fontFamily: calligraphy ? `"${SURAH_NAME_FONT_FAMILY}", serif` : undefined, fontSize: fit?.fontSize ?? maxTitle * 0.6, fontWeight: 400, lineHeight: 1, visibility: fit || failed ? "visible" : "hidden", top: fit?.dy ?? 0, left: fit?.dx ?? 0, maxWidth: "none" }}>
+          <span ref={titleRef} className="tby-surah-title" aria-label={calligraphy ? `سورة ${surahName}` : undefined} style={{ fontFamily: calligraphy ? `"${SURAH_NAME_FONT_FAMILY}", serif` : undefined, fontSize: fit?.fontSize ?? maxTitle * 0.6, fontWeight: 400, lineHeight: 1, visibility: fit || failed ? "visible" : "hidden", top: fit?.dy ?? 0, left: fit?.dx ?? 0, maxWidth: "none", transform: calligraphy ? `scaleX(${SURAH_TITLE_STRETCH})` : undefined }}>
             {text}
           </span>
         </div>

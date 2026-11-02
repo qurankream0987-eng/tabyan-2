@@ -10,7 +10,7 @@
   --mushaf-paper: var(--cream, #f5efe0);
   /* أرضية زيتونية داكنة هادئة خارج الورقة (مكتب الشاشات الواسعة، والتمرير الزائد على الهاتف). */
   --mushaf-ground: var(--maroon-deep, #360512);
-  --mushaf-ink: var(--maroon, #4c091b);
+  --mushaf-ink: #000;
   --mushaf-orn: var(--burgundy, #800020);
   --mushaf-orn-accent: var(--gold, #d4af37);
   --mushaf-orn-soft: color-mix(in srgb, var(--mushaf-orn-accent) 45%, var(--mushaf-paper));
@@ -55,7 +55,7 @@
 /* ── صفحة المصحف ─────────────────────────────────────────────────── */
 .tby-mushaf-paper {
   --mushaf-paper: var(--cream, #f5efe0);
-  --mushaf-ink: var(--maroon, #4c091b);
+  --mushaf-ink: #000;
   position: relative;
   isolation: isolate;
   background:

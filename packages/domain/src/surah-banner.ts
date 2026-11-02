@@ -5,6 +5,9 @@
 
 export const SURAH_BANNER_HEIGHT = 140;
 
+/** The surah-name calligraphy is drawn wider than its font, filling more of the cartouche. */
+export const SURAH_TITLE_STRETCH = 1.35;
+
 export const SURAH_BANNER_COLORS = {
   ground: "#EFE2BB",
   ivory: "#FFFCF5",
