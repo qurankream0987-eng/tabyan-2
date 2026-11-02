@@ -15,6 +15,7 @@
     "./recitation-state-engine": "./src/recitation-state-engine.ts",
     "./quran-surahs": "./src/quran-surahs.ts",
     "./quran-surah-names": "./src/quran-surah-names.ts",
+    "./surah-banner": "./src/surah-banner.ts",
     "./mushaf-page-index": "./src/mushaf-page-index.ts",
     "./mushaf-page-layout": "./src/mushaf-page-layout.ts",
     "./mushaf-page-data": "./src/mushaf-page-data.ts",

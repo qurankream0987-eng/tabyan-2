@@ -1977,3 +1977,18 @@
 /* حبر أغمق قريب من المصحف المطبوع: حدّ رفيع بلون كل كلمة نفسها يُثخّن خطوط QCF الدقيقة
    دون تغيير المقاسات. currentColor يتبع لون الكلمة، فالكلمات المخفية في التسميع تبقى مخفية. */
 .tby-ayah-line { -webkit-text-stroke: 0.012em currentColor; paint-order: stroke fill; }
+
+/* إطار السورة الجديد يرسم ميداليتيه بنفسه: تُخفى زخارف الجوانب القديمة، ويُكتب الترتيب
+   وعدد الآيات بالحبر داخل الميداليتين. */
+.tby-surah-banner .tby-surah-finial,
+.tby-surah-banner .tby-surah-side::before { display: none; }
+.tby-surah-banner .tby-surah-detail { color: #000; font-family: "Tabyan Surah Amiri", serif; margin-inline: 0; text-align: center; }
+.tby-surah-banner .tby-surah-detail-caption { color: #6b5a2e; font-weight: 400; }
+.tby-surah-banner .tby-surah-detail-value { color: #000; font-family: "Tabyan Surah Amiri", serif; font-weight: 700; }
+.tby-surah-banner .tby-surah-side { width: var(--sb-side-w, 11%); }
+.tby-surah-banner .tby-surah-side[data-side="start"] { inset-inline-start: var(--sb-side-inset, 5%); }
+.tby-surah-banner .tby-surah-side[data-side="end"] { inset-inline-end: var(--sb-side-inset, 5%); }
+.tby-surah-banner .tby-surah-cartouche { width: var(--sb-title-w, 56%); }
+.tby-surah-banner .tby-surah-title { color: #000; background: transparent; }
+.tby-surah-banner .tby-surah-detail { font-size: calc(var(--band-h) * 0.17); gap: 0; line-height: 1.15; }
+.tby-surah-banner .tby-surah-detail-value { font-size: calc(var(--band-h) * 0.28); line-height: 1; }

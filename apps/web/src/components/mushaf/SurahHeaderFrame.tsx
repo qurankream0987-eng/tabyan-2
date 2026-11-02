@@ -3,6 +3,7 @@ import { toArabicDigits } from "@/lib/mushaf/format";
 import { fitMeasuredTitle, measureInk } from "@/lib/mushaf/title-fit";
 import { createFrameScheduler } from "@/lib/mushaf/frame-scheduler";
 import SurahHeaderOrnament from "./SurahHeaderOrnament";
+import { SURAH_BANNER_MEDALLION, surahBannerLayout } from "@workspace/tabyan-domain/surah-banner";
 import { vocalizedSurahTitle } from "@workspace/tabyan-domain/quran-surah-names";
 
 export type SurahHeaderVariant = "standard" | "opening";
@@ -33,6 +34,20 @@ export default function SurahHeaderFrame({ surahName, rowH, surahNumber, ayahCou
   const [fit, setFit] = useState<{ fontSize: number; dx: number; dy: number } | null>(null);
   const [failed, setFailed] = useState(false);
   // Vocalised like the printed header when the surah number is known.
+  // The ornament is drawn for the banner's real proportions, so it measures itself.
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const [aspect, setAspect] = useState(() => (width > 0 ? (width * 0.94) / bandH : 7.1));
+  useLayoutEffect(() => {
+    const el = bannerRef.current;
+    if (!el) return;
+    const update = () => { if (el.clientWidth > 0 && el.clientHeight > 0) setAspect(el.clientWidth / el.clientHeight); };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const banner = surahBannerLayout(aspect);
+  const sideW = (2 * SURAH_BANNER_MEDALLION.r) / banner.viewWidth;
   const text = surahNumber !== undefined ? vocalizedSurahTitle(surahNumber, surahName) : `سُورَةُ ${surahName}`;
   useLayoutEffect(() => {
     const el = bodyRef.current;
@@ -63,15 +78,23 @@ export default function SurahHeaderFrame({ surahName, rowH, surahNumber, ayahCou
   }, [text, maxTitle]);
   return (
     <div
+      ref={bannerRef}
       className="tby-surah-banner"
       data-surah-frame={surahName}
       data-variant={variant}
       data-compact={width < 360 ? "true" : "false"}
       data-page-width={width}
       dir="rtl"
-      style={{ height: bandH, ["--band-h" as string]: `${bandH}px` }}
+      style={{
+        height: bandH,
+        ["--band-h" as string]: `${bandH}px`,
+        // Medallion text sits on the drawn medallions; the title fills the cartouche.
+        ["--sb-side-w" as string]: `${sideW * 100}%`,
+        ["--sb-side-inset" as string]: `${(banner.ayahsFrac - sideW / 2) * 100}%`,
+        ["--sb-title-w" as string]: `${(banner.titleRight - banner.titleLeft) * 100}%`,
+      }}
     >
-      <SurahHeaderOrnament />
+      <SurahHeaderOrnament aspect={aspect} />
       <HeaderSide side="start" caption="ترتيبها" value={showMeta ? toArabicDigits(surahNumber!) : null} />
       <div className="tby-surah-cartouche">
         <div ref={bodyRef} className="tby-surah-cartouche-body">
