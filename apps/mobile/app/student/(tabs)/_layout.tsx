@@ -55,7 +55,7 @@ export default function StudentTabsLayout() {
     // and is never clipped by the bar's inner container.
     tabBarShowLabel: false,
     tabBarItemStyle: { height: barHeight - 2, paddingVertical: 0, paddingHorizontal: 0, justifyContent: "center", alignItems: "center" },
-    tabBarIconStyle: { width: "100%", height: barHeight - 14 },
+    tabBarIconStyle: { width: "100%", height: barHeight - 12, alignItems: "center", justifyContent: "center" },
   } as const;
   const options = (key: string) => ({
     title: TABS[key][1],
@@ -86,7 +86,8 @@ export default function StudentTabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  pill: { flex: 1, alignSelf: "stretch", marginHorizontal: 3, borderRadius: 22, alignItems: "center", justifyContent: "center", gap: 2 },
+  // A circle: as wide as the tab allows, capped so the label still fits inside.
+  pill: { width: "100%", maxWidth: 56, aspectRatio: 1, borderRadius: 999, alignItems: "center", justifyContent: "center", gap: 1 },
   icon: { alignItems: "center", justifyContent: "center", height: 26 },
   label: { fontSize: 10, lineHeight: 14, textAlign: "center", alignSelf: "stretch" },
 });
