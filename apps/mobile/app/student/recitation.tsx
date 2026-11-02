@@ -6,6 +6,7 @@ import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@workspace/tabyan-trpc/types";
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
 import { Badge, Button, Card, Icon, LoadingState, ProgressBar } from "../../components/ui";
+import { SurahField, SurahPicker } from "../../components/ui/surah-picker";
 import { useAuth } from "../../lib/auth";
 import { formatDate, formatDuration } from "../../lib/format";
 import { useTheme } from "../../lib/theme";
@@ -84,6 +85,15 @@ export default function NativeRecitationScreen() {
   const [surahInput, setSurahInput] = useState(String(initialSurah.n));
   const [startAyahInput, setStartAyahInput] = useState(String(initialAyah));
   const [endAyahInput, setEndAyahInput] = useState(String(Math.min(initialAyah + 9, initialSurah.ayahs)));
+  const [surahPickerOpen, setSurahPickerOpen] = useState(false);
+  // A new surah starts at its first verse with up to ten verses shown, like the teacher's form.
+  const pickSurah = (n: number) => {
+    const next = SURAHS[n - 1] ?? SURAHS[0];
+    setSurahInput(String(next.n));
+    setStartAyahInput("1");
+    setEndAyahInput(String(Math.min(10, next.ayahs)));
+    setSurahPickerOpen(false);
+  };
   const [phase, setPhase] = useState<ScreenPhase>("setup");
   const [errorText, setErrorText] = useState<string | null>(null);
   const [match, setMatch] = useState<NativeRecitationMatch | null>(null);
@@ -552,15 +562,17 @@ export default function NativeRecitationScreen() {
           <Card>
             <Text style={[styles.cardTitle, { color: colors.text }]}>موضع القراءة</Text>
             <Text style={[styles.smallText, { color: colors.muted }]}>
-              أدخل رقم السورة من 1 إلى 114 وحدد أول وآخر آية للعرض. هذه الحدود لا تتحول إلى واجب أو شرط إكمال.
+              اختر السورة وحدد أول وآخر آية للعرض. هذه الحدود لا تتحول إلى واجب أو شرط إكمال.
             </Text>
+            <Text style={[styles.surahLabel, { color: colors.muted }]}>السورة</Text>
+            <SurahField selected={Number(surahInput) || 1} onPress={() => setSurahPickerOpen(true)} disabled={!!assignment} />
+            <SurahPicker visible={surahPickerOpen} selected={Number(surahInput) || 1} onPick={pickSurah} onClose={() => setSurahPickerOpen(false)} />
             <View style={styles.inputRow}>
-              <NumberField label="رقم السورة" value={surahInput} onChange={setSurahInput} maximum={3} editable={!assignment} colors={colors} />
               <NumberField label="من آية" value={startAyahInput} onChange={setStartAyahInput} maximum={3} editable={!assignment} colors={colors} />
               <NumberField label="إلى آية" value={endAyahInput} onChange={setEndAyahInput} maximum={3} editable={!assignment} colors={colors} />
             </View>
             {!validRange ? (
-              <Text style={[styles.inlineError, { color: colors.danger }]}>تحقق من أرقام السورة والآيات.</Text>
+              <Text style={[styles.inlineError, { color: colors.danger }]}>تحقق من أرقام الآيات.</Text>
             ) : null}
             {validRange && status.data?.enabled ? (
               wordsQuery.isLoading ? (
@@ -930,7 +942,8 @@ const styles = StyleSheet.create({
   bodyText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13, lineHeight: 24, textAlign: "right" },
   smallText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, lineHeight: 20, textAlign: "right" },
   cardTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, lineHeight: 25, textAlign: "right" },
-  inputRow: { flexDirection: "row-reverse", gap: 8, marginVertical: 16 },
+  inputRow: { flexDirection: "row-reverse", gap: 8, marginTop: 12, marginBottom: 16 },
+  surahLabel: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12, textAlign: "right", marginTop: 14, marginBottom: 6 },
   inputColumn: { flex: 1, minWidth: 0, gap: 6 },
   inputLabel: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11, textAlign: "right" },
   input: { minHeight: 48, borderWidth: 1, borderRadius: 13, paddingHorizontal: 12, textAlign: "center", fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 16 },

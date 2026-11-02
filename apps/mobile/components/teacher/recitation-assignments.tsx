@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
-import { FlatList, Modal, Platform, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@workspace/tabyan-trpc/types";
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
 import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 import { Badge, Button, Card, Icon, type BadgeTone } from "../ui";
+import { SurahPicker } from "../ui/surah-picker";
 import { trpc } from "../../lib/trpc";
 import { confirmAr } from "../../lib/confirm";
 import { toast } from "../../lib/toast";
@@ -226,42 +227,11 @@ function CreateForm({ studentId, colors, onDone, onCancel }: { studentId: string
         <View style={styles.flex}><Button label="إلغاء" variant="secondary" onPress={onCancel} /></View>
       </View>
 
-      <SurahPicker visible={surahPickerOpen} selected={surahId} colors={colors} onPick={pickSurah} onClose={() => setSurahPickerOpen(false)} />
+      <SurahPicker visible={surahPickerOpen} selected={surahId} onPick={pickSurah} onClose={() => setSurahPickerOpen(false)} />
     </View>
   );
 }
 
-/** Bottom sheet listing every surah with its verse count (the web `<select>`). */
-function SurahPicker({ visible, selected, colors, onPick, onClose }: { visible: boolean; selected: number; colors: Colors; onPick: (n: number) => void; onClose: () => void }) {
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <Pressable accessibilityLabel="إغلاق" style={StyleSheet.absoluteFill} onPress={onClose} />
-        <SafeAreaView style={[styles.sheet, { backgroundColor: colors.card }]}>
-          <View style={[styles.grabber, { backgroundColor: colors.border }]} />
-          <Text style={[styles.sheetTitle, { color: colors.primary }]}>اختر السورة</Text>
-          <FlatList
-            data={SURAHS}
-            keyExtractor={(s) => String(s.n)}
-            initialScrollIndex={Math.max(0, selected - 1)}
-            getItemLayout={(_, index) => ({ length: SURAH_ROW_HEIGHT, offset: SURAH_ROW_HEIGHT * index, index })}
-            renderItem={({ item }) => {
-              const active = item.n === selected;
-              return (
-                <Pressable accessibilityRole="button" accessibilityState={{ selected: active }} onPress={() => onPick(item.n)} style={[styles.surahRow, { backgroundColor: active ? colors.selected : "transparent" }]}>
-                  <Text style={[styles.surahNumber, { color: colors.muted }]}>{item.n}</Text>
-                  <Text style={[styles.surahName, { color: active ? colors.primary : colors.text }]}>{item.name}</Text>
-                  <Text style={[styles.surahCount, { color: colors.muted }]}>{item.ayahs} آية</Text>
-                </Pressable>
-              );
-            }}
-          />
-        </SafeAreaView>
-      </View>
-    </Modal>
-  );
-}
-const SURAH_ROW_HEIGHT = 48;
 
 const RECORDING_ERRORS = {
   missing: "لا يوجد تسجيل صوتي لهذا التسميع.",
@@ -581,12 +551,4 @@ const styles = StyleSheet.create({
   cancelLink: { flexDirection: "row-reverse", alignItems: "center", gap: 4, alignSelf: "flex-end", minHeight: 32 },
   recording: { gap: 4, marginTop: 4 },
   flagged: { gap: 6 },
-  backdrop: { flex: 1, backgroundColor: "#0008", justifyContent: "flex-end" },
-  sheet: { maxHeight: "80%", borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 12 },
-  grabber: { alignSelf: "center", width: 40, height: 4, borderRadius: 2, marginTop: 10, marginBottom: 6 },
-  sheetTitle: { fontFamily: "Amiri_700Bold", fontSize: 19, lineHeight: 30, textAlign: "center", marginBottom: 6 },
-  surahRow: { height: SURAH_ROW_HEIGHT, flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 20 },
-  surahNumber: { width: 30, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12, textAlign: "center" },
-  surahName: { flex: 1, fontFamily: "Amiri_700Bold", fontSize: 17, textAlign: "right" },
-  surahCount: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11 },
 });
