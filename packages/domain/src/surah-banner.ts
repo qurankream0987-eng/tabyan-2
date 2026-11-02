@@ -1,24 +1,24 @@
 // ── إطار عنوان السورة: رسم متجه واحد يستخدمه الموقع والتطبيق ─────────────
-// شريطان متضفّران بالأخضر والذهبي على كل جانب، ووردة في ميدالية بجوار الخرطوشة،
+// شريطان متضفّران بالخمري والذهبي (ألوان المشروع) على كل جانب، ووردة في ميدالية بجوار الخرطوشة،
 // وخرطوشة عاجية مستديرة الطرفين لاسم السورة. الإحداثيات في مساحة ارتفاعها 140،
 // والجانب الأيمن مرآة الأيسر عند الطرف الآخر من الإطار.
 
 export const SURAH_BANNER_HEIGHT = 140;
 
 export const SURAH_BANNER_COLORS = {
-  ground: "#EFE2B8",
-  ivory: "#FBF6E6",
-  ribbon: "#8EA67E",
-  ribbonEdge: "#E3C76A",
-  ribbonShadow: "#9C7A24",
-  leaf: "#5F7D52",
-  petal: "#6F8D62",
-  gold: "#B58F33",
-  goldLight: "#E6C866",
-  goldMid: "#B8912F",
-  goldEdge: "#DDBB55",
-  bud: "#D9B44A",
-  budEdge: "#8C6B1F",
+  ground: "#EFE2BB",
+  ivory: "#FFFCF5",
+  ribbon: "#800020",
+  ribbonEdge: "#D4AF37",
+  ribbonShadow: "#4C091B",
+  leaf: "#800020",
+  petal: "#A02040",
+  gold: "#B8860B",
+  goldLight: "#F1D27A",
+  goldMid: "#B8860B",
+  goldEdge: "#D4AF37",
+  bud: "#D4AF37",
+  budEdge: "#806315",
 } as const;
 
 /** The left-hand panel; the right one is the same drawing mirrored at the far edge. */

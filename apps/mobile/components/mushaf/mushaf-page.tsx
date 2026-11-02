@@ -20,15 +20,15 @@ const BASMALAH_TEXT = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱ
 const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
 const toArabicDigits = (value: number) => String(value).replace(/\d/g, (digit) => ARABIC_DIGITS[Number(digit)]);
 
-/** The page keeps its printed ink and paper in both app themes, as on the web. */
+/** The page keeps its printed ink on the brand cream paper in both app themes, as on the web. */
 export const MUSHAF_COLORS = {
-  paper: "#F6F1E3",
-  frame: "#D9C9A3",
+  paper: "#F5EFE0",
+  frame: "#E6D5B8",
   ink: "#000000",
-  /** Medallion captions on the surah ornament (web --hdr-green). */
-  ornament: "#788567",
+  /** Surah ornament captions and the page margins (brand burgundy). */
+  ornament: "#800020",
   outOfRange: "rgba(0, 0, 0, 0.25)",
-  current: "#7A1F35",
+  current: "#800020",
   correct: "#2F4A3A",
   pending: "#6B5B4B",
   mistake: "#B3261E",
@@ -36,8 +36,8 @@ export const MUSHAF_COLORS = {
   corrected: "#2F6B4A",
   peeked: "#8A6A1C",
   /** Reading mode: the ayah being played or picked. */
-  highlight: "#7A1F35",
-  highlightBackground: "rgba(184, 150, 50, 0.18)",
+  highlight: "#800020",
+  highlightBackground: "rgba(212, 175, 55, 0.22)",
 } as const;
 
 export interface MushafRecitationState {
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   paperCard: { borderColor: MUSHAF_COLORS.frame, borderWidth: 1, borderRadius: 6 },
   marginRow: { position: "absolute", left: 0, right: 0, flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center", paddingHorizontal: "4%" },
   marginFooter: { justifyContent: "center" },
-  marginText: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false },
+  marginText: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ornament, includeFontPadding: false },
   // Lines are laid out unconstrained so onTextLayout reports their natural width.
   measureBox: { position: "absolute", top: 0, left: 0, width: 100_000, opacity: 0 },
   measureText: { alignSelf: "flex-start", includeFontPadding: false },
@@ -293,8 +293,8 @@ const styles = StyleSheet.create({
   basmalaLine: { alignSelf: "stretch", paddingHorizontal: 12 },
   surahBand: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
   titleBox: { position: "absolute", alignItems: "center", justifyContent: "center" },
-  surahGlyph: { fontFamily: SURAH_NAME_FONT_FAMILY, color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center", alignSelf: "stretch" },
-  surahTitle: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center", textAlignVertical: "center" },
+  surahGlyph: { fontFamily: SURAH_NAME_FONT_FAMILY, color: MUSHAF_COLORS.ornament, includeFontPadding: false, textAlign: "center", alignSelf: "stretch" },
+  surahTitle: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ornament, includeFontPadding: false, textAlign: "center", textAlignVertical: "center" },
   basmalah: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false },
   mistake: { color: MUSHAF_COLORS.mistake, textDecorationLine: "underline" },
   skipped: { color: MUSHAF_COLORS.skipped, textDecorationLine: "underline" },

@@ -7,9 +7,9 @@
 
 .tby-reader {
   /* The reader keeps its warm paper while its chrome uses Tabyan burgundy and gold. */
-  --mushaf-paper: #f6f1e3;
+  --mushaf-paper: var(--cream, #f5efe0);
   /* أرضية زيتونية داكنة هادئة خارج الورقة (مكتب الشاشات الواسعة، والتمرير الزائد على الهاتف). */
-  --mushaf-ground: #4a4d3b;
+  --mushaf-ground: var(--maroon-deep, #360512);
   --mushaf-ink: #000;
   --mushaf-orn: var(--burgundy, #800020);
   --mushaf-orn-accent: var(--gold, #d4af37);
@@ -36,7 +36,7 @@
   --mushaf-error: #9f1d2b;
   --mushaf-corrected: color-mix(in srgb, var(--mushaf-orn) 38%, transparent);
   --mushaf-peek: #8a6a1c;
-  --mushaf-audio-ayah: rgba(180, 150, 50, 0.12);
+  --mushaf-audio-ayah: rgba(212, 175, 55, 0.22);
 
   background: var(--mushaf-ground);
   color: var(--mushaf-chrome-fg);
@@ -54,7 +54,7 @@
 
 /* ── صفحة المصحف ─────────────────────────────────────────────────── */
 .tby-mushaf-paper {
-  --mushaf-paper: #f6f1e3;
+  --mushaf-paper: var(--cream, #f5efe0);
   --mushaf-ink: #000;
   position: relative;
   isolation: isolate;
@@ -550,7 +550,7 @@
 }
 
 /* ── Page placement ─────────────────────────────────────────────────────── */
-.tby-reader { --mushaf-paper: #f6f1e3; }
+.tby-reader { --mushaf-paper: var(--cream, #f5efe0); }
 .tby-reading-stage > * { margin-block: auto; }
 
 /* ── Printed surah opening ─────────────────────────────────────────────── */
@@ -772,7 +772,7 @@
   font-display: swap;
 }
 .tby-surah-banner {
-  --hdr-green: #788567;
+  --hdr-green: var(--mushaf-orn);
   --hdr-gold: color-mix(in srgb, var(--mushaf-orn-accent) 78%, var(--mushaf-paper));
   max-width: 640px;
 }
@@ -1942,7 +1942,7 @@
   justify-content: space-between;
   gap: 12px;
   pointer-events: none;
-  color: var(--mushaf-ink);
+  color: var(--mushaf-orn);
   font-family: "Tabyan Surah Amiri", var(--font-amiri), serif;
   font-synthesis: none;
   font-size: 15px;
@@ -1980,7 +1980,7 @@
 
 /* إطار السورة يرسم زخارفه كلها (SurahHeaderOrnament)؛ العنوان وحده فوقه داخل الخرطوشة. */
 .tby-surah-banner .tby-surah-cartouche { width: var(--sb-title-w, 56%); }
-.tby-surah-banner .tby-surah-title { color: #000; background: transparent; }
+.tby-surah-banner .tby-surah-title { color: var(--mushaf-orn); background: transparent; }
 
 /* خط أسماء السور (خط ترويسة المصحف المطبوع، من نفس مصدر خطوط QCF): كل اسم سورة رسم واحد. */
 @font-face {
