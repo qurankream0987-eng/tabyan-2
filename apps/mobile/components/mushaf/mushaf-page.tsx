@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, type NativeSyntheticEvent, type TextLayoutEvent
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
 import { vocalizedSurahTitle } from "@workspace/tabyan-domain/quran-surah-names";
 import { buildPageLines, type LineWord, type MushafPageData } from "@workspace/tabyan-domain/mushaf-page-data";
-import { computePageLayout, LINE_COUNT, maxFontSizeFor, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
+import { computePageLayout, LINE_COUNT, maxFontSizeFor, QCF_WORD_GAP, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
 import { pageFontFamily } from "../../lib/mushaf/mushaf-assets";
 import { JUZ_LIST } from "../../lib/mushaf/juz";
 import { SURAH_NAME_FONT_FAMILY, surahBannerLayout, surahNameGlyph } from "@workspace/tabyan-domain/surah-banner";
@@ -178,7 +178,9 @@ function MushafPage({
               style={[styles.measureText, { fontFamily: family, fontSize: MEASURE_SIZE }]}
               onTextLayout={(event) => onMeasure(line.line, event)}
             >
-              {line.words!.map((word) => word.code).join(" ")}
+              {line.words!.map((word, index) => (
+                <Text key={index}>{index > 0 ? <Text style={{ fontSize: MEASURE_SIZE * QCF_WORD_GAP }}> </Text> : null}{word.code}</Text>
+              ))}
             </Text>
           ))}
         </View>
@@ -204,15 +206,17 @@ function MushafPage({
         return (
           <View key={`l-${line.line}`} style={[styles.row, { top, height: layout.wordRowH }]}>
             <Text allowFontScaling={false} style={[styles.wordLine, { fontFamily: family, fontSize }, recitation ? null : styles.boldInk]}>
-              {line.words!.map((word, index) => (
+              {line.words!.map((word, index) => [
+                // A narrower gap than the font's space, as on the printed page (QCF_WORD_GAP).
+                index > 0 ? <Text key={`g${index}`} style={{ fontSize: fontSize * QCF_WORD_GAP }}> </Text> : null,
                 <Text
                   key={`${word.verseKey}:${word.position}`}
                   style={wordStyle(word, recitation, highlightVerseKey)}
                   onPress={onPressVerse ? () => onPressVerse(word.verseKey) : undefined}
                 >
-                  {index > 0 ? " " : ""}{word.code}
-                </Text>
-              ))}
+                  {word.code}
+                </Text>,
+              ])}
             </Text>
           </View>
         );
@@ -228,7 +232,7 @@ export default memo(MushafPage);
  * in the cartouche; the two medallions stay plain ornaments.
  */
 function SurahBanner({ name, number, width, rowH }: { name: string; number?: number; width: number; rowH: number }) {
-  const bandH = Math.min(rowH * 0.92, width * 0.165);
+  const bandH = Math.min(rowH * 0.96, width * 0.165);
   const layout = surahBannerLayout(width / bandH);
   // The printed mushaf's header calligraphy: one glyph per surah. Amiri stands in until it loads.
   const [fontReady] = useFonts({ [SURAH_NAME_FONT_FAMILY]: require("../../assets/fonts/sura-names.ttf") });

@@ -14,7 +14,7 @@ import { Fragment, memo, useLayoutEffect, useMemo, useState } from "react";
 import SurahHeaderFrame from "./SurahHeaderFrame";
 import footerReference from "../../assets/mushaf/surah-footer-tabyan-burgundy.png";
 import { PAGE_ASPECT, PAGE_FRAME_INSET } from "@/lib/mushaf/pages";
-import { computePageLayout, LINE_COUNT, maxFontSizeFor, type PageVariant } from "@/lib/mushaf/page-layout";
+import { computePageLayout, LINE_COUNT, maxFontSizeFor, QCF_WORD_GAP, type PageVariant } from "@/lib/mushaf/page-layout";
 import { pageFontFamily } from "@/lib/mushaf/fonts";
 import { toArabicDigits } from "@/lib/mushaf/format";
 import { buildPageLines, type MushafPageData, type LineWord } from "@/lib/mushaf/types";
@@ -152,7 +152,8 @@ function MushafPage({
       const ctx = document.createElement("canvas").getContext("2d");
       if (!ctx) return;
       ctx.font = `100px "${family}"`;
-      const spaceW = ctx.measureText(" ").width;
+      // Words sit closer than the font's space, as on the printed page (QCF_WORD_GAP).
+      const spaceW = ctx.measureText(" ").width * QCF_WORD_GAP;
       let maxLine = 0;
       for (const m of lines) {
         if (m.kind !== "words" || !m.words?.length) continue;
@@ -258,7 +259,7 @@ function MushafPage({
 
                   return (
                     <Fragment key={i}>
-                      {i > 0 && " "}
+                      {i > 0 && <span style={{ fontSize: `${QCF_WORD_GAP}em` }}> </span>}
                       <span
                         className={w.type === 1 ? "tby-ayah-marker" : undefined}
                         data-verse={w.verseKey}

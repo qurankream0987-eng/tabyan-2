@@ -83,3 +83,10 @@ export function computePageLayout(
   for (const [line, offset] of offsets) tops.set(line, blockTop + offset);
   return { variant: "opening", paperH: fullH, wordRowH, tops, blockTop, blockBottom: blockTop + y };
 }
+
+/**
+ * Word gap as a share of the QCF font's own space. The printed page sets its words tight;
+ * a narrower gap lets the widest line fit at a larger size, so the glyphs grow and the
+ * lines lose the airy gaps between words. Measuring and drawing must use the same gap.
+ */
+export const QCF_WORD_GAP = 0.45;
