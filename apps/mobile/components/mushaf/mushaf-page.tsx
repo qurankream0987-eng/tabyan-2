@@ -20,14 +20,14 @@ const BASMALAH_TEXT = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱ
 const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
 const toArabicDigits = (value: number) => String(value).replace(/\d/g, (digit) => ARABIC_DIGITS[Number(digit)]);
 
-/** The page keeps its printed ink on the brand cream paper in both app themes, as on the web. */
+/** Brand maroon ink on the brand cream paper in both app themes, as on the web. */
 export const MUSHAF_COLORS = {
   paper: "#F5EFE0",
   frame: "#E6D5B8",
-  ink: "#000000",
+  ink: "#4C091B",
   /** Surah ornament captions and the page margins (brand burgundy). */
   ornament: "#800020",
-  outOfRange: "rgba(0, 0, 0, 0.25)",
+  outOfRange: "rgba(76, 9, 27, 0.25)",
   current: "#800020",
   correct: "#2F4A3A",
   pending: "#6B5B4B",
@@ -304,5 +304,5 @@ const styles = StyleSheet.create({
   highlighted: { color: MUSHAF_COLORS.highlight, backgroundColor: MUSHAF_COLORS.highlightBackground, textShadowColor: "transparent", textShadowRadius: 0 },
   // A same-colour halo thickens the thin QCF strokes toward the printed page; reading mode only,
   // since recitation draws hidden words in the paper colour and a black halo would reveal them.
-  boldInk: { textShadowColor: MUSHAF_COLORS.ink, textShadowRadius: 0.8, textShadowOffset: { width: 0, height: 0 } },
+  boldInk: { textShadowColor: MUSHAF_COLORS.ink, textShadowRadius: 0.4, textShadowOffset: { width: 0, height: 0 } },
 });
