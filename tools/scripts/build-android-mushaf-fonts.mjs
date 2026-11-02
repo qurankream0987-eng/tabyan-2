@@ -8,15 +8,17 @@
 // the glyph programs cannot run and Android draws the outlines unhinted, exactly
 // as browsers show them. Outlines, metrics, cmap and layout tables are untouched.
 //
-// usage: node tools/scripts/build-android-mushaf-fonts.mjs
+// usage: node tools/scripts/build-android-mushaf-fonts.mjs        (v2: fonts-ttf → fonts-android)
+//        node tools/scripts/build-android-mushaf-fonts.mjs --v1   (v1: v1/fonts-ttf → v1/fonts-android, the set the app loads)
 // Then upload with tools/scripts/build-assets.mjs upload.
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const sourceDir = path.join(root, "apps/web/public/mushaf/fonts-ttf");
-const targetDir = path.join(root, "apps/web/public/mushaf/fonts-android");
+const mushafDir = path.join(root, "apps/web/public/mushaf", process.argv.includes("--v1") ? "v1" : "");
+const sourceDir = path.join(mushafDir, "fonts-ttf");
+const targetDir = path.join(mushafDir, "fonts-android");
 const HINTING_TABLES = new Set(["fpgm", "prep", "cvt ", "hdmx", "VDMX", "LTSH"]);
 
 function tableChecksum(data) {

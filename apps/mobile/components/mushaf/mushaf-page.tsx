@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, type NativeSyntheticEvent, type TextLayoutEvent
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
 import { vocalizedSurahTitle } from "@workspace/tabyan-domain/quran-surah-names";
 import { buildPageLines, type LineWord, type MushafPageData } from "@workspace/tabyan-domain/mushaf-page-data";
-import { BASMALA_FONT_PAGE, BASMALA_GLYPHS, computePageLayout, LINE_COUNT, maxFontSizeFor, QCF_WORD_GAP, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
+import { BASMALA_FONT_PAGE, BASMALA_GLYPHS, basmalaScale, computePageLayout, LINE_COUNT, maxFontSizeFor, QCF_WORD_GAP, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
 import { ensurePageFont, pageFontFamily } from "../../lib/mushaf/mushaf-assets";
 import { JUZ_LIST } from "../../lib/mushaf/juz";
 import { SURAH_NAME_FONT_FAMILY, surahBannerLayout, surahNameGlyph } from "@workspace/tabyan-domain/surah-banner";
@@ -208,9 +208,9 @@ function MushafPage({
             <View key={`b-${line.line}`} style={[styles.row, { top, height: layout.wordRowH }]}>
               {basmalaReady ? (
                 // The printed basmala: 1:1 in the page-1 QCF font, at the size of the page's lines.
-                <Text allowFontScaling={false} style={[styles.wordLine, { fontFamily: pageFontFamily(BASMALA_FONT_PAGE), fontSize }, styles.boldInk]} numberOfLines={1}>
+                <Text allowFontScaling={false} style={[styles.wordLine, styles.basmalaLine, { fontFamily: pageFontFamily(BASMALA_FONT_PAGE), fontSize: fontSize * basmalaScale(layout.variant) }, styles.boldInk]}>
                   {BASMALA_GLYPHS.map((glyph, index) => [
-                    index > 0 ? <Text key={`g${index}`} style={{ fontSize: fontSize * QCF_WORD_GAP }}> </Text> : null,
+                    index > 0 ? <Text key={`g${index}`} style={{ fontSize: fontSize * basmalaScale(layout.variant) * QCF_WORD_GAP }}> </Text> : null,
                     <Text key={glyph}>{glyph}</Text>,
                   ])}
                 </Text>
@@ -289,6 +289,8 @@ const styles = StyleSheet.create({
   measureText: { alignSelf: "flex-start", includeFontPadding: false },
   row: { position: "absolute", left: 0, right: 0, alignItems: "center", justifyContent: "center" },
   wordLine: { color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center" },
+  // The page-1 basmala glyphs overhang their advance; padding keeps the first stroke in view.
+  basmalaLine: { alignSelf: "stretch", paddingHorizontal: 12 },
   surahBand: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
   titleBox: { position: "absolute", alignItems: "center", justifyContent: "center" },
   surahGlyph: { fontFamily: SURAH_NAME_FONT_FAMILY, color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center", alignSelf: "stretch" },

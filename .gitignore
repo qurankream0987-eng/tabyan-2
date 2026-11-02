@@ -88,3 +88,6 @@ apps/mobile/static-build/
 
 # Generated from fonts-ttf by tools/scripts/build-android-mushaf-fonts.mjs; served from the bucket.
 apps/web/public/mushaf/fonts-android/
+# QCF v1 (1405 print): the TTF download only feeds v1/fonts-android, which comes from the bucket.
+apps/web/public/mushaf/v1/fonts-ttf/
+apps/web/public/mushaf/v1/fonts-android/

@@ -1,5 +1,5 @@
 /**
- * تحميل بيانات صفحات المصحف — JSON محلي لكل صفحة (public/mushaf/pages) مع:
+ * تحميل بيانات صفحات المصحف — JSON محلي لكل صفحة (public/mushaf/v1/pages — طبعة 1405 وترقيمها) مع:
  * - ذاكرة مؤقتة في الذاكرة (لا يتكرر الطلب داخل الجلسة)
  * - Cache API للعودة السريعة والصمود مع ضعف الشبكة
  * - جلب مسبق للصفحات المجاورة (تقليب بلا وميض أبيض)
@@ -54,13 +54,14 @@ export function computeMushafPageFit(boxW: number, boxH: number): MushafPageFit 
   return { w, h: w / PAGE_ASPECT + PAGE_FRAME_INSET * 2, mode: "aspect" };
 }
 
-const CACHE_NAME = "tabyan-mushaf-v2";
-const LEGACY_CACHES = ["tabyan-mushaf-pages-v1"]; // ذاكرة صور PNG القديمة — تُمحى مرة واحدة
+const CACHE_NAME = "tabyan-mushaf-qcf1";
+// ذاكرة صور PNG القديمة، وذاكرة صفحات QCF v2 (رموزها لا تصلح لخطوط v1) — تُمحى مرة واحدة
+const LEGACY_CACHES = ["tabyan-mushaf-pages-v1", "tabyan-mushaf-v2"];
 
 const mem = new Map<number, Promise<MushafPageData>>();
 
 function pageUrl(page: number): string {
-  return `${import.meta.env.BASE_URL}mushaf/pages/${page}.json`;
+  return `${import.meta.env.BASE_URL}mushaf/v1/pages/${page}.json`;
 }
 
 async function fetchPage(page: number): Promise<MushafPageData> {
@@ -105,7 +106,7 @@ export async function cachedPageCount(): Promise<number> {
   try {
     const c = await caches.open(CACHE_NAME);
     const keys = await c.keys();
-    return keys.filter((k) => k.url.includes("/mushaf/pages/")).length;
+    return keys.filter((k) => k.url.includes("/mushaf/v1/pages/")).length;
   } catch {
     return 0;
   }

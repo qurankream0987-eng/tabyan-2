@@ -1,5 +1,6 @@
 /**
- * خطوط المصحف QCF v2 — خط woff2 مستقل لكل صفحة (604 خطاً) يُحمَّل كسولاً عبر FontFace API.
+ * خطوط المصحف QCF v1 (طبعة المدينة 1405) — خط woff2 مستقل لكل صفحة (604 خطاً) يُحمَّل كسولاً عبر FontFace API.
+ * المسار مُصدَّر (mushaf/v1/) واسم العائلة QCF1_ كي لا تختلط رموز v2 المخزّنة بخطوط v1.
  * الخطوط مرسومة بتخطيط مجمع الملك فهد (الطبعة المدنية) — نص متجه (vector) لا يتبكسل مهما كبُر.
  */
 const loaded = new Set<number>();
@@ -8,11 +9,11 @@ const inflight = new Map<number, Promise<void>>();
 const faces = new Map<number, FontFace>();
 
 export function pageFontFamily(page: number): string {
-  return `QCF2_p${page}`;
+  return `QCF1_p${page}`;
 }
 
 export function pageFontUrl(page: number): string {
-  return `${import.meta.env.BASE_URL}mushaf/fonts/p${page}.woff2`;
+  return `${import.meta.env.BASE_URL}mushaf/v1/fonts/p${page}.woff2`;
 }
 
 /** يحمّل خط صفحة ويسجّله في المستند — idempotent وآمن للتكرار */

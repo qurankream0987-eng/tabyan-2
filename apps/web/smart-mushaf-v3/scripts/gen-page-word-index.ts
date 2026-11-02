@@ -1,6 +1,6 @@
 /**
  * Regenerates src/quran/layout/pageFirstWord.generated.ts from the QCF page
- * data in apps/web/public/mushaf/pages. Read-only for the page data.
+ * data in apps/web/public/mushaf/v1/pages (1405 print pagination). Read-only for the page data.
  *
  *   npx tsx smart-mushaf-v3/scripts/gen-page-word-index.ts   (from apps/web)
  */
@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { buildPageFirstWords, QcfPageSource, TOTAL_MUSHAF_PAGES } from '../src/quran/layout/pageFirstWordBuilder';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const pagesDir = join(here, '../../public/mushaf/pages');
+const pagesDir = join(here, '../../public/mushaf/v1/pages');
 const pages: QcfPageSource[] = [];
 for (let p = 1; p <= TOTAL_MUSHAF_PAGES; p += 1) {
   pages.push(JSON.parse(readFileSync(join(pagesDir, `${p}.json`), 'utf8')));

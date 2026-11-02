@@ -36,7 +36,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 function densestPage() {
   let best = { page: 0, words: 0 };
   for (let p = 3; p <= 604; p += 1) {
-    const data = JSON.parse(readFileSync(join(here, '../../public/mushaf/pages', `${p}.json`), 'utf8'));
+    const data = JSON.parse(readFileSync(join(here, '../../public/mushaf/v1/pages', `${p}.json`), 'utf8'));
     const words = data.v.reduce((sum, v) => sum + v.w.filter((w) => w[2] === 0).length, 0);
     if (words > best.words) best = { page: p, words };
   }

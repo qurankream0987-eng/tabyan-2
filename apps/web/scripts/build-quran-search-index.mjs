@@ -3,7 +3,8 @@
  * لا يغيّر أي نص: يطبّق normalizeQuranText نفسه المستخدم في المطابقة، ويحفظ
  * لكل آية: [verseKey, page, النص المطبّع]. العرض يستعمل displayText الأصلي من الصفحات.
  *
- * التشغيل: node scripts/build-quran-search-index.mjs
+ * التشغيل: node scripts/build-quran-search-index.mjs        (v2 → public/mushaf/quran-words)
+ *         node scripts/build-quran-search-index.mjs --v1   (طبعة 1405 → public/mushaf/v1/quran-words — المستخدم حالياً)
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -12,7 +13,8 @@ import { fileURLToPath } from "node:url";
 import { normalizeQuranText } from "../src/lib/recitation-ai/normalizer.ts";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const pagesDir = resolve(root, "public/mushaf/quran-words/pages");
+const wordsDir = resolve(root, process.argv.includes("--v1") ? "public/mushaf/v1/quran-words" : "public/mushaf/quran-words");
+const pagesDir = resolve(wordsDir, "pages");
 const verses = new Map();
 for (let page = 1; page <= 604; page += 1) {
   const data = JSON.parse(readFileSync(resolve(pagesDir, `${page}.json`), "utf8"));
@@ -37,5 +39,5 @@ const out = {
   sha256: createHash("sha256").update(body).digest("hex"),
   rows,
 };
-writeFileSync(resolve(root, "public/mushaf/quran-words/search-index.json"), JSON.stringify(out));
+writeFileSync(resolve(wordsDir, "search-index.json"), JSON.stringify(out));
 console.log(`verses=${rows.length} bytes=${JSON.stringify(out).length}`);

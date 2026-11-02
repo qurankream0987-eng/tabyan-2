@@ -1,11 +1,15 @@
 # Files `railway up` leaves out of the upload; the server image does not need them.
 # TTF Mushaf fonts are only used by apps/web/scripts/verify-mushaf.mjs and to build fonts-android.
 apps/web/public/mushaf/fonts-ttf/
+apps/web/public/mushaf/v1/fonts-ttf/
 # Fetched from the bucket during the Docker build (tools/scripts/build-assets.mjs).
 # The site loads the woff2 fonts; the mobile app loads fonts-android (unhinted TTF, Android has no woff2).
 apps/web/public/mushaf/fonts/
 apps/web/public/mushaf/fonts-android/
 apps/web/public/mushaf/quran-words/
+apps/web/public/mushaf/v1/fonts/
+apps/web/public/mushaf/v1/fonts-android/
+apps/web/public/mushaf/v1/quran-words/
 docs/
 tests/
 tools/benchmarks/

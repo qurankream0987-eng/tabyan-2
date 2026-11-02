@@ -1,6 +1,6 @@
 /**
- * مصيّر صفحة المصحف — يرسم صفحة واحدة بخط QCF v2 الخاص بها:
- * الكلمات glyphs متجهة (vector) من بيانات مجمع الملك فهد، موزعة على أسطرها الحقيقية (line_v2)
+ * مصيّر صفحة المصحف — يرسم صفحة واحدة بخط QCF v1 (طبعة المدينة 1405) الخاص بها:
+ * الكلمات glyphs متجهة (vector) من بيانات مجمع الملك فهد، موزعة على أسطرها الحقيقية (line_number لطبعة 1405)
  * كما في الطبعة المدنية — لا إعادة التفاف HTML ولا تغيير لأي حرف أو ترتيب.
  * حجم الخط يُعايَر لكل صفحة بقياس أعرض سطر (canvas) فيملأ العرض تماماً كما في المصحف المطبوع.
  *
@@ -14,7 +14,7 @@ import { Fragment, memo, useEffect, useLayoutEffect, useMemo, useState } from "r
 import SurahHeaderFrame from "./SurahHeaderFrame";
 import footerReference from "../../assets/mushaf/surah-footer-tabyan-burgundy.png";
 import { PAGE_ASPECT, PAGE_FRAME_INSET } from "@/lib/mushaf/pages";
-import { BASMALA_FONT_PAGE, BASMALA_GLYPHS, computePageLayout, LINE_COUNT, maxFontSizeFor, QCF_WORD_GAP, type PageVariant } from "@/lib/mushaf/page-layout";
+import { BASMALA_FONT_PAGE, BASMALA_GLYPHS, basmalaScale, computePageLayout, LINE_COUNT, maxFontSizeFor, QCF_WORD_GAP, type PageVariant } from "@/lib/mushaf/page-layout";
 import { ensurePageFont, pageFontFamily } from "@/lib/mushaf/fonts";
 import { toArabicDigits } from "@/lib/mushaf/format";
 import { buildPageLines, type MushafPageData, type LineWord } from "@/lib/mushaf/types";
@@ -236,7 +236,7 @@ function MushafPage({
               >
                 {basmalaReady ? (
                   // The printed basmala: 1:1 in the page-1 QCF font, at the size of the page's lines.
-                  <span className="tby-ayah-line whitespace-nowrap shrink-0" style={{ fontFamily: pageFontFamily(BASMALA_FONT_PAGE), fontSize, lineHeight: 1, color: INK }}>
+                  <span className="tby-ayah-line whitespace-nowrap shrink-0" style={{ fontFamily: pageFontFamily(BASMALA_FONT_PAGE), fontSize: fontSize * basmalaScale(layout.variant), lineHeight: 1, color: INK }}>
                     {BASMALA_GLYPHS.map((g, i) => <Fragment key={g}>{i > 0 && <span style={{ fontSize: `${QCF_WORD_GAP}em` }}> </span>}{g}</Fragment>)}
                   </span>
                 ) : (

@@ -94,6 +94,16 @@ export const QCF_WORD_GAP = 0.45;
 /**
  * The printed basmala above each surah: the four words of 1:1 as drawn by the page-1 QCF
  * font (the same calligraphy as the Madinah print), separated by the narrow word gap.
+ * These are the QCF v1 (1405 print) codes U+FB51..U+FB54 from mushaf/v1/pages/1.json.
  */
 export const BASMALA_FONT_PAGE = 1;
-export const BASMALA_GLYPHS = ["ﱁ", "ﱂ", "ﱃ", "ﱄ"] as const;
+export const BASMALA_GLYPHS = ["ﭑ", "ﭒ", "ﭓ", "ﭔ"] as const;
+
+/**
+ * The v1 page-1 font draws its words smaller than the full pages do (the same basmala in
+ * 27:30 on page 379 is about 1.35-1.4x taller), so on standard pages the basmala is set at
+ * this multiple of the page's font size to match its lines. Opening pages share page 1's scale.
+ */
+export function basmalaScale(variant: PageVariant): number {
+  return variant === "opening" ? 1 : 1.35;
+}

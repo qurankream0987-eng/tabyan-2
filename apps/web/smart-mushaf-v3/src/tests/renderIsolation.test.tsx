@@ -29,13 +29,13 @@ if (!('fonts' in document)) {
   Object.defineProperty(document, 'fonts', { value: { load: async () => [], ready: Promise.resolve() } });
 }
 
-const PAGES_DIR = join(import.meta.dirname, '../../../public/mushaf/pages');
+const PAGES_DIR = join(import.meta.dirname, '../../../public/mushaf/v1/pages');
 const index = getCanonicalWordIndex();
 const resources: QcfResources = {
   loadPage: async (page) => JSON.parse(readFileSync(join(PAGES_DIR, `${page}.json`), 'utf8')) as QcfPageData,
   ensureFont: async () => {},
   releaseFontsAround: () => {},
-  fontFamily: (page) => `QCF2_p${page}`,
+  fontFamily: (page) => `QCF1_p${page}`,
   fitFontSize: async () => 22,
   prefetch: () => {},
 };

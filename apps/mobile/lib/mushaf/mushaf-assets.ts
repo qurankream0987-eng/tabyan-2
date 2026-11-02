@@ -1,7 +1,9 @@
 /**
  * Mushaf page data, page fonts and canonical recitation words, fetched from the
- * site that serves the web Mushaf. Each page has its own QCF v2 font; Android
- * cannot load woff2, so the app uses the TTF copy of the same font set.
+ * site that serves the web Mushaf. Each page has its own QCF v1 font (the 1405
+ * Madinah print, with its own pagination); Android cannot load woff2, so the app
+ * uses the TTF copy of the same font set. Everything lives under mushaf/v1/ so
+ * cached v2 glyph codes can never meet v1 fonts.
  */
 import * as Font from "expo-font";
 import type { CanonicalQuranWord } from "@workspace/tabyan-domain/quran-live-matcher";
@@ -28,7 +30,7 @@ interface StoredPageWords {
 export function mushafAssetUrl(path: string) {
   // EXPO_PUBLIC_MUSHAF_ORIGIN lets a development build load the assets from a local copy.
   const origin = process.env.EXPO_PUBLIC_MUSHAF_ORIGIN ?? apiOrigin();
-  return `${origin.replace(/\/+$/, "")}/mushaf/${path}`;
+  return `${origin.replace(/\/+$/, "")}/mushaf/v1/${path}`;
 }
 
 /** Caches one request per key; a failed request is forgotten so a retry refetches. */
@@ -52,7 +54,7 @@ async function fetchJson<T>(path: string): Promise<T> {
 }
 
 export function pageFontFamily(page: number) {
-  return `QCF2_p${page}`;
+  return `QCF1_p${page}`;
 }
 
 export const loadMushafPage = memoized((page) => fetchJson<MushafPageData>(`pages/${page}.json`));

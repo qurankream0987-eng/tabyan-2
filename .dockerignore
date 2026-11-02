@@ -12,4 +12,5 @@ apps/mobile/static-build
 .git
 docs
 apps/web/public/mushaf/fonts-ttf
+apps/web/public/mushaf/v1/fonts-ttf
 apps/api/models

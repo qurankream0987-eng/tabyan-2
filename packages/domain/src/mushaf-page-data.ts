@@ -22,7 +22,7 @@ export interface LineWord {
   position: number;
   /** 0=كلمة 1=خاتمة آية 2=علامة وقف */
   type: 0 | 1 | 2;
-  /** رموز glyphs لخط QCF v2 الخاص بالصفحة */
+  /** رموز glyphs لخط QCF v1 (طبعة 1405) الخاص بالصفحة */
   code: string;
 }
 
@@ -38,7 +38,7 @@ export interface MushafLineModel {
 }
 
 /**
- * يوزّع كلمات الصفحة على أسطرها الحقيقية (line_v2)، ويضع ترويسة السورة والبسملة
+ * يوزّع كلمات الصفحة على أسطرها الحقيقية (line_number لطبعة 1405)، ويضع ترويسة السورة والبسملة
  * في السطرين السابقين لأول آية من كل سورة كما في الطبعة المدنية.
  */
 export function buildPageLines(data: MushafPageData): MushafLineModel[] {
@@ -63,8 +63,20 @@ export function buildPageLines(data: MushafPageData): MushafLineModel[] {
         const meta = SURAHS[v.c - 1];
         models.push({ line: headerLine, kind: "surah-header", surahName: meta?.name ?? "", surahNumber: meta?.n, ayahCount: meta?.ayahs });
         if (!isFatiha && !isTawbah) models.push({ line: headerLine + 1, kind: "basmalah" });
+      } else if (headerLine === 0 && !isFatiha && !isTawbah) {
+        // The title closed the previous page; its basmala opens this one.
+        models.push({ line: 1, kind: "basmalah" });
       }
     }
+  }
+  // A surah ending above line 15 leaves the next surah's title (and basmala) at the foot of
+  // this page when that surah starts on the next one, as in the printed Madinah mushaf.
+  const last = data.v[data.v.length - 1];
+  const lastLine = last ? Math.max(...last.w.map((w) => w[1])) : 15;
+  const next = last ? SURAHS[last.c] : undefined;
+  if (last && next && last.n === SURAHS[last.c - 1]?.ayahs && lastLine < 15) {
+    models.push({ line: lastLine + 1, kind: "surah-header", surahName: next.name, surahNumber: next.n, ayahCount: next.ayahs });
+    if (lastLine + 2 <= 15 && next.n !== 9) models.push({ line: lastLine + 2, kind: "basmalah" });
   }
   for (const [line, words] of wordLines) {
     const centered = words.some(

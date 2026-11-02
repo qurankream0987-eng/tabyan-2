@@ -15,17 +15,27 @@
  *      - 2:181 (ص27): خاتمتها موسومة type=0 في بيانات QDC نفسها — quirk موثّق، لا "يُصلَّح".
  *   5) (اختياري) خطوط TTF المحوّلة إن وُجدت: توقيع sfnt (0x00010000).
  *
- * الاستخدام: node scripts/verify-mushaf.mjs   (خرج 0 = سليم، ≠0 = فشل مع تقرير)
+ * الاستخدام: node scripts/verify-mushaf.mjs        (v2: public/mushaf — خرج 0 = سليم، ≠0 = فشل مع تقرير)
+ *          node scripts/verify-mushaf.mjs --v1   (v1 طبعة 1405: public/mushaf/v1 — المعتمد في الموقع والتطبيق)
+ *
+ * فروق v1 المقصودة:
+ *   - خطوط woff2 أصغر (15KB..95KB) → المدى المقبول 10KB..250KB.
+ *   - صفحتا الافتتاح: line_number يبدأ من أسفل الشبكة — ص1 كلماتها على 9..15 (الترويسة 8)،
+ *     ص2 على 10..15 (الترويسة 8 والبسملة 9). التركيب "opening" نسبي فلا يتأثر.
+ *   - الفحص الإضافي: fonts-ttf و fonts-android (604 لكل منهما) موقّعة sfnt.
  */
 import { readFile, readdir, stat } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const FONTS_DIR = join(ROOT, "public/mushaf/fonts");
-const PAGES_DIR = join(ROOT, "public/mushaf/pages");
-const TTF_DIR = join(ROOT, "public/mushaf/fonts-ttf");
+const V1 = process.argv.includes("--v1");
+const MUSHAF_DIR = join(ROOT, V1 ? "public/mushaf/v1" : "public/mushaf");
+const FONTS_DIR = join(MUSHAF_DIR, "fonts");
+const PAGES_DIR = join(MUSHAF_DIR, "pages");
+const TTF_DIRS = V1 ? [join(MUSHAF_DIR, "fonts-ttf"), join(MUSHAF_DIR, "fonts-android")] : [join(MUSHAF_DIR, "fonts-ttf")];
 const TOTAL = 604;
+const MIN_FONT = V1 ? 10_000 : 20_000;
 
 const errors = [];
 const err = (m) => errors.push(m);
@@ -37,7 +47,7 @@ async function verifyFonts() {
     if (!files.has(name)) { err(`خط مفقود: ${name}`); continue; }
     const path = join(FONTS_DIR, name);
     const s = await stat(path);
-    if (s.size < 20_000 || s.size > 250_000) err(`حجم شاذ ${name}: ${s.size}B`);
+    if (s.size < MIN_FONT || s.size > 250_000) err(`حجم شاذ ${name}: ${s.size}B`);
     const head = (await readFile(path)).subarray(0, 4).toString("latin1");
     if (head !== "wOF2") err(`توقيع غير صحيح ${name}: ${JSON.stringify(head)}`);
   }
@@ -83,12 +93,16 @@ async function verifyGolden() {
   if (basmalah && basmalah.w[basmalah.w.length - 1][2] !== 1)
     err("ذهبية ص1: 1:1 (البسملة المرقّمة) لا تنتهي بخاتمة type=1");
   const lines1 = [...new Set(p1.v.flatMap((v) => v.w.map((w) => w[1])))].sort((a, b) => a - b);
-  if (lines1[0] !== 2) err(`ذهبية ص1: أول سطر كلمات ${lines1[0]} — المتوقع 2 (السطر 1 لرأس السورة)`);
+  // v2: الأسطر 2..8 (الترويسة 1) · v1: الأسطر 9..15 من أسفل الشبكة (الترويسة 8)
+  const firstLine1 = V1 ? 9 : 2;
+  if (lines1[0] !== firstLine1) err(`ذهبية ص1: أول سطر كلمات ${lines1[0]} — المتوقع ${firstLine1} (السطر السابق لرأس السورة)`);
+  if (V1 && lines1[lines1.length - 1] !== 15) err(`ذهبية ص1: آخر سطر كلمات ${lines1[lines1.length - 1]} — المتوقع 15`);
 
   // ص2 — بداية البقرة: رأس سورة + بسملة قبل أول كلمة
   const p2 = await loadPage(2);
   if (p2.v[0].k !== "2:1") err(`ذهبية ص2: أول آية ${p2.v[0].k} — المتوقع 2:1`);
   if (p2.v[0].w[0][1] < 3) err(`ذهبية ص2: أول سطر كلمات ${p2.v[0].w[0][1]} — يجب ≥3 (رأس+بسملة)`);
+  if (V1 && p2.v[0].w[0][1] !== 10) err(`ذهبية ص2 (v1): أول سطر كلمات ${p2.v[0].w[0][1]} — المتوقع 10 (الأسطر 10..15)`);
 
   // ص187 — التوبة بلا بسملة: سطر محجوز واحد فقط
   const p187 = await loadPage(187);
@@ -111,23 +125,27 @@ async function verifyGolden() {
   console.log("✔ الصفحات الذهبية: 1 · 2 · 187 · 604 · quirk 2:181");
 }
 
-async function verifyTtf() {
+async function verifyTtf(TTF_DIR) {
   let files;
   try { files = (await readdir(TTF_DIR)).filter((f) => f.endsWith(".ttf")); } catch { 
+    if (V1) { err(`مجلد ${TTF_DIR} مفقود`); return; }
     console.log("ℹ لا مجلد fonts-ttf بعد — تخطي فحص TTF (يولَّد بـ scripts/convert-mushaf-fonts.py)");
     return;
   }
+  if (V1 && files.length !== TOTAL) err(`${TTF_DIR}: ${files.length} خط — المتوقع ${TOTAL}`);
   for (const f of files) {
     const head = (await readFile(join(TTF_DIR, f))).readUInt32BE(0);
     if (head !== 0x00010000 && head !== 0x74727565) err(`TTF غير صالح: ${f}`);
   }
-  console.log(`✔ خطوط TTF محوّلة: ${files.length} ملف (${files.map((f) => f.replace(/\.ttf$/, "")).sort().join("، ") || "لا شيء"})`);
+  console.log(V1
+    ? `✔ خطوط TTF (${basename(TTF_DIR)}): ${files.length} ملف`
+    : `✔ خطوط TTF محوّلة: ${files.length} ملف (${files.map((f) => f.replace(/\.ttf$/, "")).sort().join("، ") || "لا شيء"})`);
 }
 
 await verifyFonts();
 await verifyPages();
 await verifyGolden();
-await verifyTtf();
+for (const dir of TTF_DIRS) await verifyTtf(dir);
 
 if (errors.length) {
   console.error(`\n✘ فشل التحقق — ${errors.length} خطأ:`);

@@ -20,7 +20,11 @@ const require = createRequire(path.join(root, "apps/api/package.json"));
 const { S3Client, GetObjectCommand, PutObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
 
 const publicDir = path.join(root, "apps/web/public");
-const assetDirs = ["mushaf/fonts", "mushaf/fonts-android", "mushaf/quran-words"];
+const assetDirs = [
+  "mushaf/fonts", "mushaf/fonts-android", "mushaf/quran-words",
+  // QCF v1 (1405 print), the set the site and the app load.
+  "mushaf/v1/fonts", "mushaf/v1/fonts-android", "mushaf/v1/quran-words",
+];
 const keyPrefix = "build-assets/web/";
 const manifestPath = path.join(root, "tools/scripts/build-assets.manifest.json");
 
