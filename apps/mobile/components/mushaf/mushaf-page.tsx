@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, type NativeSyntheticEvent, type TextLayoutEvent
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
 import { vocalizedSurahTitle } from "@workspace/tabyan-domain/quran-surah-names";
 import { buildPageLines, type LineWord, type MushafPageData } from "@workspace/tabyan-domain/mushaf-page-data";
-import { computePageLayout, LINE_COUNT, maxFontSizeFor, readerGridHeight, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
+import { computePageLayout, LINE_COUNT, maxFontSizeFor, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
 import { pageFontFamily } from "../../lib/mushaf/mushaf-assets";
 import { JUZ_LIST } from "../../lib/mushaf/juz";
 import { SURAH_NAME_FONT_FAMILY, surahBannerLayout, surahNameGlyph } from "@workspace/tabyan-domain/surah-banner";
@@ -122,11 +122,9 @@ function MushafPage({
   onPressVerse?: (verseKey: string) => void;
 }) {
   const paperH = fillHeight ?? width / PAGE_ASPECT;
-  // Printed margins carry the labels. On a full screen the line grid keeps printed density and
-  // sits centred, with the margins hugging it, rather than spreading the lines over a tall phone.
+  // Printed margins carry the labels; the line grid takes the height between them.
   const marginH = fillHeight ? Math.min(40, Math.max(26, paperH * 0.04)) : 0;
-  const height = fillHeight ? readerGridHeight(width, paperH - marginH * 2) : paperH;
-  const blockTop = fillHeight ? (paperH - height) / 2 : 0;
+  const height = paperH - marginH * 2;
   const family = pageFontFamily(data.p);
   const lines = useMemo(() => buildPageLines(data), [data]);
   const wordLines = lines.filter((line) => line.kind === "words");
@@ -160,13 +158,13 @@ function MushafPage({
     <View style={[styles.paper, fillHeight ? null : styles.paperCard, { width, height: paperH }]}>
       {marginH > 0 && fontSize > 0 ? (
         <>
-          <View style={[styles.marginRow, { top: blockTop - marginH, height: marginH }]} pointerEvents="none">
+          <View style={[styles.marginRow, { top: 0, height: marginH }]} pointerEvents="none">
             <Text allowFontScaling={false} style={[styles.marginText, { fontSize: marginFont }]} numberOfLines={1}>{JUZ_LIST[data.j - 1]?.name ?? ""}</Text>
             <Text allowFontScaling={false} style={[styles.marginText, { fontSize: marginFont }]} numberOfLines={1}>
               {lastVerse ? vocalizedSurahTitle(lastVerse.c, SURAHS[lastVerse.c - 1]?.name ?? "") : ""}
             </Text>
           </View>
-          <View style={[styles.marginRow, styles.marginFooter, { top: blockTop + height, height: marginH }]} pointerEvents="none">
+          <View style={[styles.marginRow, styles.marginFooter, { bottom: 0, height: marginH }]} pointerEvents="none">
             <Text allowFontScaling={false} style={[styles.marginText, { fontSize: marginFont }]}>{toArabicDigits(data.p)}</Text>
           </View>
         </>
@@ -186,7 +184,7 @@ function MushafPage({
         </View>
       ) : null}
       {fontSize > 0 ? lines.map((line) => {
-        const top = blockTop + (layout.tops.get(line.line) ?? 0);
+        const top = marginH + (layout.tops.get(line.line) ?? 0);
         if (line.kind === "surah-header") {
           return (
             <View key={`h-${line.line}`} style={[styles.row, { top, height: titleRowH }]}>
@@ -230,7 +228,7 @@ export default memo(MushafPage);
  * in the cartouche; the two medallions stay plain ornaments.
  */
 function SurahBanner({ name, number, width, rowH }: { name: string; number?: number; width: number; rowH: number }) {
-  const bandH = Math.min(rowH * 0.96, width * 0.165);
+  const bandH = Math.min(rowH * 0.92, width * 0.165);
   const layout = surahBannerLayout(width / bandH);
   // The printed mushaf's header calligraphy: one glyph per surah. Amiri stands in until it loads.
   const [fontReady] = useFonts({ [SURAH_NAME_FONT_FAMILY]: require("../../assets/fonts/sura-names.ttf") });

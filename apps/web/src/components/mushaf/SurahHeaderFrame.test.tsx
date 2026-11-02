@@ -24,7 +24,7 @@ describe("Surah title-only ornament", () => {
     expect(html).toContain('aria-label="سورة المائدة"');
   });
   it("preserves the existing header band geometry for both page variants", () => {
-    expect(renderToStaticMarkup(<SurahHeaderFrame surahName="الكهف" width={304} rowH={30} />)).toContain(`height:${30 * 0.96}px`);
+    expect(renderToStaticMarkup(<SurahHeaderFrame surahName="الكهف" width={304} rowH={30} />)).toContain("height:24px");
     const opening = renderToStaticMarkup(<SurahHeaderFrame surahName="الفاتحة" width={304} rowH={30} variant="opening" />);
     expect(opening).toContain(`height:${304 * .94 * (154 / 932)}px`);
   });

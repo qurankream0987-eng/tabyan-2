@@ -23,7 +23,7 @@ interface Props {
 export default function SurahHeaderFrame({ surahName, rowH, surahNumber, width = 0, variant = "standard" }: Props) {
   const bandH = variant === "opening" && width > 0
     ? width * 0.94 * (154 / 932)
-    : rowH * (variant === "opening" ? 0.86 : 0.96);
+    : rowH * (variant === "opening" ? 0.86 : 0.8);
   // The row provides a ceiling; actual Arabic ink determines the fitted size.
   // The calligraphic glyph is drawn short and wide, so it may use most of the band's height.
   const calligraphy = surahNumber !== undefined;
