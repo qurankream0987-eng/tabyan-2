@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { Children, cloneElement, isValidElement, type ReactElement, type ReactNode } from "react";
+import { useTheme } from "../../lib/theme";
 import Svg, { Defs, LinearGradient, RadialGradient, Stop, Rect, Path, Circle, Ellipse } from "react-native-svg";
 
 /**
@@ -542,10 +543,52 @@ const ART: Record<SectionIconName, ReactNode> = {
 const PLANT_ICONS: ReadonlySet<string> = new Set(["seed", "wheat", "tree", "fruit"]);
 void PLANT_ICONS;
 
+/*
+ * The web recolours this artwork to burgundy and gold in CSS (index.css, ".section-icon"):
+ * each listed colour, found in a fill, stroke or stop colour, sets all three to its brand
+ * colour, and a later group wins. The same remap is applied here to the drawn elements.
+ */
+const BRAND_GROUPS: { key: "deep" | "main" | "accentLight" | "mid" | "goldDeep" | "goldLight"; colors: string[] }[] = [
+  { key: "deep", colors: ["#4C091B", "#5E1424", "#5E4128", "#5D4229", "#183328", "#6B4A2E", "#77552F"] },
+  { key: "main", colors: ["#33604F", "#1F4435", "#2F5D49", "#2F5B41", "#3E6B4F", "#3E6B4C", "#4C7A5B", "#3E7A5E", "#24513F", "#8A6540", "#8A6844", "#A87F52", "#8F6B42", "#7C6F38"] },
+  { key: "accentLight", colors: ["#7FA98A", "#7FA997", "#5E8F6E", "#6E9A6B", "#8BAF7D", "#95BC9B", "#86B28C", "#D9BE8E", "#B39456", "#E2CDA4"] },
+  { key: "mid", colors: ["#A02040", "#9A2A44", "#B84360", "#8C2B22", "#C94435", "#E98A5F", "#7A2E2E"] },
+  { key: "goldDeep", colors: ["#B8860B", "#A87B2C", "#A87F22", "#96701D", "#C1913A", "#A39451", "#CBA13C", "#D9B44A", "#B98F2D"] },
+  { key: "goldLight", colors: ["#EFD288", "#E0BA62", "#E9CF8F", "#F1D27A", "#F2DC92", "#F2E3B3", "#F4E8CF", "#F6ECD4", "#F6D9C4", "#FFF8E6"] },
+];
+/** web --svg-* tokens for light and dark. */
+const BRAND_COLORS = {
+  light: { deep: "#4C091B", main: "#800020", accentLight: "#E2CDA4", mid: "#A02040", goldDeep: "#B8860B", goldLight: "#F1D27A" },
+  dark: { deep: "#360512", main: "#D4AF37", accentLight: "#800020", mid: "#800020", goldDeep: "#B8860B", goldLight: "#F2DC92" },
+} as const;
+
+function groupOf(value: unknown): number {
+  if (typeof value !== "string") return -1;
+  const hex = value.toUpperCase();
+  return BRAND_GROUPS.findIndex((g) => g.colors.includes(hex));
+}
+
+function recolor(node: ReactNode, colors: Record<string, string>): ReactNode {
+  return Children.map(node, (child) => {
+    if (!isValidElement(child)) return child;
+    const el = child as ReactElement<Record<string, unknown>>;
+    const props: Record<string, unknown> = {};
+    const group = Math.max(groupOf(el.props.fill), groupOf(el.props.stroke), groupOf(el.props.stopColor));
+    if (group >= 0) {
+      const color = colors[BRAND_GROUPS[group].key];
+      if (el.type === Stop) props.stopColor = color;
+      else { props.fill = color; props.stroke = color; }
+    }
+    if (el.props.children) props.children = recolor(el.props.children as ReactNode, colors);
+    return Object.keys(props).length ? cloneElement(el, props) : el;
+  });
+}
+
 export default function SectionIcon({ name, size = 40 }: { name: SectionIconName; size?: number }) {
+  const { isDark } = useTheme();
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      {ART[name]}
+      {recolor(ART[name], isDark ? BRAND_COLORS.dark : BRAND_COLORS.light)}
     </Svg>
   );
 }

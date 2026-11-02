@@ -34,7 +34,7 @@ const FALLBACK_VERSE = { text: "إِنَّ اللَّهَ مَعَ الَّذِ�
 
 export default function StudentHome() {
   const { token, name } = useAuth();
-  const { colors, categories, isDark } = useTheme();
+  const { colors, isDark } = useTheme();
   const router = useRouter();
   const dashboard = trpc.student.dashboard.useQuery(undefined, { enabled: !!token, retry: 1, retryDelay: 800 });
   const settings = trpc.student.settings.useQuery(undefined, { enabled: !!token, staleTime: 60_000 });
@@ -151,16 +151,15 @@ export default function StudentHome() {
         );
       })}
 
-      {/* 7. بطاقات المسارات غير المسجّلة — حد جانبي بلون هوية المسار */}
+      {/* 7. بطاقات المسارات غير المسجّلة — كما في الموقع: بلا حد جانبي، وخلفية الأيقونة خمرية خفيفة */}
       {LEARNING_PATHS.filter((p) => !enrolledPaths.includes(p.path)).map((p) => {
-        const tint = categories[p.path];
         return (
           <Pressable key={p.to} accessibilityRole="button" accessibilityLabel={p.title} onPress={() => router.push(p.to as never)} style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1 }]}>
-            <Card style={[styles.pathCard, { borderRightWidth: 3, borderRightColor: tint }]}>
-              <View style={[styles.pathIcon, { backgroundColor: `${tint}17` }]}>
+            <Card style={styles.pathCard}>
+              <View style={[styles.pathIcon, { backgroundColor: isDark ? `${palette.gold}1a` : `${palette.burgundy}14` }]}>
                 <SectionIcon name={p.icon} size={38} />
               </View>
-              <Text style={[styles.pathTitle, { color: palette.goldDark }]}>{p.title}</Text>
+              <Text style={[styles.pathTitle, { color: palette.gold }]}>{p.title}</Text>
               <View style={[styles.pathArrow, { backgroundColor: `${colors.primary}14` }]}>
                 <Icon name="arrow-left" size={17} color={colors.primary} />
               </View>
