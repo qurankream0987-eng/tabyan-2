@@ -26,9 +26,9 @@ type AssignmentRow = inferRouterOutputs<AppRouter>["recitationAssignments"]["min
 type SubmitState = "idle" | "sending" | "sent" | "failed";
 
 const ASSIGNMENT_STATUS: Record<string, string> = {
-  assigned: "لم يُسلَّم بعد",
-  submitted: "سُلِّم — بانتظار معلمك",
-  reviewed: "قيّمه معلمك",
+  assigned: "لم يُسلَّم",
+  submitted: "سُلِّم — بانتظار المعلم",
+  reviewed: "قيّمه المعلم",
   cancelled: "أُلغي",
 };
 const ASSIGNMENT_TONE: Record<string, "gold" | "muted" | "success"> = { assigned: "gold", submitted: "muted", reviewed: "success", cancelled: "muted" };
@@ -48,10 +48,12 @@ function positiveInteger(value: string) {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
+// Names and descriptions as on the web (HIDE_MODE_LABELS / HIDE_MODE_DESC).
 const HIDE_MODES: { value: MushafHideMode; label: string; hint: string }[] = [
-  { value: "progressive_reveal", label: "تسميع", hint: "الآيات مخفية وتظهر كل كلمة بعد أن تقرأها." },
-  { value: "first_word", label: "أول كلمة", hint: "تظهر أول كلمة من كل آية فقط كتلميح." },
-  { value: "visible_review", label: "مراجعة بالنظر", hint: "الصفحة كاملة ظاهرة وتقرأ منها." },
+  { value: "full_hide", label: "إخفاء كامل", hint: "يظهر سطر فارغ — سمّع من الذاكرة تماماً" },
+  { value: "first_word", label: "الكلمة الأولى فقط", hint: "تظهر الكلمة الأولى من كل آية كمؤشر" },
+  { value: "progressive_reveal", label: "كشف تدريجي", hint: "اكشف كلمة واحدة في كل مرة بالضغط" },
+  { value: "visible_review", label: "مراجعة بالنص", hint: "يظهر النص كاملاً — للمراجعة بالقراءة" },
 ];
 
 function ayahProgressLabel(match: NativeRecitationMatch, startAyah: number | null, endAyah: number | null) {
@@ -509,10 +511,10 @@ export default function NativeRecitationScreen() {
   const liveCounts = feedbackCounts(match);
 
   return (
-    <StudentScreen title="التسميع الحي" subtitle={assignment ? "تسميع تعليمي — واجب من معلمك" : "تتبّع موضع القراءة — جلسة عامة"}>
+    <StudentScreen title="واجبات التسميع" subtitle="سمّع ما حدده معلمك، وهو من يقيّم تسميعك">
       {assignment ? (
         <Card style={styles.noticeCard}>
-          <Badge label="واجب من معلمك" tone="success" style={styles.badgeEnd} />
+          <Badge label="واجب التسميع" tone="success" style={styles.badgeEnd} />
           <Text style={[styles.cardTitle, { color: colors.text }]}>{assignmentRange(assignment)}</Text>
           {assignment.note ? <Text style={[styles.bodyText, { color: colors.text }]}>{assignment.note}</Text> : null}
           <Text style={[styles.smallText, { color: colors.muted }]}>
@@ -522,7 +524,7 @@ export default function NativeRecitationScreen() {
         </Card>
       ) : (
         <Card style={styles.noticeCard}>
-          <Badge label="عام فقط" style={styles.badgeEnd} />
+          <Badge label="تسميع" style={styles.badgeEnd} />
           <Text style={[styles.bodyText, { color: colors.text }]}>
             جلسة تدريب عامة: اختيار السورة والآيات للعرض فقط، ولا تُرسل لمعلمك. واجبات معلمك تجدها في «واجبات التسميع».
           </Text>
@@ -540,7 +542,7 @@ export default function NativeRecitationScreen() {
       ) : null}
       {status.data && !status.data.liveTrackingEnabled ? (
         <Card>
-          <Badge label="غير متاح حالياً" tone="muted" />
+          <Badge label="غير متاح الآن" tone="muted" />
           <Text style={[styles.bodyText, { color: colors.muted, marginTop: 10 }]}>
             التتبع الحي مغلق في إعدادات الخادم. لم يتم بدء جلسة أو تشغيل الميكروفون.
           </Text>
@@ -560,10 +562,8 @@ export default function NativeRecitationScreen() {
       {phase === "setup" ? (
         <>
           <Card>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>موضع القراءة</Text>
-            <Text style={[styles.smallText, { color: colors.muted }]}>
-              اختر السورة وحدد أول وآخر آية للعرض. هذه الحدود لا تتحول إلى واجب أو شرط إكمال.
-            </Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>نطاق التسميع</Text>
+            <Text style={[styles.smallText, { color: colors.muted }]}>اختر السورة والآيات</Text>
             <Text style={[styles.surahLabel, { color: colors.muted }]}>السورة</Text>
             <SurahField selected={Number(surahInput) || 1} onPress={() => setSurahPickerOpen(true)} disabled={!!assignment} />
             <SurahPicker visible={surahPickerOpen} selected={Number(surahInput) || 1} onPick={pickSurah} onClose={() => setSurahPickerOpen(false)} />
@@ -586,7 +586,7 @@ export default function NativeRecitationScreen() {
             {Platform.OS === "web" ? (
               <Text style={[styles.inlineError, { color: colors.muted }]}>التسجيل الحي يحتاج تطبيق Native على جهاز، ولا يعمل في Expo Web.</Text>
             ) : null}
-            <Text style={[styles.inputLabel, { color: colors.muted }]}>طريقة العرض</Text>
+            <Text style={[styles.inputLabel, { color: colors.muted }]}>وضع الإخفاء</Text>
             <View style={styles.modeRow}>
               {HIDE_MODES.map((mode) => {
                 const selected = mode.value === hideMode;
@@ -607,7 +607,7 @@ export default function NativeRecitationScreen() {
             <Text style={[styles.smallText, styles.modeHint, { color: colors.muted }]}>{HIDE_MODES.find((mode) => mode.value === hideMode)?.hint}</Text>
             {errorText ? <Text style={[styles.inlineError, { color: colors.danger }]}>{errorText}</Text> : null}
             <Button
-              label={assignment ? "ابدأ تسميع الواجب" : "بدء جلسة عامة"}
+              label="ابدأ التسميع"
               icon="mic"
               disabled={!canStart}
               loading={startMutation.isPending}
@@ -670,7 +670,7 @@ export default function NativeRecitationScreen() {
                   label={ayahProgressLabel(match, startAyah, endAyah)}
                 />
                 <Text style={[styles.smallText, { color: colors.text }]}>
-                  أخطاء مؤكدة: {liveCounts.mistakes} · كلمات متروكة: {liveCounts.skipped} · صُحّحت: {liveCounts.corrected}
+                  الأخطاء: {liveCounts.mistakes} · تخطٍّ: {liveCounts.skipped} · صُحّحت: {liveCounts.corrected}
                 </Text>
                 <Text style={[styles.smallText, { color: colors.muted }]}>
                   لا يُعلَّم الخطأ إلا بعد تأكده من متابعة قراءتك. تقدم العرض المحلي لا يثبت إكمال واجب أو نطاق تعليمي.
@@ -690,12 +690,12 @@ export default function NativeRecitationScreen() {
               ) : (
                 <Button label="استئناف" variant="secondary" icon="play" loading={resumeMutation.isPending} onPress={() => void resumeSession()} />
               )}
-              <Button label="إنهاء التسميع" variant="primary" icon="stop" onPress={() => void endSession()} />
+              <Button label="إنهاء الجلسة" variant="primary" icon="stop" onPress={() => void endSession()} />
             </View>
             {hideMode !== "visible_review" ? (
               <Button label="تلميح: أظهر الكلمة التالية" variant="secondary" icon="eye" disabled={phase !== "listening"} onPress={showHint} />
             ) : null}
-            <Button label="إلغاء دون احتساب إكمال" variant="quiet" onPress={() => void cancelSession()} />
+            <Button label="إلغاء الجلسة" variant="quiet" onPress={() => void cancelSession()} />
           </View>
         </>
       ) : null}
@@ -703,14 +703,14 @@ export default function NativeRecitationScreen() {
       {phase === "user-ended" ? (
         <Card style={styles.finishedCard}>
           <Badge label="انتهت الجلسة" tone="success" style={styles.badgeEnd} />
-          <Text style={[styles.cardTitle, { color: colors.text }]}>ملخص جلستك</Text>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>ملخص الجلسة</Text>
           <SessionSummary summary={summary} durationSeconds={endedDuration ?? 0} colors={colors} />
           {assignment ? (
             <>
               <Text style={[styles.bodyText, { color: submitState === "failed" ? colors.danger : colors.text }]}>
-                {submitState === "sending" ? "جارٍ إرسال تسميعك لمعلمك…"
-                  : submitState === "sent" ? "أُرسل تسميعك لمعلمك، وسيصلك إشعار عندما يقيّمه."
-                  : submitState === "failed" ? "تعذر إرسال التسميع لمعلمك. تحقق من الاتصال وأعد المحاولة."
+                {submitState === "sending" ? "جارٍ إرسال النتيجة لمعلمك…"
+                  : submitState === "sent" ? "سُلِّم الواجب لمعلمك. سيراجع معلمك تسميعك ويقيّمه بنفسه. يمكنك إعادة التسميع قبل تقييمه، وآخر تسليم يحل محل السابق."
+                  : submitState === "failed" ? "لم يُسلَّم الواجب — أعد المحاولة، فالجلسة محفوظة."
                   : ""}
               </Text>
               {submitState === "failed" ? (
@@ -831,7 +831,7 @@ function AssignmentList({
       {loading ? <LoadingState label="جارٍ تحميل واجباتك…" /> : null}
       {failed ? <Text style={[styles.inlineError, { color: colors.danger }]}>تعذر تحميل الواجبات.</Text> : null}
       {!loading && !failed && rows.length === 0 ? (
-        <Text style={[styles.smallText, { color: colors.muted }]}>لا توجد واجبات تسميع من معلمك حالياً.</Text>
+        <Text style={[styles.smallText, { color: colors.muted }]}>لا واجبات تسميع بعد — حين يحدد لك معلمك سورة للتسميع ستظهر هنا.</Text>
       ) : null}
       {rows.map(({ assignment, teacherName }) => {
         const overdue = assignment.status === "assigned" && !!assignment.dueAt && new Date(assignment.dueAt).getTime() < now;
@@ -853,7 +853,7 @@ function AssignmentList({
             {assignment.note ? <Text style={[styles.smallText, { color: colors.text }]}>{assignment.note}</Text> : null}
             {assignment.status === "reviewed" ? (
               <Text style={[styles.bodyText, { color: colors.success }]}>
-                تقييم معلمك: {assignment.teacherScore ?? "—"}/100{assignment.teacherFeedback ? ` — ${assignment.teacherFeedback}` : ""}
+                تقييم المعلم: {assignment.teacherScore ?? "—"}/100{assignment.teacherFeedback ? ` — ${assignment.teacherFeedback}` : ""}
               </Text>
             ) : null}
             {result && assignment.status !== "reviewed" ? (
@@ -891,14 +891,14 @@ function SessionSummary({
   colors: ReturnType<typeof useTheme>["colors"];
 }) {
   const rows: { label: string; value: string; color: string }[] = [
-    { label: "كلمات قُرئت", value: `${summary?.wordsRecited ?? 0} من ${summary?.totalWords ?? 0}`, color: colors.primary },
-    { label: "أخطاء مؤكدة", value: `${summary?.confirmedMistakes ?? 0}`, color: colors.danger },
-    { label: "كلمات متروكة", value: `${summary?.skippedWords ?? 0}`, color: colors.danger },
-    { label: "كلمات صحّحتها بنفسك", value: `${summary?.correctedWords ?? 0}`, color: colors.success },
-    { label: "كلمات بتلميح", value: `${summary?.peekedWords ?? 0}`, color: MUSHAF_COLORS.peeked },
+    { label: "الكلمات", value: `${summary?.wordsRecited ?? 0} من ${summary?.totalWords ?? 0}`, color: colors.primary },
+    { label: "الأخطاء", value: `${summary?.confirmedMistakes ?? 0}`, color: colors.danger },
+    { label: "تخطٍّ", value: `${summary?.skippedWords ?? 0}`, color: colors.danger },
+    { label: "صُحّحت", value: `${summary?.correctedWords ?? 0}`, color: colors.success },
+    { label: "التلميحات", value: `${summary?.peekedWords ?? 0}`, color: MUSHAF_COLORS.peeked },
   ];
   if (durationSeconds !== undefined) {
-    rows.push({ label: "مدة الاستماع", value: `${durationSeconds} ثانية`, color: colors.text });
+    rows.push({ label: "المدة", value: formatDuration(durationSeconds), color: colors.text });
   }
   return (
     <View style={styles.summaryList}>
@@ -956,8 +956,9 @@ const styles = StyleSheet.create({
   controlRow: { flexDirection: "row", gap: 10 },
   finishedCard: { alignItems: "stretch", gap: 12 },
   underlined: { textDecorationLine: "underline" },
-  modeRow: { flexDirection: "row-reverse", gap: 8, marginTop: 6 },
-  modeChoice: { flex: 1, minWidth: 0, minHeight: 44, borderWidth: 1, borderRadius: 13, alignItems: "center", justifyContent: "center", paddingHorizontal: 6 },
+  // Two per row, like the web setup sheet, so the full mode names fit.
+  modeRow: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 8, marginTop: 6 },
+  modeChoice: { flexBasis: "47%", flexGrow: 1, minWidth: 0, minHeight: 44, borderWidth: 1, borderRadius: 13, alignItems: "center", justifyContent: "center", paddingHorizontal: 6 },
   modeHint: { marginTop: 6, marginBottom: 14 },
   modeLabel: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 13 },
   assignmentRow: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12, gap: 6 },
