@@ -11,12 +11,17 @@ describe("Surah title-only ornament", () => {
       expect(html).toContain(`سُورَةُ ${surah.name}`);
       expect(html).not.toContain("<img");
       expect(html).not.toContain("font-quran");
-      // Shared vector ornament: patterned band, two medallions and the cartouche.
-      expect(html).toContain("<pattern");
-      // Each medallion: outer ring, inner ring and the rosette's heart.
-      expect(html.match(/<circle cx="[\d.]+" cy="70"/g)?.length).toBe(6);
+      // Shared vector ornament: one side panel, drawn again mirrored, around the cartouche.
+      expect(html.match(/<use /g)?.length).toBe(2);
+      expect(html).toContain("scale(-1 1)");
       expect(html).not.toContain("ترتيبها");
     }
+  });
+  it("draws the title with the surah-name calligraphy when the number is known", () => {
+    const html = renderToStaticMarkup(<SurahHeaderFrame surahName="المائدة" surahNumber={5} width={304} rowH={30} />);
+    expect(html).toContain(">005<");
+    expect(html).toContain("TabyanSurahNames");
+    expect(html).toContain('aria-label="سورة المائدة"');
   });
   it("preserves the existing header band geometry for both page variants", () => {
     expect(renderToStaticMarkup(<SurahHeaderFrame surahName="الكهف" width={304} rowH={30} />)).toContain("height:24px");

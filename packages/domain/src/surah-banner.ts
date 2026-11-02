@@ -1,109 +1,89 @@
 // ── إطار عنوان السورة: رسم متجه واحد يستخدمه الموقع والتطبيق ─────────────
-// لوحتان من الزخرفة النباتية بالأخضر والذهبي، وميدالية على كل جانب فوق نجمة ثمانية،
-// وخرطوشة عاجية في الوسط لاسم السورة. الإحداثيات في مساحة 1000×140.
+// شريطان متضفّران بالأخضر والذهبي على كل جانب، ووردة في ميدالية بجوار الخرطوشة،
+// وخرطوشة عاجية مستديرة الطرفين لاسم السورة. الإحداثيات في مساحة ارتفاعها 140،
+// والجانب الأيمن مرآة الأيسر عند الطرف الآخر من الإطار.
 
-export const SURAH_BANNER_VIEWBOX = { width: 1000, height: 140 } as const;
+export const SURAH_BANNER_HEIGHT = 140;
 
 export const SURAH_BANNER_COLORS = {
+  ground: "#EFE2B8",
   ivory: "#FBF6E6",
-  sage: "#B9C9A9",
-  leaf: "#6F8D62",
-  star: "#5E7C52",
+  ribbon: "#8EA67E",
+  ribbonEdge: "#E3C76A",
+  ribbonShadow: "#9C7A24",
+  leaf: "#5F7D52",
+  petal: "#6F8D62",
   gold: "#B58F33",
-  goldLight: "#E2C463",
+  goldLight: "#E6C866",
   goldMid: "#B8912F",
-  goldEdge: "#D8B652",
+  goldEdge: "#DDBB55",
   bud: "#D9B44A",
   budEdge: "#8C6B1F",
-  scroll: "#C9A646",
-  pearl: "#F3E7C4",
-  caption: "#6B5A2E",
 } as const;
 
-/** Outer frame and the patterned band inside it. */
-export const SURAH_BANNER_FRAME = { x: 2, y: 2, width: 996, height: 136, strokeWidth: 4 } as const;
-export const SURAH_BANNER_BAND = { x: 10, y: 10, width: 980, height: 120, strokeWidth: 1.2 } as const;
-
-/** One 36×36 arabesque tile: four leaves round a gold bud, scrolls joining the tiles. */
-export const SURAH_BANNER_TILE = {
-  size: 36,
-  offsetY: 16,
+/** The left-hand panel; the right one is the same drawing mirrored at the far edge. */
+export const SURAH_BANNER_SIDE = {
+  /** Wide ribbon: two loops crossing at the centre of the panel. */
+  knot: "M14 22C60 22 70 70 110 70S160 22 205 22M14 118C60 118 70 70 110 70S160 118 205 118M110 70C150 70 150 22 110 22S70 70 110 70ZM110 70C150 70 150 118 110 118S70 70 110 70Z",
+  /** Fine ribbon weaving through it. */
+  knotFine: "M14 70C40 40 70 40 110 70C150 100 180 100 205 70M14 70C40 100 70 100 110 70C150 40 180 40 205 70",
   leaves: [
-    "M18 4C22 9 22 14 18 18C14 14 14 9 18 4Z",
-    "M18 32C22 27 22 22 18 18C14 22 14 27 18 32Z",
-    "M4 18C9 14 14 14 18 18C14 22 9 22 4 18Z",
-    "M32 18C27 14 22 14 18 18C22 22 27 22 32 18Z",
+    "M40 70C48 58 60 56 66 62C58 70 48 74 40 70Z",
+    "M40 70C48 82 60 84 66 78C58 70 48 66 40 70Z",
+    "M180 70C172 58 160 56 154 62C162 70 172 74 180 70Z",
+    "M180 70C172 82 160 84 154 78C162 70 172 66 180 70Z",
   ],
-  scrolls: "M0 0C6 6 6 12 0 18M36 0C30 6 30 12 36 18M0 36C6 30 6 24 0 18M36 36C30 30 30 24 36 18",
-  pearls: [[0, 0], [36, 0], [0, 36], [36, 36]] as const,
+  rosette: { cx: 236, cy: 70, r: 30, innerR: 25.5, heartR: 5 },
 } as const;
 
-/** Medallion centres (x): the ayah count on the left, the surah order on the right, as in print. */
-export const SURAH_BANNER_MEDALLION_X = { ayahs: 135, order: 865 } as const;
-export const SURAH_BANNER_MEDALLION = { cy: 70, r: 47, innerR: 41.5 } as const;
+/** Eight petals of the side rosette, as one path. */
+export const SURAH_BANNER_PETALS = (() => {
+  const { cx, cy } = SURAH_BANNER_SIDE.rosette;
+  const pt = (r: number, a: number) => `${+(cx + r * Math.sin(a)).toFixed(1)} ${+(cy - r * Math.cos(a)).toFixed(1)}`;
+  return Array.from({ length: 8 }, (_, i) => {
+    const a = (i * Math.PI) / 4;
+    return `M${pt(4, a)}Q${pt(14, a - 0.36)} ${pt(24, a)}Q${pt(14, a + 0.36)} ${pt(4, a)}Z`;
+  }).join("");
+})();
 
-/** Eight-point star behind a medallion centred at `cx`. */
-export function surahBannerStar(cx: number): string {
-  const base = [
-    [0, 14], [14.6, 34.6], [35, 35], [35.4, 55.4], [56, 70], [35.4, 84.6], [35, 105], [14.6, 105.4],
-    [0, 126], [-14.6, 105.4], [-35, 105], [-35.4, 84.6], [-56, 70], [-35.4, 55.4], [-35, 35], [-14.6, 34.6],
-  ];
-  return base.map(([dx, y]) => `${+(cx + dx).toFixed(1)},${y}`).join(" ");
-}
-
-/** The ivory cartouche for the surah name, its inner rule, and the gold finials at its tips. */
-export const SURAH_BANNER_CARTOUCHE = "M308 16H692C715 16 724.6 34 741.9 44C761.1 55 770.7 63 778.4 70C770.7 77 761.1 85 741.9 96C724.6 106 715 124 692 124H308C285 124 275.4 106 258.1 96C238.9 85 229.3 77 221.6 70C229.3 63 238.9 55 258.1 44C275.4 34 285 16 308 16Z";
-export const SURAH_BANNER_CARTOUCHE_INNER = "M311.8 23H688.2C707.4 23 717 38 732.3 47C747.7 56 756.3 63 762.1 70C756.3 77 747.7 84 732.3 93C717 102 707.4 117 688.2 117H311.8C292.6 117 283 102 267.7 93C252.3 84 243.7 77 237.9 70C243.7 63 252.3 56 267.7 47C283 38 292.6 23 311.8 23Z";
-export const SURAH_BANNER_FINIALS = "M778.4 70l10-6 10 6-10 6ZM221.6 70l-10-6-10 6 10 6Z";
-
-/** The cartouche's inner width as a share of the banner (for fitting the title). */
-export const SURAH_BANNER_TITLE_SPAN = { left: 0.27, right: 0.73 } as const;
-
-/** Moves every point of the right half (x > 500) to the right edge of a banner `viewWidth` wide. */
-function stretchPath(d: string, dx: number): string {
-  return d.replace(/([MHCL])([^MHCLZml]*)/g, (_, cmd: string, args: string) => {
-    const nums = args.trim().split(/[\s,]+/).filter(Boolean).map(Number);
-    const moved = cmd === "H"
-      ? nums.map((x) => (x > 500 ? x + dx : x))
-      : nums.map((n, i) => (i % 2 === 0 && n > 500 ? n + dx : n));
-    return cmd + moved.map((n) => +n.toFixed(1)).join(" ");
-  });
-}
+const CARTOUCHE_X = 275;
+const CARTOUCHE = { y: 16, height: 108, innerInset: 7 } as const;
 
 /**
- * The banner laid out for its real proportions (width ÷ height), so the medallions stay round
- * and the pattern keeps its shape: only the cartouche grows, the two ends keep their size.
+ * The banner laid out for its real proportions (width ÷ height): the panels keep their size
+ * at both ends and only the cartouche grows, so nothing is stretched.
  */
 export function surahBannerLayout(aspect: number) {
-  const height = SURAH_BANNER_VIEWBOX.height;
+  const height = SURAH_BANNER_HEIGHT;
   const viewWidth = Math.max(760, Math.round(height * aspect));
-  const dx = viewWidth - SURAH_BANNER_VIEWBOX.width;
-  const ayahsX = SURAH_BANNER_MEDALLION_X.ayahs;
-  const orderX = SURAH_BANNER_MEDALLION_X.order + dx;
+  const cartoucheWidth = viewWidth - 2 * CARTOUCHE_X;
+  const inset = CARTOUCHE.innerInset;
   return {
     viewWidth,
-    frame: { ...SURAH_BANNER_FRAME, width: SURAH_BANNER_FRAME.width + dx },
-    band: { ...SURAH_BANNER_BAND, width: SURAH_BANNER_BAND.width + dx },
-    medallions: [ayahsX, orderX].map((cx) => ({ cx, star: surahBannerStar(cx) })),
-    cartouche: stretchPath(SURAH_BANNER_CARTOUCHE, dx),
-    cartoucheInner: stretchPath(SURAH_BANNER_CARTOUCHE_INNER, dx),
-    finials: `M${+(778.4 + dx).toFixed(1)} 70l10-6 10 6-10 6ZM221.6 70l-10-6-10 6 10 6Z`,
-    /** Medallion centres and the cartouche's inner span, as shares of the width. */
-    ayahsFrac: ayahsX / viewWidth,
-    orderFrac: orderX / viewWidth,
-    titleLeft: 311.8 / viewWidth,
-    titleRight: (688.2 + dx) / viewWidth,
+    frame: { x: 2, y: 2, width: viewWidth - 4, height: height - 4 },
+    rule: { x: 9, y: 9, width: viewWidth - 18, height: height - 18 },
+    /** Transform that mirrors the left panel onto the right end. */
+    mirror: `translate(${viewWidth} 0) scale(-1 1)`,
+    cartouche: { x: CARTOUCHE_X, y: CARTOUCHE.y, width: cartoucheWidth, height: CARTOUCHE.height, rx: CARTOUCHE.height / 2 },
+    cartoucheInner: {
+      x: CARTOUCHE_X + inset, y: CARTOUCHE.y + inset,
+      width: cartoucheWidth - 2 * inset, height: CARTOUCHE.height - 2 * inset, rx: CARTOUCHE.height / 2 - inset,
+    },
+    /** The title's box inside the cartouche, as shares of the banner. */
+    title: {
+      left: (CARTOUCHE_X + CARTOUCHE.height / 2) / viewWidth,
+      width: (cartoucheWidth - CARTOUCHE.height) / viewWidth,
+      top: (CARTOUCHE.y + inset) / height,
+      height: (CARTOUCHE.height - 2 * inset) / height,
+    },
   };
 }
 
-/** An eight-petal rosette filling a medallion centred at `cx` (petals as one path, plus the heart). */
-export function surahBannerRosette(cx: number): { petals: string; heart: { cx: number; cy: number; r: number } } {
-  const cy = SURAH_BANNER_MEDALLION.cy;
-  const petals = Array.from({ length: 8 }, (_, i) => {
-    const a = (i * Math.PI) / 4;
-    const tip = 30, side = 9, base = 7;
-    const p = (r: number, da: number) => [cx + r * Math.sin(a + da), cy - r * Math.cos(a + da)].map((n) => +n.toFixed(1)).join(" ");
-    return `M${p(base, 0)}Q${p(side * 1.9, -0.42)} ${p(tip, 0)}Q${p(side * 1.9, 0.42)} ${p(base, 0)}Z`;
-  }).join("");
-  return { petals, heart: { cx, cy, r: 6.5 } };
+/**
+ * The calligraphic surah-name font (the printed mushaf's header lettering) draws a whole
+ * "سُورَةُ …" title as one glyph, reached by the surah number written with three digits.
+ */
+export const SURAH_NAME_FONT_FAMILY = "TabyanSurahNames";
+export function surahNameGlyph(surahNumber: number): string {
+  return String(surahNumber).padStart(3, "0");
 }

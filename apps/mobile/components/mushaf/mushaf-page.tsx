@@ -6,7 +6,8 @@ import { buildPageLines, type LineWord, type MushafPageData } from "@workspace/t
 import { computePageLayout, LINE_COUNT, maxFontSizeFor, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
 import { pageFontFamily } from "../../lib/mushaf/mushaf-assets";
 import { JUZ_LIST } from "../../lib/mushaf/juz";
-import { surahBannerLayout } from "@workspace/tabyan-domain/surah-banner";
+import { SURAH_NAME_FONT_FAMILY, surahBannerLayout, surahNameGlyph } from "@workspace/tabyan-domain/surah-banner";
+import { useFonts } from "expo-font";
 import { SurahBannerArt } from "./surah-banner-art";
 import type { NativeWordFeedback } from "../../lib/recitation/native-recitation";
 
@@ -229,13 +230,27 @@ export default memo(MushafPage);
 function SurahBanner({ name, number, width, rowH }: { name: string; number?: number; width: number; rowH: number }) {
   const bandH = Math.min(rowH * 0.92, width * 0.165);
   const layout = surahBannerLayout(width / bandH);
+  // The printed mushaf's header calligraphy: one glyph per surah. Amiri stands in until it loads.
+  const [fontReady] = useFonts({ [SURAH_NAME_FONT_FAMILY]: require("../../assets/fonts/sura-names.ttf") });
+  const calligraphy = fontReady && number !== undefined;
+  // The glyphs draw about 0.75 em tall and up to 2.5 em wide (surah 83); fit both ways inside the cartouche.
+  const box = { left: width * layout.title.left, width: width * layout.title.width, top: bandH * layout.title.top, height: bandH * layout.title.height };
+  const glyphSize = Math.min((box.height * 0.92) / 0.75, (box.width * 0.96) / 2.5);
   return (
     <View style={[styles.surahBand, { width, height: bandH }]}>
       <SurahBannerArt width={width} height={bandH} />
-      {/* The line box spans the band so Amiri diacritics are not clipped above the letters. */}
-      <Text allowFontScaling={false} style={[styles.surahTitle, { fontSize: bandH * 0.42, lineHeight: bandH, width: width * (layout.titleRight - layout.titleLeft) * 0.94 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
-        {number !== undefined ? vocalizedSurahTitle(number, name) : `سُورَةُ ${name}`}
-      </Text>
+      <View style={[styles.titleBox, box]}>
+        {calligraphy ? (
+          <Text allowFontScaling={false} accessibilityLabel={`سورة ${name}`} style={[styles.surahGlyph, { fontSize: glyphSize, lineHeight: box.height }]} numberOfLines={1}>
+            {surahNameGlyph(number)}
+          </Text>
+        ) : (
+          // The line box spans the band so Amiri diacritics are not clipped above the letters.
+          <Text allowFontScaling={false} style={[styles.surahTitle, { fontSize: bandH * 0.42, lineHeight: bandH }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+            {number !== undefined ? vocalizedSurahTitle(number, name) : `سُورَةُ ${name}`}
+          </Text>
+        )}
+      </View>
     </View>
   );
 }
@@ -252,6 +267,8 @@ const styles = StyleSheet.create({
   row: { position: "absolute", left: 0, right: 0, alignItems: "center", justifyContent: "center" },
   wordLine: { color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center" },
   surahBand: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  titleBox: { position: "absolute", alignItems: "center", justifyContent: "center" },
+  surahGlyph: { fontFamily: SURAH_NAME_FONT_FAMILY, color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center", alignSelf: "stretch" },
   surahTitle: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center", textAlignVertical: "center" },
   basmalah: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false },
   mistake: { color: MUSHAF_COLORS.mistake, textDecorationLine: "underline" },
