@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { trpc } from "@/providers/trpc";
 import GlassCard from "@/components/GlassCard";
-import EmptyState from "@/components/app/EmptyState";
 import Icon from "@/components/Icon";
 import SectionIcon, { type SectionIconName } from "@/components/app/SectionIcon";
 import { authStore } from "@/lib/auth";
@@ -105,8 +104,6 @@ export default function StudentHome() {
 
   // واجهة واحدة في الوضعين — عند غياب البيانات الحقيقية تُعرض نفس الأقسام مع حالات فراغ بدل الإخفاء
   const d = (DEMO ? DEMO_DASHBOARD : (data ?? EMPTY_DASHBOARD)) as DemoDashboard;
-  // دروس اليوم تأتي من النوع الفعلي لـ student.dashboard؛ بيانات العرض التجريبي هنا فارغة.
-  const todayLessons = DEMO ? [] : (data?.todayLessons ?? []);
   const progressPercent = d.completionPercentage ?? 0;
 
   // التسجيل الفعلي يأتي من الخادم (حجوزات نشطة/تقدّم دراسي) — لا يتأثر بغياب موعد قادم
@@ -148,24 +145,6 @@ export default function StudentHome() {
 
       {/* واجبات التسميع التي لم تُسلَّم بعد */}
       {!DEMO && <PendingAssignmentsCard />}
-
-      {/* دروس اليوم — todayLessons */}
-      <section>
-        {todayLessons.length > 0 ? (
-          <div className="space-y-3">
-            {todayLessons.map((lesson) => (
-              <Link key={lesson.id} to={`/student/library/book/${lesson.id}`}>
-                <GlassCard hover className="px-4 py-3 flex justify-between items-center">
-                  <span className="font-readex text-sm text-foreground">{lesson.title}</span>
-                  <Icon name="arrow-left" size={16} className="text-muted-foreground" />
-                </GlassCard>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <EmptyState title="لا دروس لهذا اليوم" />
-        )}
-      </section>
 
       {/* 3. بطاقات مواعيد المسارات المسجل فيها الطالب فقط — بطاقة مستقلة لكل مسار */}
       {enrolledPaths.map((path) => (

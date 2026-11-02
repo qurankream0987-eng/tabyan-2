@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { formatDateTime } from "../../../lib/format";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from "react-native-svg";
-import { Button, Card, EmptyState, ErrorState, Icon, LoadingState, ProgressBar, Screen, SoftPressable } from "../../../components/ui";
+import { Button, Card, ErrorState, Icon, LoadingState, ProgressBar, Screen, SoftPressable } from "../../../components/ui";
 import SectionIcon, { type SectionIconName } from "../../../components/ui/section-icon";
 import { assignmentRange } from "../../../components/teacher/recitation-assignments";
 import { useAuth } from "../../../lib/auth";
@@ -10,7 +10,7 @@ import { trpc } from "../../../lib/trpc";
 import { useTheme, palette } from "../../../lib/theme";
 
 // ── بنية الرئيسية مطابقة للموقع (StudentHome.tsx):
-//    1) تحية  2) آية اليوم  3) الإحصائيات  4) واجبات التسميع المعلقة  5) دروس اليوم
+//    1) تحية  2) آية اليوم  3) الإحصائيات  4) واجبات التسميع المعلقة
 //    6) بطاقة الحلقة القادمة لكل مسار مسجّل  7) بطاقات المسارات غير المسجّلة  8) تذكير اختبار القبول
 const PATH_ORDER = ["quran", "tajweed", "sharia"] as const;
 type LearningPathKey = (typeof PATH_ORDER)[number];
@@ -49,7 +49,6 @@ export default function StudentHome() {
   const levelName = typeof d.levelName === "string" && d.levelName && d.levelName !== "—" ? d.levelName : null;
   const enrolledPaths = PATH_ORDER.filter((p) => Array.isArray(d.enrolledPaths) && d.enrolledPaths.includes(p));
   const upcoming = Array.isArray(d.upcoming) ? d.upcoming : [];
-  const todayLessons: Array<{ id: string; title: string }> = Array.isArray(d.todayLessons) ? d.todayLessons : [];
   const stats = { totalJuz: Number(d.stats?.totalJuz ?? 0), sessionsCount: Number(d.stats?.sessionsCount ?? 0), avgScore: Number(d.stats?.avgScore ?? 0) };
   const placementStatus = d.student?.placementTestStatus;
   const showVerse = (settings.data as any)?.ayahNotification !== false;
@@ -131,16 +130,6 @@ export default function StudentHome() {
           </Card>
         </SoftPressable>
       ) : null}
-
-      {/* 5. دروس اليوم */}
-      {todayLessons.length ? todayLessons.map((lesson) => (
-        <SoftPressable key={lesson.id} accessibilityRole="button" onPress={() => router.push(`/student/library/${lesson.id}` as never)}>
-          <Card style={styles.lessonCard}>
-            <Text style={[styles.lessonTitle, { color: colors.text }]}>{lesson.title}</Text>
-            <Icon name="arrow-left" size={16} color={colors.muted} />
-          </Card>
-        </SoftPressable>
-      )) : <EmptyState title="لا دروس لهذا اليوم" />}
 
       {/* 6. الحلقة القادمة — بطاقة مستقلة لكل مسار مسجّل له موعد قادم */}
       {enrolledPaths.map((p) => {
@@ -224,8 +213,6 @@ const styles = StyleSheet.create({
   assignmentBody: { flex: 1, minWidth: 0 },
   assignmentTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, textAlign: "right" },
   assignmentSub: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, marginTop: 2, textAlign: "right" },
-  lessonCard: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", paddingVertical: 12 },
-  lessonTitle: { flex: 1, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 14, textAlign: "right" },
   dutyCard: { gap: 10 },
   dutyTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 22, lineHeight: 34, color: palette.gold, textAlign: "right" },
   dutyChip: { alignSelf: "flex-end", flexDirection: "row-reverse", alignItems: "center", gap: 6, backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
