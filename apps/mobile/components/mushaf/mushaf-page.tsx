@@ -300,7 +300,8 @@ const styles = StyleSheet.create({
   skipped: { color: MUSHAF_COLORS.skipped, textDecorationLine: "underline" },
   corrected: { color: MUSHAF_COLORS.corrected, textDecorationLine: "underline" },
   peeked: { color: MUSHAF_COLORS.peeked, textDecorationLine: "underline" },
-  highlighted: { color: MUSHAF_COLORS.highlight, backgroundColor: MUSHAF_COLORS.highlightBackground, textShadowColor: MUSHAF_COLORS.highlight },
+  // No shadow on a highlighted word: Android paints the shadow behind its background as a dark box.
+  highlighted: { color: MUSHAF_COLORS.highlight, backgroundColor: MUSHAF_COLORS.highlightBackground, textShadowColor: "transparent", textShadowRadius: 0 },
   // A same-colour halo thickens the thin QCF strokes toward the printed page; reading mode only,
   // since recitation draws hidden words in the paper colour and a black halo would reveal them.
   boldInk: { textShadowColor: MUSHAF_COLORS.ink, textShadowRadius: 0.8, textShadowOffset: { width: 0, height: 0 } },
