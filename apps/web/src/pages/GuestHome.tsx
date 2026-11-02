@@ -173,6 +173,12 @@ function TajweedContent({ onReg }: { onReg: () => void }) {
         </div>
         );
       })}
+      <div className="mx-4 mb-3 mt-1 rounded-2xl bg-gold/8 dark:bg-gold/10 border border-gold/18 px-4 py-2.5 flex items-center gap-2.5">
+        <SiSharia size={18} className="shrink-0" />
+        <p className="font-readex text-xs text-muted-foreground">
+          متن <span className="text-gold font-bold">تحفة الأطفال</span>: مقرر مستوى الوارثون، وعنصر تقييم اختياري في اختبار القبول
+        </p>
+      </div>
       <SectionCta onReg={onReg} />
     </div>
   );

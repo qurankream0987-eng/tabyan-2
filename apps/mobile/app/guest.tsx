@@ -262,6 +262,12 @@ export default function GuestHome() {
                 <View style={styles.levelBody}><Text style={[styles.levelName, { color: colors.text }]}>{name}</Text><Text style={[styles.levelText, { color: colors.muted }]}>{description}</Text></View>
               </View>
             ))}
+            <View style={[styles.noteBox, { backgroundColor: `${palette.gold}12`, borderColor: isDark ? `${palette.gold}2e` : `${palette.gold}30` }]}>
+              <SectionIcon name="sharia" size={18} />
+              <Text style={[styles.note, { color: colors.muted }]}>
+                متن <Text style={[styles.noteAccent, { color: isDark ? palette.gold : palette.goldDark }]}>تحفة الأطفال</Text>: مقرر مستوى الوارثون، وعنصر تقييم اختياري في اختبار القبول
+              </Text>
+            </View>
             <RegisterCta onPress={openRegister} />
           </Expandable>
         </Stagger>
@@ -376,6 +382,9 @@ const styles = StyleSheet.create({
   subDescription: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 19, textAlign: "right", marginTop: 2 },
   bulletList: { gap: 6, paddingTop: 8, paddingHorizontal: 8 },
   bullet: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 22, textAlign: "right" },
+  noteBox: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10, marginHorizontal: 4, marginTop: 10, marginBottom: 4 },
+  note: { flex: 1, fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 20, textAlign: "right" },
+  noteAccent: { fontFamily: "IBMPlexSansArabic_700Bold" },
   shariaRow: { paddingVertical: 14 },
   why: { marginTop: 24 },
   whyTitle: { fontFamily: "Amiri_700Bold", fontSize: 24, lineHeight: 36 },
