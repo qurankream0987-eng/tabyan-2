@@ -23,10 +23,10 @@ const toArabicDigits = (value: number) => String(value).replace(/\d/g, (digit) =
 export const MUSHAF_COLORS = {
   paper: "#F6F1E3",
   frame: "#D9C9A3",
-  ink: "#1B1410",
+  ink: "#000000",
   /** Medallion captions on the surah ornament (web --hdr-green). */
   ornament: "#788567",
-  outOfRange: "rgba(27, 20, 16, 0.25)",
+  outOfRange: "rgba(0, 0, 0, 0.25)",
   current: "#7A1F35",
   correct: "#2F4A3A",
   pending: "#6B5B4B",
@@ -202,7 +202,7 @@ function MushafPage({
         }
         return (
           <View key={`l-${line.line}`} style={[styles.row, { top, height: layout.wordRowH }]}>
-            <Text allowFontScaling={false} style={[styles.wordLine, { fontFamily: family, fontSize }]}>
+            <Text allowFontScaling={false} style={[styles.wordLine, { fontFamily: family, fontSize }, recitation ? null : styles.boldInk]}>
               {line.words!.map((word, index) => (
                 <Text
                   key={`${word.verseKey}:${word.position}`}
@@ -270,5 +270,8 @@ const styles = StyleSheet.create({
   skipped: { color: MUSHAF_COLORS.skipped, textDecorationLine: "underline" },
   corrected: { color: MUSHAF_COLORS.corrected, textDecorationLine: "underline" },
   peeked: { color: MUSHAF_COLORS.peeked, textDecorationLine: "underline" },
-  highlighted: { color: MUSHAF_COLORS.highlight, backgroundColor: MUSHAF_COLORS.highlightBackground },
+  highlighted: { color: MUSHAF_COLORS.highlight, backgroundColor: MUSHAF_COLORS.highlightBackground, textShadowColor: MUSHAF_COLORS.highlight },
+  // A same-colour halo thickens the thin QCF strokes toward the printed page; reading mode only,
+  // since recitation draws hidden words in the paper colour and a black halo would reveal them.
+  boldInk: { textShadowColor: MUSHAF_COLORS.ink, textShadowRadius: 0.8, textShadowOffset: { width: 0, height: 0 } },
 });

@@ -237,7 +237,7 @@ function MushafPage({
               className="absolute inset-x-0 flex items-center justify-center"
               style={{ top, height: rowH }}
             >
-              <span className="whitespace-nowrap" style={{ fontFamily: family, fontSize, lineHeight: 1, color: INK }}>
+              <span className="tby-ayah-line whitespace-nowrap" style={{ fontFamily: family, fontSize, lineHeight: 1, color: INK }}>
                 {m.words!.map((w, i) => {
                   // حساب الـ opacity
                   const opacity = recitation

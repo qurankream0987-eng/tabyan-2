@@ -1973,3 +1973,7 @@
   .tby-reader .tby-reader-viewport { scroll-padding-block-end: 0; }
   .tby-reader .tby-page-margin { inset-inline: 14px; }
 }
+
+/* حبر أغمق قريب من المصحف المطبوع: حدّ رفيع بلون كل كلمة نفسها يُثخّن خطوط QCF الدقيقة
+   دون تغيير المقاسات. currentColor يتبع لون الكلمة، فالكلمات المخفية في التسميع تبقى مخفية. */
+.tby-ayah-line { -webkit-text-stroke: 0.012em currentColor; paint-order: stroke fill; }
