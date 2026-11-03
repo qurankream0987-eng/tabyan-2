@@ -120,6 +120,7 @@ function MushafPage({
   recitation,
   highlightVerseKey,
   onPressVerse,
+  fillWidth = false,
 }: {
   data: MushafPageData;
   width: number;
@@ -130,6 +131,8 @@ function MushafPage({
   highlightVerseKey?: string | null;
   /** Reading mode: a word was tapped. */
   onPressVerse?: (verseKey: string) => void;
+  /** The widest line fills the width on every page, the short opening lines too (recitation, where reading size matters most). */
+  fillWidth?: boolean;
 }) {
   const paperH = fillHeight ?? width / PAGE_ASPECT;
   // Printed margins carry the labels; the line grid takes the height between them.
@@ -161,8 +164,17 @@ function MushafPage({
   // The widest line fills the page width, as in the printed Mushaf (web: canvas measureText).
   const widest = Math.max(0, ...lineWidths.values());
   const fontSize = measured && widest > 0
-    ? Math.min((width * 0.94 * MEASURE_SIZE) / widest, maxFontSizeFor(layout.variant, height))
+    ? Math.min((width * 0.94 * MEASURE_SIZE) / widest, fillWidth ? Infinity : maxFontSizeFor(layout.variant, height))
     : 0;
+
+  // fillWidth sets an opening page's short lines larger than its printed grid allows, so its rows
+  // are spaced for that size, and the paper ends below them instead of keeping the printed height.
+  const spread = fillWidth && layout.variant === "opening" && fontSize > 0
+    ? Math.max(1, (fontSize * 1.6) / layout.wordRowH)
+    : 1;
+  const rowTop = (line: number) => layout.blockTop + ((layout.tops.get(line) ?? 0) - layout.blockTop) * spread;
+  const wordRowH = layout.wordRowH * spread;
+  const shownPaperH = spread > 1 ? layout.blockTop * 2 + (layout.blockBottom - layout.blockTop) * spread : paperH;
 
   function onMeasure(line: number, event: NativeSyntheticEvent<TextLayoutEventData>) {
     const lineWidth = Math.max(0, ...event.nativeEvent.lines.map((textLine) => textLine.width));
@@ -174,7 +186,7 @@ function MushafPage({
   }
 
   return (
-    <View style={[styles.paper, fillHeight ? null : styles.paperCard, { width, height: paperH }]}>
+    <View style={[styles.paper, fillHeight ? null : styles.paperCard, { width, height: shownPaperH }]}>
       {marginH > 0 && fontSize > 0 ? (
         <>
           <View style={[styles.marginRow, { top: 0, height: marginH }]} pointerEvents="none">
@@ -205,7 +217,7 @@ function MushafPage({
         </View>
       ) : null}
       {fontSize > 0 ? lines.map((line) => {
-        const top = marginH + (layout.tops.get(line.line) ?? 0);
+        const top = marginH + rowTop(line.line);
         if (line.kind === "surah-header") {
           return (
             <View key={`h-${line.line}`} style={[styles.row, { top, height: titleRowH }]}>
@@ -215,7 +227,7 @@ function MushafPage({
         }
         if (line.kind === "basmalah") {
           return (
-            <View key={`b-${line.line}`} style={[styles.row, { top, height: layout.wordRowH }]}>
+            <View key={`b-${line.line}`} style={[styles.row, { top, height: wordRowH }]}>
               {basmalaReady ? (
                 // The printed basmala: 1:1 in the page-1 QCF font, at the size of the page's lines.
                 <Text allowFontScaling={false} style={[styles.wordLine, styles.basmalaLine, { fontFamily: pageFontFamily(BASMALA_FONT_PAGE), fontSize: fontSize * basmalaScale(layout.variant) }, styles.boldInk]}>
@@ -233,7 +245,7 @@ function MushafPage({
           );
         }
         return (
-          <View key={`l-${line.line}`} style={[styles.row, { top, height: layout.wordRowH }]}>
+          <View key={`l-${line.line}`} style={[styles.row, { top, height: wordRowH }]}>
             <Text allowFontScaling={false} style={[styles.wordLine, { fontFamily: family, fontSize }, recitation ? null : styles.boldInk]}>
               {line.words!.map((word, index) => [
                 // A narrower gap than the font's space, as on the printed page (QCF_WORD_GAP).

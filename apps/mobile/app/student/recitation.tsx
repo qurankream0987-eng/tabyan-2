@@ -638,11 +638,12 @@ export default function NativeRecitationScreen() {
               <Text style={[styles.cardTitle, { color: colors.text }]}>موضع القراءة الحالي</Text>
             </View>
             <Text style={[styles.positionText, { color: colors.primary }]}>{displayPosition(match)}</Text>
-            <View onLayout={(event) => setPageWidth(Math.floor(event.nativeEvent.layout.width))}>
+            <View style={styles.pageBleed} onLayout={(event) => setPageWidth(Math.floor(event.nativeEvent.layout.width))}>
               {pageQuery.data && pageWidth > 0 ? (
                 <MushafPage
                   data={pageQuery.data}
                   width={pageWidth}
+                  fillWidth
                   recitation={{
                     rangeKeys,
                     currentWord: match?.reading ?? null,
@@ -949,6 +950,8 @@ const styles = StyleSheet.create({
   input: { minHeight: 48, borderWidth: 1, borderRadius: 13, paddingHorizontal: 12, textAlign: "center", fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 16 },
   inlineError: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12, lineHeight: 21, textAlign: "right", marginVertical: 8 },
   liveCard: { gap: 12 },
+  // The page spans the card edge to edge, so the Mushaf is as large as the screen allows.
+  pageBleed: { marginHorizontal: -12 },
   statusRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
   positionText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 18, lineHeight: 30, textAlign: "right" },
   currentWord: { fontFamily: "Amiri_700Bold", fontSize: 30, textAlign: "center", lineHeight: 45, marginVertical: 4 },
