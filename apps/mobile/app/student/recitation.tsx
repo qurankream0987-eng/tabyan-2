@@ -177,14 +177,12 @@ export default function NativeRecitationScreen() {
   const rangeKeys = useMemo(() => new Set(canonicalWords.map((word) => word.verseKey)), [canonicalWords]);
   const lastRangePage = canonicalWords[canonicalWords.length - 1]?.page;
 
-  // The page follows the reciter; before the first match it shows the start verse.
-  const currentPage = useMemo(() => {
-    const current = match?.reading;
-    const word = current
-      ? canonicalWords.find((item) => item.verseKey === current.verseKey && item.position === current.position)
-      : canonicalWords[0];
-    return word?.page;
-  }, [canonicalWords, match]);
+  // The page shows the word the reciter reads next, so it turns as soon as the last
+  // word of a page is read; before the first match it shows the start verse.
+  const currentPage = useMemo(
+    () => (canonicalWords[match?.readingWords ?? 0] ?? canonicalWords[canonicalWords.length - 1])?.page,
+    [canonicalWords, match?.readingWords],
+  );
   const pageQuery = useQuery({
     queryKey: ["mushaf-page", currentPage],
     queryFn: async () => {
