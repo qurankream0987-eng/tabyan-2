@@ -7,6 +7,12 @@ export interface RecognizedWord {
 
 /** Agreed words this close to the window's edge may still be growing. */
 const GUARD_SECONDS = 0.24;
+/**
+ * CTC places a word where its letters spike, so a long word can show only its first
+ * letters ("و" of "وعلى") for a while and still look finished. The newest word of a
+ * decode is complete only once nothing has been heard after it for this long.
+ */
+const TAIL_SECONDS = 0.6;
 /** A word this far behind the edge is settled even without agreement. */
 const FORCE_SETTLE_SECONDS = 2.0;
 /**
@@ -28,7 +34,8 @@ export function wordKey(text: string): string {
  * Decides which re-decoded words are final (local agreement): a word settles
  * once two consecutive decodes agree on it and it has cleared the window's
  * edge. Words the decodes keep disagreeing on are settled once they are well
- * behind the edge, and a pause or final commit settles everything.
+ * behind the edge. A flush settles every word clear of the edge, and only the
+ * final commit settles a word still being spoken there.
  */
 export class WordStabilizer {
   private settledUntil = 0;
@@ -40,7 +47,7 @@ export class WordStabilizer {
     return this.settledUntil;
   }
 
-  update(words: RecognizedWord[], windowEndSeconds: number, settleAll: boolean) {
+  update(words: RecognizedWord[], windowEndSeconds: number, settle: "agreed" | "flush" | "all") {
     const fresh = words.filter((word) => (word.startSeconds + word.endSeconds) / 2 >= this.settledUntil);
     if (fresh.length && this.lastSettledKey
       && wordKey(fresh[0].text).startsWith(this.lastSettledKey)
@@ -48,11 +55,12 @@ export class WordStabilizer {
       fresh.shift();
     }
 
-    let count = settleAll ? fresh.length : 0;
+    let count = settle === "all" ? fresh.length : 0;
     while (count < fresh.length) {
       const word = fresh[count];
-      const agreed = wordKey(word.text) === this.previous[count]
-        && word.endSeconds <= windowEndSeconds - GUARD_SECONDS;
+      const complete = count < fresh.length - 1 || word.endSeconds <= windowEndSeconds - TAIL_SECONDS;
+      const clear = complete && word.endSeconds <= windowEndSeconds - GUARD_SECONDS;
+      const agreed = clear && (settle === "flush" || wordKey(word.text) === this.previous[count]);
       if (!agreed && word.endSeconds > windowEndSeconds - FORCE_SETTLE_SECONDS) break;
       count += 1;
     }

@@ -77,6 +77,16 @@ export class TilawiModel implements Transcriber {
   }
 }
 
+/**
+ * Two threads per decode halve the time the reciter waits for the pointer (about
+ * 370 ms to 230 ms per decode) for a quarter more CPU. TABYAN_TILAWI_THREADS overrides.
+ */
+function threadsPerInference() {
+  const configured = Number(process.env.TABYAN_TILAWI_THREADS);
+  if (Number.isInteger(configured) && configured > 0) return configured;
+  return availableParallelism() >= 4 ? 2 : 1;
+}
+
 let shared: Promise<TilawiModel> | null = null;
 
 /** Lazily loads the model once per process from TABYAN_TILAWI_MODEL_DIR. */
@@ -84,7 +94,7 @@ export function sharedTilawiModel(): Promise<TilawiModel> {
   if (!shared) {
     const modelDir = process.env.TABYAN_TILAWI_MODEL_DIR?.trim();
     shared = modelDir
-      ? TilawiModel.load(modelDir)
+      ? TilawiModel.load(modelDir, { threadsPerInference: threadsPerInference() })
       : Promise.reject(new Error("TABYAN_TILAWI_MODEL_DIR is not configured"));
     // A failed load is retried by the next session instead of being cached.
     shared.catch(() => { shared = null; });

@@ -62,6 +62,22 @@ describe("recitation mistakes", () => {
     expect(mulk(1, 1, 2, 3).flagged.size).toBe(0);
   });
 
+  it("fast recitation heard with letters dropped, words cut short and run together is not wrong", () => {
+    // What the recognizer made of a correct, fast recitation of al-Baqarah 1-5.
+    const { summary, flagged } = recite(range(2, 1, 5), [
+      "الم ذلك الكتاب لا ريب", "فيه هدى للمتقين", "الذين يؤمنون بالغيبيقيمون الصاة ومما", "رزقناهم ينفق",
+      "والذين يؤمنون بما أنزل إليك و أنزل", "من قك وبالآخرة هم يوقن", "أول على هدى من ربهم", "وأولئك هم المفلحون",
+    ]);
+    expect(flagged.size).toBe(0);
+    expect(summary.wordsRecited).toBe(summary.totalWords);
+  });
+
+  it("a word left out is not counted as recited because the words around it are close", () => {
+    // "بالغيب" then "الصلاة" must not be taken as "بالغيب ويقيمون" run together.
+    const { summary } = recite(range(2, 1, 3), ["الم ذلك الكتاب لا ريب فيه هدى للمتقين", "الذين يؤمنون بالغيب الصلاة ومما رزقناهم ينفقون"]);
+    expect(summary.wordsRecited).toBe(summary.totalWords - 1);
+  });
+
   it("recognizer noise on a correct recitation does not turn into skipped ayahs", () => {
     // Dropped and misheard words, phrases split mid-ayah: what live recognition looks like.
     let seed = 7;

@@ -5,6 +5,7 @@ import { CtcDecoder, type CtcWord } from "./ctcDecoder";
 import { MODEL_SAMPLE_RATE_HZ, pcm16ToModelInput } from "./pcm";
 import { FRAME_SECONDS, type Transcriber } from "./tilawiModel";
 import { TILAWI_INPUT_SAMPLE_RATE_HZ, TilawiStreamingProvider } from "./TilawiStreamingProvider";
+import { WordStabilizer } from "./wordStabilizer";
 
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 
@@ -143,6 +144,18 @@ test("recitation under the breath in a quiet room is decoded", async () => {
   const heard = h.transcripts.filter((event) => event.isFinal).map((event) => event.text).join(" ");
   assert.equal(heard, "بسم الله الرحمن الرحيم");
   assert.ok(h.transcripts.filter((event) => event.isFinal).every((event) => event.confirmationEligible === true));
+});
+
+const word = (text: string, startSeconds: number, endSeconds: number) => ({ text, startSeconds, endSeconds, confidence: 0.9 });
+
+test("a pause commit does not settle a word whose first letter is all that is heard yet", () => {
+  // Fast recitation: only "و" of "وعلى" has been decoded when the client asks to settle.
+  const stabilizer = new WordStabilizer();
+  const first = stabilizer.update([word("سمعهم", 0.2, 0.8), word("و", 1.0, 1.08)], 1.3, "flush");
+  assert.deepEqual(first.settled.map((w) => w.text), ["سمعهم"]);
+  assert.deepEqual(first.pending.map((w) => w.text), ["و"]);
+  const next = stabilizer.update([word("وعلى", 1.0, 1.5), word("أبصارهم", 1.6, 2.4)], 2.6, "flush");
+  assert.deepEqual(next.settled.map((w) => w.text), ["وعلى"]);
 });
 
 test("silence is not decoded", async () => {

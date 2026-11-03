@@ -128,7 +128,7 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
     this.pump();
   }
 
-  /** A non-final commit means the client heard a pause: settle everything heard so far. */
+  /** A non-final commit means the client heard a pause: settle every word clear of the window edge. */
   commit(finalize = false, commitId?: string) {
     if (!this.isOpen() || this.finalCommit) return;
     if (finalize) this.finalCommit = { id: commitId };
@@ -168,7 +168,7 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
     const isFinal = this.finalCommit !== null;
     const wasFlush = this.flushRequested;
     this.flushRequested = false;
-    void this.decode(settleAll).then(() => {
+    void this.decode(isFinal ? "all" : wasFlush ? "flush" : "agreed").then(() => {
       if (wasFlush || isFinal) this.events.onCommitAccepted?.("local_transcription_result");
       if (isFinal && this.isOpen()) {
         this.finalized = true;
@@ -192,7 +192,7 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
     this.audioStart = absoluteSample;
   }
 
-  private async decode(settleAll: boolean) {
+  private async decode(settle: "agreed" | "flush" | "all") {
     const model = this.model;
     if (!model) return;
     this.decoding = true;
@@ -217,7 +217,7 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
           confidence: word.confidence,
         })),
         end / MODEL_SAMPLE_RATE_HZ,
-        settleAll,
+        settle,
       );
       this.emit(settled, pending);
     } catch (error) {
