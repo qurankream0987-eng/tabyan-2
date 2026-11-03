@@ -1980,7 +1980,7 @@
 
 /* إطار السورة يرسم زخارفه كلها (SurahHeaderOrnament)؛ العنوان وحده فوقه داخل الخرطوشة. */
 .tby-surah-banner .tby-surah-cartouche { width: var(--sb-title-w, 56%); }
-.tby-surah-banner .tby-surah-title { color: var(--mushaf-orn); background: transparent; }
+.tby-surah-banner .tby-surah-title { color: var(--mushaf-ink); background: transparent; }
 
 /* خط أسماء السور (خط ترويسة المصحف المطبوع، من نفس مصدر خطوط QCF): كل اسم سورة رسم واحد. */
 @font-face {
