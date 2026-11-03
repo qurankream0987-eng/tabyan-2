@@ -72,8 +72,8 @@ describe("Mushaf page composition", () => {
     expect(maxFontSizeFor(layout.variant, fullH)).toBe(Infinity);
   });
 
-  it("caps opening-page glyphs at the dense-page type size; dense pages fit by width only", () => {
-    expect(maxFontSizeFor("opening", fullH)).toBeCloseTo(standardRowHeight(fullH) * DENSE_INK_RATIO);
+  it("caps opening-page glyphs at the dense-page word size (their fonts draw 1.35x smaller); dense pages fit by width only", () => {
+    expect(maxFontSizeFor("opening", fullH)).toBeCloseTo(standardRowHeight(fullH) * DENSE_INK_RATIO * 1.35);
     expect(maxFontSizeFor("standard", fullH)).toBe(Infinity);
   });
 });

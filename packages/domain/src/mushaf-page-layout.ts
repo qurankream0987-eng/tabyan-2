@@ -38,11 +38,18 @@ export function standardRowHeight(fullH: number): number {
 }
 
 /**
+ * The v1 (1405 print) fonts of pages 1 and 2 draw their words this much smaller than the
+ * full pages' fonts do (the basmala of 1:1 against the same words in 27:30 on page 379).
+ */
+const OPENING_GLYPH_SCALE = 1.35;
+
+/**
  * سقف حجم خط QCF لصفحة: الصفحات الكاملة تُعاير بالعرض وحده؛ صفحتا الافتتاح أسطرهما
- * أقصر بطبيعتها في المطبوع، فتُحدّ بحجم خط الصفحات الكاملة (لا تكبير للـ glyphs).
+ * أقصر بطبيعتها في المطبوع، فتُحدّ بحجم خط الصفحات الكاملة — مصحَّحاً بصغر glyphs
+ * خطَّيهما، فتظهر كلماتهما بحجم كلمات بقية المصحف.
  */
 export function maxFontSizeFor(variant: PageVariant, fullH: number): number {
-  return variant === "opening" ? standardRowHeight(fullH) * DENSE_INK_RATIO : Infinity;
+  return variant === "opening" ? standardRowHeight(fullH) * DENSE_INK_RATIO * OPENING_GLYPH_SCALE : Infinity;
 }
 
 /**

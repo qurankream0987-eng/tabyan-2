@@ -57,6 +57,16 @@ export type MushafHideMode = "progressive_reveal" | "first_word" | "full_hide" |
 // Paper-coloured ink: Android drops a fully transparent colour on nested text.
 const HIDDEN = { color: MUSHAF_COLORS.paper } as const;
 
+/**
+ * During recitation each word keeps the page's heavier ink in its own colour, so coloured
+ * feedback reads as clearly as the printed text (a black halo would darken it, and on a
+ * hidden word would give it away).
+ */
+function recitedInk(style: ReturnType<typeof wordStyle>) {
+  const color = (style && "color" in style ? style.color : undefined) ?? MUSHAF_COLORS.ink;
+  return [style, { textShadowColor: color, textShadowRadius: 0.4, textShadowOffset: { width: 0, height: 0 } }];
+}
+
 function wordStyle(word: LineWord, recitation: MushafRecitationState | undefined, highlightVerseKey: string | null | undefined) {
   if (!recitation) return word.verseKey === highlightVerseKey ? styles.highlighted : null;
   if (!recitation.rangeKeys.has(word.verseKey)) return { color: MUSHAF_COLORS.outOfRange };
@@ -230,7 +240,7 @@ function MushafPage({
                 index > 0 ? <Text key={`g${index}`} style={{ fontSize: fontSize * QCF_WORD_GAP }}> </Text> : null,
                 <Text
                   key={`${word.verseKey}:${word.position}`}
-                  style={wordStyle(word, recitation, highlightVerseKey)}
+                  style={recitation ? recitedInk(wordStyle(word, recitation, highlightVerseKey)) : wordStyle(word, recitation, highlightVerseKey)}
                   onPress={onPressVerse ? () => onPressVerse(word.verseKey) : undefined}
                 >
                   {word.code}
@@ -288,7 +298,8 @@ const styles = StyleSheet.create({
   measureBox: { position: "absolute", top: 0, left: 0, width: 100_000, opacity: 0 },
   measureText: { alignSelf: "flex-start", includeFontPadding: false },
   row: { position: "absolute", left: 0, right: 0, alignItems: "center", justifyContent: "center" },
-  wordLine: { color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center" },
+  // Spanning the row keeps the overhang of a line's first and last glyphs inside the text box (Android clips it).
+  wordLine: { color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center", alignSelf: "stretch", paddingHorizontal: 8 },
   // The page-1 basmala glyphs overhang their advance; padding keeps the first stroke in view.
   basmalaLine: { alignSelf: "stretch", paddingHorizontal: 12 },
   surahBand: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
