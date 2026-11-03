@@ -10,8 +10,9 @@ import { trpc } from "../../../lib/trpc";
 import { useTheme, palette } from "../../../lib/theme";
 
 // ── بنية الرئيسية مطابقة للموقع (StudentHome.tsx):
-//    1) تحية  2) آية اليوم  3) الإحصائيات  4) واجبات التسميع المعلقة
+//    1) تحية  2) آية اليوم  3) الإحصائيات
 //    6) بطاقة الحلقة القادمة لكل مسار مسجّل  7) بطاقات المسارات غير المسجّلة  8) تذكير اختبار القبول
+//    9) واجبات التسميع المعلقة (آخر الصفحة)
 const PATH_ORDER = ["quran", "tajweed", "sharia"] as const;
 type LearningPathKey = (typeof PATH_ORDER)[number];
 
@@ -117,20 +118,6 @@ export default function StudentHome() {
         ))}
       </View>
 
-      {/* 4. واجبات التسميع التي لم تُسلَّم بعد */}
-      {pendingAssignments.length ? (
-        <SoftPressable accessibilityRole="button" accessibilityLabel="واجبات التسميع" onPress={() => router.push("/student/recitation" as never)}>
-          <Card style={[styles.assignmentCard, { borderRightColor: palette.gold }]}>
-            <View style={[styles.pathIcon, { backgroundColor: `${palette.gold}26` }]}><Icon name="mic" size={22} color={isDark ? palette.gold : palette.goldDark} /></View>
-            <View style={styles.assignmentBody}>
-              <Text style={[styles.assignmentTitle, { color: colors.text }]}>واجبات التسميع{pendingAssignments.length > 1 ? ` (${pendingAssignments.length})` : ""}</Text>
-              <Text numberOfLines={1} style={[styles.assignmentSub, { color: colors.muted }]}>{assignmentRange(pendingAssignments[0].assignment)}</Text>
-            </View>
-            <Icon name="arrow-left" size={17} color={colors.muted} />
-          </Card>
-        </SoftPressable>
-      ) : null}
-
       {/* 6. الحلقة القادمة — بطاقة مستقلة لكل مسار مسجّل له موعد قادم */}
       {enrolledPaths.map((p) => {
         const next = upcomingByPath[p][0];
@@ -186,6 +173,20 @@ export default function StudentHome() {
             <Text style={[styles.placementBtnText, { color: palette.goldDark }]}>فتح</Text>
           </Pressable>
         </Card>
+      ) : null}
+
+      {/* 9. واجبات التسميع التي لم تُسلَّم بعد — آخر الصفحة */}
+      {pendingAssignments.length ? (
+        <SoftPressable accessibilityRole="button" accessibilityLabel="واجبات التسميع" onPress={() => router.push("/student/recitation" as never)}>
+          <Card style={[styles.assignmentCard, { borderRightColor: palette.gold }]}>
+            <View style={[styles.pathIcon, { backgroundColor: `${palette.gold}26` }]}><Icon name="mic" size={22} color={isDark ? palette.gold : palette.goldDark} /></View>
+            <View style={styles.assignmentBody}>
+              <Text style={[styles.assignmentTitle, { color: colors.text }]}>واجبات التسميع{pendingAssignments.length > 1 ? ` (${pendingAssignments.length})` : ""}</Text>
+              <Text numberOfLines={1} style={[styles.assignmentSub, { color: colors.muted }]}>{assignmentRange(pendingAssignments[0].assignment)}</Text>
+            </View>
+            <Icon name="arrow-left" size={17} color={colors.muted} />
+          </Card>
+        </SoftPressable>
       ) : null}
     </Screen>
   );

@@ -143,9 +143,6 @@ export default function StudentHome() {
         </div>
       </section>
 
-      {/* واجبات التسميع التي لم تُسلَّم بعد */}
-      {!DEMO && <PendingAssignmentsCard />}
-
       {/* 3. بطاقات مواعيد المسارات المسجل فيها الطالب فقط — بطاقة مستقلة لكل مسار */}
       {enrolledPaths.map((path) => (
         <PathScheduleCard key={path} path={path} sessions={upcomingByPath[path]} />
@@ -172,6 +169,9 @@ export default function StudentHome() {
           </Link>
         </GlassCard>
       )}
+
+      {/* واجبات التسميع التي لم تُسلَّم بعد */}
+      {!DEMO && <PendingAssignmentsCard />}
     </div>
   );
 }
