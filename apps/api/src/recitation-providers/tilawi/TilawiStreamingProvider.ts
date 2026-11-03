@@ -14,13 +14,42 @@ const HOP_SECONDS = 0.4;
 const CONTEXT_SECONDS = 1.0;
 /** Upper bound on one decode, so a long unbroken stretch cannot grow without limit. */
 const MAX_WINDOW_SECONDS = 12;
-/** Below this level a hop is treated as silence and not decoded. */
-const SILENCE_RMS = 0.002;
+/**
+ * Silence and voiced speech are judged against the background noise measured on
+ * this session's own audio, so recitation under the breath in a quiet room is
+ * decoded while the noise of a louder room is not. These floors hold when the
+ * input is digital silence.
+ */
+const MIN_SILENCE_RMS = 0.0006;
+const MIN_VOICED_RMS = 0.0008;
+/** A hop below this multiple of the noise floor is silence and not decoded. */
+const SILENCE_OVER_NOISE = 2.5;
+/** A decoded word needs this multiple of the noise floor around its frames to be real speech. */
+const VOICED_OVER_NOISE = 3;
+/**
+ * The noise floor follows quieter chunks quickly and louder ones slowly: within
+ * a few seconds for noise-level audio, and over about half a minute while the
+ * reciter is heard, so steady recitation is never taken for a noisy room.
+ */
+const NOISE_FALL = 0.7;
+const NOISE_RISE = 1.02;
+const NOISE_RISE_DURING_SPEECH = 1.002;
 /** Shorter windows (a final flush right after a decode) hold no whole word. */
 const MIN_DECODE_SECONDS = 0.2;
-/** A decoded word needs at least this level around its frames to be real speech. */
-const WORD_VOICED_RMS = 0.003;
 const VOICE_MARGIN_FRAMES = 2;
+/** Quiet audio is raised towards this level before decoding, by at most MAX_INPUT_GAIN. */
+const TARGET_INPUT_RMS = 0.05;
+const MAX_INPUT_GAIN = 12;
+
+/** A copy of quiet audio raised towards TARGET_INPUT_RMS; loud audio is passed as it is. */
+function raised(window: Float32Array): Float32Array {
+  const level = rms(window);
+  if (level <= 0 || level >= TARGET_INPUT_RMS) return window;
+  const gain = Math.min(MAX_INPUT_GAIN, TARGET_INPUT_RMS / level);
+  const out = new Float32Array(window.length);
+  for (let i = 0; i < window.length; i++) out[i] = Math.max(-1, Math.min(1, window[i] * gain));
+  return out;
+}
 
 /**
  * Live recitation transcription on the in-process Tilawi CTC model.
@@ -44,6 +73,8 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
   private decodedUntil = 0;
   /** Skipped silence moves the window forward even though no word settled. */
   private silenceUntilSeconds = 0;
+  /** Background noise level of this session's audio (RMS per chunk). */
+  private noiseFloor = 0.001;
   private readonly stabilizer = new WordStabilizer();
 
   private decoding = false;
@@ -86,6 +117,10 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
     }
     this.events.onAudioForwarded?.(chunk.length);
     const samples = pcm16ToModelInput(chunk, TILAWI_INPUT_SAMPLE_RATE_HZ);
+    const level = rms(samples);
+    this.noiseFloor = level < this.noiseFloor
+      ? this.noiseFloor * NOISE_FALL + level * (1 - NOISE_FALL)
+      : Math.min(level, this.noiseFloor * (level >= this.silenceRms() ? NOISE_RISE_DURING_SPEECH : NOISE_RISE));
     const merged = new Float32Array(this.audio.length + samples.length);
     merged.set(this.audio);
     merged.set(samples, this.audio.length);
@@ -121,7 +156,7 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
     if (!settleAll && newSamples < HOP_SECONDS * MODEL_SAMPLE_RATE_HZ) return;
 
     if (!settleAll && !this.itemHasPartial
-      && rms(this.audio, Math.max(0, this.decodedUntil - this.audioStart)) < SILENCE_RMS) {
+      && rms(this.audio, Math.max(0, this.decodedUntil - this.audioStart)) < this.silenceRms()) {
       // Nothing is waiting to settle and the new audio is silent: skip the
       // decode and slide the context forward so the next window stays short.
       this.decodedUntil = this.audioEnd;
@@ -167,7 +202,7 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
     const window = this.audio.slice(0, end - start);
     try {
       const words = window.length >= MIN_DECODE_SECONDS * MODEL_SAMPLE_RATE_HZ
-        ? await model.transcribe(window)
+        ? await model.transcribe(raised(window))
         : [];
       if (!this.isOpen()) return;
       this.decodedUntil = end;
@@ -200,7 +235,11 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
     const samplesPerFrame = FRAME_SECONDS * MODEL_SAMPLE_RATE_HZ;
     const from = Math.max(0, (word.startFrame - VOICE_MARGIN_FRAMES) * samplesPerFrame);
     const to = Math.min(window.length, (word.endFrame + VOICE_MARGIN_FRAMES) * samplesPerFrame);
-    return rms(window, from, to) >= WORD_VOICED_RMS;
+    return rms(window, from, to) >= Math.max(MIN_VOICED_RMS, this.noiseFloor * VOICED_OVER_NOISE);
+  }
+
+  private silenceRms() {
+    return Math.max(MIN_SILENCE_RMS, this.noiseFloor * SILENCE_OVER_NOISE);
   }
 
   private emit(settled: RecognizedWord[], pending: RecognizedWord[]) {
@@ -224,8 +263,9 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
       startMs: words.length ? Math.round(words[0].startSeconds * 1000) : undefined,
       endMs: words.length ? Math.round(words[words.length - 1].endSeconds * 1000) : undefined,
       confidence: words.length ? Math.min(...words.map((word) => word.confidence)) : undefined,
-      // Unvalidated ASR may suggest review; it never confirms a mistake.
-      confirmationEligible: false,
+      // Settled words may confirm a mistake; the client still needs the reciter to read
+      // on correctly past it first. A revisable tail never does.
+      confirmationEligible: isFinal,
     });
   }
 

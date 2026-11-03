@@ -491,9 +491,20 @@ test("automatic gain raises quiet speech, leaves loud speech and never clips", a
   let quiet = new Float32Array();
   for (let chunk = 0; chunk < 30; chunk += 1) quiet = gain.apply(Float32Array.from({ length: 240 }, (_, i) => 0.06 * Math.sin(i / 5)));
   assert.ok(peak(quiet) > 0.25, "quiet speech is raised");
-  assert.ok(peak(quiet) <= 0.06 * 6 + 1e-6, "gain is bounded");
+  assert.ok(peak(quiet) <= 0.06 * 16 + 1e-6, "gain is bounded");
   const loud = gain.apply(Float32Array.from({ length: 240 }, (_, i) => 0.9 * Math.sin(i / 5)));
   assert.ok(peak(loud) <= 1, "loud speech never clips");
+});
+
+test("automatic gain raises recitation under the breath above a quiet room", async () => {
+  const { AutoGain } = await import("../lib/recitation/auto-gain");
+  const gain = new AutoGain();
+  const peak = (samples: Float32Array) => Math.max(...Array.from(samples, Math.abs));
+  // A quiet room first, then a whisper at 1% of full scale.
+  for (let chunk = 0; chunk < 20; chunk += 1) gain.apply(Float32Array.from({ length: 240 }, (_, i) => 0.001 * Math.sin(i * 1.7)));
+  let whisper = new Float32Array();
+  for (let chunk = 0; chunk < 30; chunk += 1) whisper = gain.apply(Float32Array.from({ length: 240 }, (_, i) => 0.01 * Math.sin(i / 5)));
+  assert.ok(peak(whisper) > 0.1, "a whisper is raised well above its recorded level");
 });
 
 test("speech filter keeps the speech band and removes hiss above it and DC below it", async () => {

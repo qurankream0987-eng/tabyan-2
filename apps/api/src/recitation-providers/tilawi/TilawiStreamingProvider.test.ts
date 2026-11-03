@@ -8,11 +8,11 @@ import { TILAWI_INPUT_SAMPLE_RATE_HZ, TilawiStreamingProvider } from "./TilawiSt
 
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 
-/** 100 ms of 24 kHz PCM16, loud enough to count as speech (or silent). */
-function chunk(silent = false): string {
+/** 100 ms of 24 kHz PCM16, loud enough to count as speech (or silent, or at `amplitude`). */
+function chunk(silent = false, amplitude = 3000): string {
   const samples = TILAWI_INPUT_SAMPLE_RATE_HZ / 10;
   const pcm = Buffer.alloc(samples * 2);
-  for (let i = 0; i < samples; i++) pcm.writeInt16LE(silent ? 0 : (i % 2 ? 3000 : -3000), i * 2);
+  for (let i = 0; i < samples; i++) pcm.writeInt16LE(silent ? 0 : (i % 2 ? amplitude : -amplitude), i * 2);
   return pcm.toString("base64");
 }
 
@@ -55,11 +55,11 @@ function harness(model: TimelineModel) {
   };
   const provider = new TilawiStreamingProvider(events, async () => model);
   let seconds = 0;
-  const feed = async (count: number, silent = false) => {
+  const feed = async (count: number, silent = false, amplitude?: number) => {
     for (let i = 0; i < count; i++) {
       seconds += 0.1;
       model.heardUntilSeconds = seconds;
-      provider.appendAudio(chunk(silent));
+      provider.appendAudio(chunk(silent, amplitude));
       await settle();
     }
   };
@@ -129,6 +129,20 @@ test("a final commit settles the tail and acknowledges with its commit id", asyn
   assert.deepEqual(h.finalized, ["commit-1"]);
   h.provider.appendAudio(chunk());
   assert.equal(h.finalized.length, 1, "audio after the final commit is ignored");
+});
+
+test("recitation under the breath in a quiet room is decoded", async () => {
+  const model = new TimelineModel(TIMELINE.map((word) => ({ ...word, start: word.start + 1, end: word.end + 1 })));
+  const h = harness(model);
+  h.provider.connect();
+  await settle();
+  // A second of a quiet room, then recitation at about 0.15% of full scale.
+  await h.feed(10, false, 10);
+  await h.feed(30, false, 50);
+  await h.feed(10, true);
+  const heard = h.transcripts.filter((event) => event.isFinal).map((event) => event.text).join(" ");
+  assert.equal(heard, "بسم الله الرحمن الرحيم");
+  assert.ok(h.transcripts.filter((event) => event.isFinal).every((event) => event.confirmationEligible === true));
 });
 
 test("silence is not decoded", async () => {
