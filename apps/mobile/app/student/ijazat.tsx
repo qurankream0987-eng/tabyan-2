@@ -27,6 +27,7 @@ export default function Ijazat() {
   const { colors, isDark } = useTheme();
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [answer, setAnswer] = useState<"yes" | null>(null);
   const submit = trpc.student.submitQiraatCertificate.useMutation({
     onSuccess: () => { setError(null); void q.refetch(); },
@@ -100,7 +101,7 @@ export default function Ijazat() {
           <Text style={[styles.note, { color: colors.muted }]}>اختر صورة أو ملف PDF واضحاً، بحد أقصى ١٠ ميجابايت. لن يُرسل الملف قبل اكتمال رفعه والتحقق منه.</Text>
           {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
           <Button
-            label={uploading ? "جارٍ رفع الشهادة…" : "اختيار وثيقة الإجازة"}
+            label={uploading ? `جارٍ رفع الشهادة… ${progress}%` : submit.isPending ? "جارٍ إرسال الشهادة…" : "اختيار وثيقة الإجازة"}
             icon="upload"
             loading={uploading || submit.isPending}
             disabled={uploading || submit.isPending}
@@ -130,11 +131,13 @@ export default function Ijazat() {
       return;
     }
     setUploading(true);
+    setProgress(0);
     try {
+      // Like the web: a plain upload, since the qiraat_certificate purpose only takes PDF and images are allowed here.
       const objectPath = await uploadNativeFile(file.uri, {
-        name: file.name || `qiraat-certificate-${Date.now()}.${contentType === "application/pdf" ? "pdf" : "jpg"}`,
+        name: file.name || `qiraat-certificate-${Date.now()}.${contentType === "application/pdf" ? "pdf" : contentType === "image/png" ? "png" : "jpg"}`,
         contentType,
-        purpose: "qiraat_certificate",
+        onProgress: setProgress,
       });
       await submit.mutateAsync({ certificateUrl: objectPath });
     } catch (cause) {
