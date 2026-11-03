@@ -263,13 +263,16 @@ export class NativeQuranLiveMatcher {
         return "peeked";
       case "POSSIBLE_ERROR":
         return "pending";
-      case "CONFIRMED_ERROR":
-        return this.engine.mistakeAt(index)?.kind === "OMISSION" ? "skipped" : "mistake";
+      case "CONFIRMED_ERROR": {
+        const kind = this.engine.mistakeAt(index)?.kind;
+        return kind === "OMISSION" || kind === "SKIP" || kind === "UNEXPECTED_JUMP" ? "skipped" : "mistake";
+      }
       case "SKIPPED": {
-        // A long skipped run records one mistake at its first word; show the run
-        // only once that mistake is confirmed.
+        // A long skipped run records one mistake at its first word, which turns
+        // CONFIRMED_ERROR; show the whole run only once that mistake is confirmed.
         let start = index;
         while (start > 0 && this.engine.stateAt(start - 1) === "SKIPPED") start -= 1;
+        if (!this.engine.mistakeAt(start) && start > 0) start -= 1;
         return this.engine.mistakeAt(start)?.status === "confirmed" ? "skipped" : null;
       }
       default:

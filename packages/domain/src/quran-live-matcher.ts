@@ -157,6 +157,18 @@ function tokenCost(heard: string, expected: string, cache: Map<string, number>, 
   return cost;
 }
 
+/** Whether any of the first `count` heard tokens is matched in `alignment`. */
+function leadingMatched(alignment: Alignment, count: number) {
+  let heardIndex = 0;
+  for (const op of alignment.ops) {
+    if (heardIndex >= count) return false;
+    if (op.kind === "skip") continue;
+    if (op.kind === "match") return true;
+    heardIndex += 1;
+  }
+  return false;
+}
+
 /**
  * مطابق التلاوة الحي — محاذاة متسلسلة مقيدة بالنص القرآني الكنسي.
  *
@@ -197,6 +209,17 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
   private readonly known = new Set<string>();
   private readonly revealed = new Map<string, number>();
   private readonly costCache = new Map<string, number>();
+  /**
+   * Final speech since the last commit that matched nothing near the reader (another
+   * ayah or surah). If the reader then resumes further on, it stood in for the skipped
+   * words, so those are wrong words rather than omissions.
+   */
+  private unmatchedFinal: string[] = [];
+  /**
+   * A final phrase that aligned but could not be committed yet (it opens two ayahs
+   * alike); it is read again in front of the next phrase, which tells the two apart.
+   */
+  private carry: string[] = [];
 
   constructor(
     private words: W[],
@@ -254,6 +277,8 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
     this.lastEvent = "";
     this.mode = "tracking";
     this.mismatchCount = 0;
+    this.unmatchedFinal = [];
+    this.carry = [];
     this.seen.clear();
     this.revealed.clear();
     for (let i = 0; i < index; i += 1) this.markRevealed(this.words[i]);
@@ -334,10 +359,14 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
     return prefixLength;
   }
 
-  private searchWindow(heardLength: number): [number, number] {
+  private searchWindow(heardLength: number, extended = false): [number, number] {
     const anchor = this.committed;
     const lastIndex = this.words.length - 1;
-    const forward = Math.max(this.options.trackingForwardWindow, heardLength + 6);
+    // Extended: the phrase may start anywhere in the forward window (a skipped ayah), so
+    // the window reaches its whole length past that and a long ayah is not cut short.
+    const forward = extended
+      ? this.options.trackingForwardWindow + heardLength + 6
+      : Math.max(this.options.trackingForwardWindow, heardLength + 6);
     if (this.mode !== "recovery") {
       return [Math.max(0, anchor - this.options.trackingBackwardWindow), Math.min(lastIndex, anchor + forward)];
     }
@@ -360,9 +389,9 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
    * محاذاة semi-global: كل كلمات الذيل المسموع تُحاذى، والبداية داخل النافذة
    * حرة مع عقوبة المسافة عن المرساة. O(tail × window) بلا حلقات بداية/طول.
    */
-  private findAlignment(heard: string[], openLast: boolean): Alignment | null {
+  private findAlignment(heard: string[], openLast: boolean, extended = false): Alignment | null {
     if (!heard.length || !this.words.length) return null;
-    const [first, last] = this.searchWindow(heard.length);
+    const [first, last] = this.searchWindow(heard.length, extended);
     const width = last - first + 1;
     const h = heard.length;
     const cols = width + 1;
@@ -498,6 +527,55 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
     return false;
   }
 
+  /**
+   * Global alignment of heard tokens with the words [from, to): matches,
+   * substitutions, skipped words, and tokens left over as extras.
+   */
+  private alignGap(heard: string[], from: number, to: number): AlignmentOp[] {
+    const n = heard.length;
+    const m = to - from;
+    if (!n) return Array.from({ length: m }, (_, k): AlignmentOp => ({ kind: "skip", index: from + k }));
+    const cols = m + 1;
+    const cost = new Float64Array((n + 1) * cols);
+    const move = new Uint8Array((n + 1) * cols);
+    for (let j = 1; j <= m; j += 1) { cost[j] = j * INDEL_COST; move[j] = 2; }
+    for (let i = 1; i <= n; i += 1) {
+      cost[i * cols] = i * INDEL_COST;
+      move[i * cols] = 1;
+      for (let j = 1; j <= m; j += 1) {
+        const diag = cost[(i - 1) * cols + j - 1] + tokenCost(heard[i - 1], this.words[from + j - 1].normalizedText, this.costCache, false);
+        const extra = cost[(i - 1) * cols + j] + INDEL_COST;
+        const skip = cost[i * cols + j - 1] + INDEL_COST;
+        let best = diag;
+        let bestMove = 0;
+        if (extra < best) { best = extra; bestMove = 1; }
+        if (skip < best) { best = skip; bestMove = 2; }
+        cost[i * cols + j] = best;
+        move[i * cols + j] = bestMove;
+      }
+    }
+    const ops: AlignmentOp[] = [];
+    let i = n;
+    let j = m;
+    while (i > 0 || j > 0) {
+      const step = move[i * cols + j];
+      if (i > 0 && j > 0 && step === 0) {
+        const index = from + j - 1;
+        const c = tokenCost(heard[i - 1], this.words[index].normalizedText, this.costCache, false);
+        ops.push(c < 1 ? { kind: "match", index, cost: c } : { kind: "substitution", index, heard: heard[i - 1], cost: c });
+        i -= 1;
+        j -= 1;
+      } else if (i > 0 && (j === 0 || step === 1)) {
+        ops.push({ kind: "extra", heard: heard[i - 1], afterIndex: from + j - 1 });
+        i -= 1;
+      } else {
+        ops.push({ kind: "skip", index: from + j - 1 });
+        j -= 1;
+      }
+    }
+    return ops.reverse();
+  }
+
   private markRevealed(word: CanonicalQuranWord) {
     this.revealed.set(word.verseKey, Math.max(this.revealed.get(word.verseKey) ?? 0, word.position));
   }
@@ -534,17 +612,26 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
     // ذيل محدود: ما لم يُطابق خلال MAX_TAIL_TOKENS كلمة لا يُعاد فحصه للأبد.
     // دون التزام جزئي لا يُستهلك رأس الـ item قبل نهايته، فلا يُقص.
     if (this.options.commitPartials && body.length - item.consumed > MAX_TAIL_TOKENS) item.consumed = body.length - MAX_TAIL_TOKENS;
-    const heard = body.slice(Math.min(item.consumed, body.length));
-    if (!heard.length) {
+    const carried = this.carry.length;
+    const heard = [...this.carry, ...body.slice(Math.min(item.consumed, body.length))];
+    if (heard.length === carried) {
       return this.result(item.skip > 0 ? 1 : 0, false, startedAt);
     }
 
     let alignment = this.findAlignment(heard, !event.isFinal);
+    if (!alignment || alignment.confidence < COMMIT_CONFIDENCE) {
+      // The reader may have skipped ahead (or read a later ayah first): search further,
+      // but only when the phrase does not fit near the reader, so normal reading is unchanged.
+      const far = this.findAlignment(heard, !event.isFinal, true);
+      if (far && far.confidence >= COMMIT_CONFIDENCE && far.confidence > (alignment?.confidence ?? 0) + 0.1) alignment = far;
+    }
     let heardOffset = 0;
     if (alignment && alignment.confidence < COMMIT_CONFIDENCE && heard.length >= 2) {
       // بداية مترددة/خاطئة ثم متابعة صحيحة: نحاذي بدون أول لفظ أو لفظين، ونُبقي
       // المحذوف كألفاظ زائدة في مقدمة المحاذاة لتُقرن بفجوتها كإبدال.
       for (let trim = 1; trim <= Math.min(2, heard.length - 1); trim += 1) {
+        // Words the full alignment already matched are not a false start.
+        if (leadingMatched(alignment, trim)) break;
         const trimmed = this.findAlignment(heard.slice(trim), !event.isFinal);
         if (!trimmed || trimmed.confidence < COMMIT_CONFIDENCE) continue;
         const lead: AlignmentOp[] = heard.slice(0, trim).map((token) => ({ kind: "extra", heard: token, afterIndex: trimmed.start - 1 }));
@@ -564,6 +651,8 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
       }
     }
     if (!alignment || alignment.confidence < this.options.confidenceThreshold) {
+      if (event.isFinal) this.carry = [];
+      if (event.isFinal) this.unmatchedFinal = [...this.unmatchedFinal, ...heard].slice(-MAX_TAIL_TOKENS);
       this.stats.matcherNoMatchCount += 1;
       this.mismatchCount += 1;
       if (this.provisional) this.stats.provisionalRollbackCount += 1;
@@ -627,6 +716,7 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
       this.stats.falseForwardJumps += 1;
     }
     const stable = commitEnd > 0;
+    if (event.isFinal) this.carry = stable ? [] : heard.slice(-MAX_TAIL_TOKENS);
 
     const previousProvisional = this.provisional;
     // لا مؤشر مؤقت بعيد من لفظ واحد: كلمة شائعة تتكرر أمامنا لا تُحرّك الواجهة.
@@ -648,24 +738,16 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
       if (alignment.start - from > 0) {
         // قفزة أمامية: الكلمات بين الموضع الملتزم وبداية المحاذاة لم تُقرأ.
         // ألفاظ زائدة في مقدمة المحاذاة تقابل هذه الفجوة = إبدال لا زيادة+تخطٍّ.
-        const gap: AlignmentOp[] = [];
+        // Speech that matched nothing before this phrase, and words heard in front of
+        // it, came where the gap belongs: align them word by word with the gap, so a
+        // dropped word does not shift every pairing after it.
         let lead = 0;
         while (committedOps[lead]?.kind === "extra") lead += 1;
-        for (let index = from; index < alignment.start; index += 1) {
-          const extra = index - from < lead ? committedOps[index - from] : null;
-          if (extra?.kind !== "extra") {
-            gap.push({ kind: "skip", index });
-            continue;
-          }
-          // لفظ قريب إملائياً من كلمة الفجوة (مثل ة/ه) مطابقة لا خطأ.
-          const cost = tokenCost(extra.heard, this.words[index].normalizedText, this.costCache, false);
-          gap.push(cost < 1
-            ? { kind: "match", index, cost }
-            : { kind: "substitution", index, heard: extra.heard, cost });
-        }
-        const paired = Math.min(lead, alignment.start - from);
-        committedOps = [...gap, ...committedOps.slice(paired)];
+        const leadTokens = committedOps.slice(0, lead).map((op) => (op.kind === "extra" ? op.heard : ""));
+        const gap = this.alignGap([...this.unmatchedFinal, ...leadTokens], from, alignment.start);
+        committedOps = [...gap, ...committedOps.slice(lead)];
       }
+      this.unmatchedFinal = [];
       this.stats.committedRevealCount += commitEnd - this.committed;
       for (let index = this.committed; index < commitEnd; index += 1) this.markRevealed(this.words[index]);
       this.committed = commitEnd;
@@ -676,7 +758,7 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
       }
       if (!event.isFinal) {
         const consumedAt = alignment.heardConsumedAt.get(commitEnd - 1);
-        if (consumedAt !== undefined) item.consumed += heardOffset + consumedAt;
+        if (consumedAt !== undefined) item.consumed += Math.max(0, heardOffset + consumedAt - carried);
       }
       for (const index of this.seen.keys()) if (index < this.committed) this.seen.delete(index);
     } else if (stable && alignment.end < this.committed) {
