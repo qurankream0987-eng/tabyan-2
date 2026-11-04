@@ -176,7 +176,10 @@ function MushafPage({
   const spread = fillWidth && layout.variant === "opening" && fontSize > 0
     ? Math.max(1, (fontSize * 1.6) / layout.wordRowH)
     : 1;
-  const rowTop = (line: number) => layout.blockTop + ((layout.tops.get(line) ?? 0) - layout.blockTop) * spread;
+  // A full-screen recitation page centres the short opening pages between its margins.
+  const blockH = (layout.blockBottom - layout.blockTop) * spread;
+  const centredTop = fillWidth && fillHeight && layout.variant === "opening" ? Math.max(layout.blockTop, (height - blockH) / 2) : layout.blockTop;
+  const rowTop = (line: number) => centredTop + ((layout.tops.get(line) ?? 0) - layout.blockTop) * spread;
   const wordRowH = layout.wordRowH * spread;
   // A faint rule under every word line while words are hidden: the reciter sees the page grid.
   const ruled = !!recitation && recitation.hideMode !== "visible_review";

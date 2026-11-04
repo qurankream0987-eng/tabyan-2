@@ -181,7 +181,7 @@ function feedbackCounts(match: NativeRecitationMatch | null) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: MUSHAF_COLORS.paper },
   topStrip: {
-    backgroundColor: palette.burgundy,
+    backgroundColor: palette.maroon,
     paddingHorizontal: 14,
     paddingVertical: 7,
     flexDirection: "row-reverse",
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   pageMessageText: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 13, textAlign: "center", color: palette.burgundy },
   currentWord: { fontFamily: "Amiri_700Bold", fontSize: 30, textAlign: "center", lineHeight: 45, color: MUSHAF_COLORS.ink },
   inlineError: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12, lineHeight: 20, textAlign: "center", color: MUSHAF_COLORS.mistake, paddingHorizontal: 16, paddingVertical: 6 },
-  bottomBar: { backgroundColor: palette.burgundy, paddingTop: 8, paddingHorizontal: 14, gap: 6 },
+  bottomBar: { backgroundColor: palette.maroon, paddingTop: 8, paddingHorizontal: 14, gap: 6 },
   countsRow: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", gap: 10 },
   clock: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, lineHeight: 18, color: palette.goldLight },
   countsText: { flex: 1, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11, lineHeight: 18, color: palette.cream, textAlign: "left" },
