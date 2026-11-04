@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useKeepAwake } from "expo-keep-awake";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
@@ -53,6 +54,8 @@ export function LiveRecitationScreen({
   pauseBusy: boolean;
   resumeBusy: boolean;
 }) {
+  // The reciter reads from memory without touching the phone; the session must not go dark.
+  useKeepAwake("live-recitation");
   const insets = useSafeAreaInsets();
   const [size, setSize] = useState({ width: 0, height: 0 });
   const elapsed = useElapsedSeconds(phase === "listening");
