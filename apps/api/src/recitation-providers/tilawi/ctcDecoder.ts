@@ -9,21 +9,125 @@ export interface CtcWord {
 }
 
 /** SentencePiece marks the first piece of every word with U+2581. */
-const WORD_START = "\u2581";
+const WORD_START = "▁";
 /**
  * The model sometimes adds harakat, tatweel and punctuation ("إياك."),
  * inconsistently between windows. Matching works on letters, so they are dropped here.
  */
-const MARKS = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640.,!?\u060C\u061B\u061F\u06D4]/g;
+const MARKS = /[ؐ-ًؚ-ٰٟۖ-ۭـ.,!?،؛؟۔]/g;
 
 interface WordInProgress extends CtcWord {
   probabilitySum: number;
   tokens: number;
 }
 
+interface TrieNode {
+  children: Map<string, TrieNode>;
+  terminal: boolean;
+}
+
+/** Letters the lexicon is keyed on: hamza seats and alef maqsura vary in the model's spelling. */
+function foldLetter(letter: string): string {
+  if (letter === "أ" || letter === "إ" || letter === "آ" || letter === "ٱ") return "ا";
+  if (letter === "ى") return "ي";
+  return letter;
+}
+
 /**
- * Greedy CTC decoding that keeps frame positions, so the streaming provider
- * can tell settled words from ones still being spoken at the window's edge.
+ * The words the decoder may spell: a prefix trie over the Quran's vocabulary.
+ * A hypothesis extends a word only along the trie, so a smeared or clipped
+ * word is decoded as the nearest Quran word it sounds like instead of a
+ * spelling no reciter can have said.
+ */
+export class Lexicon {
+  private readonly root: TrieNode = { children: new Map(), terminal: false };
+  readonly size: number;
+
+  constructor(words: Iterable<string>) {
+    let size = 0;
+    for (const word of words) {
+      let node = this.root;
+      for (const letter of word) {
+        const folded = foldLetter(letter);
+        let next = node.children.get(folded);
+        if (!next) {
+          next = { children: new Map(), terminal: false };
+          node.children.set(folded, next);
+        }
+        node = next;
+      }
+      if (node !== this.root && !node.terminal) {
+        node.terminal = true;
+        size += 1;
+      }
+    }
+    this.size = size;
+  }
+
+  /** The node reached by `letters` from `from` (the root when omitted), or null when no word starts so. */
+  advance(letters: string, from: TrieNode | null = this.root): TrieNode | null {
+    let node = from;
+    for (const letter of letters) {
+      node = node?.children.get(foldLetter(letter)) ?? null;
+      if (!node) return null;
+    }
+    return node;
+  }
+
+  isWord(word: string): boolean {
+    return this.advance(word)?.terminal ?? false;
+  }
+}
+
+export interface ConstrainedDecodeOptions {
+  lexicon: Lexicon;
+  /** Hypotheses kept per frame. */
+  beam?: number;
+  /** Non-blank pieces tried per frame, among those within `pieceMargin` nats of the best. */
+  topK?: number;
+  pieceMargin?: number;
+  /**
+   * Log-probability cost of a word that leaves the lexicon (a word no Quran
+   * word starts with, or ended while incomplete). Below it the recognizer's
+   * own spelling wins, so a reciter who says something else is still heard
+   * saying it; above it the nearest Quran spelling wins.
+   */
+  freeWordPenalty?: number;
+}
+
+interface Hypothesis {
+  /** Collapsed piece sequence, the identity of a CTC prefix. */
+  key: string;
+  last: number;
+  /** Log probability of the prefix with the paths ending in blank / in its last piece. */
+  blank: number;
+  nonBlank: number;
+  words: WordInProgress[];
+  /** Trie node of the word being spelled; null once the word has left the lexicon. */
+  node: TrieNode | null;
+  penalty: number;
+}
+
+const NEG_INF = -Infinity;
+
+function logAdd(a: number, b: number): number {
+  if (a === NEG_INF) return b;
+  if (b === NEG_INF) return a;
+  const max = a > b ? a : b;
+  return max + Math.log1p(Math.exp(-Math.abs(a - b)));
+}
+
+function finishWords(words: WordInProgress[]): CtcWord[] {
+  return words.filter((word) => word.text).map(({ probabilitySum, tokens, ...word }) => ({
+    ...word,
+    confidence: probabilitySum / tokens,
+  }));
+}
+
+/**
+ * CTC decoding that keeps frame positions, so the streaming provider can tell
+ * settled words from ones still being spoken at the window's edge. `decode`
+ * is greedy; `decodeConstrained` is a prefix beam search over the lexicon.
  */
 export class CtcDecoder {
   private readonly pieces: string[];
@@ -76,6 +180,124 @@ export class CtcDecoder {
     finish();
     return words;
   }
+
+  /**
+   * Prefix beam search in which a word may only grow along the lexicon trie.
+   * A piece that takes the word off every Quran spelling, or a new word that
+   * starts while the current one is incomplete, is still allowed but costs
+   * `freeWordPenalty` once per word. The last word of the window is never
+   * judged incomplete: it may still be being spoken at the edge.
+   */
+  decodeConstrained(logprobs: Float32Array, timeSteps: number, vocabSize: number, options: ConstrainedDecodeOptions): CtcWord[] {
+    const { lexicon } = options;
+    const beamWidth = options.beam ?? 8;
+    const topK = options.topK ?? 12;
+    const pieceMargin = options.pieceMargin ?? 10;
+    const penalty = options.freeWordPenalty ?? 5;
+    const blankId = this.blankId;
+    let beam: Hypothesis[] = [{ key: "", last: -1, blank: 0, nonBlank: NEG_INF, words: [], node: null, penalty: 0 }];
+    const candidates: number[] = [];
+
+    for (let t = 0; t < timeSteps; t++) {
+      const offset = t * vocabSize;
+      const blankLogProb = logprobs[offset + blankId];
+      const bestLogProb = Math.max(blankLogProb, logprobs[offset + argmax(logprobs, offset, vocabSize)]);
+      candidates.length = 0;
+      for (let id = 0; id < vocabSize; id++) {
+        if (id !== blankId && logprobs[offset + id] >= bestLogProb - pieceMargin) candidates.push(id);
+      }
+      if (candidates.length > topK) {
+        candidates.sort((a, b) => logprobs[offset + b] - logprobs[offset + a]);
+        candidates.length = topK;
+      }
+
+      const next = new Map<string, Hypothesis>();
+      const merge = (hypothesis: Hypothesis) => {
+        const existing = next.get(hypothesis.key);
+        if (!existing) {
+          next.set(hypothesis.key, hypothesis);
+          return;
+        }
+        // Same prefix by two paths: the likelier path's word timings stand.
+        if (logAdd(hypothesis.blank, hypothesis.nonBlank) > logAdd(existing.blank, existing.nonBlank)) existing.words = hypothesis.words;
+        existing.blank = logAdd(existing.blank, hypothesis.blank);
+        existing.nonBlank = logAdd(existing.nonBlank, hypothesis.nonBlank);
+      };
+
+      for (const hypothesis of beam) {
+        const total = logAdd(hypothesis.blank, hypothesis.nonBlank);
+        // Blank, or the last piece repeated: the prefix is unchanged.
+        let repeated = NEG_INF;
+        if (hypothesis.last >= 0 && logprobs[offset + hypothesis.last] >= bestLogProb - pieceMargin) {
+          repeated = hypothesis.nonBlank + logprobs[offset + hypothesis.last];
+        }
+        let words = hypothesis.words;
+        // The word spans the frames where its last piece beats blank, as in greedy decoding.
+        if (repeated !== NEG_INF && logprobs[offset + hypothesis.last] > blankLogProb
+          && words.length && words[words.length - 1].endFrame < t + 1) {
+          words = words.slice();
+          words[words.length - 1] = { ...words[words.length - 1], endFrame: t + 1 };
+        }
+        merge({ ...hypothesis, words, blank: total + blankLogProb, nonBlank: repeated });
+
+        for (const id of candidates) {
+          const logProb = logprobs[offset + id];
+          // The same piece again only extends the prefix after a blank.
+          const from = id === hypothesis.last ? hypothesis.blank : total;
+          if (from === NEG_INF) continue;
+          merge(this.extend(hypothesis, id, t, from + logProb, logProb, lexicon, penalty));
+        }
+      }
+
+      beam = [...next.values()];
+      if (beam.length > beamWidth) {
+        beam.sort((a, b) => score(b) - score(a));
+        beam.length = beamWidth;
+      }
+    }
+
+    let best = beam[0];
+    for (const hypothesis of beam) if (score(hypothesis) > score(best)) best = hypothesis;
+    return finishWords(best.words);
+  }
+
+  private extend(
+    hypothesis: Hypothesis, id: number, t: number, logProb: number, pieceLogProb: number,
+    lexicon: Lexicon, penalty: number,
+  ): Hypothesis {
+    const key = `${hypothesis.key},${id}`;
+    const raw = this.pieces[id]?.replace(MARKS, "") ?? "";
+    if (!raw || raw === "<unk>") {
+      return { ...hypothesis, key, last: id, blank: NEG_INF, nonBlank: logProb };
+    }
+    const probability = Math.exp(pieceLogProb);
+    const words = hypothesis.words.slice();
+    const current = words[words.length - 1];
+    let node = hypothesis.node;
+    let extraPenalty = 0;
+    if (raw.startsWith(WORD_START) || !current) {
+      // A new word: the one before it must be a whole Quran word.
+      if (current && node && !node.terminal) extraPenalty += penalty;
+      const text = raw.replace(WORD_START, "");
+      node = lexicon.advance(text);
+      if (!node && text) extraPenalty += penalty;
+      words.push({ text, startFrame: t, endFrame: t + 1, confidence: 0, probabilitySum: probability, tokens: 1 });
+    } else {
+      if (node) {
+        node = lexicon.advance(raw, node);
+        if (!node) extraPenalty += penalty;
+      }
+      words[words.length - 1] = {
+        ...current, text: current.text + raw, endFrame: t + 1,
+        probabilitySum: current.probabilitySum + probability, tokens: current.tokens + 1,
+      };
+    }
+    return { key, last: id, blank: NEG_INF, nonBlank: logProb, words, node, penalty: hypothesis.penalty + extraPenalty };
+  }
+}
+
+function score(hypothesis: Hypothesis): number {
+  return logAdd(hypothesis.blank, hypothesis.nonBlank) - hypothesis.penalty;
 }
 
 function argmax(values: Float32Array, offset: number, length: number): number {
