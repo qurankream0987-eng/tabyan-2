@@ -61,13 +61,15 @@ export default function NativeRecitationScreen() {
   const { token, role } = useAuth();
   const { colors } = useTheme();
   const router = useRouter();
-  // Opened from the Mushaf reader: start at the chosen ayah, ten ayahs at most.
-  const params = useLocalSearchParams<{ surah?: string; ayah?: string }>();
+  // Opened from the Mushaf toolbar: the page's first ayah, ten ayahs at most, with the range
+  // open to change. Opened on a chosen ayah (toEnd): that ayah to the surah's end, no range to pick.
+  const params = useLocalSearchParams<{ surah?: string; ayah?: string; toEnd?: string }>();
+  const toSurahEnd = params.toEnd === "1";
   const initialSurah = SURAHS[Number(params.surah) - 1] ?? SURAHS[0];
   const initialAyah = Math.min(Math.max(1, Number(params.ayah) || 1), initialSurah.ayahs);
   const [surahInput, setSurahInput] = useState(String(initialSurah.n));
   const [startAyahInput, setStartAyahInput] = useState(String(initialAyah));
-  const [endAyahInput, setEndAyahInput] = useState(String(Math.min(initialAyah + 9, initialSurah.ayahs)));
+  const [endAyahInput, setEndAyahInput] = useState(String(toSurahEnd ? initialSurah.ayahs : Math.min(initialAyah + 9, initialSurah.ayahs)));
   const [surahPickerOpen, setSurahPickerOpen] = useState(false);
   // A new surah starts at its first verse with up to ten verses shown, like the teacher's form.
   const pickSurah = (n: number) => {
@@ -157,6 +159,11 @@ export default function NativeRecitationScreen() {
     && canonicalWords.some((word) => word.ayah === endAyah);
   const rangeKeys = useMemo(() => new Set(canonicalWords.map((word) => word.verseKey)), [canonicalWords]);
   const lastRangePage = canonicalWords[canonicalWords.length - 1]?.page;
+  const continuousPages = useMemo(() => {
+    const first = canonicalWords[0]?.page;
+    if (!toSurahEnd || first === undefined || lastRangePage === undefined) return undefined;
+    return Array.from({ length: lastRangePage - first + 1 }, (_, index) => first + index);
+  }, [canonicalWords, lastRangePage, toSurahEnd]);
 
   // The page shows the word the reciter reads next, so it turns as soon as the last
   // word of a page is read; before the first match it shows the start verse.
@@ -494,6 +501,7 @@ export default function NativeRecitationScreen() {
         hideMode={hideMode}
         rangeKeys={rangeKeys}
         revealedKeys={revealedKeys}
+        continuousPages={continuousPages}
         errorText={errorText}
         onPause={() => void pauseSession()}
         onResume={() => void resumeSession()}
@@ -507,8 +515,11 @@ export default function NativeRecitationScreen() {
   }
 
   return (
-    <StudentScreen title="واجبات التسميع" subtitle="سمّع ما حدده معلمك، وهو من يقيّم تسميعك">
-      {assignment ? (
+    <StudentScreen
+      title={toSurahEnd ? "تسميع" : "واجبات التسميع"}
+      subtitle={toSurahEnd ? "جلسة تدريب عامة، لا تُرسل لمعلمك" : "سمّع ما حدده معلمك، وهو من يقيّم تسميعك"}
+    >
+      {toSurahEnd ? null : assignment ? (
         <Card style={styles.noticeCard}>
           <Badge label="واجب التسميع" tone="success" style={styles.badgeEnd} />
           <Text style={[styles.cardTitle, { color: colors.text }]}>{assignmentRange(assignment)}</Text>
@@ -544,7 +555,7 @@ export default function NativeRecitationScreen() {
           </Text>
         </Card>
       ) : null}
-      {phase === "setup" && !assignment ? (
+      {phase === "setup" && !assignment && !toSurahEnd ? (
         <AssignmentList
           rows={assignments.data ?? []}
           loading={assignments.isLoading}
@@ -558,18 +569,27 @@ export default function NativeRecitationScreen() {
       {phase === "setup" ? (
         <>
           <Card>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>نطاق التسميع</Text>
-            <Text style={[styles.smallText, { color: colors.muted }]}>اختر السورة والآيات</Text>
-            <Text style={[styles.surahLabel, { color: colors.muted }]}>السورة</Text>
-            <SurahField selected={Number(surahInput) || 1} onPress={() => setSurahPickerOpen(true)} disabled={!!assignment} />
-            <SurahPicker visible={surahPickerOpen} selected={Number(surahInput) || 1} onPick={pickSurah} onClose={() => setSurahPickerOpen(false)} />
-            <View style={styles.inputRow}>
-              <NumberField label="من آية" value={startAyahInput} onChange={setStartAyahInput} maximum={3} editable={!assignment} colors={colors} />
-              <NumberField label="إلى آية" value={endAyahInput} onChange={setEndAyahInput} maximum={3} editable={!assignment} colors={colors} />
-            </View>
-            {!validRange ? (
-              <Text style={[styles.inlineError, { color: colors.danger }]}>تحقق من أرقام الآيات.</Text>
-            ) : null}
+            {toSurahEnd ? (
+              <>
+                <Text style={[styles.cardTitle, { color: colors.text }]}>سورة {initialSurah.name}</Text>
+                <Text style={[styles.smallText, { color: colors.muted }]}>من الآية {initialAyah} إلى آخر السورة</Text>
+              </>
+            ) : (
+              <>
+                <Text style={[styles.cardTitle, { color: colors.text }]}>نطاق التسميع</Text>
+                <Text style={[styles.smallText, { color: colors.muted }]}>اختر السورة والآيات</Text>
+                <Text style={[styles.surahLabel, { color: colors.muted }]}>السورة</Text>
+                <SurahField selected={Number(surahInput) || 1} onPress={() => setSurahPickerOpen(true)} disabled={!!assignment} />
+                <SurahPicker visible={surahPickerOpen} selected={Number(surahInput) || 1} onPick={pickSurah} onClose={() => setSurahPickerOpen(false)} />
+                <View style={styles.inputRow}>
+                  <NumberField label="من آية" value={startAyahInput} onChange={setStartAyahInput} maximum={3} editable={!assignment} colors={colors} />
+                  <NumberField label="إلى آية" value={endAyahInput} onChange={setEndAyahInput} maximum={3} editable={!assignment} colors={colors} />
+                </View>
+                {!validRange ? (
+                  <Text style={[styles.inlineError, { color: colors.danger }]}>تحقق من أرقام الآيات.</Text>
+                ) : null}
+              </>
+            )}
             {validRange && status.data?.enabled ? (
               wordsQuery.isLoading ? (
                 <Text style={[styles.smallText, { color: colors.muted }]}>جارٍ تحميل نص الآيات من خدمة المحتوى…</Text>

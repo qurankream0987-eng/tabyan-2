@@ -257,7 +257,7 @@ export default function MushafReaderScreen() {
                   onPress={() => {
                     setSelectedVerse(null);
                     playerRef.current?.stop();
-                    router.push({ pathname: "/student/recitation", params: { surah: String(selected.surah), ayah: String(selected.ayah) } } as never);
+                    router.push({ pathname: "/student/recitation", params: { surah: String(selected.surah), ayah: String(selected.ayah), toEnd: "1" } } as never);
                   }}
                 />
               </View>

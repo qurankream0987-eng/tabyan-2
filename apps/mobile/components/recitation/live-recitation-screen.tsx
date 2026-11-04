@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useKeepAwake } from "expo-keep-awake";
 import { StatusBar } from "expo-status-bar";
@@ -6,11 +6,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
 import type { MushafPageData } from "@workspace/tabyan-domain/mushaf-page-data";
 import { Icon, LoadingState } from "../ui";
+import { ContinuousPages } from "./continuous-pages";
 import MushafPage, { MUSHAF_COLORS, PAGE_ASPECT, type MushafHideMode } from "../mushaf/mushaf-page";
 import type { NativeRecitationMatch } from "../../lib/recitation/native-recitation";
 import { formatDuration } from "../../lib/format";
 import { palette } from "../../lib/theme";
 
+const NO_FEEDBACK: NativeRecitationMatch["wordFeedback"] = new Map();
 const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
 const toArabicDigits = (value: number) => String(value).replace(/\d/g, (digit) => ARABIC_DIGITS[Number(digit)]);
 
@@ -28,6 +30,7 @@ export function LiveRecitationScreen({
   hideMode,
   rangeKeys,
   revealedKeys,
+  continuousPages,
   errorText,
   onPause,
   onResume,
@@ -45,6 +48,8 @@ export function LiveRecitationScreen({
   hideMode: MushafHideMode;
   rangeKeys: ReadonlySet<string>;
   revealedKeys: ReadonlySet<string>;
+  /** Show these pages in one vertical scroll, the range alone, instead of a page at a time. */
+  continuousPages?: number[];
   errorText: string | null;
   onPause: () => void;
   onResume: () => void;
@@ -69,6 +74,12 @@ export function LiveRecitationScreen({
   // Edge to edge on a phone; on a wide screen the paper stays no squatter than 1.3× the print.
   const paperWidth = Math.min(size.width, size.height * PAGE_ASPECT * 1.3);
   const listening = phase === "listening";
+  const reading = match?.reading ?? null;
+  const wordFeedback = match?.wordFeedback ?? NO_FEEDBACK;
+  const continuousState = useMemo(
+    () => ({ rangeKeys, currentWord: reading, wordFeedback, hideMode, revealedKeys }),
+    [rangeKeys, reading, wordFeedback, hideMode, revealedKeys],
+  );
 
   return (
     <View style={styles.root}>
@@ -83,7 +94,9 @@ export function LiveRecitationScreen({
       </View>
 
       <View style={styles.pageHost} onLayout={(event) => setSize({ width: event.nativeEvent.layout.width, height: event.nativeEvent.layout.height })}>
-        {page && size.width > 0 ? (
+        {continuousPages && size.width > 0 ? (
+          <ContinuousPages pages={continuousPages} currentPage={page?.p} recitation={continuousState} width={paperWidth} height={size.height} />
+        ) : page && size.width > 0 ? (
           <MushafPage
             data={page}
             width={paperWidth}

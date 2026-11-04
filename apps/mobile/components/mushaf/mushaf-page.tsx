@@ -52,6 +52,10 @@ export interface MushafRecitationState {
   hideMode: MushafHideMode;
   /** `verseKey:position` of the range words the reciter has reached. */
   revealedKeys: ReadonlySet<string>;
+  /** Draw the range alone: lines outside it are left out and the paper closes up around the rest. */
+  onlyRange?: boolean;
+  /** The top of the line being read, measured from the top of the paper. */
+  onCurrentLine?: (page: number, top: number) => void;
 }
 
 /** Same modes as the web reader; the server stores the chosen one with the session. */
@@ -72,7 +76,7 @@ function recitedInk(style: ReturnType<typeof wordStyle>) {
 
 function wordStyle(word: LineWord, recitation: MushafRecitationState | undefined, highlightVerseKey: string | null | undefined) {
   if (!recitation) return word.verseKey === highlightVerseKey ? styles.highlighted : null;
-  if (!recitation.rangeKeys.has(word.verseKey)) return { color: MUSHAF_COLORS.outOfRange };
+  if (!recitation.rangeKeys.has(word.verseKey)) return recitation.onlyRange ? HIDDEN : { color: MUSHAF_COLORS.outOfRange };
   // Ayah markers and pause marks stay visible as the reciter's reference; on a hidden page
   // the markers are gold, so the blank lines still read as a page of ayahs.
   if (word.type !== 0) return word.type === 1 && recitation.hideMode !== "visible_review" ? { color: MUSHAF_COLORS.marker } : null;
@@ -160,6 +164,10 @@ function MushafPage({
   const titleRowH = height / LINE_COUNT;
   const lastVerse = data.v[data.v.length - 1];
   const marginFont = Math.min(16, marginH * 0.48);
+  // A range that ends mid-page names its own surah, not the next one on the paper.
+  const titleSurah = recitation?.onlyRange
+    ? Number([...recitation.rangeKeys][0]?.split(":")[0]) || lastVerse?.c
+    : lastVerse?.c;
   // Widths are per page; a new page starts unmeasured.
   const [measuredPage, setMeasuredPage] = useState({ page: data.p, widths: new Map<number, number>() });
   const lineWidths = measuredPage.page === data.p ? measuredPage.widths : new Map<number, number>();
@@ -178,13 +186,41 @@ function MushafPage({
     : 1;
   // A full-screen recitation page centres the short opening pages between its margins.
   const blockH = (layout.blockBottom - layout.blockTop) * spread;
-  const centredTop = fillWidth && fillHeight && layout.variant === "opening" ? Math.max(layout.blockTop, (height - blockH) / 2) : layout.blockTop;
-  const rowTop = (line: number) => centredTop + ((layout.tops.get(line) ?? 0) - layout.blockTop) * spread;
+  const onlyRange = !!recitation?.onlyRange;
+  const centredTop = fillWidth && fillHeight && !onlyRange && layout.variant === "opening" ? Math.max(layout.blockTop, (height - blockH) / 2) : layout.blockTop;
   const wordRowH = layout.wordRowH * spread;
+  const rangeKeys = recitation?.rangeKeys;
+  // A surah title or basmala belongs to the line after it, kept only if that line opens in the range.
+  const shownLines = useMemo(() => {
+    if (!onlyRange || !rangeKeys) return lines;
+    return lines.filter((line, index) => {
+      if (line.kind === "words") return line.words!.some((word) => rangeKeys.has(word.verseKey));
+      const first = lines.slice(index).find((next) => next.kind === "words")?.words?.[0];
+      return !!first && rangeKeys.has(first.verseKey);
+    });
+  }, [lines, onlyRange, rangeKeys]);
+  const uncutTop = (line: number) => centredTop + ((layout.tops.get(line) ?? 0) - layout.blockTop) * spread;
+  const firstShown = shownLines[0];
+  const lastShown = shownLines[shownLines.length - 1];
+  const cutTop = onlyRange && firstShown ? uncutTop(firstShown.line) : 0;
+  const rowTop = (line: number) => uncutTop(line) - cutTop;
+  const rangeBottom = lastShown ? rowTop(lastShown.line) + (lastShown.kind === "surah-header" ? titleRowH : wordRowH) : 0;
   // A faint rule under every word line while words are hidden: the reciter sees the page grid.
   const ruled = !!recitation && recitation.hideMode !== "visible_review";
   // A full-bleed paper keeps its height, so the page number stays in the bottom margin.
-  const shownPaperH = spread > 1 && !fillHeight ? layout.blockTop * 2 + (layout.blockBottom - layout.blockTop) * spread : paperH;
+  const shownPaperH = onlyRange && fontSize > 0
+    ? marginH * 2 + rangeBottom
+    : spread > 1 && !fillHeight ? layout.blockTop * 2 + (layout.blockBottom - layout.blockTop) * spread : paperH;
+
+  const reading = recitation?.currentWord;
+  const readingLine = reading
+    ? shownLines.find((line) => line.words?.some((word) => word.verseKey === reading.verseKey && word.position === reading.position))?.line
+    : undefined;
+  const readingTop = fontSize > 0 && readingLine !== undefined ? marginH + rowTop(readingLine) : null;
+  const onCurrentLine = recitation?.onCurrentLine;
+  useEffect(() => {
+    if (readingTop !== null) onCurrentLine?.(data.p, readingTop);
+  }, [data.p, onCurrentLine, readingTop]);
 
   function onMeasure(line: number, event: NativeSyntheticEvent<TextLayoutEventData>) {
     const lineWidth = Math.max(0, ...event.nativeEvent.lines.map((textLine) => textLine.width));
@@ -202,7 +238,7 @@ function MushafPage({
           <View style={[styles.marginRow, { top: 0, height: marginH }]} pointerEvents="none">
             <Text allowFontScaling={false} style={[styles.marginText, { fontSize: marginFont }]} numberOfLines={1}>{JUZ_LIST[data.j - 1]?.name ?? ""}</Text>
             <Text allowFontScaling={false} style={[styles.marginText, { fontSize: marginFont }]} numberOfLines={1}>
-              {lastVerse ? vocalizedSurahTitle(lastVerse.c, SURAHS[lastVerse.c - 1]?.name ?? "") : ""}
+              {titleSurah ? vocalizedSurahTitle(titleSurah, SURAHS[titleSurah - 1]?.name ?? "") : ""}
             </Text>
           </View>
           <View style={[styles.marginRow, styles.marginFooter, { bottom: 0, height: marginH }]} pointerEvents="none">
@@ -226,7 +262,7 @@ function MushafPage({
           ))}
         </View>
       ) : null}
-      {fontSize > 0 ? lines.map((line) => {
+      {fontSize > 0 ? shownLines.map((line) => {
         const top = marginH + rowTop(line.line);
         if (line.kind === "surah-header") {
           return (
