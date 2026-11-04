@@ -78,6 +78,17 @@ describe("recitation mistakes", () => {
     expect(summary.wordsRecited).toBe(summary.totalWords - 1);
   });
 
+  it("one common word misheard does not carry the reader forward past unread words", () => {
+    // An-Nisa 81: "وَٱللَّهُ يَكْتُبُ" heard as "الله" alone, which also fits "عَلَى ٱللَّهِ" eight words on.
+    const words = range(4, 80, 83);
+    const text = words.map((w) => w.displayText);
+    const upTo = text.indexOf("وَٱللَّهُ");
+    // Word-by-word finals, as the recognizer sends them.
+    const { summary, flagged } = recite(words, [...text.slice(0, upTo), "الله", ...text.slice(upTo + 1)]);
+    expect([...flagged.values()].filter((kind) => kind === "skipped")).toEqual([]);
+    expect(summary.wordsRecited).toBe(summary.totalWords);
+  });
+
   it("recognizer noise on a correct recitation does not turn into skipped ayahs", () => {
     // Dropped and misheard words, phrases split mid-ayah: what live recognition looks like.
     let seed = 7;

@@ -78,13 +78,15 @@ export class TilawiModel implements Transcriber {
 }
 
 /**
- * Two threads per decode halve the time the reciter waits for the pointer (about
- * 370 ms to 230 ms per decode) for a quarter more CPU. TABYAN_TILAWI_THREADS overrides.
+ * More threads per decode cut the time the reciter waits for the pointer (one thread
+ * about 370 ms, two 230 ms, four 160 ms per decode) at the cost of fewer concurrent
+ * recitations per core. TABYAN_TILAWI_THREADS overrides.
  */
 function threadsPerInference() {
   const configured = Number(process.env.TABYAN_TILAWI_THREADS);
   if (Number.isInteger(configured) && configured > 0) return configured;
-  return availableParallelism() >= 4 ? 2 : 1;
+  const cores = availableParallelism();
+  return cores >= 8 ? 4 : cores >= 4 ? 2 : 1;
 }
 
 let shared: Promise<TilawiModel> | null = null;
