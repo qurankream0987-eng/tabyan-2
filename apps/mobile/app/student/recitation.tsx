@@ -5,7 +5,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@workspace/tabyan-trpc/types";
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
-import { Badge, Button, Card, Icon, LoadingState, ProgressBar } from "../../components/ui";
+import { Badge, Button, Card, Icon, LoadingState } from "../../components/ui";
 import { SurahField, SurahPicker } from "../../components/ui/surah-picker";
 import { useAuth } from "../../lib/auth";
 import { formatDate, formatDuration } from "../../lib/format";
@@ -18,9 +18,10 @@ import {
   type NativeRecitationSummary,
 } from "../../lib/recitation/native-recitation";
 import { ensurePageFont, loadMushafPage, loadRangeWords } from "../../lib/mushaf/mushaf-assets";
-import MushafPage, { MUSHAF_COLORS, type MushafHideMode } from "../../components/mushaf/mushaf-page";
+import { MUSHAF_COLORS, type MushafHideMode } from "../../components/mushaf/mushaf-page";
 import { trpc } from "../../lib/trpc";
 import { StudentScreen } from "../../components/student/student-screen";
+import { LiveRecitationScreen } from "../../components/recitation/live-recitation-screen";
 
 type AssignmentRow = inferRouterOutputs<AppRouter>["recitationAssignments"]["mine"][number];
 type SubmitState = "idle" | "sending" | "sent" | "failed";
@@ -55,26 +56,6 @@ const HIDE_MODES: { value: MushafHideMode; label: string; hint: string }[] = [
   { value: "progressive_reveal", label: "كشف تدريجي", hint: "اكشف كلمة واحدة في كل مرة بالضغط" },
   { value: "visible_review", label: "مراجعة بالنص", hint: "يظهر النص كاملاً — للمراجعة بالقراءة" },
 ];
-
-function ayahProgressLabel(match: NativeRecitationMatch, startAyah: number | null, endAyah: number | null) {
-  if (!match.reading || startAyah === null || endAyah === null) return `0 من ${match.totalWords} كلمة`;
-  return `الآية ${match.reading.ayah - startAyah + 1} من ${endAyah - startAyah + 1} · الكلمة ${match.readingWords} من ${match.totalWords}`;
-}
-
-function feedbackCounts(match: NativeRecitationMatch | null) {
-  const counts = { mistakes: 0, skipped: 0, corrected: 0 };
-  for (const feedback of match?.wordFeedback.values() ?? []) {
-    if (feedback === "mistake") counts.mistakes += 1;
-    else if (feedback === "skipped") counts.skipped += 1;
-    else if (feedback === "corrected") counts.corrected += 1;
-  }
-  return counts;
-}
-
-function displayPosition(match: NativeRecitationMatch | null) {
-  if (!match?.reading) return "لم يُثبت موضع بعد";
-  return `السورة ${match.reading.surah} · الآية ${match.reading.ayah} · الكلمة ${match.reading.position}`;
-}
 
 export default function NativeRecitationScreen() {
   const { token, role } = useAuth();
@@ -193,7 +174,6 @@ export default function NativeRecitationScreen() {
     staleTime: Infinity,
     placeholderData: keepPreviousData,
   });
-  const [pageWidth, setPageWidth] = useState(0);
   // Words up to the reading pointer are revealed; the matcher's words start at the range start.
   const revealedKeys = useMemo(
     () => new Set(canonicalWords.slice(0, match?.readingWords ?? 0).map((word) => `${word.verseKey}:${word.position}`)),
@@ -502,11 +482,29 @@ export default function NativeRecitationScreen() {
     && rangeHasCoverage
     && canonicalWords.length > 0
     && phase === "setup";
-  // Progress is where the reciter is in the range; mistakes are counted separately.
-  const progressPercent = match && match.totalWords > 0
-    ? (match.readingWords / match.totalWords) * 100
-    : 0;
-  const liveCounts = feedbackCounts(match);
+  if (phase === "listening" || phase === "paused") {
+    // The live session takes the whole screen; the setup and summary stay in the usual layout.
+    return (
+      <LiveRecitationScreen
+        phase={phase}
+        match={match}
+        page={pageQuery.data}
+        pageError={!!pageQuery.error}
+        surahId={surahId}
+        hideMode={hideMode}
+        rangeKeys={rangeKeys}
+        revealedKeys={revealedKeys}
+        errorText={errorText}
+        onPause={() => void pauseSession()}
+        onResume={() => void resumeSession()}
+        onEnd={() => void endSession()}
+        onCancel={() => void cancelSession()}
+        onHint={showHint}
+        pauseBusy={pauseMutation.isPending}
+        resumeBusy={resumeMutation.isPending}
+      />
+    );
+  }
 
   return (
     <StudentScreen title="واجبات التسميع" subtitle="سمّع ما حدده معلمك، وهو من يقيّم تسميعك">
@@ -626,77 +624,6 @@ export default function NativeRecitationScreen() {
       />
       {phase === "preparing" || phase === "ending" ? (
         <Card><LoadingState label={phase === "preparing" ? "جارٍ إنشاء الجلسة وتهيئة الميكروفون…" : "جارٍ إنهاء الجلسة بأمان…"} /></Card>
-      ) : null}
-
-      {phase === "listening" || phase === "paused" ? (
-        <>
-          <Card style={styles.liveCard}>
-            <View style={styles.statusRow}>
-              <Badge label={phase === "listening" ? "يستمع الآن" : "متوقف مؤقتاً"} tone={phase === "listening" ? "success" : "muted"} />
-              <Text style={[styles.cardTitle, { color: colors.text }]}>موضع القراءة الحالي</Text>
-            </View>
-            <Text style={[styles.positionText, { color: colors.primary }]}>{displayPosition(match)}</Text>
-            <View style={styles.pageBleed} onLayout={(event) => setPageWidth(Math.floor(event.nativeEvent.layout.width))}>
-              {pageQuery.data && pageWidth > 0 ? (
-                <MushafPage
-                  data={pageQuery.data}
-                  width={pageWidth}
-                  fillWidth
-                  recitation={{
-                    rangeKeys,
-                    currentWord: match?.reading ?? null,
-                    wordFeedback: match?.wordFeedback ?? new Map(),
-                    hideMode,
-                    revealedKeys,
-                  }}
-                />
-              ) : pageQuery.error ? (
-                <>
-                  <Text style={[styles.inlineError, { color: colors.danger }]}>تعذر تحميل صفحة المصحف؛ التسميع مستمر.</Text>
-                  {match?.reading ? (
-                    <Text style={[styles.currentWord, { color: colors.text }]}>{match.reading.displayText}</Text>
-                  ) : null}
-                </>
-              ) : (
-                <LoadingState label="جارٍ تحميل صفحة المصحف…" />
-              )}
-            </View>
-            <FeedbackLegend />
-            {match ? (
-              <>
-                <ProgressBar
-                  value={progressPercent}
-                  label={ayahProgressLabel(match, startAyah, endAyah)}
-                />
-                <Text style={[styles.smallText, { color: colors.text }]}>
-                  الأخطاء: {liveCounts.mistakes} · تخطٍّ: {liveCounts.skipped} · صُحّحت: {liveCounts.corrected}
-                </Text>
-                <Text style={[styles.smallText, { color: colors.muted }]}>
-                  لا يُعلَّم الخطأ إلا بعد تأكده من متابعة قراءتك. تقدم العرض المحلي لا يثبت إكمال واجب أو نطاق تعليمي.
-                </Text>
-              </>
-            ) : (
-              <Text style={[styles.smallText, { color: colors.muted }]}>
-                لم تصل مطابقة موضع مؤكدة بعد. لا يظهر هنا تفريغ صوتي خام أو درجة تقييم.
-              </Text>
-            )}
-          </Card>
-          {errorText ? <Text style={[styles.inlineError, { color: colors.danger }]}>{errorText}</Text> : null}
-          <View style={styles.controls}>
-            <View style={styles.controlRow}>
-              {phase === "listening" ? (
-                <Button label="إيقاف مؤقت" variant="secondary" icon="pause" loading={pauseMutation.isPending} onPress={() => void pauseSession()} />
-              ) : (
-                <Button label="استئناف" variant="secondary" icon="play" loading={resumeMutation.isPending} onPress={() => void resumeSession()} />
-              )}
-              <Button label="إنهاء الجلسة" variant="primary" icon="stop" onPress={() => void endSession()} />
-            </View>
-            {hideMode !== "visible_review" ? (
-              <Button label="تلميح: أظهر الكلمة التالية" variant="secondary" icon="eye" disabled={phase !== "listening"} onPress={showHint} />
-            ) : null}
-            <Button label="إلغاء الجلسة" variant="quiet" onPress={() => void cancelSession()} />
-          </View>
-        </>
       ) : null}
 
       {phase === "user-ended" ? (
@@ -911,30 +838,6 @@ function SessionSummary({
   );
 }
 
-/** Matches the word colours on the Mushaf page. */
-function FeedbackLegend() {
-  const items = [
-    { label: "موضعك الآن", color: MUSHAF_COLORS.current, underline: false },
-    { label: "صحيحة", color: MUSHAF_COLORS.correct, underline: false },
-    { label: "خطأ مؤكد", color: MUSHAF_COLORS.mistake, underline: true },
-    { label: "متروكة", color: MUSHAF_COLORS.skipped, underline: true },
-    { label: "صُحّحت", color: MUSHAF_COLORS.corrected, underline: true },
-    { label: "تلميح", color: MUSHAF_COLORS.peeked, underline: true },
-  ];
-  return (
-    <View style={styles.legendRow}>
-      {items.map((item) => (
-        <Text
-          key={item.label}
-          style={[styles.legendItem, { color: item.color }, item.underline ? styles.underlined : null]}
-        >
-          {item.label}
-        </Text>
-      ))}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   noticeCard: { gap: 10 },
   badgeEnd: { alignSelf: "flex-end" },
@@ -947,14 +850,6 @@ const styles = StyleSheet.create({
   inputLabel: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11, textAlign: "right" },
   input: { minHeight: 48, borderWidth: 1, borderRadius: 13, paddingHorizontal: 12, textAlign: "center", fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 16 },
   inlineError: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12, lineHeight: 21, textAlign: "right", marginVertical: 8 },
-  liveCard: { gap: 12 },
-  // The page spans the card edge to edge, so the Mushaf is as large as the screen allows.
-  pageBleed: { marginHorizontal: -12 },
-  statusRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
-  positionText: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 18, lineHeight: 30, textAlign: "right" },
-  currentWord: { fontFamily: "Amiri_700Bold", fontSize: 30, textAlign: "center", lineHeight: 45, marginVertical: 4 },
-  controls: { gap: 10 },
-  controlRow: { flexDirection: "row", gap: 10 },
   finishedCard: { alignItems: "stretch", gap: 12 },
   underlined: { textDecorationLine: "underline" },
   // Two per row, like the web setup sheet, so the full mode names fit.
@@ -969,8 +864,6 @@ const styles = StyleSheet.create({
   historyLink: { minHeight: 36, flexDirection: "row-reverse", alignItems: "center", gap: 4, paddingHorizontal: 4 },
   historyLinkText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 12, lineHeight: 18 },
   assignmentTitle: { flex: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, lineHeight: 22, textAlign: "right" },
-  legendRow: { flexDirection: "row-reverse", flexWrap: "wrap", justifyContent: "center", gap: 12 },
-  legendItem: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11, lineHeight: 18 },
   summaryList: { gap: 2 },
   summaryRow: { minHeight: 36, flexDirection: "row-reverse", alignItems: "center", gap: 12, borderBottomWidth: StyleSheet.hairlineWidth },
   summaryLabel: { flex: 1, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 13, lineHeight: 22, textAlign: "right" },

@@ -38,6 +38,9 @@ export const MUSHAF_COLORS = {
   /** Reading mode: the ayah being played or picked. */
   highlight: "#800020",
   highlightBackground: "rgba(212, 175, 55, 0.22)",
+  /** Hidden recitation: the ayah markers that stay on the page, and the rule under each line. */
+  marker: "#B8860B",
+  rule: "rgba(212, 175, 55, 0.35)",
 } as const;
 
 export interface MushafRecitationState {
@@ -70,8 +73,9 @@ function recitedInk(style: ReturnType<typeof wordStyle>) {
 function wordStyle(word: LineWord, recitation: MushafRecitationState | undefined, highlightVerseKey: string | null | undefined) {
   if (!recitation) return word.verseKey === highlightVerseKey ? styles.highlighted : null;
   if (!recitation.rangeKeys.has(word.verseKey)) return { color: MUSHAF_COLORS.outOfRange };
-  // Ayah markers and pause marks stay visible as the reciter's reference.
-  if (word.type !== 0) return null;
+  // Ayah markers and pause marks stay visible as the reciter's reference; on a hidden page
+  // the markers are gold, so the blank lines still read as a page of ayahs.
+  if (word.type !== 0) return word.type === 1 && recitation.hideMode !== "visible_review" ? { color: MUSHAF_COLORS.marker } : null;
   const key = `${word.verseKey}:${word.position}`;
   const feedback = recitation.wordFeedback.get(key);
   // Hidden words keep their glyphs (drawn in the paper colour), so the page never reflows as they appear.
@@ -174,7 +178,10 @@ function MushafPage({
     : 1;
   const rowTop = (line: number) => layout.blockTop + ((layout.tops.get(line) ?? 0) - layout.blockTop) * spread;
   const wordRowH = layout.wordRowH * spread;
-  const shownPaperH = spread > 1 ? layout.blockTop * 2 + (layout.blockBottom - layout.blockTop) * spread : paperH;
+  // A faint rule under every word line while words are hidden: the reciter sees the page grid.
+  const ruled = !!recitation && recitation.hideMode !== "visible_review";
+  // A full-bleed paper keeps its height, so the page number stays in the bottom margin.
+  const shownPaperH = spread > 1 && !fillHeight ? layout.blockTop * 2 + (layout.blockBottom - layout.blockTop) * spread : paperH;
 
   function onMeasure(line: number, event: NativeSyntheticEvent<TextLayoutEventData>) {
     const lineWidth = Math.max(0, ...event.nativeEvent.lines.map((textLine) => textLine.width));
@@ -259,6 +266,8 @@ function MushafPage({
                 </Text>,
               ])}
             </Text>
+            {/* Drawn over the words: hidden glyphs are paper-coloured and would cut gaps in a rule beneath them. */}
+            {ruled ? <View pointerEvents="none" style={[styles.rule, { bottom: wordRowH * 0.14 }]} /> : null}
           </View>
         );
       }) : null}
@@ -310,6 +319,7 @@ const styles = StyleSheet.create({
   measureBox: { position: "absolute", top: 0, left: 0, width: 100_000, opacity: 0 },
   measureText: { alignSelf: "flex-start", includeFontPadding: false },
   row: { position: "absolute", left: 0, right: 0, alignItems: "center", justifyContent: "center" },
+  rule: { position: "absolute", left: "4%", right: "4%", height: StyleSheet.hairlineWidth, backgroundColor: MUSHAF_COLORS.rule },
   // Spanning the row keeps the overhang of a line's first and last glyphs inside the text box (Android clips it).
   wordLine: { color: MUSHAF_COLORS.ink, includeFontPadding: false, textAlign: "center", alignSelf: "stretch", paddingHorizontal: 8 },
   // The page-1 basmala glyphs overhang their advance; padding keeps the first stroke in view.
