@@ -5,12 +5,12 @@ import { createHash } from "node:crypto";
 import { normalizeQuranText } from "./normalizer";
 import { buildSearchIndex, queryTokens, searchQuran, type SearchRow } from "./quranSearch";
 
-const file = resolve(import.meta.dirname, "../../../public/mushaf/v1/quran-words/search-index.json");
+const file = resolve(import.meta.dirname, "../../../public/mushaf/quran-words/search-index.json");
 const data = JSON.parse(readFileSync(file, "utf8")) as { version: string; verses: number; sha256: string; rows: SearchRow[] };
 const index = buildSearchIndex(data.rows);
 
 function pageWords(page: number) {
-  return (JSON.parse(readFileSync(resolve(import.meta.dirname, `../../../public/mushaf/v1/quran-words/pages/${page}.json`), "utf8")).words as { verseKey: string; position: number; displayText: string }[]);
+  return (JSON.parse(readFileSync(resolve(import.meta.dirname, `../../../public/mushaf/quran-words/pages/${page}.json`), "utf8")).words as { verseKey: string; position: number; displayText: string }[]);
 }
 
 describe("generated Quran search index", () => {

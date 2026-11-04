@@ -22,7 +22,7 @@ export interface LineWord {
   position: number;
   /** 0=كلمة 1=خاتمة آية 2=علامة وقف */
   type: 0 | 1 | 2;
-  /** رموز glyphs لخط QCF v1 (طبعة 1405) الخاص بالصفحة */
+  /** رموز glyphs لخط QCF v2 الخاص بالصفحة */
   code: string;
 }
 
@@ -38,7 +38,7 @@ export interface MushafLineModel {
 }
 
 /**
- * يوزّع كلمات الصفحة على أسطرها الحقيقية (line_number لطبعة 1405)، ويضع ترويسة السورة والبسملة
+ * يوزّع كلمات الصفحة على أسطرها الحقيقية (line_v2)، ويضع ترويسة السورة والبسملة
  * في السطرين السابقين لأول آية من كل سورة كما في الطبعة المدنية.
  */
 export function buildPageLines(data: MushafPageData): MushafLineModel[] {

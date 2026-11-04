@@ -1,10 +1,9 @@
 /**
  * Mushaf page data, page fonts and canonical recitation words, fetched from the
- * site that serves the web Mushaf. Each page has its own QCF v1 font (the 1405
- * Madinah print, with its own pagination); Android cannot load woff2, so the app
- * uses the TTF copy of the same font set. Everything lives under mushaf/v1/ so
- * cached v2 glyph codes can never meet v1 fonts.
+ * site that serves the web Mushaf. Each page has its own QCF v2 font; Android
+ * cannot load woff2, so the app uses the TTF copy of the same font set.
  */
+import * as FileSystem from "expo-file-system/legacy";
 import * as Font from "expo-font";
 import type { CanonicalQuranWord } from "@workspace/tabyan-domain/quran-live-matcher";
 import type { MushafPageData } from "@workspace/tabyan-domain/mushaf-page-data";
@@ -30,7 +29,7 @@ interface StoredPageWords {
 export function mushafAssetUrl(path: string) {
   // EXPO_PUBLIC_MUSHAF_ORIGIN lets a development build load the assets from a local copy.
   const origin = process.env.EXPO_PUBLIC_MUSHAF_ORIGIN ?? apiOrigin();
-  return `${origin.replace(/\/+$/, "")}/mushaf/v1/${path}`;
+  return `${origin.replace(/\/+$/, "")}/mushaf/${path}`;
 }
 
 /** Caches one request per key; a failed request is forgotten so a retry refetches. */
@@ -54,14 +53,38 @@ async function fetchJson<T>(path: string): Promise<T> {
 }
 
 export function pageFontFamily(page: number) {
-  return `QCF1_p${page}`;
+  return `QCF2_p${page}`;
 }
 
 export const loadMushafPage = memoized((page) => fetchJson<MushafPageData>(`pages/${page}.json`));
 
+/** The first bytes of a TrueType font, base64. */
+const TRUETYPE_SIGNATURE = "AAEAAA==";
+const FONT_CACHE_DIR = `${FileSystem.cacheDirectory}mushaf-fonts-qcf2/`;
+
+/**
+ * Downloads a page font and keeps it only if it really is a font. The site answers an
+ * unknown path with its HTML page and status 200, and expo-font would cache that for good
+ * under the URL, leaving the page drawn in a fallback font.
+ */
+async function pageFontFile(page: number) {
+  const target = `${FONT_CACHE_DIR}p${page}.ttf`;
+  if ((await FileSystem.getInfoAsync(target)).exists) return target;
+  await FileSystem.makeDirectoryAsync(FONT_CACHE_DIR, { intermediates: true });
+  const partial = `${target}.part`;
+  const { status } = await FileSystem.downloadAsync(mushafAssetUrl(`fonts-android/p${page}.ttf`), partial);
+  const signature = await FileSystem.readAsStringAsync(partial, { encoding: FileSystem.EncodingType.Base64, position: 0, length: 4 });
+  if (status !== 200 || signature !== TRUETYPE_SIGNATURE) {
+    await FileSystem.deleteAsync(partial, { idempotent: true });
+    throw new Error(`Mushaf font for page ${page} is not a font (HTTP ${status})`);
+  }
+  await FileSystem.moveAsync({ from: partial, to: target });
+  return target;
+}
+
 export const ensurePageFont = memoized(async (page) => {
   const family = pageFontFamily(page);
-  if (!Font.isLoaded(family)) await Font.loadAsync({ [family]: { uri: mushafAssetUrl(`fonts-android/p${page}.ttf`) } });
+  if (!Font.isLoaded(family)) await Font.loadAsync({ [family]: { uri: await pageFontFile(page) } });
 });
 
 const loadPageWords = memoized(async (page): Promise<MushafCanonicalWord[]> => {

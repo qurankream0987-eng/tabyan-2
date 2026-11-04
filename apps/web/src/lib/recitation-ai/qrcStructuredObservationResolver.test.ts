@@ -8,7 +8,7 @@ import { CanonicalQuranResolver, type CanonicalQuranCoordinate } from "./qrcStru
 function loadActualPageWords(page: number): CanonicalQuranWord[] {
   const file = resolve(
     import.meta.dirname,
-    `../../../public/mushaf/v1/quran-words/pages/${page}.json`,
+    `../../../public/mushaf/quran-words/pages/${page}.json`,
   );
   const data = JSON.parse(readFileSync(file, "utf8")) as {
     words: Omit<CanonicalQuranWord, "normalizedText">[];

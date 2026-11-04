@@ -12,7 +12,7 @@ const fullH = 551;
 
 describe("Mushaf page composition", () => {
   it("keeps page 207's canonical 14 text rows on the ordinary 15-slot pitch without inventing a basmala", () => {
-    const page = JSON.parse(readFileSync(new URL("../../../public/mushaf/v1/pages/207.json", import.meta.url), "utf8"));
+    const page = JSON.parse(readFileSync(new URL("../../../public/mushaf/pages/207.json", import.meta.url), "utf8"));
     const rowNumbers = [...new Set<number>(page.v.flatMap((verse: { w: [number, number, number, string][] }) => verse.w.map(word => word[1])))].sort((a, b) => a - b);
     expect(rowNumbers).toEqual(Array.from({ length: 14 }, (_, index) => index + 1));
     const layout = computePageLayout(rowNumbers.map(line => ({ line, kind: "words" })), 14, fullH, "standard");
@@ -72,8 +72,8 @@ describe("Mushaf page composition", () => {
     expect(maxFontSizeFor(layout.variant, fullH)).toBe(Infinity);
   });
 
-  it("caps opening-page glyphs at the dense-page word size (their fonts draw 1.35x smaller); dense pages fit by width only", () => {
-    expect(maxFontSizeFor("opening", fullH)).toBeCloseTo(standardRowHeight(fullH) * DENSE_INK_RATIO * 1.35);
+  it("caps opening-page glyphs at the dense-page type size; dense pages fit by width only", () => {
+    expect(maxFontSizeFor("opening", fullH)).toBeCloseTo(standardRowHeight(fullH) * DENSE_INK_RATIO);
     expect(maxFontSizeFor("standard", fullH)).toBe(Infinity);
   });
 });

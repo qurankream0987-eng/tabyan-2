@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, type NativeSyntheticEvent, type TextLayoutEvent
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
 import { vocalizedSurahTitle } from "@workspace/tabyan-domain/quran-surah-names";
 import { buildPageLines, type LineWord, type MushafPageData } from "@workspace/tabyan-domain/mushaf-page-data";
-import { BASMALA_FONT_PAGE, BASMALA_GLYPHS, basmalaScale, computePageLayout, LINE_COUNT, maxFontSizeFor, QCF_WORD_GAP, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
+import { BASMALA_FONT_PAGE, BASMALA_GLYPHS, computePageLayout, LINE_COUNT, maxFontSizeFor, QCF_WORD_GAP, type PageVariant } from "@workspace/tabyan-domain/mushaf-page-layout";
 import { ensurePageFont, pageFontFamily } from "../../lib/mushaf/mushaf-assets";
 import { JUZ_LIST } from "../../lib/mushaf/juz";
 import { SURAH_NAME_FONT_FAMILY, SURAH_TITLE_STRETCH, surahBannerLayout, surahNameGlyph } from "@workspace/tabyan-domain/surah-banner";
@@ -230,9 +230,9 @@ function MushafPage({
             <View key={`b-${line.line}`} style={[styles.row, { top, height: wordRowH }]}>
               {basmalaReady ? (
                 // The printed basmala: 1:1 in the page-1 QCF font, at the size of the page's lines.
-                <Text allowFontScaling={false} style={[styles.wordLine, styles.basmalaLine, { fontFamily: pageFontFamily(BASMALA_FONT_PAGE), fontSize: fontSize * basmalaScale(layout.variant) }, styles.boldInk]}>
+                <Text allowFontScaling={false} style={[styles.wordLine, styles.basmalaLine, { fontFamily: pageFontFamily(BASMALA_FONT_PAGE), fontSize }, styles.boldInk]}>
                   {BASMALA_GLYPHS.map((glyph, index) => [
-                    index > 0 ? <Text key={`g${index}`} style={{ fontSize: fontSize * basmalaScale(layout.variant) * QCF_WORD_GAP }}> </Text> : null,
+                    index > 0 ? <Text key={`g${index}`} style={{ fontSize: fontSize * QCF_WORD_GAP }}> </Text> : null,
                     <Text key={glyph}>{glyph}</Text>,
                   ])}
                 </Text>
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   paperCard: { borderColor: MUSHAF_COLORS.frame, borderWidth: 1, borderRadius: 6 },
   marginRow: { position: "absolute", left: 0, right: 0, flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center", paddingHorizontal: "4%" },
   marginFooter: { justifyContent: "center" },
-  marginText: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ornament, includeFontPadding: false },
+  marginText: { fontFamily: "Amiri_400Regular", color: MUSHAF_COLORS.ink, includeFontPadding: false },
   // Lines are laid out unconstrained so onTextLayout reports their natural width.
   measureBox: { position: "absolute", top: 0, left: 0, width: 100_000, opacity: 0 },
   measureText: { alignSelf: "flex-start", includeFontPadding: false },

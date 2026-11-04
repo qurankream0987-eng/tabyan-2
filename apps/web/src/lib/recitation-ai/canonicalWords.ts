@@ -37,7 +37,7 @@ const pageCache = new Map<number, Promise<CanonicalQuranWord[]>>();
 
 function wordUrl(page: number) {
   const base = ((import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/").replace(/\/$/, "");
-  return `${base}/mushaf/v1/quran-words/pages/${page}.json`;
+  return `${base}/mushaf/quran-words/pages/${page}.json`;
 }
 
 async function loadPage(page: number): Promise<CanonicalQuranWord[]> {

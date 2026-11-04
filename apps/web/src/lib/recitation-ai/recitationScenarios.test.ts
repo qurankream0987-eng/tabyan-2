@@ -15,7 +15,7 @@ import { RecitationStateEngine, type RecitationMistakeKind } from "./recitationS
 import type { CanonicalQuranWord } from "./canonicalWords";
 
 function loadPage(page: number): CanonicalQuranWord[] {
-  const file = resolve(import.meta.dirname, `../../../public/mushaf/v1/quran-words/pages/${page}.json`);
+  const file = resolve(import.meta.dirname, `../../../public/mushaf/quran-words/pages/${page}.json`);
   const data = JSON.parse(readFileSync(file, "utf8")) as { words: Omit<CanonicalQuranWord, "normalizedText">[] };
   return data.words.map((word) => ({ ...word, normalizedText: normalizeQuranText(word.displayText) }));
 }

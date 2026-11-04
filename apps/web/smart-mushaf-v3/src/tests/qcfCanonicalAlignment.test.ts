@@ -1,6 +1,6 @@
 /**
  * Gate A — canonical Quran integrity across the WordKey corpus (Tanzil) and the
- * page-geometry corpus (QCF v1). Every one of the 77,433 WordKeys must be
+ * page-geometry corpus (QCF v2). Every one of the 77,433 WordKeys must be
  * presented by exactly one QCF glyph-word, in order, on the expected page.
  */
 
@@ -19,7 +19,7 @@ import { buildPageFirstWords, QcfPageSource } from '../quran/layout/pageFirstWor
 import { PAGE_FIRST_WORD } from '../quran/layout/pageFirstWord.generated';
 import { firstWordOfPage, pageOfWord } from '../quran/layout/pageWordIndex';
 
-const PAGES_DIR = join(import.meta.dirname, '../../../public/mushaf/v1/pages');
+const PAGES_DIR = join(import.meta.dirname, '../../../public/mushaf/pages');
 const pages: QcfPageSource[] = Array.from({ length: 604 }, (_, i) =>
   JSON.parse(readFileSync(join(PAGES_DIR, `${i + 1}.json`), 'utf8')),
 );

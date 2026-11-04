@@ -5,7 +5,7 @@ import { normalizeQuranText } from "@/lib/recitation-ai/normalizer";
 import type { CanonicalQuranWord } from "@/lib/recitation-ai/canonicalWords";
 import { testHintIndices, testRevealMap, type QuestionRuntime } from "./useMemorizationTestRunner";
 
-const words: CanonicalQuranWord[] = (JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../public/mushaf/v1/quran-words/pages/562.json"), "utf8")).words as Omit<CanonicalQuranWord, "normalizedText">[])
+const words: CanonicalQuranWord[] = (JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../public/mushaf/quran-words/pages/562.json"), "utf8")).words as Omit<CanonicalQuranWord, "normalizedText">[])
   .map((w) => ({ ...w, normalizedText: normalizeQuranText(w.displayText) }));
 
 function runtime(patch: Partial<QuestionRuntime> = {}): QuestionRuntime {

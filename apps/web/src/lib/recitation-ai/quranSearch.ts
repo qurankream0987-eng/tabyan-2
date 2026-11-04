@@ -11,7 +11,7 @@ let indexPromise: Promise<QuranSearchIndex> | null = null;
 export function loadQuranSearchIndex(): Promise<QuranSearchIndex> {
   if (!indexPromise) {
     const base = ((import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/").replace(/\/$/, "");
-    indexPromise = fetch(`${base}/mushaf/v1/quran-words/search-index.json`)
+    indexPromise = fetch(`${base}/mushaf/quran-words/search-index.json`)
       .then(async (response) => {
         if (!response.ok) throw new Error("تعذّر تحميل فهرس البحث");
         const data = await response.json() as { version: string; rows: SearchRow[] };

@@ -1942,7 +1942,7 @@
   justify-content: space-between;
   gap: 12px;
   pointer-events: none;
-  color: var(--mushaf-orn);
+  color: var(--mushaf-ink);
   font-family: "Tabyan Surah Amiri", var(--font-amiri), serif;
   font-synthesis: none;
   font-size: 15px;
