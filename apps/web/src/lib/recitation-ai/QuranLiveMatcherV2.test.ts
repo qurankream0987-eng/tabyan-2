@@ -171,3 +171,45 @@ describe("QuranLiveMatcher V2 — performance", () => {
     expect(matcher.committedIndex()).toBeGreaterThanOrEqual(13);
   });
 });
+
+describe("QuranLiveMatcher V2 — live pointer", () => {
+  it("matches a word by its modern spelling when the mushaf writes a dagger alef", () => {
+    // "عَلَىٰ" is heard as "على"; "تَبَـٰرَكَ" as "تبارك". Both must be exact matches.
+    const dagger = page.findIndex((word) => word.displayText.includes("ٰ"));
+    expect(dagger).toBeGreaterThanOrEqual(0);
+    const modern = normalizeQuranText(page[dagger].displayText.replace(/ٰ/g, ""));
+    const matcher = new QuranLiveMatcher(page.slice());
+    if (dagger > 0) recite(matcher, spoken(0, dagger), "before");
+    const result = matcher.feed(event(modern, true, "dagger"));
+    expect(matcher.committedIndex()).toBe(dagger + 1);
+    expect(result.committedOps).toEqual([{ kind: "match", index: dagger, cost: 0 }]);
+  });
+
+  it("does not jump the provisional pointer forward on a word still forming at the edge", () => {
+    // The next word is heard, then a half-formed word that happens to spell a word
+    // far ahead whose predecessor is the same common word: the pair must not be
+    // read as a jump, since only one of the two words is settled.
+    let near = -1;
+    let far = -1;
+    for (let k = 4; k < 40 && near < 0; k += 1) {
+      for (let f = k + 4; f < 70; f += 1) {
+        if (page[f].normalizedText === page[k].normalizedText && page[f + 1].normalizedText !== page[k + 1].normalizedText) { near = k; far = f; break; }
+      }
+    }
+    expect(near).toBeGreaterThan(0);
+    const matcher = new QuranLiveMatcher(page.slice());
+    recite(matcher, spoken(0, near), "before");
+    const partial = matcher.feed(event(`${page[near].normalizedText} ${page[far + 1].normalizedText}`, false, "edge"));
+    expect(partial.provisionalIndex).toBeLessThanOrEqual(near);
+    expect(matcher.committedIndex()).toBe(near);
+  });
+
+  it("moves the provisional pointer over words heard whole in front of a noisy token", () => {
+    const matcher = new QuranLiveMatcher(page.slice(), { commitPartials: false });
+    recite(matcher, spoken(0, 10), "before");
+    const partial = matcher.feed(event(`${page[10].normalizedText} زقق`, false, "noisy"));
+    expect(partial.provisionalIndex).toBe(10);
+    expect(partial.mode).toBe("tracking");
+    expect(matcher.committedIndex()).toBe(10);
+  });
+});

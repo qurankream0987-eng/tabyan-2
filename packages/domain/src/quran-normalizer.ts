@@ -30,6 +30,8 @@ export function normalizeQuranText(text: string): string {
     .replace(FORMAT_CHARS, "")
     // الرسم العثماني/مخرجات ASR يختلفان في هذه الأشكال الإملائية فقط.
     .replace(/[ٱأإآ]/g, "ا")
+    // المصحف يكتب المدّة همزةً فألفاً («ءامنوا»)، والتعرف يكتبها «آمنوا».
+    .replace(/ءا/g, "ا")
     .replace(/ى/g, "ي")
     .replace(/\s+/g, " ")
     .trim();

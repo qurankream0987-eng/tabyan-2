@@ -57,7 +57,11 @@ describe("Quran search", () => {
   it("returns the refrain's many positions in canonical order rather than guessing one", () => {
     const results = searchQuran(index, "فباي الاء ربكما تكذبان", { limit: 40 });
     expect(results.length).toBeGreaterThan(20);
-    expect(results.every((r) => r.verseKey.startsWith("55:"))).toBe(true);
+    // Every full match is a refrain of ar-Rahman; "فبأي آلاء ربك" (53:55) may follow as a partial match.
+    const full = results.filter((r) => r.score === 1);
+    expect(full.length).toBeGreaterThan(20);
+    expect(full.every((r) => r.verseKey.startsWith("55:"))).toBe(true);
+    expect(results.slice(0, full.length)).toEqual(full);
     expect(results[0].verseKey).toBe("55:13");
   });
 
