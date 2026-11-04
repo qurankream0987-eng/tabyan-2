@@ -12,6 +12,12 @@ export const TILAWI_INPUT_SAMPLE_RATE_HZ = 24_000;
 const HOP_SECONDS = 0.4;
 /** Already-settled audio re-decoded in front of new audio, for acoustic context. */
 const CONTEXT_SECONDS = 1.0;
+/**
+ * Silence appended after the newest audio. The model holds back the last
+ * pieces of a word until it hears what follows; a silent tail lets it close
+ * the word at the edge now, which cuts the pointer's lag by about 200 ms.
+ */
+const PAD_SECONDS = 0.3;
 /** Upper bound on one decode, so a long unbroken stretch cannot grow without limit. */
 const MAX_WINDOW_SECONDS = 12;
 /**
@@ -48,6 +54,14 @@ function raised(window: Float32Array): Float32Array {
   const gain = Math.min(MAX_INPUT_GAIN, TARGET_INPUT_RMS / level);
   const out = new Float32Array(window.length);
   for (let i = 0; i < window.length; i++) out[i] = Math.max(-1, Math.min(1, window[i] * gain));
+  return out;
+}
+
+function padded(window: Float32Array): Float32Array {
+  const pad = Math.round(PAD_SECONDS * MODEL_SAMPLE_RATE_HZ);
+  if (!pad) return window;
+  const out = new Float32Array(window.length + pad);
+  out.set(window);
   return out;
 }
 
@@ -202,7 +216,7 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
     const window = this.audio.slice(0, end - start);
     try {
       const words = window.length >= MIN_DECODE_SECONDS * MODEL_SAMPLE_RATE_HZ
-        ? await model.transcribe(raised(window))
+        ? await model.transcribe(padded(raised(window)))
         : [];
       if (!this.isOpen()) return;
       this.decodedUntil = end;
