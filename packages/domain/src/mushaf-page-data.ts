@@ -71,10 +71,11 @@ export function buildPageLines(data: MushafPageData): MushafLineModel[] {
   }
   // A surah ending above line 15 leaves the next surah's title (and basmala) at the foot of
   // this page when that surah starts on the next one, as in the printed Madinah mushaf.
+  // Page 1 stands alone: al-Baqarah opens page 2 with its own title.
   const last = data.v[data.v.length - 1];
   const lastLine = last ? Math.max(...last.w.map((w) => w[1])) : 15;
   const next = last ? SURAHS[last.c] : undefined;
-  if (last && next && last.n === SURAHS[last.c - 1]?.ayahs && lastLine < 15) {
+  if (data.p > 1 && last && next && last.n === SURAHS[last.c - 1]?.ayahs && lastLine < 15) {
     models.push({ line: lastLine + 1, kind: "surah-header", surahName: next.name, surahNumber: next.n, ayahCount: next.ayahs });
     if (lastLine + 2 <= 15 && next.n !== 9) models.push({ line: lastLine + 2, kind: "basmalah" });
   }

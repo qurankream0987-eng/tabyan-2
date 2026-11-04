@@ -7,6 +7,12 @@ const PAGES = join(__dirname, "../../../public/mushaf/pages");
 const page = (n: number): MushafPageData => JSON.parse(readFileSync(join(PAGES, `${n}.json`), "utf8"));
 
 describe("buildPageLines on the 1421 print", () => {
+  it("shows al-Baqarah only on page 2, not at the foot of al-Fatiha", () => {
+    const titles = (n: number) => buildPageLines(page(n)).filter((m) => m.kind === "surah-header").map((m) => m.surahNumber);
+    expect(titles(1)).toEqual([1]);
+    expect(titles(2)).toEqual([2]);
+  });
+
   // Every full page fills its 15 lines once: a surah title that falls at the foot of a page,
   // or a basmala carried over to the next page, must not leave a blank line.
   it("fills lines 1–15 exactly once on pages 3–604", () => {
