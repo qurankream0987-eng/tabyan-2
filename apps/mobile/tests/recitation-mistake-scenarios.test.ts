@@ -16,12 +16,12 @@ for (let page = 1; page <= 604; page += 1) {
 const range = (surah: number, from: number, to: number) => corpus.filter((w) => w.surah === surah && w.ayah >= from && w.ayah <= to);
 const ayah = (surah: number, number: number) => range(surah, number, number).map((w) => w.displayText).join(" ");
 
-function recite(words: CanonicalQuranWord[], phrases: string[]) {
+function recite(words: CanonicalQuranWord[], phrases: string[], confidences?: number[][]) {
   const matcher = new NativeQuranLiveMatcher(words);
   phrases.forEach((phrase, item) => {
     const tokens = phrase.split(" ");
     for (let k = 1; k < tokens.length; k += 1) matcher.feed(tokens.slice(0, k).join(" "), `p${item}`, false);
-    matcher.feed(phrase, `p${item}`, true);
+    matcher.feed(phrase, `p${item}`, true, confidences?.[item]);
   });
   const summary = matcher.finish();
   const flagged = new Map(matcher.flaggedWords().map((f) => [f.key, f.kind]));
@@ -86,6 +86,31 @@ describe("recitation mistakes", () => {
     // Word-by-word finals, as the recognizer sends them.
     const { summary, flagged } = recite(words, [...text.slice(0, upTo), "الله", ...text.slice(upTo + 1)]);
     expect([...flagged.values()].filter((kind) => kind === "skipped")).toEqual([]);
+    expect(summary.wordsRecited).toBe(summary.totalWords);
+  });
+
+  it("a wrong word the recognizer barely heard is not a mistake; one it was sure of is", () => {
+    // Al-Mulk 2 with its third word replaced, the way a mumbled or wrongly read word arrives.
+    const words = ayah(67, 2).split(" ");
+    words[2] = "كلمةغريبة";
+    const sure = (count: number) => Array(count).fill(0.97);
+    const sureOfAll = recite(range(67, 1, 4), [ayah(67, 1), words.join(" "), ayah(67, 3), ayah(67, 4)], [sure(4), sure(words.length), sure(9), sure(15)]);
+    expect([...sureOfAll.flagged.values()]).toEqual(["mistake"]);
+    const unsure = sure(words.length);
+    unsure[2] = 0.3;
+    const barelyHeard = recite(range(67, 1, 4), [ayah(67, 1), words.join(" "), ayah(67, 3), ayah(67, 4)], [sure(4), unsure, sure(9), sure(15)]);
+    expect(barelyHeard.flagged.size).toBe(0);
+    expect(barelyHeard.summary.wordsRecited).toBe(barelyHeard.summary.totalWords);
+  });
+
+  it("the recognizer's spellings of Mushaf words are exact matches", () => {
+    // «الصلوٰة» as الصلاة, «ءأنذرتهم» as أأنذرتهم, «ذٰلك» as ذلك.
+    const { summary, flagged } = recite(range(2, 1, 6), [
+      "الم", "ذلك الكتاب لا ريب فيه هدى للمتقين", "الذين يؤمنون بالغيب ويقيمون الصلاة ومما رزقناهم ينفقون",
+      "والذين يؤمنون بما أنزل إليك وما أنزل من قبلك وبالآخرة هم يوقنون", "أولئك على هدى من ربهم وأولئك هم المفلحون",
+      "إن الذين كفروا سواء عليهم أأنذرتهم أم لم تنذرهم لا يؤمنون",
+    ]);
+    expect(flagged.size).toBe(0);
     expect(summary.wordsRecited).toBe(summary.totalWords);
   });
 

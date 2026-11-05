@@ -270,4 +270,22 @@ describe("RecitationStateEngine — history export", () => {
     expect(mistakes).toEqual([expect.objectContaining({ kind: "WRONG_WORD", status: "confirmed" })]);
     expect(JSON.stringify(mistakes)).not.toContain("بيت");
   });
+
+  it("a different word is a mistake only when the recognizer was sure of it", () => {
+    const run = (confidence: number) => {
+      const matcher = new QuranLiveMatcher(page.slice());
+      const engine = new RecitationStateEngine({ wordAt: (index) => matcher.wordAt(index) });
+      const heard = spoken(0, 8);
+      heard[3] = "كلمةغريبة";
+      const wordConfidences = heard.map((_, index) => (index === 3 ? confidence : 0.97));
+      engine.apply(matcher.feed({ text: heard.join(" "), isFinal: true, itemId: "u1", wordConfidences }));
+      engine.apply(matcher.feed({ text: spoken(8, 14).join(" "), isFinal: true, itemId: "u2", wordConfidences: Array(6).fill(0.97) }));
+      return engine;
+    };
+    // Heard at 40%: the recognizer guessed; the reciter is taken to have read the word.
+    expect(run(0.4).mistakeRecords()).toEqual([]);
+    expect(run(0.4).stateAt(3)).toBe("CORRECT");
+    // Heard at 95%: a wrong word, confirmed once the reciter has gone on correctly.
+    expect(run(0.95).mistakeRecords()).toEqual([{ verseKey: "67:1", position: 4, kind: "WRONG_WORD", status: "confirmed" }]);
+  });
 });

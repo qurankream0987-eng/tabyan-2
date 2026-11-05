@@ -73,6 +73,8 @@ export type ProviderObservation =
       completeness: "partial" | "final";
       textIsDelta?: boolean;
       confidenceHint?: number;
+      /** The provider's confidence (0..1) in each whitespace-separated word of the transcript. */
+      wordConfidences?: number[];
       confirmationEligible?: boolean;
       timingHint?: { startMs?: number; endMs?: number };
     })
@@ -122,6 +124,7 @@ export type NormalizedRecitationEvent =
       transcript: string;
       textIsDelta: boolean;
       confidenceHint?: number;
+      wordConfidences?: number[];
       confirmationEligible?: boolean;
       timingHint?: { startMs?: number; endMs?: number };
     })
@@ -158,6 +161,7 @@ export interface MatcherTranscriptInput {
   text: string;
   isFinal: boolean;
   confidence?: number;
+  wordConfidences?: number[];
   receivedAt: number;
   itemId: string;
   confirmationEligible?: boolean;
@@ -192,6 +196,7 @@ export class NormalizedTranscriptMatcherBridge {
       text,
       isFinal: event.type === "final",
       ...(event.confidenceHint === undefined ? {} : { confidence: event.confidenceHint }),
+      ...(event.wordConfidences === undefined ? {} : { wordConfidences: event.wordConfidences }),
       receivedAt: event.timestamp,
       itemId,
       ...(event.confirmationEligible === undefined
@@ -300,12 +305,18 @@ export function normalizeProviderObservation(
         : undefined;
       const startMs = observation.timingHint?.startMs;
       const endMs = observation.timingHint?.endMs;
+      const wordConfidences = Array.isArray(observation.wordConfidences)
+        && observation.wordConfidences.length <= 4096
+        && observation.wordConfidences.every((value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1)
+        ? observation.wordConfidences
+        : undefined;
       return {
         ...base,
         type: observation.completeness,
         transcript: observation.transcript.slice(0, 20_000),
         textIsDelta: observation.textIsDelta ?? false,
         ...(confidenceHint === undefined ? {} : { confidenceHint }),
+        ...(wordConfidences === undefined ? {} : { wordConfidences }),
         ...(observation.confirmationEligible === undefined
           ? {}
           : { confirmationEligible: observation.confirmationEligible }),

@@ -401,7 +401,10 @@ export class RecitationStateEngine {
       if (op.kind === "match") {
         this.resolveMatch(op.index, changed);
       } else if (op.kind === "substitution") {
-        this.openError(op.index, "WRONG_WORD", tier, changed, op.heard);
+        // A different word is a mistake only when the recognizer is sure of what it heard;
+        // a word it barely made out (fast speech, a breath, noise) is taken as the expected one.
+        if (op.confidence !== undefined && confidenceTier(op.confidence) !== "HIGH") this.resolveMatch(op.index, changed);
+        else this.openError(op.index, "WRONG_WORD", tier, changed, op.heard);
       } else if (op.kind === "skip") {
         if (longSkips.has(op.index)) {
           this.setState(op.index, "SKIPPED", changed);
@@ -416,7 +419,7 @@ export class RecitationStateEngine {
           this.openError(op.index, "OMISSION", tier, changed);
         }
       } else if (op.kind === "extra") {
-        this.applyExtra(op, ops, tier, audioReliable, changed);
+        this.applyExtra(op, ops, op.confidence === undefined ? tier : confidenceTier(op.confidence), audioReliable, changed);
       }
     }
   }

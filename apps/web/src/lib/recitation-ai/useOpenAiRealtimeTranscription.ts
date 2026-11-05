@@ -143,6 +143,7 @@ type GatewayMessage =
       provider?: RealtimeProviderName;
       eventId?: string;
       confidence?: number;
+      wordConfidences?: number[];
       textIsDelta?: boolean;
       confirmationEligible?: boolean;
       timing?: {
@@ -607,6 +608,7 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
       completeness: type,
       textIsDelta: message.textIsDelta ?? false,
       ...(message.confidence === undefined ? {} : { confidenceHint: message.confidence }),
+      ...(Array.isArray(message.wordConfidences) ? { wordConfidences: message.wordConfidences } : {}),
       ...(message.confirmationEligible === undefined
         ? {}
         : { confirmationEligible: message.confirmationEligible }),

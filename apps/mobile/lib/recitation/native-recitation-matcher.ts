@@ -134,14 +134,14 @@ export class NativeQuranLiveMatcher {
     return true;
   }
 
-  feed(text: string, itemId: string, isFinal: boolean): NativeRecitationMatch {
+  feed(text: string, itemId: string, isFinal: boolean, wordConfidences?: number[]): NativeRecitationMatch {
     const eventKey = `${itemId}:${isFinal}:${text}`;
     if (eventKey === this.lastEvent && this.lastResult) {
       return { ...this.lastResult, stable: false, changedWordStates: [] };
     }
     this.lastEvent = eventKey;
     const committedBefore = this.matcher.committedIndex();
-    const live = this.matcher.feed({ text, itemId, isFinal });
+    const live = this.matcher.feed({ text, itemId, isFinal, wordConfidences });
     const update = this.engine.apply(live);
     // A partial that does not align (a half-heard word, noise) keeps the
     // pointer where it is instead of snapping back to the last final.

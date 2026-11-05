@@ -59,7 +59,7 @@ export interface NativeRecitationRuntime {
 }
 
 export interface NativeMatcherLike {
-  feed(text: string, itemId: string, isFinal: boolean): ReturnType<NativeQuranLiveMatcher["feed"]>;
+  feed(text: string, itemId: string, isFinal: boolean, wordConfidences?: number[]): ReturnType<NativeQuranLiveMatcher["feed"]>;
 }
 
 const SOCKET_OPEN = 1;
@@ -251,7 +251,11 @@ export class NativeRecitationControllerCore {
         if (completed) this.items.delete(completed[0]);
         else { this.fail(new Error("Too many pending transcript items")); return; }
       }
-      this.callbacks.onMatch?.(this.matcher.feed(text, itemId, isFinal));
+      const wordConfidences = Array.isArray(message.wordConfidences)
+        && message.wordConfidences.every((value: unknown) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1)
+        ? message.wordConfidences as number[]
+        : undefined;
+      this.callbacks.onMatch?.(this.matcher.feed(text, itemId, isFinal, wordConfidences));
       return;
     }
     if (message.t === "finalized" && this.stopping && message.commitId === this.finalCommitId) {
