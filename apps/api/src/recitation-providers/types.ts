@@ -14,6 +14,8 @@ export interface CanonicalTranscriptEvent {
   eventId?: string;
   /** Unvalidated ASR can suggest review, never automatically confirm a mistake. */
   confirmationEligible?: boolean;
+  /** The recognizer's confidence (0..1) in each whitespace-separated word of `text`. */
+  wordConfidences?: number[];
 }
 
 export type AudioAcceptanceEvidence =
@@ -60,4 +62,6 @@ export interface SpeechRecognitionProvider {
   /** Close sockets, workers, and other adapter-owned resources. */
   close(reason?: string): void;
   isOpen(): boolean;
+  /** Provider-side timing for the session log. */
+  stats?(): Record<string, number | string>;
 }

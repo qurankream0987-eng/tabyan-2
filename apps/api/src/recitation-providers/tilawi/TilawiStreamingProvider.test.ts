@@ -110,6 +110,9 @@ test("words are emitted once, in order, as settled finals with a revisable tail"
   assert.deepEqual(finals.map((event) => event.text).join(" ").split(" "), ["بسم", "الله", "الرحمن", "الرحيم"]);
   const itemIds = finals.map((event) => event.itemId);
   assert.equal(new Set(itemIds).size, itemIds.length, "each item is finalized exactly once");
+  for (const event of h.transcripts) {
+    assert.deepEqual(event.wordConfidences, event.text.split(" ").filter(Boolean).map(() => 1), "one confidence per word");
+  }
   assert.ok(h.transcripts.some((event) => !event.isFinal && event.text), "a tail is shown before it settles");
   for (const event of h.transcripts) assert.equal(event.textIsDelta, false);
   assert.deepEqual(h.errors, []);

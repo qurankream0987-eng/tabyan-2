@@ -363,6 +363,7 @@ export function attachRecitationRealtime(server: Server) {
         textIsDelta: normalized.textIsDelta,
         confirmationEligible: normalized.confirmationEligible,
         confidence: normalized.confidenceHint,
+        wordConfidences: normalized.wordConfidences,
         eventId: normalized.providerEventId,
         timing: latestAudioTiming ? { ...latestAudioTiming, providerDeltaReceivedAt: Date.now() } : undefined,
         providerStats: providerStats(),
@@ -834,6 +835,7 @@ export function attachRecitationRealtime(server: Server) {
         providerCompletedEventCount,
         providerErrorCount,
         droppedAudioChunkCount,
+        decodeStats: provider?.stats?.() ?? null,
       }, "recitation realtime client closed");
       closeAll("client_socket_closed");
     });

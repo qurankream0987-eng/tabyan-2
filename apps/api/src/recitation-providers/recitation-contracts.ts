@@ -143,6 +143,7 @@ export function normalizeTranscriptEvent(
     transcript: event.text,
     completeness: event.isFinal ? "final" : "partial",
     ...(event.confidence === undefined ? {} : { confidenceHint: event.confidence }),
+    ...(event.wordConfidences === undefined ? {} : { wordConfidences: event.wordConfidences }),
     ...(event.confirmationEligible === undefined
       ? {}
       : { confirmationEligible: event.confirmationEligible }),

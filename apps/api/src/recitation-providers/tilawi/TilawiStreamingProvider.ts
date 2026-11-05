@@ -8,10 +8,19 @@ import { WordStabilizer, type RecognizedWord } from "./wordStabilizer";
 /** Sample rate the gateway announces to clients for this provider. */
 export const TILAWI_INPUT_SAMPLE_RATE_HZ = 24_000;
 
-/** New audio needed before the next decode. */
-const HOP_SECONDS = 0.4;
+/** A tuning value from the environment, or its default when unset or not a positive number. */
+function seconds(name: string, fallback: number) {
+  const value = Number(process.env[name]);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+/**
+ * New audio needed before the next decode. A decode takes about 160 ms on four
+ * threads, so a quarter second keeps the model busy about two thirds of the time
+ * and the pointer at most a quarter second behind the audio before decoding.
+ */
+const HOP_SECONDS = seconds("TABYAN_TILAWI_HOP_SECONDS", 0.25);
 /** Already-settled audio re-decoded in front of new audio, for acoustic context. */
-const CONTEXT_SECONDS = 1.0;
+const CONTEXT_SECONDS = seconds("TABYAN_TILAWI_CONTEXT_SECONDS", 0.8);
 /**
  * Silence appended after the newest audio. The model holds back the last
  * pieces of a word until it hears what follows; a silent tail lets it close
@@ -96,6 +105,9 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
   private finalCommit: { id?: string } | null = null;
   private finalized = false;
 
+  private readonly decodeMs: number[] = [];
+  private readonly windowSeconds: number[] = [];
+
   private readonly itemPrefix = `tilawi-${randomUUID()}`;
   private itemSequence = 0;
   private itemHasPartial = false;
@@ -159,6 +171,24 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
     return !!this.model && !this.closed && !this.failed;
   }
 
+  /** Decode timing of this session, for the session log. */
+  stats() {
+    const quantile = (values: number[], share: number) => {
+      if (!values.length) return 0;
+      const sorted = [...values].sort((a, b) => a - b);
+      return sorted[Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * share))];
+    };
+    return {
+      decodes: this.decodeMs.length,
+      decodeMsP50: Math.round(quantile(this.decodeMs, 0.5)),
+      decodeMsP90: Math.round(quantile(this.decodeMs, 0.9)),
+      decodeMsMax: Math.round(quantile(this.decodeMs, 1)),
+      windowSecondsP50: Math.round(quantile(this.windowSeconds, 0.5) * 100) / 100,
+      hopSeconds: HOP_SECONDS,
+      contextSeconds: CONTEXT_SECONDS,
+    };
+  }
+
   private get audioEnd() {
     return this.audioStart + this.audio.length;
   }
@@ -215,9 +245,14 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
     const end = this.audioEnd;
     const window = this.audio.slice(0, end - start);
     try {
+      const startedAt = performance.now();
       const words = window.length >= MIN_DECODE_SECONDS * MODEL_SAMPLE_RATE_HZ
         ? await model.transcribe(padded(raised(window)))
         : [];
+      if (this.decodeMs.length < 4096) {
+        this.decodeMs.push(performance.now() - startedAt);
+        this.windowSeconds.push(window.length / MODEL_SAMPLE_RATE_HZ);
+      }
       if (!this.isOpen()) return;
       this.decodedUntil = end;
       this.events.onAudioAccepted?.("local_transcription_result");
@@ -277,6 +312,8 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
       startMs: words.length ? Math.round(words[0].startSeconds * 1000) : undefined,
       endMs: words.length ? Math.round(words[words.length - 1].endSeconds * 1000) : undefined,
       confidence: words.length ? Math.min(...words.map((word) => word.confidence)) : undefined,
+      // The model's confidence in each word, so a word it barely heard is never a mistake.
+      wordConfidences: words.map((word) => Math.round(word.confidence * 1000) / 1000),
       // Settled words may confirm a mistake; the client still needs the reciter to read
       // on correctly past it first. A revisable tail never does.
       confirmationEligible: isFinal,

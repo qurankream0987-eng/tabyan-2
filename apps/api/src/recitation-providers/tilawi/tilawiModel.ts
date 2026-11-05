@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { availableParallelism } from "node:os";
 import path from "node:path";
 import type { InferenceSession } from "onnxruntime-node";
+import { logger } from "../../lib/logger";
 import { CtcDecoder, Lexicon, type CtcWord } from "./ctcDecoder";
 import { QURAN_LEXICON } from "./quranLexicon";
 
@@ -54,6 +55,13 @@ export class TilawiModel implements Transcriber {
     ]);
     const maxConcurrent = Math.max(1, Math.floor(availableParallelism() / threads));
     const lexicon = options.decoder === "greedy" ? null : sharedLexicon();
+    logger.info({
+      cores: availableParallelism(),
+      threadsPerInference: threads,
+      maxConcurrent,
+      decoder: lexicon ? "lexicon" : "greedy",
+      freeWordPenalty: options.freeWordPenalty ?? null,
+    }, "Tilawi model loaded");
     return new TilawiModel(session, new CtcDecoder(vocab), maxConcurrent, lexicon, options.freeWordPenalty);
   }
 
