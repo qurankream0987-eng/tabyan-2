@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useState } from "react";
-import { StyleSheet, Text, View, type NativeSyntheticEvent, type TextLayoutEventData } from "react-native";
+import { Image, StyleSheet, Text, View, type NativeSyntheticEvent, type TextLayoutEventData } from "react-native";
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
 import { vocalizedSurahTitle } from "@workspace/tabyan-domain/quran-surah-names";
 import { buildPageLines, type LineWord, type MushafPageData } from "@workspace/tabyan-domain/mushaf-page-data";
@@ -10,6 +10,15 @@ import { SURAH_NAME_FONT_FAMILY, SURAH_TITLE_STRETCH, surahBannerLayout, surahNa
 import { useFonts } from "expo-font";
 import { SurahBannerArt } from "./surah-banner-art";
 import type { NativeWordFeedback } from "../../lib/recitation/native-recitation";
+
+/**
+ * The illuminated opening pages of the printed Madinah Mushaf (KFGQPC, 1441 AH edition), shown as
+ * printed in the reader. Recitation draws them from the page font, so each word can be coloured.
+ */
+const ILLUMINATED_PAGES: Record<number, { source: number; aspect: number }> = {
+  1: { source: require("../../assets/mushaf/opening-1.webp"), aspect: 1200 / 1886 },
+  2: { source: require("../../assets/mushaf/opening-2.webp"), aspect: 1200 / 1888 },
+};
 
 /** Width/height of a printed Madinah Mushaf page. */
 export const PAGE_ASPECT = 622 / 917;
@@ -213,6 +222,16 @@ function MushafPage({
     });
   }
 
+  const illuminated = !recitation && fillHeight && !fillWidth ? ILLUMINATED_PAGES[data.p] : undefined;
+  if (illuminated) {
+    const artH = Math.min(paperH, width / illuminated.aspect);
+    return (
+      <View style={[styles.paper, styles.illuminatedPaper, { width, height: paperH }]}>
+        <Image source={illuminated.source} accessibilityLabel={`صفحة ${data.p}`} style={{ width: artH * illuminated.aspect, height: artH }} resizeMode="contain" />
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.paper, fillHeight ? null : styles.paperCard, { width, height: shownPaperH }]}>
       {marginH > 0 && fontSize > 0 ? (
@@ -332,6 +351,7 @@ function SurahBanner({ name, number, width, rowH }: { name: string; number?: num
 
 const styles = StyleSheet.create({
   paper: { alignSelf: "center", backgroundColor: MUSHAF_COLORS.paper, overflow: "hidden" },
+  illuminatedPaper: { alignItems: "center", justifyContent: "center" },
   paperCard: { borderColor: MUSHAF_COLORS.frame, borderWidth: 1, borderRadius: 6 },
   marginRow: { position: "absolute", left: 0, right: 0, flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center", paddingHorizontal: "4%" },
   marginFooter: { justifyContent: "center" },
