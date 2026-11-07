@@ -9,6 +9,7 @@ import { JUZ_LIST } from "../../lib/mushaf/juz";
 import { SURAH_NAME_FONT_FAMILY, SURAH_TITLE_STRETCH, surahBannerLayout, surahNameGlyph } from "@workspace/tabyan-domain/surah-banner";
 import { useFonts } from "expo-font";
 import { SurahBannerArt } from "./surah-banner-art";
+import { fitMedallion, OpeningPageArt, openingFrame } from "./opening-page-art";
 import type { NativeWordFeedback } from "../../lib/recitation/native-recitation";
 
 /** Width/height of a printed Madinah Mushaf page. */
@@ -197,6 +198,26 @@ function MushafPage({
   // A faint rule under every word line while words are hidden: the reciter sees the page grid.
   const ruled = !!recitation && recitation.hideMode !== "visible_review";
   // A full-bleed paper keeps its height, so the page number stays in the bottom margin.
+  // The reader draws the two opening pages in their ornament: the surah name in the panel above,
+  // the basmala and the ayahs inside the medallion, each line held to the circle at its height.
+  const frame = useMemo(
+    () => (!!fillHeight && !fillWidth && layout.variant === "opening" ? openingFrame(width, paperH) : null),
+    [fillHeight, fillWidth, layout.variant, width, paperH],
+  );
+  const insideLines = frame ? lines.filter((line) => line.kind !== "surah-header") : [];
+  const medallion = frame && measured
+    ? fitMedallion(insideLines.map((line) => (line.kind === "words" ? lineWidths.get(line.line) ?? widest : widest * 0.6)), frame.circle.innerR, MEASURE_SIZE)
+    : null;
+  const glyphSize = medallion ? medallion.size : fontSize;
+  const placement = (line: { kind: string; line: number }) => {
+    if (frame && medallion) {
+      if (line.kind === "surah-header") return { top: frame.cartouche.y, height: frame.cartouche.h };
+      const index = insideLines.findIndex((inside) => inside.line === line.line);
+      const centre = frame.circle.cy + (index - (insideLines.length - 1) / 2) * medallion.rowH;
+      return { top: centre - medallion.rowH / 2, height: medallion.rowH };
+    }
+    return { top: marginH + rowTop(line.line), height: line.kind === "surah-header" ? titleRowH : wordRowH };
+  };
   const shownPaperH = spread > 1 && !fillHeight ? layout.blockTop * 2 + (layout.blockBottom - layout.blockTop) * spread : paperH;
 
   const drawn = fontSize > 0;
@@ -215,7 +236,8 @@ function MushafPage({
 
   return (
     <View style={[styles.paper, fillHeight ? null : styles.paperCard, { width, height: shownPaperH }]}>
-      {marginH > 0 && fontSize > 0 ? (
+      {frame && medallion ? <OpeningPageArt frame={frame} /> : null}
+      {marginH > 0 && fontSize > 0 && !frame ? (
         <>
           <View style={[styles.marginRow, { top: 0, height: marginH }]} pointerEvents="none">
             <Text allowFontScaling={false} style={[styles.marginText, { fontSize: marginFont }]} numberOfLines={1}>{JUZ_LIST[data.j - 1]?.name ?? ""}</Text>
@@ -244,18 +266,23 @@ function MushafPage({
           ))}
         </View>
       ) : null}
-      {fontSize > 0 ? lines.map((line) => {
-        const top = marginH + rowTop(line.line);
+      {fontSize > 0 && (!frame || medallion) ? lines.map((line) => {
+        const { top, height: rowH } = placement(line);
+        const fontSize = glyphSize;
         if (line.kind === "surah-header") {
           return (
-            <View key={`h-${line.line}`} style={[styles.row, { top, height: titleRowH }]}>
-              <SurahBanner name={line.surahName ?? ""} number={line.surahNumber} width={width * 0.94} rowH={titleRowH} />
+            <View key={`h-${line.line}`} style={[styles.row, { top, height: rowH }]}>
+              {frame ? (
+                <CartoucheTitle name={line.surahName ?? ""} number={line.surahNumber} width={frame.cartouche.w} height={frame.cartouche.h} />
+              ) : (
+                <SurahBanner name={line.surahName ?? ""} number={line.surahNumber} width={width * 0.94} rowH={rowH} />
+              )}
             </View>
           );
         }
         if (line.kind === "basmalah") {
           return (
-            <View key={`b-${line.line}`} style={[styles.row, { top, height: wordRowH }]}>
+            <View key={`b-${line.line}`} style={[styles.row, { top, height: rowH }]}>
               {basmalaReady ? (
                 // The printed basmala: 1:1 in the page-1 QCF font, at the size of the page's lines.
                 <Text allowFontScaling={false} style={[styles.wordLine, styles.basmalaLine, { fontFamily: pageFontFamily(BASMALA_FONT_PAGE), fontSize }, styles.boldInk]}>
@@ -273,7 +300,7 @@ function MushafPage({
           );
         }
         return (
-          <View key={`l-${line.line}`} style={[styles.row, { top, height: wordRowH }]}>
+          <View key={`l-${line.line}`} style={[styles.row, { top, height: rowH }]}>
             <Text allowFontScaling={false} style={[styles.wordLine, { fontFamily: family, fontSize }, recitation ? null : styles.boldInk]}>
               {line.words!.map((word, index) => [
                 // A narrower gap than the font's space, as on the printed page (QCF_WORD_GAP).
@@ -288,7 +315,7 @@ function MushafPage({
               ])}
             </Text>
             {/* Drawn over the words: hidden glyphs are paper-coloured and would cut gaps in a rule beneath them. */}
-            {ruled ? <View pointerEvents="none" style={[styles.rule, { bottom: wordRowH * 0.14 }]} /> : null}
+            {ruled ? <View pointerEvents="none" style={[styles.rule, { bottom: rowH * 0.14 }]} /> : null}
           </View>
         );
       }) : null}
@@ -326,6 +353,26 @@ function SurahBanner({ name, number, width, rowH }: { name: string; number?: num
           </Text>
         )}
       </View>
+    </View>
+  );
+}
+
+/** The surah name alone, in the cartouche of an illuminated opening page. */
+function CartoucheTitle({ name, number, width, height }: { name: string; number?: number; width: number; height: number }) {
+  const [fontReady] = useFonts({ [SURAH_NAME_FONT_FAMILY]: require("../../assets/fonts/sura-names.ttf") });
+  const box = { width: width * 0.62, height: height * 0.8 };
+  const glyphSize = Math.min((box.height * 0.92) / 0.75, (box.width * 0.96) / (2.5 * SURAH_TITLE_STRETCH));
+  return (
+    <View style={[styles.titleBox, { position: "relative", ...box }]}>
+      {fontReady && number !== undefined ? (
+        <Text allowFontScaling={false} accessibilityLabel={`سورة ${name}`} style={[styles.surahGlyph, { fontSize: glyphSize, lineHeight: box.height, transform: [{ scaleX: SURAH_TITLE_STRETCH }] }]} numberOfLines={1}>
+          {surahNameGlyph(number)}
+        </Text>
+      ) : (
+        <Text allowFontScaling={false} style={[styles.surahTitle, { fontSize: box.height * 0.5, lineHeight: box.height }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+          {number !== undefined ? vocalizedSurahTitle(number, name) : `سُورَةُ ${name}`}
+        </Text>
+      )}
     </View>
   );
 }
