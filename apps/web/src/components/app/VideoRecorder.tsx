@@ -185,8 +185,8 @@ export default function VideoRecorder({
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "user",
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: 854 },
+          height: { ideal: 480 },
           frameRate: { ideal: 30 },
         },
         audio: { echoCancellation: true, noiseSuppression: true },
@@ -385,7 +385,8 @@ export default function VideoRecorder({
     let rec: MediaRecorder;
     try {
       const mime = MIME_CANDIDATES.find((m) => MediaRecorder.isTypeSupported(m));
-      rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      /* Same budget as the app: ~1 Mbit/s video keeps a 5-minute interview under 40 MB. */
+      rec = new MediaRecorder(stream, { ...(mime ? { mimeType: mime } : {}), videoBitsPerSecond: 1_000_000, audioBitsPerSecond: 128_000 });
     } catch {
       rec = new MediaRecorder(stream);
     }

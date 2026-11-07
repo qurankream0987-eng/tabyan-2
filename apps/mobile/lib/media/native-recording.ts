@@ -7,13 +7,14 @@ import { Platform } from "react-native";
  * request H.264 explicitly. Android ignores this option and records H.264.
  */
 /**
- * Camera settings for reviewable recordings (placement and teacher videos): 720p at 2 Mbit/s.
+ * Camera settings for reviewable recordings (placement and teacher videos): 480p at 1 Mbit/s.
  * Left unset, expo-camera records 1080p at the encoder's default bitrate (often 15–20 Mbit/s),
  * so a few minutes came to several hundred megabytes and took most of an upload on a phone.
- * 720p at 2 Mbit/s keeps the face and the reciting clear at about 15 MB a minute.
+ * The reviewer needs the reciting and the face, not detail: 480p at 1 Mbit/s is about
+ * 7.5 MB a minute, so a five-minute interview stays under 40 MB.
  * On iOS the bitrate applies because `reviewableRecordingOptions` names the codec.
  */
-export const reviewableCameraProps = { videoQuality: "720p", videoBitrate: 2_000_000 } as const;
+export const reviewableCameraProps = { videoQuality: "480p", videoBitrate: 1_000_000 } as const;
 
 export const reviewableRecordingOptions: { codec?: "avc1" } = Platform.OS === "ios"
   ? { codec: "avc1" }
