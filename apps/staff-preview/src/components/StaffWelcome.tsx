@@ -102,7 +102,7 @@ function LevelList({ onTeacherRegister }: { onTeacherRegister: () => void }) {
         </div>
         <SectionCta onTeacherRegister={onTeacherRegister} />
       </ExpandableRow>
-      <ExpandableRow Icon={BookOpen} title="القراءات" desc="إجازة برواية حفص عن طريق الشاطبية">
+      <ExpandableRow Icon={BookOpen} title="القراءات" desc="إجازة برواية حفص من طريق الشاطبية">
         <div className="sw-detail-copy">
           <p>• لديك إجازة؟ أرفق الوثيقة — مراجعة خلال ٢٤ ساعة</p>
           <p>• لا إجازة؟ نوجّهك لمسار التحضير (مستوى الوارثون)</p>

@@ -127,7 +127,7 @@ export default function StudentIjazat() {
           <h2 className="font-amiri text-2xl font-extrabold text-burgundy leading-relaxed mb-2">
             هل لديك إجازة برواية حفص عن عاصم
             <br />
-            عن طريق الشاطبية؟
+            من طريق الشاطبية؟
           </h2>
           <p className="font-readex text-xs text-muted-foreground mb-6">هذا البرنامج مخصص لحملة الإجازة بالسند المتصل</p>
           <div className="grid grid-cols-2 gap-3">
@@ -279,7 +279,7 @@ export default function StudentIjazat() {
           </div>
           <h2 className="font-amiri text-2xl font-extrabold text-burgundy mb-2">وثيقتك قيد المراجعة</h2>
           <p className="font-readex text-sm text-muted-foreground leading-relaxed">
-            استلم المسؤول وثيقتك وسيرد عليك خلال ٢٤–٤٨ ساعة — سيصلك إشعار بالنتيجة
+            سيتم مراجعة إجازتك، وسيتم الرد خلال أقرب وقت ممكن
           </p>
         </GlassCard>
       )}

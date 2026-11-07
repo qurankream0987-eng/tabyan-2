@@ -91,7 +91,7 @@ export default function Ijazat() {
           </View>
           <Text style={[styles.pendingTitle, { color: colors.primary }]}>وثيقتك قيد المراجعة</Text>
           <Text style={[styles.note, { color: colors.muted }]}>
-            استلم المسؤول وثيقتك وسيرد عليك خلال ٢٤–٤٨ ساعة — سيصلك إشعار بالنتيجة
+            سيتم مراجعة إجازتك، وسيتم الرد خلال أقرب وقت ممكن
           </Text>
         </Card>
       ) : null}
@@ -215,7 +215,7 @@ function QiraatLanding({
           <Icon name="shield" size={24} color={isDark ? palette.gold : palette.goldDark} />
         </View>
         <Text style={[styles.questionTitle, { color: colors.primary }]}>
-          هل لديك إجازة برواية حفص عن عاصم{"\n"}عن طريق الشاطبية؟
+          هل لديك إجازة برواية حفص عن عاصم{"\n"}من طريق الشاطبية؟
         </Text>
         <Text style={[styles.questionNote, { color: colors.muted }]}>
           هذا البرنامج مخصص لحملة الإجازة بالسند المتصل

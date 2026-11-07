@@ -19,7 +19,7 @@ function qiraatState(qiraat: QiraatPath): { label: string; tone: "success" | "go
     return { label: "إجازتك معتمدة", tone: "success", hint: "تم اعتمادك في برنامج القراءات؛ يمكنك الدخول إلى مستوياته مباشرة.", action: "الدخول إلى برنامج القراءات", href: "/student/levels/qiraat" };
   }
   if (qiraat?.certificateStatus === "pending") {
-    return { label: "قيد المراجعة", tone: "gold", hint: "استلم المسؤول وثيقتك وسيرد عليك خلال ٢٤–٤٨ ساعة — سيصلك إشعار بالنتيجة.", action: "متابعة حالة الطلب", href: "/student/ijazat" };
+    return { label: "قيد المراجعة", tone: "gold", hint: "سيتم مراجعة إجازتك، وسيتم الرد خلال أقرب وقت ممكن.", action: "متابعة حالة الطلب", href: "/student/ijazat" };
   }
   return { label: "يتطلب إجازة", tone: "muted", hint: "افتح صفحة القراءات للإجابة عن سؤال الإجازة ورفع الوثيقة عبر المسار المعتمد.", action: "فتح صفحة القراءات", href: "/student/ijazat" };
 }

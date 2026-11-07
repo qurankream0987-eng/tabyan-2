@@ -189,7 +189,7 @@ function QuranContent({ onRegister }: { onRegister: () => void }) {
         <RegisterCta onPress={onRegister} />
       </SubExpandable>
 
-      <SubExpandable title="القراءات" description="إجازة برواية حفص عن طريق الشاطبية" icon="qiraat">
+      <SubExpandable title="القراءات" description="إجازة برواية حفص من طريق الشاطبية" icon="qiraat">
         <View style={styles.bulletList}>
           <Text style={[styles.bullet, { color: colors.muted }]}>• لديك إجازة؟ أرفق الوثيقة — مراجعة خلال ٢٤ ساعة</Text>
           <Text style={[styles.bullet, { color: colors.muted }]}>• لا إجازة؟ نوجّهك لمسار التحضير (مستوى الوارثون)</Text>

@@ -145,7 +145,7 @@ function QuranContent({ onReg }: { onReg: () => void }) {
         </div>
         <SectionCta onReg={onReg} />
       </SubCard>
-      <SubCard Icon={SiQiraat} title="القراءات" desc="إجازة برواية حفص عن طريق الشاطبية">
+      <SubCard Icon={SiQiraat} title="القراءات" desc="إجازة برواية حفص من طريق الشاطبية">
         <div className="px-5 pt-2 pb-1 space-y-1.5 text-xs text-muted-foreground font-readex">
           <p>• لديك إجازة؟ أرفق الوثيقة — مراجعة خلال ٢٤ ساعة</p>
           <p>• لا إجازة؟ نوجّهك لمسار التحضير (مستوى الوارثون)</p>
