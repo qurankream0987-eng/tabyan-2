@@ -18,7 +18,7 @@ import {
 import { useTheme, palette } from "../../lib/theme";
 import { useAuth } from "../../lib/auth";
 import { uploadNativeVideo } from "../../lib/media/mobile-upload";
-import { reviewableRecordingOptions } from "../../lib/media/native-recording";
+import { reviewableCameraProps, reviewableRecordingOptions } from "../../lib/media/native-recording";
 import { trpc } from "../../lib/trpc";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
 import { getAccountGeneration, isCurrentAccountGeneration, onAccountTransition } from "../../lib/account-transition";
@@ -1074,6 +1074,7 @@ export default function Placement() {
                   facing="front"
                   mode="video"
                   mute={false}
+                  {...reviewableCameraProps}
                   onCameraReady={handleCameraReady}
                   onMountError={handleCameraMountError}
                 />

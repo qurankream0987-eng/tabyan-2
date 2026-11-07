@@ -27,7 +27,12 @@ export type VideoUploadResult = {
   accountGeneration: number;
 };
 const NETWORK_TIMEOUT_MS = 30_000;
-const UPLOAD_TIMEOUT_MS = 5 * 60_000;
+/** Finalizing a video downloads and probes the whole file on the server. */
+const FINALIZE_TIMEOUT_MS = 3 * 60_000;
+/** An upload fails only when no bytes have gone out for this long, not after a fixed time. */
+const UPLOAD_STALL_MS = 90_000;
+/** Outer bound: the time the file would take at 64 KB/s, and never under 10 minutes. */
+const uploadLimitMs = (size: number) => Math.max(10 * 60_000, (size / (64 * 1024)) * 1000);
 
 type AccountRequestContext = { token: string; generation: number };
 
@@ -53,10 +58,11 @@ async function fetchWithTimeout(
   init: RequestInit,
   message: string,
   context: AccountRequestContext,
+  timeoutMs = NETWORK_TIMEOUT_MS,
 ) {
   const controller = new AbortController();
   const unsubscribe = onAccountTransition(() => controller.abort());
-  const timer = setTimeout(() => controller.abort(), NETWORK_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     assertCurrentAccount(context);
     const response = await fetch(input, { ...init, signal: controller.signal as any });
@@ -118,7 +124,7 @@ async function finalizeUpload(
     method: "POST",
     headers: { "Content-Type": "application/json", ...authorizedHeaders(context) },
     body: JSON.stringify({ objectPath, ...(purpose ? { purpose } : {}), ...(uploadProof ? { uploadProof } : {}) }),
-  }, "انتهت مهلة التحقق من الملف. تحقق من الاتصال وحاول مرة أخرى.", context);
+  }, "انتهت مهلة التحقق من الملف. تحقق من الاتصال وحاول مرة أخرى.", context, FINALIZE_TIMEOUT_MS);
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { error?: string } | null;
     assertCurrentAccount(context);
@@ -246,6 +252,8 @@ async function uploadNativeFileWithResult(
   const { uploadURL, objectPath, uploadProof } = await requestUploadUrl(context, name, size, contentType, purpose);
   assertCurrentAccount(context);
   onProgress?.(0);
+  let lastProgressAt = Date.now();
+  let lastBytesSent = 0;
   const task = LegacyFileSystem.createUploadTask(
     uploadURL,
     uri,
@@ -255,7 +263,11 @@ async function uploadNativeFileWithResult(
       headers: { "Content-Type": contentType },
     },
     (event) => {
-        if (isCurrentAccountGeneration(context.generation) && event.totalBytesExpectedToSend > 0) {
+      if (event.totalBytesSent > lastBytesSent) {
+        lastBytesSent = event.totalBytesSent;
+        lastProgressAt = Date.now();
+      }
+      if (isCurrentAccountGeneration(context.generation) && event.totalBytesExpectedToSend > 0) {
         onProgress?.(Math.round((event.totalBytesSent / event.totalBytesExpectedToSend) * 90));
       }
     },
@@ -264,14 +276,20 @@ async function uploadNativeFileWithResult(
     void task.cancelAsync().catch(() => undefined);
   });
   let timeout: ReturnType<typeof setTimeout> | undefined;
+  let stallWatch: ReturnType<typeof setInterval> | undefined;
   try {
     assertCurrentAccount(context);
     const uploadPromise = task.uploadAsync();
     const timeoutPromise = new Promise<never>((_, reject) => {
-      timeout = setTimeout(() => {
+      const fail = () => {
         void task.cancelAsync().catch(() => undefined);
-        reject(new Error("انتهت مهلة رفع الملف. تحقق من الاتصال وحاول مرة أخرى."));
-      }, UPLOAD_TIMEOUT_MS);
+        reject(new Error("انقطع رفع الملف لضعف الاتصال. تحقق من الإنترنت وحاول مرة أخرى."));
+      };
+      // A slow connection keeps going as long as bytes keep leaving; a dead one fails within 90 s.
+      stallWatch = setInterval(() => {
+        if (Date.now() - lastProgressAt > UPLOAD_STALL_MS) fail();
+      }, 5_000);
+      timeout = setTimeout(fail, uploadLimitMs(size));
     });
     let result: Awaited<typeof uploadPromise>;
     try {
@@ -291,6 +309,7 @@ async function uploadNativeFileWithResult(
     return finalized;
   } finally {
     if (timeout) clearTimeout(timeout);
+    if (stallWatch) clearInterval(stallWatch);
     unsubscribe();
   }
 }

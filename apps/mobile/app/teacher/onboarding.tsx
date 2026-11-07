@@ -12,7 +12,7 @@ import { useAuth } from "../../lib/auth";
 import { trpc } from "../../lib/trpc";
 import { uploadNativeFile, uploadNativeVideo } from "../../lib/media/mobile-upload";
 import { resolveLibraryAsset } from "../../lib/media/library-media";
-import { reviewableRecordingOptions } from "../../lib/media/native-recording";
+import { reviewableCameraProps, reviewableRecordingOptions } from "../../lib/media/native-recording";
 import { useTheme, palette } from "../../lib/theme";
 import { toast } from "../../lib/toast";
 import { userFacingErrorMessage } from "../../lib/user-facing-error";
@@ -285,7 +285,7 @@ export default function Onboarding() {
         </View>
         {videoMethod === "record" && !videoUrl ? (
           <>
-            {hasRecordingPermission ? <NativeCameraView ref={cameraRef} facing="front" mode="video" style={styles.camera} /> : null}
+            {hasRecordingPermission ? <NativeCameraView ref={cameraRef} facing="front" mode="video" {...reviewableCameraProps} style={styles.camera} /> : null}
             <Button label={recording ? "إيقاف التسجيل" : "بدء التسجيل"} icon={recording ? "stop" : "video"} disabled={uploading} style={styles.spaced} onPress={recording ? () => cameraRef.current?.stopRecording() : recordVideo} />
           </>
         ) : null}
