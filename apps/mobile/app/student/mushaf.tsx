@@ -304,7 +304,7 @@ export default function MushafReaderScreen() {
               if (!page) return;
               const start = parseVerseKey(PAGE_FIRST_VERSE[page - 1]);
               playerRef.current?.stop();
-              router.push({ pathname: "/student/recitation", params: { surah: String(start.surah), ayah: String(start.ayah) } } as never);
+              router.push({ pathname: "/student/recitation", params: { surah: String(start.surah), ayah: String(start.ayah), toEnd: "1" } } as never);
             }}
             colors={colors}
           />

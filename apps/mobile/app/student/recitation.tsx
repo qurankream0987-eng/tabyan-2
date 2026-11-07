@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@workspace/tabyan-trpc/types";
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
 import { Badge, Button, Card, Icon, LoadingState } from "../../components/ui";
-import { SurahField, SurahPicker } from "../../components/ui/surah-picker";
 import { useAuth } from "../../lib/auth";
 import { formatDate, formatDuration } from "../../lib/format";
 import { useTheme } from "../../lib/theme";
@@ -70,15 +69,6 @@ export default function NativeRecitationScreen() {
   const [surahInput, setSurahInput] = useState(String(initialSurah.n));
   const [startAyahInput, setStartAyahInput] = useState(String(initialAyah));
   const [endAyahInput, setEndAyahInput] = useState(String(toSurahEnd ? initialSurah.ayahs : Math.min(initialAyah + 9, initialSurah.ayahs)));
-  const [surahPickerOpen, setSurahPickerOpen] = useState(false);
-  // A new surah starts at its first verse with up to ten verses shown, like the teacher's form.
-  const pickSurah = (n: number) => {
-    const next = SURAHS[n - 1] ?? SURAHS[0];
-    setSurahInput(String(next.n));
-    setStartAyahInput("1");
-    setEndAyahInput(String(Math.min(10, next.ayahs)));
-    setSurahPickerOpen(false);
-  };
   const [phase, setPhase] = useState<ScreenPhase>("setup");
   const [errorText, setErrorText] = useState<string | null>(null);
   const [match, setMatch] = useState<NativeRecitationMatch | null>(null);
@@ -514,7 +504,7 @@ export default function NativeRecitationScreen() {
       title={toSurahEnd ? "تسميع" : "واجبات التسميع"}
       subtitle={toSurahEnd ? "جلسة تدريب عامة، لا تُرسل لمعلمك" : "سمّع ما حدده معلمك، وهو من يقيّم تسميعك"}
     >
-      {toSurahEnd ? null : assignment ? (
+      {!toSurahEnd && assignment ? (
         <Card style={styles.noticeCard}>
           <Badge label="واجب التسميع" tone="success" style={styles.badgeEnd} />
           <Text style={[styles.cardTitle, { color: colors.text }]}>{assignmentRange(assignment)}</Text>
@@ -522,19 +512,9 @@ export default function NativeRecitationScreen() {
           <Text style={[styles.smallText, { color: colors.muted }]}>
             عند إنهاء التسميع يُرسل ملخصه وتسجيل صوتك لمعلمك ليستمع له ويقيّمه بنفسه. يمكنك إعادة التسميع والتسليم قبل أن يقيّمه.
           </Text>
-          {phase === "setup" ? <Button label="تسميع عام بدلاً من الواجب" variant="quiet" onPress={() => chooseAssignment(null)} /> : null}
+          {phase === "setup" ? <Button label="العودة لكل الواجبات" variant="quiet" onPress={() => chooseAssignment(null)} /> : null}
         </Card>
-      ) : (
-        <Card style={styles.noticeCard}>
-          <Badge label="تسميع" style={styles.badgeEnd} />
-          <Text style={[styles.bodyText, { color: colors.text }]}>
-            جلسة تدريب عامة: اختيار السورة والآيات للعرض فقط، ولا تُرسل لمعلمك. واجبات معلمك تجدها في «واجبات التسميع».
-          </Text>
-          <Text style={[styles.smallText, { color: colors.muted }]}>
-            الإيقاف اليدوي ينهي الجلسة فقط؛ لا يعني إكمال النطاق ولا ينشئ تقييماً.
-          </Text>
-        </Card>
-      )}
+      ) : null}
 
       {status.isLoading ? <Card><LoadingState label="جارٍ التحقق من إتاحة التسميع…" /></Card> : null}
       {status.error ? (
@@ -561,7 +541,8 @@ export default function NativeRecitationScreen() {
         />
       ) : null}
 
-      {phase === "setup" ? (
+      {/* A general session starts from the Mushaf (from a chosen ayah to the surah's end); this screen otherwise starts the teacher's assignments. */}
+      {phase === "setup" && (assignment || toSurahEnd) ? (
         <>
           <Card>
             {toSurahEnd ? (
@@ -569,22 +550,7 @@ export default function NativeRecitationScreen() {
                 <Text style={[styles.cardTitle, { color: colors.text }]}>سورة {initialSurah.name}</Text>
                 <Text style={[styles.smallText, { color: colors.muted }]}>من الآية {initialAyah} إلى آخر السورة</Text>
               </>
-            ) : (
-              <>
-                <Text style={[styles.cardTitle, { color: colors.text }]}>نطاق التسميع</Text>
-                <Text style={[styles.smallText, { color: colors.muted }]}>اختر السورة والآيات</Text>
-                <Text style={[styles.surahLabel, { color: colors.muted }]}>السورة</Text>
-                <SurahField selected={Number(surahInput) || 1} onPress={() => setSurahPickerOpen(true)} disabled={!!assignment} />
-                <SurahPicker visible={surahPickerOpen} selected={Number(surahInput) || 1} onPick={pickSurah} onClose={() => setSurahPickerOpen(false)} />
-                <View style={styles.inputRow}>
-                  <NumberField label="من آية" value={startAyahInput} onChange={setStartAyahInput} maximum={3} editable={!assignment} colors={colors} />
-                  <NumberField label="إلى آية" value={endAyahInput} onChange={setEndAyahInput} maximum={3} editable={!assignment} colors={colors} />
-                </View>
-                {!validRange ? (
-                  <Text style={[styles.inlineError, { color: colors.danger }]}>تحقق من أرقام الآيات.</Text>
-                ) : null}
-              </>
-            )}
+            ) : null}
             {validRange && status.data?.enabled ? (
               wordsQuery.isLoading ? (
                 <Text style={[styles.smallText, { color: colors.muted }]}>جارٍ تحميل نص الآيات من خدمة المحتوى…</Text>
@@ -708,38 +674,6 @@ export default function NativeRecitationScreen() {
   }
 }
 
-function NumberField({
-  label,
-  value,
-  onChange,
-  maximum,
-  editable = true,
-  colors,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  maximum: number;
-  editable?: boolean;
-  colors: ReturnType<typeof useTheme>["colors"];
-}) {
-  return (
-    <View style={styles.inputColumn}>
-      <Text style={[styles.inputLabel, { color: colors.muted }]}>{label}</Text>
-      <TextInput
-        accessibilityLabel={label}
-        keyboardType="number-pad"
-        maxLength={maximum}
-        value={value}
-        onChangeText={(text) => onChange(text.replace(/\D/g, ""))}
-        selectTextOnFocus
-        editable={editable}
-        style={[styles.input, { color: colors.text, backgroundColor: colors.input, borderColor: colors.border }]}
-      />
-    </View>
-  );
-}
-
 /** The teacher's assignments for this student, with their review once given. */
 function AssignmentList({
   rows,
@@ -856,11 +790,7 @@ const styles = StyleSheet.create({
   bodyText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 13, lineHeight: 24, textAlign: "right" },
   smallText: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, lineHeight: 20, textAlign: "right" },
   cardTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 16, lineHeight: 25, textAlign: "right" },
-  inputRow: { flexDirection: "row-reverse", gap: 8, marginTop: 12, marginBottom: 16 },
-  surahLabel: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12, textAlign: "right", marginTop: 14, marginBottom: 6 },
-  inputColumn: { flex: 1, minWidth: 0, gap: 6 },
   inputLabel: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11, textAlign: "right" },
-  input: { minHeight: 48, borderWidth: 1, borderRadius: 13, paddingHorizontal: 12, textAlign: "center", fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 16 },
   inlineError: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12, lineHeight: 21, textAlign: "right", marginVertical: 8 },
   finishedCard: { alignItems: "stretch", gap: 12 },
   underlined: { textDecorationLine: "underline" },
