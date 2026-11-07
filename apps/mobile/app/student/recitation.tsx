@@ -159,11 +159,6 @@ export default function NativeRecitationScreen() {
     && canonicalWords.some((word) => word.ayah === endAyah);
   const rangeKeys = useMemo(() => new Set(canonicalWords.map((word) => word.verseKey)), [canonicalWords]);
   const lastRangePage = canonicalWords[canonicalWords.length - 1]?.page;
-  const continuousPages = useMemo(() => {
-    const first = canonicalWords[0]?.page;
-    if (!toSurahEnd || first === undefined || lastRangePage === undefined) return undefined;
-    return Array.from({ length: lastRangePage - first + 1 }, (_, index) => first + index);
-  }, [canonicalWords, lastRangePage, toSurahEnd]);
 
   // The page shows the word the reciter reads next, so it turns as soon as the last
   // word of a page is read; before the first match it shows the start verse.
@@ -489,19 +484,19 @@ export default function NativeRecitationScreen() {
     && rangeHasCoverage
     && canonicalWords.length > 0
     && phase === "setup";
-  if (phase === "listening" || phase === "paused") {
-    // The live session takes the whole screen; the setup and summary stay in the usual layout.
+  if (phase === "preparing" || phase === "listening" || phase === "paused" || phase === "ending") {
+    // The live session takes the whole screen from the moment it is being set up until it has
+    // ended; the setup and summary stay in the usual layout.
     return (
       <LiveRecitationScreen
         phase={phase}
         match={match}
         page={pageQuery.data}
         pageError={!!pageQuery.error}
-        surahId={surahId}
         hideMode={hideMode}
         rangeKeys={rangeKeys}
         revealedKeys={revealedKeys}
-        continuousPages={continuousPages}
+        onlyRange={toSurahEnd}
         errorText={errorText}
         onPause={() => void pauseSession()}
         onResume={() => void resumeSession()}
@@ -642,9 +637,6 @@ export default function NativeRecitationScreen() {
           controllerRef.current?.setSoundsEnabled(enabled);
         }}
       />
-      {phase === "preparing" || phase === "ending" ? (
-        <Card><LoadingState label={phase === "preparing" ? "جارٍ إنشاء الجلسة وتهيئة الميكروفون…" : "جارٍ إنهاء الجلسة بأمان…"} /></Card>
-      ) : null}
 
       {phase === "user-ended" ? (
         <Card style={styles.finishedCard}>

@@ -54,8 +54,6 @@ export interface MushafRecitationState {
   revealedKeys: ReadonlySet<string>;
   /** Draw the range alone: lines outside it are left out and the paper closes up around the rest. */
   onlyRange?: boolean;
-  /** The top of the line being read, measured from the top of the paper. */
-  onCurrentLine?: (page: number, top: number) => void;
 }
 
 /** Same modes as the web reader; the server stores the chosen one with the session. */
@@ -129,6 +127,7 @@ function MushafPage({
   highlightVerseKey,
   onPressVerse,
   fillWidth = false,
+  onReady,
 }: {
   data: MushafPageData;
   width: number;
@@ -141,6 +140,8 @@ function MushafPage({
   onPressVerse?: (verseKey: string) => void;
   /** The widest line fills the width on every page, the short opening lines too (recitation, where reading size matters most). */
   fillWidth?: boolean;
+  /** Called once the page is measured and its lines are drawn. */
+  onReady?: (page: number) => void;
 }) {
   const paperH = fillHeight ?? width / PAGE_ASPECT;
   // Printed margins carry the labels; the line grid takes the height between them.
@@ -212,15 +213,10 @@ function MushafPage({
     ? marginH * 2 + rangeBottom
     : spread > 1 && !fillHeight ? layout.blockTop * 2 + (layout.blockBottom - layout.blockTop) * spread : paperH;
 
-  const reading = recitation?.currentWord;
-  const readingLine = reading
-    ? shownLines.find((line) => line.words?.some((word) => word.verseKey === reading.verseKey && word.position === reading.position))?.line
-    : undefined;
-  const readingTop = fontSize > 0 && readingLine !== undefined ? marginH + rowTop(readingLine) : null;
-  const onCurrentLine = recitation?.onCurrentLine;
+  const drawn = fontSize > 0;
   useEffect(() => {
-    if (readingTop !== null) onCurrentLine?.(data.p, readingTop);
-  }, [data.p, onCurrentLine, readingTop]);
+    if (drawn) onReady?.(data.p);
+  }, [drawn, data.p, onReady]);
 
   function onMeasure(line: number, event: NativeSyntheticEvent<TextLayoutEventData>) {
     const lineWidth = Math.max(0, ...event.nativeEvent.lines.map((textLine) => textLine.width));
