@@ -52,8 +52,8 @@ export interface MushafRecitationState {
   hideMode: MushafHideMode;
   /** `verseKey:position` of the range words the reciter has reached. */
   revealedKeys: ReadonlySet<string>;
-  /** Draw the range alone: lines outside it are left out and the paper closes up around the rest. */
-  onlyRange?: boolean;
+  /** Words outside the range keep the page's own ink instead of fading: the whole page reads as printed. */
+  plainOutside?: boolean;
 }
 
 /** Same modes as the web reader; the server stores the chosen one with the session. */
@@ -74,7 +74,7 @@ function recitedInk(style: ReturnType<typeof wordStyle>) {
 
 function wordStyle(word: LineWord, recitation: MushafRecitationState | undefined, highlightVerseKey: string | null | undefined) {
   if (!recitation) return word.verseKey === highlightVerseKey ? styles.highlighted : null;
-  if (!recitation.rangeKeys.has(word.verseKey)) return recitation.onlyRange ? HIDDEN : { color: MUSHAF_COLORS.outOfRange };
+  if (!recitation.rangeKeys.has(word.verseKey)) return recitation.plainOutside ? null : { color: MUSHAF_COLORS.outOfRange };
   // Ayah markers and pause marks stay visible as the reciter's reference; on a hidden page
   // the markers are gold, so the blank lines still read as a page of ayahs.
   if (word.type !== 0) return word.type === 1 && recitation.hideMode !== "visible_review" ? { color: MUSHAF_COLORS.marker } : null;
@@ -165,10 +165,7 @@ function MushafPage({
   const titleRowH = height / LINE_COUNT;
   const lastVerse = data.v[data.v.length - 1];
   const marginFont = Math.min(16, marginH * 0.48);
-  // A range that ends mid-page names its own surah, not the next one on the paper.
-  const titleSurah = recitation?.onlyRange
-    ? Number([...recitation.rangeKeys][0]?.split(":")[0]) || lastVerse?.c
-    : lastVerse?.c;
+  const titleSurah = lastVerse?.c;
   // Widths are per page; a new page starts unmeasured.
   const [measuredPage, setMeasuredPage] = useState({ page: data.p, widths: new Map<number, number>() });
   const lineWidths = measuredPage.page === data.p ? measuredPage.widths : new Map<number, number>();
@@ -185,33 +182,22 @@ function MushafPage({
   const spread = fillWidth && layout.variant === "opening" && fontSize > 0
     ? Math.max(1, (fontSize * 1.6) / layout.wordRowH)
     : 1;
-  // A full-screen recitation page centres the short opening pages between its margins.
-  const blockH = (layout.blockBottom - layout.blockTop) * spread;
-  const onlyRange = !!recitation?.onlyRange;
-  const centredTop = fillWidth && fillHeight && !onlyRange && layout.variant === "opening" ? Math.max(layout.blockTop, (height - blockH) / 2) : layout.blockTop;
   const wordRowH = layout.wordRowH * spread;
-  const rangeKeys = recitation?.rangeKeys;
-  // A surah title or basmala belongs to the line after it, kept only if that line opens in the range.
-  const shownLines = useMemo(() => {
-    if (!onlyRange || !rangeKeys) return lines;
-    return lines.filter((line, index) => {
-      if (line.kind === "words") return line.words!.some((word) => rangeKeys.has(word.verseKey));
-      const first = lines.slice(index).find((next) => next.kind === "words")?.words?.[0];
-      return !!first && rangeKeys.has(first.verseKey);
-    });
-  }, [lines, onlyRange, rangeKeys]);
-  const uncutTop = (line: number) => centredTop + ((layout.tops.get(line) ?? 0) - layout.blockTop) * spread;
-  const firstShown = shownLines[0];
-  const lastShown = shownLines[shownLines.length - 1];
-  const cutTop = onlyRange && firstShown ? uncutTop(firstShown.line) : 0;
-  const rowTop = (line: number) => uncutTop(line) - cutTop;
-  const rangeBottom = lastShown ? rowTop(lastShown.line) + (lastShown.kind === "surah-header" ? titleRowH : wordRowH) : 0;
+  // A line's top within the block of lines, before the block is placed on the paper.
+  const blockOffset = (line: number) => ((layout.tops.get(line) ?? 0) - layout.blockTop) * spread;
+  const firstLine = lines[0];
+  const lastLine = lines[lines.length - 1];
+  const firstOffset = firstLine ? blockOffset(firstLine.line) : 0;
+  const linesH = lastLine ? blockOffset(lastLine.line) + (lastLine.kind === "surah-header" ? titleRowH : wordRowH) - firstOffset : 0;
+  // A full-height page centres the short opening pages (Al-Fatiha, the start of Al-Baqara)
+  // between its margins, in the reader and in recitation.
+  const centred = !!fillHeight && layout.variant === "opening";
+  const placedTop = centred ? Math.max(0, (height - linesH) / 2) : layout.blockTop;
+  const rowTop = (line: number) => placedTop + blockOffset(line) - (centred ? firstOffset : 0);
   // A faint rule under every word line while words are hidden: the reciter sees the page grid.
   const ruled = !!recitation && recitation.hideMode !== "visible_review";
   // A full-bleed paper keeps its height, so the page number stays in the bottom margin.
-  const shownPaperH = onlyRange && fontSize > 0
-    ? marginH * 2 + rangeBottom
-    : spread > 1 && !fillHeight ? layout.blockTop * 2 + (layout.blockBottom - layout.blockTop) * spread : paperH;
+  const shownPaperH = spread > 1 && !fillHeight ? layout.blockTop * 2 + (layout.blockBottom - layout.blockTop) * spread : paperH;
 
   const drawn = fontSize > 0;
   useEffect(() => {
@@ -258,7 +244,7 @@ function MushafPage({
           ))}
         </View>
       ) : null}
-      {fontSize > 0 ? shownLines.map((line) => {
+      {fontSize > 0 ? lines.map((line) => {
         const top = marginH + rowTop(line.line);
         if (line.kind === "surah-header") {
           return (

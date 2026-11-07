@@ -487,7 +487,7 @@ export default function NativeRecitationScreen() {
         hideMode={hideMode}
         rangeKeys={rangeKeys}
         revealedKeys={revealedKeys}
-        onlyRange={toSurahEnd}
+        plainOutside={toSurahEnd}
         errorText={errorText}
         onPause={() => void pauseSession()}
         onResume={() => void resumeSession()}

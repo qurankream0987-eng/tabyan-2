@@ -31,7 +31,7 @@ export function LiveRecitationScreen({
   hideMode,
   rangeKeys,
   revealedKeys,
-  onlyRange = false,
+  plainOutside = false,
   errorText,
   onPause,
   onResume,
@@ -48,8 +48,8 @@ export function LiveRecitationScreen({
   hideMode: MushafHideMode;
   rangeKeys: ReadonlySet<string>;
   revealedKeys: ReadonlySet<string>;
-  /** Draw only the range on its pages, so the chosen ayah opens the first one. */
-  onlyRange?: boolean;
+  /** The whole page in its own ink, the ayahs before the start too (a session from a chosen ayah). */
+  plainOutside?: boolean;
   errorText: string | null;
   onPause: () => void;
   onResume: () => void;
@@ -72,8 +72,8 @@ export function LiveRecitationScreen({
   const reading = match?.reading ?? null;
   const wordFeedback = match?.wordFeedback ?? NO_FEEDBACK;
   const recitation = useMemo(
-    () => ({ rangeKeys, currentWord: reading, wordFeedback, hideMode, revealedKeys, onlyRange }),
-    [rangeKeys, reading, wordFeedback, hideMode, revealedKeys, onlyRange],
+    () => ({ rangeKeys, currentWord: reading, wordFeedback, hideMode, revealedKeys, plainOutside }),
+    [rangeKeys, reading, wordFeedback, hideMode, revealedKeys, plainOutside],
   );
   // A page is drawn unseen until it is measured; the page before stays up meanwhile, so a turn never flashes blank paper.
   const [shown, setShown] = useState<MushafPageData | undefined>(undefined);
@@ -237,7 +237,6 @@ function feedbackCounts(match: NativeRecitationMatch | null) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: MUSHAF_COLORS.paper },
-  // A range drawn alone is shorter than the screen; it starts at the top like a page.
   pageHost: { flex: 1, alignItems: "center", justifyContent: "flex-start", overflow: "hidden" },
   pageMessage: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 24 },
   pageMessageText: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 13, textAlign: "center", color: palette.burgundy },
