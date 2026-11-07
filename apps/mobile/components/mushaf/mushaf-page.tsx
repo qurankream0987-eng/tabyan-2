@@ -8,7 +8,7 @@ import { ensurePageFont, pageFontFamily } from "../../lib/mushaf/mushaf-assets";
 import { JUZ_LIST } from "../../lib/mushaf/juz";
 import { SURAH_NAME_FONT_FAMILY, SURAH_TITLE_STRETCH, surahBannerLayout, surahNameGlyph } from "@workspace/tabyan-domain/surah-banner";
 import { useFonts } from "expo-font";
-import { SurahBannerArt } from "./surah-banner-art";
+import { OrnamentBand, SurahBannerArt } from "./surah-banner-art";
 import type { NativeWordFeedback } from "../../lib/recitation/native-recitation";
 
 /** Width/height of a printed Madinah Mushaf page. */
@@ -194,6 +194,17 @@ function MushafPage({
   const centred = !!fillHeight && layout.variant === "opening";
   const placedTop = centred ? Math.max(0, (height - linesH) / 2) : layout.blockTop;
   const rowTop = (line: number) => placedTop + blockOffset(line) - (centred ? firstOffset : 0);
+  // The paper left empty above and below a centred opening page carries an ornamental band each.
+  const bandW = width * 0.94;
+  const bands = centred
+    ? [
+        { from: marginH, to: marginH + placedTop },
+        { from: marginH + placedTop + linesH, to: marginH + height },
+      ].map(({ from, to }) => {
+        const bandH = Math.min((bandW * 140) / 760, (to - from) * 0.7);
+        return { top: from + (to - from - bandH) / 2, height: bandH };
+      }).filter((band) => band.height >= 32)
+    : [];
   // A faint rule under every word line while words are hidden: the reciter sees the page grid.
   const ruled = !!recitation && recitation.hideMode !== "visible_review";
   // A full-bleed paper keeps its height, so the page number stays in the bottom margin.
@@ -228,6 +239,11 @@ function MushafPage({
           </View>
         </>
       ) : null}
+      {fontSize > 0 ? bands.map((band) => (
+        <View key={band.top} pointerEvents="none" style={[styles.row, { top: band.top, height: band.height }]}>
+          <OrnamentBand width={bandW} height={band.height} />
+        </View>
+      )) : null}
       {!measured ? (
         <View style={styles.measureBox} pointerEvents="none">
           {wordLines.map((line) => (
