@@ -226,12 +226,17 @@ test("Native reading pointer follows partials forward and holds through an unali
 });
 
 test("Native matcher reports skipped words without counting them as confirmed progression", () => {
-  const matcher = new NativeQuranLiveMatcher(canonicalWords);
-  // One heard word cannot carry the reader over a gap (it waits for the next phrase); two can.
-  const result = matcher.feed("الرحمن الرحيم", "item-1", true);
+  const words = ["بسم", "الله", "الرحمن", "الرحيم", "الحمد", "لله"].map((displayText, index) => ({
+    surah: 1, ayah: 1, verseKey: "1:1", position: index + 1, displayText, normalizedText: normalizeQuranText(displayText),
+  })) satisfies CanonicalQuranWord[];
+  // Two heard words cannot carry the reader over a gap: a wrong ending often repeats a nearby
+  // one. They wait for the next phrase; three can.
+  const waiting = new NativeQuranLiveMatcher(words).feed("الرحمن الرحيم", "item-1", true);
+  assert.equal(waiting.progressionWords, 0);
+  const result = new NativeQuranLiveMatcher(words).feed("الرحمن الرحيم الحمد", "item-1", true);
 
-  assert.equal(result.current?.position, 4);
-  assert.equal(result.progressionWords, 2);
+  assert.equal(result.current?.position, 5);
+  assert.equal(result.progressionWords, 3);
   assert.equal(result.diagnostics.skippedRegionWords, 2);
   assert.equal("completionState" in result, false);
 });

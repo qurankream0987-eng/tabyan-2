@@ -116,6 +116,12 @@ const MAX_TRACKED_ITEMS = 32;
 /** قفزة أمامية أكبر من هذا تحتاج دليلاً متعدد الكلمات قبل الالتزام (hysteresis). */
 const LARGE_JUMP_WORDS = 12;
 const LARGE_JUMP_MIN_MATCHES = 3;
+/**
+ * Words matched in a row before the reader is taken to have moved ahead: two are not enough,
+ * since a wrong ending often repeats a nearby one (Al-Nisa 16 read «عليما حكيما» for «توابا
+ * رحيما», which closes the next ayah). Fewer wait, carried, for the next phrase to place them.
+ */
+const JUMP_MIN_MATCHES = 3;
 /** عدد الكلمات الأحدث المستعملة لاستعادة الموضع حين يفشل الذيل كاملاً. */
 const RECENT_SUFFIX_TOKENS = 6;
 
@@ -873,7 +879,7 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
       commitEnd = -1;
       this.stats.falseForwardJumps += 1;
     }
-    if (commitEnd > 0 && jump >= 2 && settledMatches < 2) {
+    if (commitEnd > 0 && jump >= 2 && settledMatches < JUMP_MIN_MATCHES) {
       // One matched word cannot carry the reader forward: a common word ("الله") fits
       // several places ahead, and misheard "والله" would otherwise skip the words between.
       // A final heard alone waits (carry) for the next phrase to place it.
@@ -888,7 +894,7 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
 
     const previousProvisional = this.provisional;
     // لا مؤشر مؤقت بعيد من لفظ واحد: كلمة شائعة تتكرر أمامنا لا تُحرّك الواجهة.
-    const farSingle = settledMatches < 2 && alignment.start > this.committed + 2;
+    const farSingle = settledMatches < JUMP_MIN_MATCHES && alignment.start > this.committed + 2;
     this.provisional = alignment.end > this.committed && !farSingle ? this.words[alignment.end - 1] ?? null : null;
     this.provisionalIndex = this.provisional ? alignment.end - 1 : -1;
     const committedBefore = this.committed;
@@ -921,6 +927,16 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
       }
       this.unmatchedFinal = [];
       this.unmatchedFinalConfidences = [];
+      if (event.isFinal) {
+        // Words heard after the last matched one (a wrong ending: «عليما حكيما» for «توابا رحيما»)
+        // are kept like unmatched speech: if the reader goes on further, they pair with the
+        // words they stood in for instead of being lost.
+        const trailing = alignment.ops.filter((op): op is Extract<AlignmentOp, { kind: "extra" }> => op.kind === "extra" && op.afterIndex >= commitEnd - 1);
+        this.unmatchedFinal = trailing.map((op) => op.heard).slice(-MAX_TAIL_TOKENS);
+        this.unmatchedFinalConfidences = trailing.every((op) => op.confidence !== undefined)
+          ? trailing.map((op) => op.confidence as number).slice(-MAX_TAIL_TOKENS)
+          : [];
+      }
       this.stats.committedRevealCount += commitEnd - this.committed;
       for (let index = this.committed; index < commitEnd; index += 1) this.markRevealed(this.words[index]);
       this.committed = commitEnd;

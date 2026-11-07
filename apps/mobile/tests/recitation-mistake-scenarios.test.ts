@@ -114,6 +114,23 @@ describe("recitation mistakes", () => {
     expect(summary.wordsRecited).toBe(summary.totalWords);
   });
 
+  it("a wrong ayah ending that closes the next ayah is a mistake, not a jump to it", () => {
+    // Al-Nisa 16 ends «إن الله كان توابا رحيما»; read «عليما حكيما», which closes ayah 17.
+    const body = "والذان يأتيانها منكم فآذوهما فإن تابا وأصلحا فأعرضوا عنهما إن الله كان";
+    const expectWrongEnding = (phrases: string[]) => {
+      const { flagged } = recite(range(4, 16, 18), phrases);
+      expect(flagged.get("4:16:13")).toBe("mistake");
+      expect(flagged.get("4:16:14")).toBe("mistake");
+      expect(ayahKeys(4, 17).concat(ayahKeys(4, 18)).some((key) => flagged.has(key))).toBe(false);
+    };
+    expectWrongEnding([body, "عليما حكيما", ayah(4, 17), ayah(4, 18)]);
+    expectWrongEnding([`${body} عليما حكيما`, ayah(4, 17), ayah(4, 18)]);
+    // Said alone, the wrong ending leaves the reader where they were.
+    const matcher = new NativeQuranLiveMatcher(range(4, 16, 18));
+    matcher.feed(body, "a", true);
+    expect(matcher.feed("عليما حكيما", "b", true).reading?.verseKey).toBe("4:16");
+  });
+
   it("recognizer noise on a correct recitation does not turn into skipped ayahs", () => {
     // Dropped and misheard words, phrases split mid-ayah: what live recognition looks like.
     let seed = 7;
