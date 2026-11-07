@@ -6,6 +6,7 @@ import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "@workspace/tabyan-trpc/types";
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
 import { Badge, Button, Card, Icon, LoadingState } from "../../components/ui";
+import { SurahField, SurahPicker } from "../../components/ui/surah-picker";
 import { useAuth } from "../../lib/auth";
 import { formatDate, formatDuration } from "../../lib/format";
 import { useTheme } from "../../lib/theme";
@@ -540,6 +541,12 @@ export default function NativeRecitationScreen() {
           colors={colors}
         />
       ) : null}
+      {phase === "setup" && !assignment && !toSurahEnd ? (
+        <FreeRecitationCard
+          onStart={(surah) => router.push({ pathname: "/student/recitation", params: { surah: String(surah), ayah: "1", toEnd: "1" } } as never)}
+          colors={colors}
+        />
+      ) : null}
 
       {/* A general session starts from the Mushaf (from a chosen ayah to the surah's end); this screen otherwise starts the teacher's assignments. */}
       {phase === "setup" && (assignment || toSurahEnd) ? (
@@ -672,6 +679,21 @@ export default function NativeRecitationScreen() {
     setSummary(null);
     matcherRef.current = null;
   }
+}
+
+/** Practice outside the assignments: a whole surah, page by page, not sent to the teacher. */
+function FreeRecitationCard({ onStart, colors }: { onStart: (surah: number) => void; colors: ReturnType<typeof useTheme>["colors"] }) {
+  const [surah, setSurah] = useState(1);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  return (
+    <Card style={styles.noticeCard}>
+      <Text style={[styles.cardTitle, { color: colors.text }]}>تسميع حر</Text>
+      <Text style={[styles.smallText, { color: colors.muted }]}>اختر السورة وسمّعها من أولها لآخرها. لا يُرسل لمعلمك.</Text>
+      <SurahField selected={surah} onPress={() => setPickerOpen(true)} />
+      <SurahPicker visible={pickerOpen} selected={surah} onPick={(n) => { setSurah(n); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} />
+      <Button label="ابدأ التسميع" icon="mic" onPress={() => onStart(surah)} />
+    </Card>
+  );
 }
 
 /** The teacher's assignments for this student, with their review once given. */
