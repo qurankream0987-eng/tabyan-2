@@ -701,6 +701,75 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
     return ops.reverse();
   }
 
+  private vocabulary = new Set<string>();
+  private vocabularySize = 0;
+
+  /** Whether a heard token is a word of the loaded Mushaf pages. */
+  private isQuranWord(token: string) {
+    if (this.vocabularySize !== this.words.length) {
+      for (let index = this.vocabularySize; index < this.words.length; index += 1) {
+        this.vocabulary.add(this.words[index].normalizedText);
+        const alternate = this.alternates[index];
+        if (alternate) this.vocabulary.add(alternate);
+      }
+      this.vocabularySize = this.words.length;
+    }
+    return this.vocabulary.has(token);
+  }
+
+  /**
+   * A final phrase of only one or two words, none of them placed: when they stand in for the
+   * next words of the ayah being read, commit them as mistakes («يعلمون» said alone for
+   * «يشعرون»). Returns the committed ops, or null when they do not fit there.
+   */
+  private commitWrongNext(heard: string[], confidences?: number[]): AlignmentOp[] | null {
+    const trailing = heard.map((token, k): Extract<AlignmentOp, { kind: "extra" }> => ({
+      kind: "extra", heard: token, afterIndex: this.committed - 1, ...(confidences ? { confidence: confidences[k] } : {}),
+    }));
+    const ops = this.committed > 0 ? this.wrongNextWords(trailing, this.committed) : [];
+    if (!ops.length) return null;
+    const end = this.committed + ops.length;
+    this.stats.committedRevealCount += ops.length;
+    for (let index = this.committed; index < end; index += 1) this.markRevealed(this.words[index]);
+    this.committed = end;
+    this.committedCurrent = this.words[end - 1] ?? null;
+    this.provisional = null;
+    this.provisionalIndex = -1;
+    this.carry = [];
+    this.carryConfidences = [];
+    this.unmatchedFinal = [];
+    this.unmatchedFinalConfidences = [];
+    for (const index of this.seen.keys()) if (index < this.committed) this.seen.delete(index);
+    return ops;
+  }
+
+  /**
+   * One or two words heard at the end of a final phrase after its last matched word, when each
+   * stands in for the next word of the same ayah: substitutions to commit now. Nothing when a
+   * word repeats one just read (a reader repeating himself), fits loosely (a misheard right
+   * word), or the next word starts another ayah (speech between ayahs is not a reading).
+   */
+  private wrongNextWords(trailing: Extract<AlignmentOp, { kind: "extra" }>[], commitEnd: number): AlignmentOp[] {
+    if (!trailing.length || trailing.length > 2) return [];
+    const end = commitEnd + trailing.length;
+    const lastRead = this.words[commitEnd - 1];
+    if (!lastRead || end > this.words.length) return [];
+    for (let index = commitEnd; index < end; index += 1) if (this.words[index].verseKey !== lastRead.verseKey) return [];
+    const recent = new Set(this.words.slice(Math.max(0, commitEnd - 3), commitEnd).map((word) => word.normalizedText));
+    if (trailing.some((op) => recent.has(op.heard))) return [];
+    // Only recitation counts as a wrong word: a word of the Quran (another ayah's ending), or
+    // one close to the word expected. Talk or noise heard there is not a reading of it.
+    if (trailing.some((op, k) => !this.isQuranWord(op.heard) && charDistance(op.heard, this.words[commitEnd + k].normalizedText) > 0.5)) return [];
+    // The first word of an ayah a little ahead may be the reader moving on (the tail of an
+    // ayah skipped, a new surah begun): leave that to the usual alignment.
+    const first = trailing[0].heard;
+    for (let index = commitEnd; index < Math.min(this.words.length, commitEnd + 40); index += 1) {
+      if (this.words[index].position === 1 && (this.words[index].normalizedText === first || this.alternates[index] === first)) return [];
+    }
+    const ops = this.alignGap(trailing.map((op) => op.heard), commitEnd, end, trailing.every((op) => op.confidence !== undefined) ? trailing.map((op) => op.confidence as number) : undefined);
+    return ops.length === trailing.length && ops.every((op) => op.kind === "substitution") ? ops : [];
+  }
+
   /**
    * Index of the last word in the run of exact matches that starts at the
    * committed position (an open last word counts when it is the whole word), or -1.
@@ -808,6 +877,10 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
         this.mismatchCount = 0;
         return this.result(alignment.confidence, false, startedAt);
       }
+      if (event.isFinal && carried === 0) {
+        const wrong = this.commitWrongNext(heard, confidences);
+        if (wrong) return this.result(alignment?.confidence ?? 0, true, startedAt, wrong);
+      }
       if (event.isFinal) { this.carry = []; this.carryConfidences = []; }
       if (event.isFinal) {
         const known = confidences && this.unmatchedFinalConfidences.length === this.unmatchedFinal.length;
@@ -887,6 +960,10 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
       this.stats.falseForwardJumps += 1;
     }
     const stable = commitEnd > 0;
+    if (event.isFinal && !stable && carried === 0) {
+      const wrong = this.commitWrongNext(heard, confidences);
+      if (wrong) return this.result(alignment.confidence, true, startedAt, wrong);
+    }
     if (event.isFinal) {
       this.carry = stable ? [] : heard.slice(-MAX_TAIL_TOKENS);
       this.carryConfidences = stable || !confidences ? [] : confidences.slice(-MAX_TAIL_TOKENS);
@@ -932,10 +1009,18 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
         // are kept like unmatched speech: if the reader goes on further, they pair with the
         // words they stood in for instead of being lost.
         const trailing = alignment.ops.filter((op): op is Extract<AlignmentOp, { kind: "extra" }> => op.kind === "extra" && op.afterIndex >= commitEnd - 1);
-        this.unmatchedFinal = trailing.map((op) => op.heard).slice(-MAX_TAIL_TOKENS);
-        this.unmatchedFinalConfidences = trailing.every((op) => op.confidence !== undefined)
-          ? trailing.map((op) => op.confidence as number).slice(-MAX_TAIL_TOKENS)
-          : [];
+        const wrongNext = this.wrongNextWords(trailing, commitEnd);
+        if (wrongNext.length) {
+          // The phrase ended on a word or two said in place of the next ones («لا يعلمون» for
+          // «لا يشعرون»): mark them now, so the reader sees the mistake before going on.
+          committedOps = [...committedOps.filter((op) => !(op.kind === "extra" && op.afterIndex >= commitEnd - 1)), ...wrongNext];
+          commitEnd += wrongNext.length;
+        } else {
+          this.unmatchedFinal = trailing.map((op) => op.heard).slice(-MAX_TAIL_TOKENS);
+          this.unmatchedFinalConfidences = trailing.every((op) => op.confidence !== undefined)
+            ? trailing.map((op) => op.confidence as number).slice(-MAX_TAIL_TOKENS)
+            : [];
+        }
       }
       this.stats.committedRevealCount += commitEnd - this.committed;
       for (let index = this.committed; index < commitEnd; index += 1) this.markRevealed(this.words[index]);

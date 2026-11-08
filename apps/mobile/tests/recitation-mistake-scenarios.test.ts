@@ -131,6 +131,30 @@ describe("recitation mistakes", () => {
     expect(matcher.feed("عليما حكيما", "b", true).reading?.verseKey).toBe("4:16");
   });
 
+  it("a wrong last word is shown at once, and saying it right after marks it corrected", () => {
+    // Al-Baqarah 12 ends «ولكن لا يشعرون»; read «يعلمون», then stop.
+    const words = range(2, 11, 16);
+    const wrong = ayah(2, 12).split(" ").slice(0, -1).concat("يعلمون").join(" ");
+    const key = "2:12:7";
+    const matcher = new NativeQuranLiveMatcher(words);
+    matcher.feed(ayah(2, 11), "a", true);
+    expect(matcher.feed(wrong, "b", true).wordFeedback.get(key)).toBe("pending");
+    expect(matcher.feed("يشعرون", "c", true).wordFeedback.get(key)).toBe("corrected");
+    // The wrong word said alone after a pause is caught the same way.
+    const alone = new NativeQuranLiveMatcher(words);
+    alone.feed(ayah(2, 11), "a", true);
+    alone.feed(ayah(2, 12).split(" ").slice(0, -1).join(" "), "b", true);
+    expect(alone.feed("يعلمون", "c", true).wordFeedback.get(key)).toBe("pending");
+    // Going on without correcting it confirms the mistake.
+    const { flagged } = recite(words, [ayah(2, 11), wrong, ayah(2, 13)]);
+    expect(flagged.get(key)).toBe("mistake");
+    // Talk that is not recitation is not taken for the word.
+    const talk = new NativeQuranLiveMatcher(words);
+    talk.feed(ayah(2, 11), "a", true);
+    talk.feed(ayah(2, 12).split(" ").slice(0, -1).join(" "), "b", true);
+    expect(talk.feed("طيب كده", "c", true).wordFeedback.get(key)).toBeUndefined();
+  });
+
   it("recognizer noise on a correct recitation does not turn into skipped ayahs", () => {
     // Dropped and misheard words, phrases split mid-ayah: what live recognition looks like.
     let seed = 7;

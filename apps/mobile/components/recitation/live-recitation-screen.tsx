@@ -113,7 +113,7 @@ export function LiveRecitationScreen({
       <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 8) + 6 }]}>
         <View style={styles.statusBox}>
           <View style={styles.statusRow}>
-            {live ? <View style={[styles.liveDot, { backgroundColor: listening ? palette.maroon : MUSHAF_COLORS.pending }]} /> : <ActivityIndicator size="small" color={palette.maroon} />}
+            {live ? <View style={[styles.liveDot, { backgroundColor: listening ? palette.maroon : MUSHAF_COLORS.muted }]} /> : <ActivityIndicator size="small" color={palette.maroon} />}
             <Text style={styles.clock}>{live ? formatDuration(elapsed) : ""}</Text>
           </View>
           <Text style={[styles.statusText, flagged > 0 && live ? { color: MUSHAF_COLORS.mistake } : null]} numberOfLines={1}>
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   statusRow: { flexDirection: "row-reverse", alignItems: "center", gap: 6, minHeight: 20 },
   liveDot: { width: 8, height: 8, borderRadius: 4 },
   clock: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, lineHeight: 20, color: palette.maroon },
-  statusText: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 10, lineHeight: 15, color: MUSHAF_COLORS.pending, textAlign: "center" },
+  statusText: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 10, lineHeight: 15, color: MUSHAF_COLORS.muted, textAlign: "center" },
   barButton: { width: 56, minHeight: 44, alignItems: "center", justifyContent: "center", gap: 1 },
   barButtonLabel: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 10, lineHeight: 15, color: palette.maroon },
   stopButton: { width: 48, height: 48, borderRadius: 24, backgroundColor: palette.maroon, alignItems: "center", justifyContent: "center" },

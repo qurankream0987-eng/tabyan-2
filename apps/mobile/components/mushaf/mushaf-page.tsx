@@ -42,7 +42,10 @@ export const MUSHAF_COLORS = {
   outOfRange: "rgba(0, 0, 0, 0.25)",
   current: "#800020",
   correct: "#2F4A3A",
-  pending: "#6B5B4B",
+  /** Muted brown for status text around the page. */
+  muted: "#6B5B4B",
+  /** A word heard differently, not yet confirmed: amber, so the reader notices at once. */
+  pending: "#C2620A",
   mistake: "#B3261E",
   skipped: "rgba(179, 38, 30, 0.5)",
   corrected: "#2F6B4A",
