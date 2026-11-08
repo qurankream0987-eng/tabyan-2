@@ -5,7 +5,8 @@ import { NativeQuranLiveMatcher, type CanonicalQuranWord } from "../lib/recitati
 import { normalizeQuranText } from "../lib/recitation/quran-normalizer";
 
 // Whole recitations through the shared matcher and mistake engine, fed the way the
-// recognizer sends them: growing partials, then a final per phrase.
+// recognizer sends them: growing partials, then a final per phrase. The reader is stopped
+// on every wrong or missing word until it is read right; nothing is ever skipped.
 const PAGES = join(__dirname, "../../web/public/mushaf/v1/quran-words/pages");
 const corpus: CanonicalQuranWord[] = [];
 for (let page = 1; page <= 604; page += 1) {
@@ -14,21 +15,24 @@ for (let page = 1; page <= 604; page += 1) {
   }
 }
 const range = (surah: number, from: number, to: number) => corpus.filter((w) => w.surah === surah && w.ayah >= from && w.ayah <= to);
-const ayah = (surah: number, number: number) => range(surah, number, number).map((w) => w.displayText).join(" ");
+const ayahWords = (surah: number, number: number) => range(surah, number, number).map((w) => w.displayText);
+const ayah = (surah: number, number: number) => ayahWords(surah, number).join(" ");
 
 function recite(words: CanonicalQuranWord[], phrases: string[], confidences?: number[][]) {
   const matcher = new NativeQuranLiveMatcher(words);
+  let last = null as ReturnType<NativeQuranLiveMatcher["feed"]> | null;
   phrases.forEach((phrase, item) => {
     const tokens = phrase.split(" ");
     for (let k = 1; k < tokens.length; k += 1) matcher.feed(tokens.slice(0, k).join(" "), `p${item}`, false);
-    matcher.feed(phrase, `p${item}`, true, confidences?.[item]);
+    last = matcher.feed(phrase, `p${item}`, true, confidences?.[item]);
   });
   const summary = matcher.finish();
   const flagged = new Map(matcher.flaggedWords().map((f) => [f.key, f.kind]));
-  return { summary, flagged };
+  return { summary, flagged, reading: last?.reading ?? null };
 }
 const mulk = (...ayahs: number[]) => recite(range(67, 1, 6), ayahs.map((n) => ayah(67, n)));
 const ayahKeys = (surah: number, number: number) => range(surah, number, number).map((w) => `${w.verseKey}:${w.position}`);
+const wordsOf = (summary: { wordsRecited: number }) => summary.wordsRecited;
 
 describe("recitation mistakes", () => {
   it("a correct recitation has no mistakes", () => {
@@ -37,25 +41,34 @@ describe("recitation mistakes", () => {
     expect(summary.wordsRecited).toBe(summary.totalWords);
   });
 
-  it("a skipped ayah is shown skipped in full, and the long ayah after it is read to its end", () => {
-    const { flagged } = mulk(1, 3, 4, 5, 6);
-    expect(ayahKeys(67, 2).every((key) => flagged.get(key) === "skipped")).toBe(true);
-    expect(ayahKeys(67, 3).some((key) => flagged.has(key))).toBe(false);
+  it("an ayah left out stops the reader at its first word; reading it lets him go on", () => {
+    const skipped = mulk(1, 3, 4, 5, 6);
+    expect(skipped.flagged.get("67:2:1")).toBe("mistake");
+    expect([...skipped.flagged.values()].filter((kind) => kind === "skipped")).toEqual([]);
+    expect(wordsOf(skipped.summary)).toBe(ayahKeys(67, 1).length);
+    expect(skipped.summary.skippedWords).toBe(0);
+
+    const goneBack = mulk(1, 3, 2, 3, 4, 5, 6);
+    expect(goneBack.flagged.get("67:2:1")).toBe("corrected");
+    expect(goneBack.flagged.size).toBe(1);
+    expect(goneBack.summary.wordsRecited).toBe(goneBack.summary.totalWords);
+    expect(goneBack.summary.confirmedMistakes).toBe(1);
+    expect(goneBack.summary.correctedWords).toBe(1);
   });
 
-  it("an ayah from elsewhere read in place of the expected one is marked wrong", () => {
+  it("an ayah from elsewhere read in place of the expected one stops the reader there", () => {
     const foreign = ayah(2, 255).split(" ").slice(0, 10).join(" ");
-    const { flagged } = recite(range(67, 1, 6), [ayah(67, 1), foreign, ayah(67, 3), ayah(67, 4), ayah(67, 5)]);
-    const wrong = ayahKeys(67, 2).filter((key) => flagged.get(key) === "mistake");
-    expect(wrong.length).toBeGreaterThanOrEqual(8);
+    const { flagged, summary } = recite(range(67, 1, 6), [ayah(67, 1), foreign, ayah(67, 3), ayah(67, 4), ayah(67, 5)]);
+    expect(flagged.get("67:2:1")).toBe("mistake");
+    expect(ayahKeys(67, 3).concat(ayahKeys(67, 4)).some((key) => flagged.has(key))).toBe(false);
+    expect(wordsOf(summary)).toBe(ayahKeys(67, 1).length);
   });
 
-  it("a later ayah read in place of the expected one is marked wrong, and the reader is still followed", () => {
+  it("a later ayah read in place of the expected one is not followed", () => {
     const { summary, flagged } = mulk(1, 4, 3, 5, 6);
-    expect(ayahKeys(67, 2).filter((key) => flagged.get(key) === "mistake").length).toBeGreaterThanOrEqual(8);
-    expect(ayahKeys(67, 4).every((key) => flagged.get(key) === "skipped")).toBe(true);
-    expect(ayahKeys(67, 5).concat(ayahKeys(67, 6)).some((key) => flagged.has(key))).toBe(false);
-    expect(summary.wordsRecited).toBeGreaterThan(50);
+    expect(flagged.get("67:2:1")).toBe("mistake");
+    expect(ayahKeys(67, 4).concat(ayahKeys(67, 5)).some((key) => flagged.has(key))).toBe(false);
+    expect(wordsOf(summary)).toBe(ayahKeys(67, 1).length);
   });
 
   it("repeating an ayah is not a mistake", () => {
@@ -72,30 +85,57 @@ describe("recitation mistakes", () => {
     expect(summary.wordsRecited).toBe(summary.totalWords);
   });
 
-  it("a word left out is not counted as recited because the words around it are close", () => {
-    // "بالغيب" then "الصلاة" must not be taken as "بالغيب ويقيمون" run together.
-    const { summary } = recite(range(2, 1, 3), ["الم ذلك الكتاب لا ريب فيه هدى للمتقين", "الذين يؤمنون بالغيب الصلاة ومما رزقناهم ينفقون"]);
-    expect(summary.wordsRecited).toBe(summary.totalWords - 1);
+  it("a word left out stops the reader on it, though the words around it are close", () => {
+    // "بالغيب" then "الصلاة": «ويقيمون» was not said.
+    const { summary, flagged, reading } = recite(range(2, 1, 3), ["الم ذلك الكتاب لا ريب فيه هدى للمتقين", "الذين يؤمنون بالغيب الصلاة ومما رزقناهم ينفقون"]);
+    expect(flagged.get("2:3:4")).toBe("mistake");
+    expect(reading?.verseKey).toBe("2:3");
+    expect(reading?.position).toBe(3);
+    expect(summary.wordsRecited).toBe(range(2, 1, 2).length + 3);
+  });
+
+  it("Al Imran 3: «التوراة» read wrong or left out stops the reader at «وأنزل» until he says it", () => {
+    // «وأنزل التوراة والإنجيل * من قبل هدى للناس وأنزل الفرقان»
+    const words = range(3, 1, 5);
+    const third = ayahWords(3, 3);
+    const at = third.findIndex((word) => normalizeQuranText(word).startsWith("التور"));
+    expect(at).toBeGreaterThan(0);
+    const key = `3:3:${at + 1}`;
+    const withWord = (word: string | null) => [...third.slice(0, at), ...(word ? [word] : []), ...third.slice(at + 1)].join(" ");
+    for (const wrong of [withWord("الفرقان"), withWord(null)]) {
+      const stopped = recite(words, [ayah(3, 1), ayah(3, 2), wrong, ayah(3, 4)]);
+      expect(stopped.flagged.get(key)).toBe("mistake");
+      expect(stopped.reading?.position).toBe(at);
+      expect(ayahKeys(3, 4).some((k) => stopped.flagged.has(k))).toBe(false);
+      expect(stopped.summary.wordsRecited).toBe(ayahKeys(3, 1).length + ayahKeys(3, 2).length + at);
+
+      const corrected = recite(words, [ayah(3, 1), ayah(3, 2), wrong, third.slice(at - 1).join(" "), ayah(3, 4)]);
+      expect(corrected.flagged.get(key)).toBe("corrected");
+      expect(corrected.flagged.size).toBe(1);
+      expect(corrected.reading?.verseKey).toBe("3:4");
+    }
   });
 
   it("one common word misheard does not carry the reader forward past unread words", () => {
     // An-Nisa 81: "وَٱللَّهُ يَكْتُبُ" heard as "الله" alone, which also fits "عَلَى ٱللَّهِ" eight words on.
     const words = range(4, 80, 83);
     const text = words.map((w) => w.displayText);
-    const upTo = text.indexOf("وَٱللَّهُ");
+    const upTo = words.findIndex((w) => w.verseKey === "4:81" && w.normalizedText === "والله");
+    expect(upTo).toBeGreaterThan(0);
     // Word-by-word finals, as the recognizer sends them.
     const { summary, flagged } = recite(words, [...text.slice(0, upTo), "الله", ...text.slice(upTo + 1)]);
-    expect([...flagged.values()].filter((kind) => kind === "skipped")).toEqual([]);
+    expect(flagged.size).toBe(0);
     expect(summary.wordsRecited).toBe(summary.totalWords);
   });
 
-  it("a wrong word the recognizer barely heard is not a mistake; one it was sure of is", () => {
+  it("a wrong word the recognizer barely heard is not a mistake; one it was sure of stops the reader", () => {
     // Al-Mulk 2 with its third word replaced, the way a mumbled or wrongly read word arrives.
     const words = ayah(67, 2).split(" ");
     words[2] = "كلمةغريبة";
     const sure = (count: number) => Array(count).fill(0.97);
     const sureOfAll = recite(range(67, 1, 4), [ayah(67, 1), words.join(" "), ayah(67, 3), ayah(67, 4)], [sure(4), sure(words.length), sure(9), sure(15)]);
-    expect([...sureOfAll.flagged.values()]).toEqual(["mistake"]);
+    expect([...sureOfAll.flagged.entries()]).toEqual([["67:2:3", "mistake"]]);
+    expect(sureOfAll.reading?.verseKey).toBe("67:2");
     const unsure = sure(words.length);
     unsure[2] = 0.3;
     const barelyHeard = recite(range(67, 1, 4), [ayah(67, 1), words.join(" "), ayah(67, 3), ayah(67, 4)], [sure(4), unsure, sure(9), sure(15)]);
@@ -114,21 +154,25 @@ describe("recitation mistakes", () => {
     expect(summary.wordsRecited).toBe(summary.totalWords);
   });
 
-  it("a wrong ayah ending that closes the next ayah is a mistake, not a jump to it", () => {
+  it("a wrong ayah ending that closes the next ayah stops the reader; it never jumps to that ayah", () => {
     // Al-Nisa 16 ends «إن الله كان توابا رحيما»; read «عليما حكيما», which closes ayah 17.
     const body = "والذان يأتيانها منكم فآذوهما فإن تابا وأصلحا فأعرضوا عنهما إن الله كان";
-    const expectWrongEnding = (phrases: string[]) => {
-      const { flagged } = recite(range(4, 16, 18), phrases);
+    const expectStopped = (phrases: string[]) => {
+      const { flagged, reading, summary } = recite(range(4, 16, 18), phrases);
       expect(flagged.get("4:16:13")).toBe("mistake");
-      expect(flagged.get("4:16:14")).toBe("mistake");
+      expect(reading?.verseKey).toBe("4:16");
+      expect(reading?.position).toBe(12);
       expect(ayahKeys(4, 17).concat(ayahKeys(4, 18)).some((key) => flagged.has(key))).toBe(false);
+      expect(summary.wordsRecited).toBe(12);
     };
-    expectWrongEnding([body, "عليما حكيما", ayah(4, 17), ayah(4, 18)]);
-    expectWrongEnding([`${body} عليما حكيما`, ayah(4, 17), ayah(4, 18)]);
-    // Said alone, the wrong ending leaves the reader where they were.
-    const matcher = new NativeQuranLiveMatcher(range(4, 16, 18));
-    matcher.feed(body, "a", true);
-    expect(matcher.feed("عليما حكيما", "b", true).reading?.verseKey).toBe("4:16");
+    expectStopped([body, "عليما حكيما", ayah(4, 17), ayah(4, 18)]);
+    expectStopped([`${body} عليما حكيما`, ayah(4, 17), ayah(4, 18)]);
+    expectStopped([`${body} عليما حكيما ${ayah(4, 17)}`]);
+    // Read right after the stop, the reader goes on.
+    const { flagged, summary } = recite(range(4, 16, 18), [`${body} عليما حكيما`, "إن الله كان توابا رحيما", ayah(4, 17), ayah(4, 18)]);
+    expect(flagged.get("4:16:13")).toBe("corrected");
+    expect(flagged.size).toBe(1);
+    expect(summary.wordsRecited).toBe(summary.totalWords);
   });
 
   it("a wrong last word is shown at once, and saying it right after marks it corrected", () => {
@@ -138,16 +182,18 @@ describe("recitation mistakes", () => {
     const key = "2:12:7";
     const matcher = new NativeQuranLiveMatcher(words);
     matcher.feed(ayah(2, 11), "a", true);
-    expect(matcher.feed(wrong, "b", true).wordFeedback.get(key)).toBe("pending");
+    expect(matcher.feed(wrong, "b", true).wordFeedback.get(key)).toBe("mistake");
     expect(matcher.feed("يشعرون", "c", true).wordFeedback.get(key)).toBe("corrected");
     // The wrong word said alone after a pause is caught the same way.
     const alone = new NativeQuranLiveMatcher(words);
     alone.feed(ayah(2, 11), "a", true);
     alone.feed(ayah(2, 12).split(" ").slice(0, -1).join(" "), "b", true);
-    expect(alone.feed("يعلمون", "c", true).wordFeedback.get(key)).toBe("pending");
-    // Going on without correcting it confirms the mistake.
-    const { flagged } = recite(words, [ayah(2, 11), wrong, ayah(2, 13)]);
+    expect(alone.feed("يعلمون", "c", true).wordFeedback.get(key)).toBe("mistake");
+    // Going on without correcting it is not followed.
+    const { flagged, reading } = recite(words, [ayah(2, 11), wrong, ayah(2, 13)]);
     expect(flagged.get(key)).toBe("mistake");
+    expect(reading?.verseKey).toBe("2:12");
+    expect(ayahKeys(2, 13).some((k) => flagged.has(k))).toBe(false);
     // Talk that is not recitation is not taken for the word.
     const talk = new NativeQuranLiveMatcher(words);
     talk.feed(ayah(2, 11), "a", true);
@@ -155,32 +201,38 @@ describe("recitation mistakes", () => {
     expect(talk.feed("طيب كده", "c", true).wordFeedback.get(key)).toBeUndefined();
   });
 
-  it("recognizer noise on a correct recitation does not turn into skipped ayahs", () => {
-    // Dropped and misheard words, phrases split mid-ayah: what live recognition looks like.
+  it("a word misheard by a letter or two, or a short word the recognizer drops, never stops a correct reading", () => {
+    // Misheard endings and dropped short words, phrases split mid-ayah: live recognition noise.
     let seed = 7;
     const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const noisy = (words: CanonicalQuranWord[]) => {
       const phrases: string[] = [];
       let phrase: string[] = [];
+      let lastDropped = false;
       for (const word of words) {
         const roll = random();
-        if (roll < 0.06) continue;
-        phrase.push(roll < 0.14 ? `${word.displayText.slice(0, -1)}ي` : word.displayText);
+        const short = word.normalizedText.length <= 2;
+        if (short && !lastDropped && roll < 0.3) { lastDropped = true; continue; }
+        lastDropped = false;
+        phrase.push(roll < 0.08 && word.normalizedText.length >= 5 ? `${word.normalizedText.slice(0, -1)}ي` : word.displayText);
         if (phrase.length >= 3 + Math.floor(random() * 5)) { phrases.push(phrase.join(" ")); phrase = []; }
       }
       if (phrase.length) phrases.push(phrase.join(" "));
       return phrases;
     };
-    let skipped = 0;
+    let stopped = 0;
+    let read = 0;
     let words = 0;
     for (const [surah, from, to] of [[67, 1, 14], [2, 1, 16], [55, 1, 30], [36, 1, 20], [18, 1, 12]] as const) {
       for (let run = 0; run < 3; run += 1) {
         const corpusRange = range(surah, from, to);
         const { summary } = recite(corpusRange, noisy(corpusRange));
-        skipped += summary.skippedWords;
+        stopped += summary.confirmedMistakes;
+        read += summary.wordsRecited;
         words += summary.totalWords;
       }
     }
-    expect(skipped / words).toBeLessThan(0.01);
+    expect(stopped).toBe(0);
+    expect(read).toBeGreaterThan(words * 0.97);
   });
 });

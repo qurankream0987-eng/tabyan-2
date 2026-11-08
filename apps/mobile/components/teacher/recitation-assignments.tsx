@@ -353,7 +353,8 @@ function ResultView({ assignment, colors }: { assignment: Assignment; colors: Co
   const tiles: { label: string; value: string; error?: boolean }[] = [
     { label: "الكلمات المسمَّعة", value: `${result.wordsRecited}/${result.totalWords}` },
     { label: "أخطاء", value: String(result.confirmedMistakes), error: result.confirmedMistakes > 0 },
-    { label: "تخطٍّ", value: String(result.skippedWords), error: result.skippedWords > 0 },
+    // Results submitted before nothing could be skipped may still carry skipped words.
+    ...(result.skippedWords > 0 ? [{ label: "تخطٍّ", value: String(result.skippedWords), error: true }] : []),
     { label: "صحّحها بنفسه", value: String(result.correctedWords) },
     { label: "تلميحات", value: String(result.peekedWords) },
     { label: "المدة", value: formatDuration(result.durationSeconds) },

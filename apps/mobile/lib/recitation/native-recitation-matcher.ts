@@ -20,8 +20,9 @@ export interface NativeMatcherDiagnostics {
 }
 
 /**
- * What the screen may show for a recited word. Deviations stay "pending" until
- * the shared state engine confirms them; they never come from raw ASR text.
+ * What the screen may show for a recited word, from the shared state engine; never raw ASR
+ * text. "skipped" is no longer produced (a word left out is a mistake) but stays for results
+ * submitted before.
  */
 export type NativeWordFeedback = "correct" | "pending" | "mistake" | "skipped" | "corrected" | "peeked";
 
@@ -58,8 +59,11 @@ export interface NativeRecitationMatch {
 export interface NativeRecitationSummary {
   wordsRecited: number;
   totalWords: number;
+  /** Every word the reader stopped on, wrong or left out, corrected afterwards or not. */
   confirmedMistakes: number;
+  /** Always 0: nothing is skipped; kept for the submitted result's shape. */
   skippedWords: number;
+  /** Mistakes the reader corrected by reading the word right. */
   correctedWords: number;
   /** Words revealed by a hint; neither correct nor a mistake. */
   peekedWords: number;
@@ -79,12 +83,6 @@ export interface NativeRecitationCallbacks {
 }
 
 const CONFIDENCE_THRESHOLD = 0.68;
-/**
- * The recognizer often drops a short word ("في", "من") that was recited, which
- * the matcher reads as an omission. Only a run of this many consecutive omitted
- * words is shown and counted as skipped; a shorter gap is treated as not heard.
- */
-const MIN_SHOWN_OMISSION_RUN = 3;
 
 export function confirmedWordKey(word: Pick<CanonicalQuranWord, "verseKey" | "position">) {
   return `${word.verseKey}:${word.position}`;
@@ -98,6 +96,8 @@ function tokenCount(text: string) {
  * Native live matcher: the shared web matcher and mistake engine behind the
  * controller's `feed(text, itemId, isFinal)` contract. Partials only move the
  * provisional pointer; words are committed and judged from final transcripts.
+ * Strict: a wrong or missing word stops the reader on it, and nothing after it
+ * counts until it is read right (or shown by a hint and then read).
  */
 export class NativeQuranLiveMatcher {
   private readonly matcher: QuranLiveMatcher;
@@ -115,7 +115,7 @@ export class NativeQuranLiveMatcher {
       confidenceThreshold: CONFIDENCE_THRESHOLD,
       commitPartials: false,
     });
-    this.engine = new RecitationStateEngine({ wordAt: (index) => this.matcher.wordAt(index) });
+    this.engine = new RecitationStateEngine({ strict: true, wordAt: (index) => this.matcher.wordAt(index) });
     this.indexWords();
   }
 
@@ -143,24 +143,30 @@ export class NativeQuranLiveMatcher {
     const committedBefore = this.matcher.committedIndex();
     const live = this.matcher.feed({ text, itemId, isFinal, wordConfidences });
     const update = this.engine.apply(live);
+    // Stopped on a mistake: the matcher goes back to it, and words said past it are not taken.
+    if (update.rewindTo !== null) this.matcher.rewindTo(update.rewindTo);
+    const committed = this.matcher.committedIndex();
+    const hold = this.engine.strictHoldAt;
+    if (hold !== null) this.readingIndex = hold - 1;
     // A partial that does not align (a half-heard word, noise) keeps the
     // pointer where it is instead of snapping back to the last final.
-    if (isFinal && live.stable) this.readingIndex = live.committedIndex - 1;
-    else this.readingIndex = Math.max(this.readingIndex, live.provisionalIndex, live.committedIndex - 1);
+    else if (isFinal && live.stable) this.readingIndex = committed - 1;
+    else this.readingIndex = Math.max(this.readingIndex, live.provisionalIndex, committed - 1);
     for (const op of [...live.committedOps, ...live.revisitOps]) {
-      if (op.kind === "match" || op.kind === "substitution") this.confirmedIndices.add(op.index);
+      if (op.kind === "extra" || op.index >= committed || op.index === hold) continue;
+      // A short word the recognizer dropped, taken as heard, was recited too.
+      if (op.kind !== "skip" || this.engine.stateAt(op.index) === "CORRECT") this.confirmedIndices.add(op.index);
     }
     const changedWordStates: NativeWordStateChange[] = [];
     for (const index of update.changed) {
       const word = this.matcher.wordAt(index);
-      // No mistake cue for a gap that is not shown.
-      if (word && !this.isUnheardGap(index)) changedWordStates.push({ key: confirmedWordKey(word), state: this.engine.stateAt(index) });
+      if (word) changedWordStates.push({ key: confirmedWordKey(word), state: this.engine.stateAt(index) });
     }
     this.lastResult = {
       current: live.current,
       reading: this.matcher.wordAt(this.readingIndex) ?? null,
       readingWords: this.readingIndex + 1,
-      revealedWords: live.revealedWords,
+      revealedWords: this.matcher.revealedSnapshot(),
       confirmedWordKeys: this.confirmedKeys(),
       wordFeedback: this.wordFeedback(),
       changedWordStates,
@@ -179,7 +185,7 @@ export class NativeQuranLiveMatcher {
    * words are recorded as peeks, never as correct words or mistakes.
    */
   peek(level: 1 | 2 | 3): NativeRecitationMatch | null {
-    const start = Math.max(this.readingIndex + 1, this.matcher.committedIndex());
+    const start = this.engine.strictHoldAt ?? Math.max(this.readingIndex + 1, this.matcher.committedIndex());
     const first = this.matcher.wordAt(start);
     if (!first) return null;
     const indices: number[] = [];
@@ -210,11 +216,11 @@ export class NativeQuranLiveMatcher {
       peekedWords: 0,
     };
     for (const feedback of this.wordFeedback().values()) {
-      if (feedback === "mistake") summary.confirmedMistakes += 1;
-      else if (feedback === "skipped") summary.skippedWords += 1;
-      else if (feedback === "corrected") summary.correctedWords += 1;
+      if (feedback === "corrected") summary.correctedWords += 1;
       else if (feedback === "peeked") summary.peekedWords += 1;
     }
+    // Every stop counts as a mistake, the ones corrected after it too.
+    summary.confirmedMistakes = this.engine.mistakeRecords().filter((record) => record.status !== "dismissed").length;
     return summary;
   }
 
@@ -245,15 +251,13 @@ export class NativeQuranLiveMatcher {
     for (const [key, state] of this.engine.visibleStates(true)) {
       const index = this.indexByKey.get(key);
       if (index === undefined) continue;
-      const value = this.feedbackFor(index, state);
+      const value = this.feedbackFor(state);
       if (value) feedback.set(key, value);
     }
     return feedback;
   }
 
-  private feedbackFor(index: number, state: RecitationWordState): NativeWordFeedback | null {
-    // A short gap is never shown as a mistake; once re-read it is simply correct.
-    if (this.isUnheardGap(index)) return state === "CORRECTED" ? "correct" : null;
+  private feedbackFor(state: RecitationWordState): NativeWordFeedback | null {
     switch (state) {
       case "CORRECT":
         return "correct";
@@ -263,18 +267,8 @@ export class NativeQuranLiveMatcher {
         return "peeked";
       case "POSSIBLE_ERROR":
         return "pending";
-      case "CONFIRMED_ERROR": {
-        const kind = this.engine.mistakeAt(index)?.kind;
-        return kind === "OMISSION" || kind === "SKIP" || kind === "UNEXPECTED_JUMP" ? "skipped" : "mistake";
-      }
-      case "SKIPPED": {
-        // A long skipped run records one mistake at its first word, which turns
-        // CONFIRMED_ERROR; show the whole run only once that mistake is confirmed.
-        let start = index;
-        while (start > 0 && this.engine.stateAt(start - 1) === "SKIPPED") start -= 1;
-        if (!this.engine.mistakeAt(start) && start > 0) start -= 1;
-        return this.engine.mistakeAt(start)?.status === "confirmed" ? "skipped" : null;
-      }
+      case "CONFIRMED_ERROR":
+        return "mistake";
       default:
         return null;
     }
@@ -295,17 +289,6 @@ export class NativeQuranLiveMatcher {
       totalWords: this.words.length,
       diagnostics: { mode: "tracking", repeatedPosition: false, skippedRegionWords: 0, unmatchedTokenCount: 0, unmatched: false },
     };
-  }
-
-  /** A short run of omissions, more likely missed by the recognizer than skipped. */
-  private isUnheardGap(index: number) {
-    const isOmission = (at: number) => this.engine.mistakeAt(at)?.kind === "OMISSION";
-    if (!isOmission(index)) return false;
-    let start = index;
-    while (start > 0 && isOmission(start - 1)) start -= 1;
-    let end = index;
-    while (isOmission(end + 1)) end += 1;
-    return end - start + 1 < MIN_SHOWN_OMISSION_RUN;
   }
 
   private diagnostics(live: LiveMatch, text: string, committedBefore: number): NativeMatcherDiagnostics {

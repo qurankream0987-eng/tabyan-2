@@ -32,7 +32,8 @@ function writeFlag(accountId: string | null, key: string, value: boolean | undef
 
 export function loadRecitationAiOptions(accountId: string | null): RecitationAiOptions {
   return {
-    strict: readFlag(accountId, STRICT_KEY),
+    // On unless the reader turned it off: a mistake stops the reader until it is read right.
+    strict: readAccountStorage(accountId, STRICT_KEY) !== "0",
     tashkeel: readFlag(accountId, TASHKEEL_KEY),
     hideVerses: readFlag(accountId, HIDE_VERSES_KEY),
     hideMarkers: readFlag(accountId, HIDE_MARKERS_KEY),

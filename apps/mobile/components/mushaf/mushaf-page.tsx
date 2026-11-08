@@ -47,6 +47,8 @@ export const MUSHAF_COLORS = {
   /** A word heard differently, not yet confirmed: amber, so the reader notices at once. */
   pending: "#C2620A",
   mistake: "#B3261E",
+  /** A hidden word the reader is stopped on: a red block over it, the word itself not shown. */
+  hiddenMistake: "#E2A39C",
   skipped: "rgba(179, 38, 30, 0.5)",
   corrected: "#2F6B4A",
   peeked: "#8A6A1C",
@@ -76,6 +78,8 @@ export type MushafHideMode = "progressive_reveal" | "first_word" | "full_hide" |
 
 // Paper-coloured ink: Android drops a fully transparent colour on nested text.
 const HIDDEN = { color: MUSHAF_COLORS.paper } as const;
+// Glyph and background one colour: a solid block the size of the word.
+const HIDDEN_MISTAKE = { color: MUSHAF_COLORS.hiddenMistake, backgroundColor: MUSHAF_COLORS.hiddenMistake } as const;
 
 /**
  * During recitation each word keeps the page's heavier ink in its own colour, so coloured
@@ -96,13 +100,14 @@ function wordStyle(word: LineWord, recitation: MushafRecitationState | undefined
   const key = `${word.verseKey}:${word.position}`;
   const feedback = recitation.wordFeedback.get(key);
   // Hidden words keep their glyphs (drawn in the paper colour), so the page never reflows as they appear.
-  // A word the engine judged is always shown, so a skipped word is seen where it was missed.
+  // A word the engine judged is shown once read (corrected, hinted); a mistake not yet read right stays a block.
   // full_hide keeps the whole range blank, as on the web.
+  const hidden = recitation.hideMode === "full_hide" || (!recitation.revealedKeys.has(key)
+    && (recitation.hideMode === "progressive_reveal" || (recitation.hideMode === "first_word" && word.position !== 1)));
+  // The word the reader is stopped on is marked where it is, without giving it away.
+  if (hidden && feedback === "mistake") return HIDDEN_MISTAKE;
   if (recitation.hideMode === "full_hide") return HIDDEN;
-  if (!feedback && !recitation.revealedKeys.has(key)) {
-    if (recitation.hideMode === "progressive_reveal") return HIDDEN;
-    if (recitation.hideMode === "first_word" && word.position !== 1) return HIDDEN;
-  }
+  if (!feedback && hidden) return HIDDEN;
   const current = recitation.currentWord?.verseKey === word.verseKey
     && recitation.currentWord.position === word.position;
   // Mistakes stay visible on the current word; only a plain or correct word turns maroon.

@@ -225,19 +225,20 @@ test("Native reading pointer follows partials forward and holds through an unali
   assert.equal(final.readingWords, 3);
 });
 
-test("Native matcher reports skipped words without counting them as confirmed progression", () => {
+test("Native matcher stops a reader who goes on past words left out, at the first of them", () => {
   const words = ["بسم", "الله", "الرحمن", "الرحيم", "الحمد", "لله"].map((displayText, index) => ({
     surah: 1, ayah: 1, verseKey: "1:1", position: index + 1, displayText, normalizedText: normalizeQuranText(displayText),
   })) satisfies CanonicalQuranWord[];
   // Two heard words cannot carry the reader over a gap: a wrong ending often repeats a nearby
-  // one. They wait for the next phrase; three can.
+  // one. They wait for the next phrase; three can, and stop the reader at the gap.
   const waiting = new NativeQuranLiveMatcher(words).feed("الرحمن الرحيم", "item-1", true);
   assert.equal(waiting.progressionWords, 0);
   const result = new NativeQuranLiveMatcher(words).feed("الرحمن الرحيم الحمد", "item-1", true);
 
-  assert.equal(result.current?.position, 5);
-  assert.equal(result.progressionWords, 3);
-  assert.equal(result.diagnostics.skippedRegionWords, 2);
+  assert.equal(result.wordFeedback.get("1:1:1"), "mistake");
+  assert.equal(result.progressionWords, 0);
+  assert.equal(result.readingWords, 0);
+  assert.equal(result.wordFeedback.has("1:1:3"), false);
   assert.equal("completionState" in result, false);
 });
 
@@ -254,41 +255,67 @@ const fatihaWords = [
   normalizedText: normalizeQuranText(displayText),
 }))) satisfies CanonicalQuranWord[];
 
-test("Native matcher keeps a wrong word possible until later reading confirms it", () => {
+test("Native matcher stops on a wrong word at once and holds there until it is read right", () => {
   const matcher = new NativeQuranLiveMatcher(fatihaWords);
   const first = matcher.feed("الحمد لله قال العالمين الرحمن الرحيم", "item-1", true);
-  assert.equal(first.wordFeedback.get("1:2:3"), "pending");
+  assert.equal(first.wordFeedback.get("1:2:3"), "mistake");
   assert.equal(first.wordFeedback.get("1:2:1"), "correct");
+  assert.ok(first.changedWordStates.some((change) => change.key === "1:2:3" && change.state === "CONFIRMED_ERROR"));
+  assert.equal(first.reading?.position, 2);
+  assert.equal(first.progressionWords, 2);
 
-  const second = matcher.feed("مالك يوم الدين", "item-2", true);
-  assert.equal(second.wordFeedback.get("1:2:3"), "mistake");
-  assert.ok(second.changedWordStates.some((change) => change.key === "1:2:3" && change.state === "CONFIRMED_ERROR"));
+  // Going on without correcting it is not followed.
+  const ignored = matcher.feed("مالك يوم الدين", "item-2", true);
+  assert.equal(ignored.reading?.position, 2);
+  assert.equal(ignored.wordFeedback.has("1:4:1"), false);
+
+  const corrected = matcher.feed("رب العالمين الرحمن الرحيم مالك يوم الدين", "item-3", true);
+  assert.equal(corrected.wordFeedback.get("1:2:3"), "corrected");
+  assert.equal(corrected.reading?.verseKey, "1:4");
   assert.deepEqual(matcher.finish(), {
     wordsRecited: 9,
     totalWords: 9,
     confirmedMistakes: 1,
     skippedWords: 0,
-    correctedWords: 0,
+    correctedWords: 1,
     peekedWords: 0,
   });
 });
 
-test("Native matcher treats a single dropped word as not heard, not as skipped", () => {
+test("Native matcher takes a single short word the recognizer dropped as heard", () => {
   const matcher = new NativeQuranLiveMatcher(fatihaWords);
   matcher.feed("الحمد لله العالمين الرحمن الرحيم", "item-1", true);
   const result = matcher.feed("مالك يوم الدين", "item-2", true);
-  assert.equal(result.wordFeedback.has("1:2:3"), false);
-  assert.equal(result.changedWordStates.some((change) => change.key === "1:2:3"), false);
-  assert.equal(result.confirmedWordKeys.has("1:2:3"), false);
-  assert.equal(matcher.finish().skippedWords, 0);
+  assert.equal(result.wordFeedback.get("1:2:3"), "correct");
+  assert.equal(result.reading?.verseKey, "1:4");
+  const summary = matcher.finish();
+  assert.equal(summary.confirmedMistakes, 0);
+  assert.equal(summary.skippedWords, 0);
 });
 
-test("Native matcher marks a confirmed run of omitted words as skipped, not as wrong words", () => {
+test("Native matcher stops at words left out, and never counts them as skipped", () => {
   const matcher = new NativeQuranLiveMatcher(fatihaWords);
   matcher.feed("الحمد الرحمن الرحيم", "item-1", true);
   const result = matcher.feed("مالك يوم الدين", "item-2", true);
-  for (const key of ["1:2:2", "1:2:3", "1:2:4"]) assert.equal(result.wordFeedback.get(key), "skipped");
-  assert.equal(matcher.finish().skippedWords, 3);
+  assert.equal(result.wordFeedback.get("1:2:2"), "mistake");
+  assert.equal(result.reading?.position, 1);
+  for (const key of ["1:2:3", "1:2:4", "1:3:1"]) assert.equal(result.wordFeedback.has(key), false);
+  const summary = matcher.finish();
+  assert.equal(summary.skippedWords, 0);
+  assert.equal(summary.confirmedMistakes, 1);
+});
+
+test("Native hint on the word a reader is stopped on lets him go on once he reads it", () => {
+  const matcher = new NativeQuranLiveMatcher(fatihaWords);
+  assert.equal(matcher.feed("الحمد لله الدين", "item-1", true).wordFeedback.get("1:2:3"), "mistake");
+  assert.equal(matcher.peek(1)?.wordFeedback.get("1:2:3"), "peeked");
+  const result = matcher.feed("رب العالمين الرحمن الرحيم", "item-2", true);
+  assert.equal(result.wordFeedback.get("1:2:3"), "peeked");
+  assert.equal(result.reading?.verseKey, "1:3");
+  const summary = matcher.finish();
+  assert.equal(summary.confirmedMistakes, 1);
+  assert.equal(summary.peekedWords, 1);
+  assert.equal(summary.correctedWords, 0);
 });
 
 test("Native hint reveals the words after the reading pointer as peeked, not correct", () => {
@@ -317,12 +344,12 @@ test("Native matcher shows an immediate self-correction as corrected", () => {
   assert.equal(matcher.finish().correctedWords, 1);
 });
 
-test("Native matcher drops unconfirmed deviations from the session summary", () => {
+test("Native matcher counts a wrong word the session ended on as a mistake", () => {
   const matcher = new NativeQuranLiveMatcher(fatihaWords);
   matcher.feed("الحمد لله قال العالمين", "item-1", true);
   const summary = matcher.finish();
-  assert.equal(summary.confirmedMistakes, 0);
-  assert.equal(summary.wordsRecited, 4);
+  assert.equal(summary.confirmedMistakes, 1);
+  assert.equal(summary.wordsRecited, 2);
 });
 
 test("controller authenticates before recording and ignores malformed or empty transcript events", async () => {

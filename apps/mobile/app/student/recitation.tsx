@@ -756,7 +756,7 @@ function AssignmentList({
             {result && assignment.status !== "reviewed" ? (
               <Text style={[styles.smallText, { color: colors.muted }]}>
                 آخر تسليم{assignment.submittedAt ? ` (${formatDate(assignment.submittedAt)})` : ""}: {result.wordsRecited} من {result.totalWords} كلمة
-                {" · "}{result.confirmedMistakes} خطأ · {result.skippedWords} تخطٍّ · {formatDuration(result.durationSeconds)}
+                {" · "}{result.confirmedMistakes} خطأ · {result.correctedWords} مصحّحة · {formatDuration(result.durationSeconds)}
               </Text>
             ) : null}
             {canRecite ? (
@@ -790,8 +790,7 @@ function SessionSummary({
   const rows: { label: string; value: string; color: string }[] = [
     { label: "الكلمات", value: `${summary?.wordsRecited ?? 0} من ${summary?.totalWords ?? 0}`, color: colors.primary },
     { label: "الأخطاء", value: `${summary?.confirmedMistakes ?? 0}`, color: colors.danger },
-    { label: "تخطٍّ", value: `${summary?.skippedWords ?? 0}`, color: colors.danger },
-    { label: "صُحّحت", value: `${summary?.correctedWords ?? 0}`, color: colors.success },
+    { label: "الكلمات المصحّحة", value: `${summary?.correctedWords ?? 0}`, color: colors.success },
     { label: "التلميحات", value: `${summary?.peekedWords ?? 0}`, color: MUSHAF_COLORS.peeked },
   ];
   if (durationSeconds !== undefined) {

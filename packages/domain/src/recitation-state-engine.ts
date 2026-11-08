@@ -404,7 +404,18 @@ export class RecitationStateEngine {
         // A different word is a mistake only when the recognizer is sure of what it heard;
         // a word it barely made out (fast speech, a breath, noise) is taken as the expected one.
         if (op.confidence !== undefined && confidenceTier(op.confidence) !== "HIGH") this.resolveMatch(op.index, changed);
-        else this.openError(op.index, "WRONG_WORD", tier, changed, op.heard);
+        else {
+          this.openError(op.index, "WRONG_WORD", tier, changed, op.heard);
+          if (this.strict) this.holdOn(op.index, changed);
+        }
+      } else if (op.kind === "skip" && this.strict) {
+        // Strict: nothing is skipped. A word left out stops the reader there like a wrong one,
+        // except a lone short word («في», «من») the recognizer often drops from a correct reading.
+        if (this.isDroppedShortWord(op.index, ops)) this.resolveMatch(op.index, changed);
+        else {
+          this.openError(op.index, "OMISSION", tier, changed);
+          this.holdOn(op.index, changed);
+        }
       } else if (op.kind === "skip") {
         if (longSkips.has(op.index)) {
           this.setState(op.index, "SKIPPED", changed);
@@ -478,7 +489,36 @@ export class RecitationStateEngine {
     }
   }
 
+  /**
+   * Strict: the mistake stops the reader at once (no waiting for words after it), and the
+   * matcher is taken back to it until the word is read right.
+   */
+  private holdOn(index: number, changed: Set<number>) {
+    const record = this.errors.get(index);
+    const peeked = this.states.get(index) === "PEEKED";
+    if (record && record.event.status !== "corrected" && record.event.status !== "dismissed") {
+      record.event.status = "confirmed";
+      if (!peeked) this.setState(index, "CONFIRMED_ERROR", changed);
+    } else if (!peeked) {
+      return;
+    }
+    // A hinted word read wrong still holds; it is released when read right.
+    if (this.holdAt === null) this.holdAt = index;
+  }
+
+  /** A single short word missing between words heard: more likely unheard than left out. */
+  private isDroppedShortWord(index: number, ops: AlignmentOp[]) {
+    const text = this.options.wordAt(index)?.normalizedText;
+    if (!text || text.length > 2) return false;
+    return !ops.some((op) => op.kind === "skip" && (op.index === index - 1 || op.index === index + 1));
+  }
+
   private resolveMatch(index: number, changed: Set<number>) {
+    // A word shown by a hint and then read: the hold ends, the word stays a hint.
+    if (this.states.get(index) === "PEEKED") {
+      if (this.holdAt === index) this.holdAt = null;
+      return;
+    }
     const record = this.errors.get(index);
     if (record && (record.event.status === "possible" || record.event.status === "confirmed")) {
       this.markCorrected(index, record, changed);

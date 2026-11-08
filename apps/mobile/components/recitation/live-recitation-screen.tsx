@@ -82,7 +82,8 @@ export function LiveRecitationScreen({
     if (page?.p === ready) setShown(page);
   }, [page]);
   const turn = usePageTurn(shown?.p, size.width);
-  const flagged = counts.mistakes + counts.skipped;
+  // A mistake on the page is where the reader is stopped: nothing counts until it is read right.
+  const stopped = counts.mistakes > 0;
   const status = phase === "preparing" ? "تجهيز الميكروفون…"
     : phase === "ending" ? "جارٍ إنهاء الجلسة…"
     : phase === "paused" ? "متوقف مؤقتاً"
@@ -116,8 +117,8 @@ export function LiveRecitationScreen({
             {live ? <View style={[styles.liveDot, { backgroundColor: listening ? palette.maroon : MUSHAF_COLORS.muted }]} /> : <ActivityIndicator size="small" color={palette.maroon} />}
             <Text style={styles.clock}>{live ? formatDuration(elapsed) : ""}</Text>
           </View>
-          <Text style={[styles.statusText, flagged > 0 && live ? { color: MUSHAF_COLORS.mistake } : null]} numberOfLines={1}>
-            {flagged > 0 && live ? `${toArabicDigits(flagged)} ${flagged === 1 ? "خطأ" : "أخطاء"}` : status}
+          <Text style={[styles.statusText, stopped && live ? { color: MUSHAF_COLORS.mistake } : null]} numberOfLines={1}>
+            {stopped && live ? "توقّف: صحّح الكلمة الحمراء" : status}
           </Text>
         </View>
         <BarButton label={listening || !live ? "إيقاف" : "استئناف"} icon={listening || !live ? "pause" : "play"} onPress={listening ? onPause : onResume} disabled={!live || (listening ? pauseBusy : resumeBusy)} />
@@ -226,10 +227,9 @@ function useElapsedSeconds(running: boolean) {
 }
 
 function feedbackCounts(match: NativeRecitationMatch | null) {
-  const counts = { mistakes: 0, skipped: 0, corrected: 0 };
+  const counts = { mistakes: 0, corrected: 0 };
   for (const feedback of match?.wordFeedback.values() ?? []) {
     if (feedback === "mistake") counts.mistakes += 1;
-    else if (feedback === "skipped") counts.skipped += 1;
     else if (feedback === "corrected") counts.corrected += 1;
   }
   return counts;
