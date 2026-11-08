@@ -18,12 +18,38 @@ function httpStatus(error: unknown) {
 }
 
 function handleAuthError(error: unknown) {
-  // 401 means the token is missing, expired, or revoked. A 403 from a protected
-  // admin procedure means the locally stored role/session no longer has access.
-  // In both cases, keeping the local session leaves the user stuck on an
-  // unrecoverable "temporary error" screen.
+  // 401 means the token is missing, expired, or revoked: sign out.
+  // 403 is ambiguous. It is a role mismatch (the stored role no longer has access),
+  // but procedures also answer FORBIDDEN for business rules (e.g. a placement video
+  // already under review). Sign out only when the session itself turns out to be bad.
   const status = httpStatus(error);
-  if (status === 401 || status === 403) void storage.invalidateSession();
+  if (status === 401) void storage.invalidateSession();
+  else if (status === 403) void verifySessionAfterForbidden();
+}
+
+let sessionCheck: Promise<void> | null = null;
+
+/** After a 403, ask the server who we are; drop the session only if it is invalid or its role changed. */
+function verifySessionAfterForbidden() {
+  sessionCheck ??= (async () => {
+    const generation = getAccountGeneration();
+    const [token, role] = await Promise.all([storage.getToken(), storage.getRole()]);
+    if (!token) return;
+    const checkClient = createTRPCClient<AppRouter>({
+      links: [httpLink({ url: `${apiOrigin()}/api/trpc`, transformer: superjson, headers: { Authorization: `Bearer ${token}` } })],
+    });
+    try {
+      const me = await checkClient.auth.me.query();
+      if (role && me.role !== role && isCurrentAccountGeneration(generation)) await storage.invalidateSession();
+    } catch (checkError) {
+      const checkStatus = httpStatus(checkError);
+      if ((checkStatus === 401 || checkStatus === 403) && isCurrentAccountGeneration(generation)) {
+        await storage.invalidateSession();
+      }
+      // Offline or a server error: keep the session; the next request will tell.
+    }
+  })().finally(() => { sessionCheck = null; });
+  return sessionCheck;
 }
 
 export function apiOrigin() {
