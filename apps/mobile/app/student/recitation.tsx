@@ -468,6 +468,9 @@ export default function NativeRecitationScreen() {
   }
 
   const featureEnabled = status.data?.liveTrackingEnabled === true;
+  // The button shows it is working while the session's text and settings load, so a tap
+  // before they arrive does not look ignored.
+  const loadingPrerequisites = status.isLoading || (wordsQuery.fetchStatus === "fetching" && !wordsQuery.data);
   const canStart = Platform.OS !== "web"
     && role === "student"
     && !!token
@@ -594,7 +597,7 @@ export default function NativeRecitationScreen() {
               label="ابدأ التسميع"
               icon="mic"
               disabled={!canStart}
-              loading={startMutation.isPending}
+              loading={startMutation.isPending || loadingPrerequisites}
               onPress={() => void beginSession()}
             />
           </Card>
