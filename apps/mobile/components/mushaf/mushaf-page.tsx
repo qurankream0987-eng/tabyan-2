@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useState } from "react";
-import { StyleSheet, Text, View, type NativeSyntheticEvent, type TextLayoutEventData } from "react-native";
+import { Image, StyleSheet, Text, View, type NativeSyntheticEvent, type TextLayoutEventData } from "react-native";
 import { SURAHS } from "@workspace/tabyan-domain/quran-surahs";
 import { vocalizedSurahTitle } from "@workspace/tabyan-domain/quran-surah-names";
 import { buildPageLines, type LineWord, type MushafPageData } from "@workspace/tabyan-domain/mushaf-page-data";
@@ -10,6 +10,18 @@ import { SURAH_NAME_FONT_FAMILY, SURAH_TITLE_STRETCH, surahBannerLayout, surahNa
 import { useFonts } from "expo-font";
 import { SurahBannerArt } from "./surah-banner-art";
 import type { NativeWordFeedback } from "../../lib/recitation/native-recitation";
+
+/**
+ * The illumination of the printed Madinah Mushaf's opening pages (KFGQPC, 1441 AH edition), recoloured to
+ * the app's maroon and gold and built to a phone's height: its outer border round the page, the surah-name
+ * panel and the tail panel, and between them a text panel framed by the medallion's own rule, maroon band
+ * and rope. The page's lines are drawn in the panel in the page font. `left` (each side), `top` and
+ * `bottom` give the text area as shares of the page.
+ */
+const ILLUMINATED_PAGES: Record<number, { source: number; left: number; top: number; bottom: number }> = {
+  1: { source: require("../../assets/mushaf/opening-1.webp"), left: 0.1031, top: 0.1315, bottom: 0.1311 },
+  2: { source: require("../../assets/mushaf/opening-2.webp"), left: 0.1031, top: 0.1311, bottom: 0.1304 },
+};
 
 /** Width/height of a printed Madinah Mushaf page. */
 export const PAGE_ASPECT = 622 / 917;
@@ -128,6 +140,7 @@ function MushafPage({
   onPressVerse,
   fillWidth = false,
   onReady,
+  plain = false,
 }: {
   data: MushafPageData;
   width: number;
@@ -142,13 +155,15 @@ function MushafPage({
   fillWidth?: boolean;
   /** Called once the page is measured and its lines are drawn. */
   onReady?: (page: number) => void;
+  /** Lines only: no margins and no surah title (the illumination around them carries both). */
+  plain?: boolean;
 }) {
   const paperH = fillHeight ?? width / PAGE_ASPECT;
   // Printed margins carry the labels; the line grid takes the height between them.
-  const marginH = fillHeight ? Math.min(40, Math.max(26, paperH * 0.04)) : 0;
+  const marginH = fillHeight && !plain ? Math.min(40, Math.max(26, paperH * 0.04)) : 0;
   const height = paperH - marginH * 2;
   const family = pageFontFamily(data.p);
-  const lines = useMemo(() => buildPageLines(data), [data]);
+  const lines = useMemo(() => buildPageLines(data).filter((line) => !plain || line.kind !== "surah-header"), [data, plain]);
   // The basmala is drawn with page 1's font; until it loads, Amiri stands in.
   const hasBasmala = lines.some((line) => line.kind === "basmalah");
   const [basmalaReady, setBasmalaReady] = useState(false);
@@ -174,7 +189,7 @@ function MushafPage({
   // The widest line fills the page width, as in the printed Mushaf (web: canvas measureText).
   const widest = Math.max(0, ...lineWidths.values());
   const fontSize = measured && widest > 0
-    ? Math.min((width * 0.94 * MEASURE_SIZE) / widest, fillWidth ? Infinity : maxFontSizeFor(layout.variant, height))
+    ? Math.min((width * (plain ? 0.9 : 0.94) * MEASURE_SIZE) / widest, fillWidth ? Infinity : maxFontSizeFor(layout.variant, height))
     : 0;
 
   // fillWidth sets an opening page's short lines larger than its printed grid allows, so its rows
@@ -214,7 +229,7 @@ function MushafPage({
   }
 
   return (
-    <View style={[styles.paper, fillHeight ? null : styles.paperCard, { width, height: shownPaperH }]}>
+    <View style={[styles.paper, fillHeight ? null : styles.paperCard, plain ? styles.plainPaper : null, { width, height: shownPaperH }]}>
       {marginH > 0 && fontSize > 0 ? (
         <>
           <View style={[styles.marginRow, { top: 0, height: marginH }]} pointerEvents="none">
@@ -296,7 +311,25 @@ function MushafPage({
   );
 }
 
-export default memo(MushafPage);
+/** The two opening pages of the reader, inside their illumination; the lines are drawn in the medallion. */
+function FramedMushafPage(props: Parameters<typeof MushafPage>[0]) {
+  const art = !props.recitation && props.height !== undefined && !props.fillWidth ? ILLUMINATED_PAGES[props.data.p] : undefined;
+  if (!art) return <MushafPage {...props} />;
+  const W = props.width;
+  const H = props.height!;
+  const pad = W * 0.01;
+  const box = { left: art.left * W + pad, width: W * (1 - 2 * art.left) - pad * 2, top: art.top * H + pad, height: H * (1 - art.top - art.bottom) - pad * 2 };
+  return (
+    <View style={[styles.paper, { width: W, height: H }]}>
+      <Image source={art.source} accessibilityIgnoresInvertColors style={{ position: "absolute", left: 0, top: 0, width: W, height: H }} resizeMode="stretch" />
+      <View style={{ position: "absolute", left: box.left, top: box.top }}>
+        <MushafPage {...props} plain width={box.width} height={box.height} />
+      </View>
+    </View>
+  );
+}
+
+export default memo(FramedMushafPage);
 
 /**
  * The web SurahHeaderFrame: the ornament stretched over the title row, the surah name
@@ -332,6 +365,7 @@ function SurahBanner({ name, number, width, rowH }: { name: string; number?: num
 
 const styles = StyleSheet.create({
   paper: { alignSelf: "center", backgroundColor: MUSHAF_COLORS.paper, overflow: "hidden" },
+  plainPaper: { backgroundColor: "transparent" },
   paperCard: { borderColor: MUSHAF_COLORS.frame, borderWidth: 1, borderRadius: 6 },
   marginRow: { position: "absolute", left: 0, right: 0, flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center", paddingHorizontal: "4%" },
   marginFooter: { justifyContent: "center" },
