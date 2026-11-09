@@ -30,13 +30,15 @@ export type PlaceSearch =
  * Where in the Quran these heard words are read: one place, several alike, or null (too few
  * words, or not recitation). The longest run of recent words that points somewhere wins.
  */
-export function findRecitationPlace(index: QuranSearchIndex, heard: string, open: boolean): PlaceSearch | null {
+export function findRecitationPlace(index: QuranSearchIndex, heard: string, open: boolean, quick = false): PlaceSearch | null {
   const tokens = withoutOpenings(heardTokens(heard));
   // From the first word heard (where the reader began), then from the latest ones (words before
-  // them may be talk or noise). Longer runs first: they tell places apart.
+  // them may be talk or noise). Longer runs first: they tell places apart. Quick (while words
+  // are still coming): only the longest of each, so the phone keeps up with the recognizer.
   const windows: string[][] = [];
-  for (let count = Math.min(tokens.length, MAX_WORDS); count >= MIN_WORDS; count -= 1) windows.push(tokens.slice(0, count));
-  for (let count = Math.min(tokens.length, MAX_WORDS); count >= MIN_WORDS; count -= 1) if (count < tokens.length) windows.push(tokens.slice(-count));
+  const longest = Math.min(tokens.length, MAX_WORDS);
+  for (let count = longest; count >= (quick ? longest : MIN_WORDS); count -= 1) if (count >= MIN_WORDS) windows.push(tokens.slice(0, count));
+  for (let count = longest; count >= (quick ? longest : MIN_WORDS); count -= 1) if (count >= MIN_WORDS && count < tokens.length) windows.push(tokens.slice(-count));
   for (const window of windows) {
     const query = window.join(" ");
     const results = searchQuran(index, query, { limit: 12, openLast: open, minScore: MIN_SCORE - LEAD });
@@ -101,6 +103,8 @@ type FeedArgs = [text: string, itemId: string, isFinal: boolean, wordConfidences
 
 /** Finals kept while a place is looked for, replayed to its matcher once it is found. */
 const MAX_BUFFER = 12;
+/** Partials this close together are searched once, with the latest words. */
+const QUICK_DELAY_MS = 250;
 /** Finals in a row the matcher could not place before the reader is looked for elsewhere. */
 const LOST_FINALS = 2;
 
@@ -118,6 +122,10 @@ export class AnywhereRecitationMatcher {
   private lost = 0;
   private relocations = 0;
   private lastResult: NativeRecitationMatch = emptyMatch();
+  /** The words last searched while still being said: the same words are not searched again. */
+  private lastQuick = "";
+  /** A search of words still being said, waiting for the recognizer to pause a moment. */
+  private quickTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private readonly index: QuranSearchIndex,
@@ -180,20 +188,45 @@ export class AnywhereRecitationMatcher {
     if (this.pending) return this.lastResult;
     // A partial may already name the place; its words reach the matcher once final.
     const heard = isFinal ? this.recent.join(" ") : [...this.recent, text].join(" ");
-    this.events.onHeard?.(heardWords(heard));
-    const search = findRecitationPlace(this.index, heard, !isFinal);
-    if (search?.kind === "found") this.found(search.location);
-    // Only a pause offers a choice: words still coming may tell the places apart.
-    else if (search?.kind === "several" && isFinal) this.events.onCandidates?.(search.candidates);
+    const words = heardWords(heard);
+    this.events.onHeard?.(words);
+    this.cancelQuick();
+    if (isFinal) {
+      this.lastQuick = "";
+      const search = findRecitationPlace(this.index, heard, false);
+      if (search?.kind === "found") this.found(search.location);
+      // Only a pause offers a choice: words still coming may tell the places apart.
+      else if (search?.kind === "several") this.events.onCandidates?.(search.candidates);
+      return this.lastResult;
+    }
+    // Recognizer partials come several times a second, and the phone must keep up: search only
+    // complete words (the one still being said is left out), only the longest runs, and only the
+    // latest words once the partials pause a moment.
+    const complete = words.split(" ").slice(0, -1).join(" ");
+    if (complete === this.lastQuick) return this.lastResult;
+    this.quickTimer = setTimeout(() => {
+      this.quickTimer = null;
+      if (this.matcher || this.pending) return;
+      this.lastQuick = complete;
+      const search = findRecitationPlace(this.index, complete, false, true);
+      if (search?.kind === "found") this.found(search.location);
+    }, QUICK_DELAY_MS);
     return this.lastResult;
   }
 
+  private cancelQuick() {
+    if (this.quickTimer) clearTimeout(this.quickTimer);
+    this.quickTimer = null;
+  }
+
   private found(location: RecitationLocation) {
+    this.cancelQuick();
     this.matcher = null;
     // Nothing of the old place is shown while the new one is prepared.
     this.lastResult = emptyMatch();
     this.pending = true;
     this.lost = 0;
+    this.lastQuick = "";
     this.events.onCandidates?.([]);
     this.onLocated(location);
   }

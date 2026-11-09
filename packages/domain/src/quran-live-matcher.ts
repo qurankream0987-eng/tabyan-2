@@ -89,6 +89,12 @@ export interface QuranLiveMatcherOptions {
    * (سياسة تطبيق الجوال). الافتراضي true كما في الويب.
    */
   commitPartials?: boolean;
+  /**
+   * Whether a heard word is a word of the Quran (anywhere in it). A word heard close to the
+   * expected one is taken as a mishearing of it, unless it is itself another Quran word
+   * («الظالمين» for «الضالين»): that is a wrong word, however close.
+   */
+  isQuranWord?: (token: string) => boolean;
 }
 
 interface Alignment {
@@ -264,7 +270,8 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
   private lastEvent = "";
   private mode: "tracking" | "recovery" = "tracking";
   private mismatchCount = 0;
-  private readonly options: Required<QuranLiveMatcherOptions>;
+  private readonly options: Required<Omit<QuranLiveMatcherOptions, "isQuranWord">>;
+  private readonly isAnyQuranWord?: (token: string) => boolean;
   private readonly stats: MatcherDiagnostics = {
     matcherUpdateCount: 0,
     matcherMatchCount: 0,
@@ -321,6 +328,7 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
       ignoreOptionalBasmala: options.ignoreOptionalBasmala ?? false,
       commitPartials: options.commitPartials ?? true,
     };
+    this.isAnyQuranWord = options.isQuranWord;
     for (const word of words) {
       this.known.add(this.wordKey(word));
       this.alternates.push(alternateSpelling(word));
@@ -329,10 +337,15 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
 
   /** Cost of hearing `heard` for the word at `index`, by either spelling. */
   private wordCost(heard: string, index: number, openPrefix: boolean) {
-    const cost = tokenCost(heard, this.words[index].normalizedText, this.costCache, openPrefix);
+    const expected = this.words[index].normalizedText;
     const alternate = this.alternates[index];
-    if (!alternate || cost === 0) return cost;
-    return Math.min(cost, tokenCost(heard, alternate, this.costCache, openPrefix));
+    let cost = tokenCost(heard, expected, this.costCache, openPrefix);
+    if (alternate && cost > 0) cost = Math.min(cost, tokenCost(heard, alternate, this.costCache, openPrefix));
+    // Close in spelling but another word of the Quran with a letter changed: read wrong, not
+    // misheard. Letters only dropped (a word cut short, «الله» for «والله») stay a mishearing.
+    if (cost > 0 && cost < 1 && !openPrefix && this.isAnyQuranWord?.(heard)
+      && !isSubsequence(heard, expected) && (!alternate || !isSubsequence(heard, alternate))) return 1;
+    return cost;
   }
 
   private pairCost(heard: string, first: number, second: number) {

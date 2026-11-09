@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { buildSearchIndex, type SearchRow } from "@workspace/tabyan-domain/quran-search";
 import { NativeQuranLiveMatcher, type CanonicalQuranWord } from "../lib/recitation/native-recitation-matcher";
 import { normalizeQuranText } from "../lib/recitation/quran-normalizer";
@@ -35,8 +35,13 @@ describe("reciting from anywhere", () => {
   it("opened on An-Nisa, reading Al-Jinn goes to Al-Jinn and follows the reader there", () => {
     const located: RecitationLocation[] = [];
     const anywhere = new AnywhereRecitationMatcher(index, (location) => located.push(location));
+    vi.useFakeTimers();
     anywhere.feed("قل اوحي", "a", false);
     anywhere.feed("قل اوحي الي انه استمع", "a", false);
+    // Words still being said are searched once the recognizer pauses a moment.
+    expect(located).toEqual([]);
+    vi.advanceTimersByTime(300);
+    vi.useRealTimers();
     expect(located.map((l) => l.verseKey)).toEqual(["72:1"]);
     anywhere.feed("قل اوحي الي انه استمع نفر من الجن", "a", true);
     expect(located).toHaveLength(1);

@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { Pressable, StyleSheet } from "react-native";
 import { usePathname, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SvgIcon } from "../ui";
 import { mushafStorage } from "../../lib/storage";
+import { loadSearchIndex } from "../../lib/mushaf/mushaf-assets";
 import { palette, useTheme } from "../../lib/theme";
 
 /** Screens with the floating tab bar: the button sits above it. */
@@ -28,6 +30,8 @@ export function ReciteAnywhereButton() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { isDark } = useTheme();
+  // The Quran search index finds the place; loaded ahead so a tap starts listening at once.
+  useEffect(() => { void loadSearchIndex().catch(() => undefined); }, []);
   if (hiddenOn(pathname)) return null;
   const bottom = TAB_SCREENS.has(pathname) || pathname === "/student" ? 112 : insets.bottom + 24;
   return (

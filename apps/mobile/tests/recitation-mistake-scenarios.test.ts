@@ -3,6 +3,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { NativeQuranLiveMatcher, type CanonicalQuranWord } from "../lib/recitation/native-recitation-matcher";
 import { normalizeQuranText } from "../lib/recitation/quran-normalizer";
+import { isQuranVocabularyWord, setQuranVocabulary } from "../lib/recitation/quran-vocabulary";
+import type { SearchRow } from "@workspace/tabyan-domain/quran-search";
 
 // Whole recitations through the shared matcher and mistake engine, fed the way the
 // recognizer sends them: growing partials, then a final per phrase. The reader is stopped
@@ -14,6 +16,8 @@ for (let page = 1; page <= 604; page += 1) {
     corpus.push({ ...word, normalizedText: normalizeQuranText(word.displayText) });
   }
 }
+// As in the app once the search index is loaded: every word of the Quran is known.
+setQuranVocabulary((JSON.parse(readFileSync(join(PAGES, "../search-index.json"), "utf8")) as { rows: SearchRow[] }).rows);
 const range = (surah: number, from: number, to: number) => corpus.filter((w) => w.surah === surah && w.ayah >= from && w.ayah <= to);
 const ayahWords = (surah: number, number: number) => range(surah, number, number).map((w) => w.displayText);
 const ayah = (surah: number, number: number) => ayahWords(surah, number).join(" ");
@@ -222,6 +226,20 @@ describe("recitation mistakes", () => {
     expect(talk.feed("طيب كده", "c", true).wordFeedback.get(key)).toBeUndefined();
   });
 
+  it("another Quran word read in place of the expected one stops the reader, however close", () => {
+    // «ولا الظالمين» for «ولا الضالين»: two letters apart, but a word of the Quran.
+    const fatiha = range(1, 1, 7);
+    const last = fatiha[fatiha.length - 1];
+    const wrongEnding = recite(fatiha, [ayah(1, 1), ayah(1, 2), ayah(1, 3), ayah(1, 4), ayah(1, 5), ayah(1, 6), "صراط الذين انعمت عليهم غير المغضوب عليهم ولا الظالمين"]);
+    expect(wrongEnding.flagged.get(`${last.verseKey}:${last.position}`)).toBe("mistake");
+    // «لا يفعلون شيئا» for «لا يعقلون شيئا» (Al-Baqarah 170): one letter apart, both Quran words.
+    const target = range(2, 170, 170).find((word) => word.normalizedText === "يعقلون")!;
+    const swapped = range(2, 170, 170).map((word) => (word === target ? "يفعلون" : word.displayText)).join(" ");
+    const wrongWord = recite(range(2, 169, 171), [ayah(2, 169), swapped, ayah(2, 171)]);
+    expect(wrongWord.flagged.get(`2:170:${target.position}`)).toBe("mistake");
+    expect(wrongWord.reading?.verseKey).toBe("2:170");
+  });
+
   it("a word misheard by a letter or two, or a short word the recognizer drops, never stops a correct reading", () => {
     // Misheard endings and dropped short words, phrases split mid-ayah: live recognition noise.
     let seed = 7;
@@ -235,7 +253,9 @@ describe("recitation mistakes", () => {
         const short = word.normalizedText.length <= 2;
         if (short && !lastDropped && roll < 0.3) { lastDropped = true; continue; }
         lastDropped = false;
-        phrase.push(roll < 0.08 && word.normalizedText.length >= 5 ? `${word.normalizedText.slice(0, -1)}ي` : word.displayText);
+        // A misheard ending that is not itself a Quran word («وجعلني» is: read wrong, not misheard).
+        const misheard = `${word.normalizedText.slice(0, -1)}ي`;
+        phrase.push(roll < 0.08 && word.normalizedText.length >= 5 && !isQuranVocabularyWord(misheard) ? misheard : word.displayText);
         if (phrase.length >= 3 + Math.floor(random() * 5)) { phrases.push(phrase.join(" ")); phrase = []; }
       }
       if (phrase.length) phrases.push(phrase.join(" "));

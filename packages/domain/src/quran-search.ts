@@ -32,6 +32,13 @@ export interface QuranSearchResult {
 
 const PUNCTUATION = /[.,!?;:"'()[\]{}«»<>\-–—…،؛؟٪0-9٠-٩]/g;
 
+/** Every word of the Quran in the search index, spelled as heard words are normalized. */
+export function quranVocabulary(rows: readonly SearchRow[]): Set<string> {
+  const words = new Set<string>();
+  for (const row of rows) for (const token of queryTokens(row[2])) words.add(token);
+  return words;
+}
+
 export function queryTokens(text: string): string[] {
   return normalizeQuranText(text.replace(PUNCTUATION, " ")).split(" ").filter(Boolean);
 }

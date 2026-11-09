@@ -10,6 +10,7 @@ import type { MushafPageData } from "@workspace/tabyan-domain/mushaf-page-data";
 import { pageOfAyah } from "@workspace/tabyan-domain/mushaf-page-index";
 import { buildSearchIndex, type QuranSearchIndex, type SearchRow } from "@workspace/tabyan-domain/quran-search";
 import { normalizeQuranText } from "../recitation/quran-normalizer";
+import { setQuranVocabulary } from "../recitation/quran-vocabulary";
 import { apiOrigin } from "../trpc";
 
 export const QURAN_TEXT_VERSION = "qdc-uthmani-hafs-word-text-v1";
@@ -116,6 +117,7 @@ export function loadSearchIndex() {
   searchIndex ??= fetchJson<{ version: string; rows: SearchRow[] }>("quran-words/search-index.json")
     .then((data) => {
       if (data.version !== "tabyan-quran-search-v1" || !Array.isArray(data.rows)) throw new Error("Quran search index is not in the expected format");
+      setQuranVocabulary(data.rows);
       return buildSearchIndex(data.rows);
     })
     .catch((error: unknown) => {

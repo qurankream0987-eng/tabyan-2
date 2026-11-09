@@ -8,6 +8,7 @@ import {
   type RecitationWordState,
 } from "@workspace/tabyan-domain/recitation-state-engine";
 import { normalizeQuranText } from "./quran-normalizer";
+import { isQuranVocabularyWord } from "./quran-vocabulary";
 
 export type { CanonicalQuranWord };
 
@@ -127,6 +128,7 @@ export class NativeQuranLiveMatcher {
       ignoreOptionalBasmala: true,
       confidenceThreshold: CONFIDENCE_THRESHOLD,
       commitPartials: false,
+      isQuranWord: isQuranVocabularyWord,
     });
     this.engine = new RecitationStateEngine({ strict: true, wordAt: (index) => this.matcher.wordAt(index) });
     this.indexWords();
