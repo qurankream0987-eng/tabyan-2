@@ -5,8 +5,6 @@ import { api } from "@/lib/api";
 import { logoutWebSession } from "@/lib/web-session";
 import { cn } from "@/lib/utils";
 import Icon, { type IconName } from "./Icon";
-import AdminGateModal from "./AdminGateModal";
-import TeacherRegisterFlow from "./TeacherRegisterFlow";
 import { InitialsAvatar } from "./CircularUserCard";
 
 type DrawerItem = { to: string; label: string; icon: IconName };
@@ -30,8 +28,6 @@ const SECONDARY_ITEMS: DrawerItem[] = [
 
 export default function StudentDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();
-  const [gateOpen, setGateOpen] = useState(false);
-  const [teacherAuthOpen, setTeacherAuthOpen] = useState(false);
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
@@ -162,27 +158,6 @@ export default function StudentDrawer({ open, onClose }: { open: boolean; onClos
               </NavLink>
             ))}
 
-            <div className="border-t border-border my-2" />
-
-            <button
-              onClick={() => { onClose(); setTeacherAuthOpen(true); }}
-              className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 font-readex font-bold text-sm text-burgundy hover:bg-burgundy/6 dark:hover:bg-gold/8 transition btn-press"
-            >
-              <span className="w-7 flex items-center justify-center shrink-0 opacity-70">
-                <Icon name="clipboard" size={18} />
-              </span>
-              التسجيل كمعلم
-            </button>
-
-            <button
-              onClick={() => setGateOpen(true)}
-              className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 font-readex font-bold text-sm text-burgundy hover:bg-gold/10 transition btn-press"
-            >
-              <span className="w-7 flex items-center justify-center shrink-0 opacity-70">
-                <Icon name="shield" size={18} />
-              </span>
-              بوابة الإشراف
-            </button>
           </nav>
 
           {/* Footer logout */}
@@ -200,8 +175,6 @@ export default function StudentDrawer({ open, onClose }: { open: boolean; onClos
         </aside>
       </div>}
 
-      <AdminGateModal open={gateOpen} onClose={() => setGateOpen(false)} />
-      <TeacherRegisterFlow open={teacherAuthOpen} onClose={() => setTeacherAuthOpen(false)} />
     </>
   );
 }

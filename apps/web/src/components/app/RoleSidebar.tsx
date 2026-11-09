@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import { authStore } from "@/lib/auth";
 import { logoutWebSession } from "@/lib/web-session";
 import { useEffect, useState } from "react";
-import AdminGateModal from "./AdminGateModal";
 import Icon from "./Icon";
 import type { IconName } from "./Icon";
 
@@ -14,7 +13,6 @@ export default function RoleSidebar({ open, onClose, items, title }: {
 }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const [gateOpen, setGateOpen] = useState(false);
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
@@ -104,13 +102,6 @@ export default function RoleSidebar({ open, onClose, items, title }: {
         {/* Footer actions */}
         <div className="border-t border-border p-3 space-y-0.5">
           <button
-            onClick={() => setGateOpen(true)}
-            className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 font-readex font-bold text-sm text-burgundy hover:bg-gold/8 transition btn-press"
-          >
-            <Icon name="shield" size={18} className="shrink-0" />
-            بوابة الإشراف
-          </button>
-          <button
             onClick={() => { void logoutWebSession().then(() => { navigate("/", { replace: true }); onClose(); }); }}
             className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 font-readex font-bold text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition btn-press"
           >
@@ -120,7 +111,6 @@ export default function RoleSidebar({ open, onClose, items, title }: {
         </div>
       </aside>
 
-      <AdminGateModal open={gateOpen} onClose={() => setGateOpen(false)} />
     </>
   );
 }
