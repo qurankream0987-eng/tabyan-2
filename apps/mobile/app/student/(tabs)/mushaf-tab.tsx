@@ -1,7 +1,7 @@
-import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { searchQuran } from "@workspace/tabyan-domain/quran-search";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SURAHS, type SurahMeta } from "@workspace/tabyan-domain/quran-surahs";
 import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
@@ -26,6 +26,11 @@ export default function MushafTab() {
   const { colors, isDark } = useTheme();
   const [tab, setTab] = useState<Tab>("surahs");
   const [search, setSearch] = useState("");
+  // `?q=` from a link opens the index already searching.
+  const { q } = useLocalSearchParams<{ q?: string }>();
+  useEffect(() => {
+    if (typeof q === "string" && q.trim()) { setTab("surahs"); setSearch(q); }
+  }, [q]);
   const [lastPage, setLastPage] = useState<number | null>(null);
   const [bookmarks, setBookmarks] = useState<number[]>([]);
   const accent = isDark ? palette.gold : palette.burgundy;
