@@ -26,6 +26,7 @@ import { AyahAudioPlayer, DEFAULT_RECITER, RECITERS, type AyahRef, type ReciterI
 import { mushafStorage } from "../../lib/storage";
 import { toast } from "../../lib/toast";
 import { useTheme } from "../../lib/theme";
+import { useAuth } from "../../lib/auth";
 
 const PAGES = Array.from({ length: TOTAL_PAGES }, (_, index) => index + 1);
 const RECITER_KEY = "tabyan.mushaf.reciter";
@@ -101,6 +102,7 @@ export default function MushafReaderScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ page?: string; surah?: string; verse?: string }>();
   const { colors } = useTheme();
+  const { role } = useAuth();
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<number>>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -248,6 +250,20 @@ export default function MushafReaderScreen() {
           style={[styles.bottomChrome, { paddingBottom: insets.bottom, backgroundColor: chrome || selected || playingAyah || audioError ? colors.card : "transparent" }]}
           pointerEvents="box-none"
         >
+          {/* Recite from anywhere: listening starts at once, and the reader's place is found from what is read. */}
+          {role === "student" && !selected ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="سمّع من أي موضع"
+              onPress={() => {
+                playerRef.current?.stop();
+                router.push({ pathname: "/student/recitation", params: { anywhere: "1", page: String(page ?? 1) } } as never);
+              }}
+              style={({ pressed }) => [styles.reciteFab, { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 }]}
+            >
+              <Icon name="mic" size={22} color="#FFFFFF" />
+            </Pressable>
+          ) : null}
         {selected ? (
           <View style={[styles.panel, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
             <View style={styles.panelHeader}>
@@ -520,6 +536,8 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   audioText: { flex: 1, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12, textAlign: "right" },
+  // In the page-number row, under the last line, so it never covers the text.
+  reciteFab: { alignSelf: "flex-start", width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", marginLeft: 16, marginBottom: 6, elevation: 4, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
   toolbar: { flexDirection: "row-reverse", borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 6 },
   toolbarButton: { flex: 1, alignItems: "center", gap: 2, paddingVertical: 4 },
   toolbarLabel: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11, lineHeight: 16, alignSelf: "stretch", textAlign: "center" },

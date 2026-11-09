@@ -32,6 +32,7 @@ export function LiveRecitationScreen({
   rangeKeys,
   revealedKeys,
   plainOutside = false,
+  prompt,
   errorText,
   onPause,
   onResume,
@@ -50,6 +51,8 @@ export function LiveRecitationScreen({
   revealedKeys: ReadonlySet<string>;
   /** The whole page in its own ink, the ayahs before the start too (a session from a chosen ayah). */
   plainOutside?: boolean;
+  /** Shown instead of "يستمع" while listening, e.g. before the reader's place is known. */
+  prompt?: string;
   errorText: string | null;
   onPause: () => void;
   onResume: () => void;
@@ -87,7 +90,7 @@ export function LiveRecitationScreen({
   const status = phase === "preparing" ? "تجهيز الميكروفون…"
     : phase === "ending" ? "جارٍ إنهاء الجلسة…"
     : phase === "paused" ? "متوقف مؤقتاً"
-    : "يستمع";
+    : prompt ?? "يستمع";
 
   return (
     <View style={styles.root}>

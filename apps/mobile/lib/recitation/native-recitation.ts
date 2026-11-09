@@ -5,6 +5,7 @@ import { NativeRecitationCuePlayer } from "./native-recitation-cues";
 import {
   NativeRecitationControllerCore,
   type NativeAudioRecorder,
+  type NativeMatcherLike,
   type NativeSocket,
 } from "./native-recitation-controller";
 import {
@@ -35,7 +36,7 @@ function recitationWebSocketUrl() {
 }
 
 export class NativeRecitationController extends NativeRecitationControllerCore {
-  constructor(matcher: NativeQuranLiveMatcher, callbacks: NativeRecitationCallbacks = {}) {
+  constructor(matcher: NativeMatcherLike, callbacks: NativeRecitationCallbacks = {}) {
     const cues = new NativeRecitationCuePlayer();
     super(matcher, callbacks, {
       isWeb: Platform.OS === "web",

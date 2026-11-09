@@ -18,7 +18,8 @@ import {
   type NativeRecitationState,
   type NativeRecitationSummary,
 } from "../../lib/recitation/native-recitation";
-import { ensurePageFont, loadMushafPage, loadRangeWords } from "../../lib/mushaf/mushaf-assets";
+import { ensurePageFont, loadMushafPage, loadRangeWords, loadSearchIndex } from "../../lib/mushaf/mushaf-assets";
+import { AnywhereRecitationMatcher, type RecitationLocation } from "../../lib/recitation/recitation-anywhere";
 import { MUSHAF_COLORS, type MushafHideMode } from "../../components/mushaf/mushaf-page";
 import { trpc } from "../../lib/trpc";
 import { StudentScreen } from "../../components/student/student-screen";
@@ -64,8 +65,11 @@ export default function NativeRecitationScreen() {
   const router = useRouter();
   // Opened from the Mushaf toolbar: the page's first ayah, ten ayahs at most, with the range
   // open to change. Opened on a chosen ayah (toEnd): that ayah to the surah's end, no range to pick.
-  const params = useLocalSearchParams<{ surah?: string; ayah?: string; toEnd?: string }>();
-  const toSurahEnd = params.toEnd === "1";
+  const params = useLocalSearchParams<{ surah?: string; ayah?: string; toEnd?: string; anywhere?: string; page?: string }>();
+  // Opened from the Mushaf's microphone: the reader starts anywhere, and the place is found by what is read.
+  const anywhereMode = params.anywhere === "1";
+  const anywherePage = Math.min(604, Math.max(1, Number(params.page) || 1));
+  const toSurahEnd = params.toEnd === "1" || anywhereMode;
   const initialSurah = SURAHS[Number(params.surah) - 1] ?? SURAHS[0];
   const initialAyah = Math.min(Math.max(1, Number(params.ayah) || 1), initialSurah.ayahs);
   const [surahInput, setSurahInput] = useState(String(initialSurah.n));
@@ -79,9 +83,19 @@ export default function NativeRecitationScreen() {
   const [mistakes, setMistakes] = useState<NativeRecitationMistake[]>([]);
   /** Ends the local count and keeps the words the reader was stopped on for the summary. */
   const finishLocal = useCallback(() => {
-    const finished = matcherRef.current?.finish() ?? null;
+    // A reading that moved place has one matcher per place; the summary adds them up.
+    const matchers = [...doneMatchersRef.current, ...(matcherRef.current ? [matcherRef.current] : [])];
+    const summaries = matchers.map((matcher) => matcher.finish());
+    const finished = summaries.length ? summaries.reduce((total, part) => ({
+      wordsRecited: total.wordsRecited + part.wordsRecited,
+      totalWords: total.totalWords + part.totalWords,
+      confirmedMistakes: total.confirmedMistakes + part.confirmedMistakes,
+      skippedWords: total.skippedWords + part.skippedWords,
+      correctedWords: total.correctedWords + part.correctedWords,
+      peekedWords: total.peekedWords + part.peekedWords,
+    })) : null;
     setSummary(finished);
-    setMistakes(matcherRef.current?.mistakes() ?? []);
+    setMistakes(matchers.flatMap((matcher) => matcher.mistakes()));
     return finished;
   }, []);
   const [soundsEnabled, setSoundsEnabled] = useState(true);
@@ -92,6 +106,11 @@ export default function NativeRecitationScreen() {
   const [, setSessionStateVersion] = useState(0);
   const controllerRef = useRef<NativeRecitationController | null>(null);
   const matcherRef = useRef<NativeQuranLiveMatcher | null>(null);
+  const anywhereRef = useRef<AnywhereRecitationMatcher | null>(null);
+  /** Matchers of places the reader moved away from, kept for the summary. */
+  const doneMatchersRef = useRef<NativeQuranLiveMatcher[]>([]);
+  const [located, setLocated] = useState<RecitationLocation | null>(null);
+  const searchIndex = useQuery({ queryKey: ["quran-search-index"], queryFn: loadSearchIndex, enabled: anywhereMode, staleTime: Infinity, retry: 1 });
   const sessionIdRef = useRef<string | null>(null);
   const finishingRef = useRef(false);
   const controllerStartingRef = useRef(false);
@@ -157,22 +176,25 @@ export default function NativeRecitationScreen() {
   const rangeHasCoverage = validRange
     && canonicalWords.some((word) => word.ayah === startAyah)
     && canonicalWords.some((word) => word.ayah === endAyah);
-  const rangeKeys = useMemo(() => new Set(canonicalWords.map((word) => word.verseKey)), [canonicalWords]);
+  // Anywhere: words are followed only once the place is known and its text loaded.
+  const following = !anywhereMode || (!!located && canonicalWords.some((word) => word.verseKey === located.verseKey));
+  const rangeKeys = useMemo(() => new Set(following ? canonicalWords.map((word) => word.verseKey) : []), [canonicalWords, following]);
   const lastRangePage = canonicalWords[canonicalWords.length - 1]?.page;
 
   // The page shows the word the reciter reads next, so it turns as soon as the last
   // word of a page is read; before the first match it shows the start verse.
-  const currentPage = useMemo(
-    () => (canonicalWords[match?.readingWords ?? 0] ?? canonicalWords[canonicalWords.length - 1])?.page,
-    [canonicalWords, match?.readingWords],
-  );
+  const currentPage = useMemo(() => {
+    if (anywhereMode && !located) return anywherePage;
+    if (anywhereMode && located && !following) return located.page;
+    return (canonicalWords[match?.readingWords ?? 0] ?? canonicalWords[canonicalWords.length - 1])?.page;
+  }, [anywhereMode, anywherePage, located, following, canonicalWords, match?.readingWords]);
   const pageQuery = useQuery({
     queryKey: ["mushaf-page", currentPage],
     queryFn: async () => {
       const [data] = await Promise.all([loadMushafPage(currentPage!), ensurePageFont(currentPage!)]);
       return data;
     },
-    enabled: currentPage !== undefined && rangeHasCoverage,
+    enabled: currentPage !== undefined && (rangeHasCoverage || anywhereMode),
     staleTime: Infinity,
     placeholderData: keepPreviousData,
   });
@@ -181,6 +203,27 @@ export default function NativeRecitationScreen() {
     () => new Set(canonicalWords.slice(0, match?.readingWords ?? 0).map((word) => `${word.verseKey}:${word.position}`)),
     [canonicalWords, match?.readingWords],
   );
+
+  // Once the place is found and its surah loaded, its matcher takes the reading from there.
+  useEffect(() => {
+    const anywhere = anywhereRef.current;
+    if (!anywhereMode || !anywhere || !located || matcherRef.current || !following) return;
+    const matcher = new NativeQuranLiveMatcher(canonicalWords);
+    if (!matcher.setStartPosition({ verseKey: located.verseKey, wordPosition: located.position })) return;
+    matcherRef.current = matcher;
+    const result = anywhere.attach(matcher);
+    for (const change of result.changedWordStates) controllerRef.current?.observeWordState(change.key, change.state, true);
+    setMatch(result);
+  }, [anywhereMode, located, following, canonicalWords]);
+
+  // The microphone in the Mushaf starts listening at once.
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (!anywhereMode || autoStartedRef.current || phase !== "setup") return;
+    if (!status.data?.liveTrackingEnabled || !searchIndex.data || !token) return;
+    autoStartedRef.current = true;
+    void beginSession();
+  });
 
   useEffect(() => {
     // Load the next page of the range ahead so turning the page does not flash.
@@ -236,8 +279,7 @@ export default function NativeRecitationScreen() {
     if (
       !token
       || role !== "student"
-      || !validRange
-      || !rangeHasCoverage
+      || (anywhereMode ? !searchIndex.data : !validRange || !rangeHasCoverage)
       || !status.data?.liveTrackingEnabled
       || sessionIdRef.current !== null
       || Platform.OS === "web"
@@ -249,6 +291,9 @@ export default function NativeRecitationScreen() {
     setSummary(null);
     setMistakes([]);
     matcherRef.current = null;
+    anywhereRef.current = null;
+    doneMatchersRef.current = [];
+    setLocated(null);
     setPhase("preparing");
     let sessionId: string | null = null;
     try {
@@ -264,7 +309,7 @@ export default function NativeRecitationScreen() {
           }
         : {
             mode: "general",
-            startContext: { startVerseKey: `${surahId}:${startAyah}` },
+            startContext: anywhereMode ? { startPage: anywherePage } : { startVerseKey: `${surahId}:${startAyah}` },
             hideMode,
           });
       sessionId = session.sessionId;
@@ -275,11 +320,27 @@ export default function NativeRecitationScreen() {
         return;
       }
       sessionIdRef.current = sessionId;
-      const matcher = new NativeQuranLiveMatcher(canonicalWords);
-      if (!matcher.setStartPosition({ verseKey: `${surahId}:${startAyah}` })) {
-        throw new Error("Selected start position is not present in the loaded Quran text");
+      let matcher: NativeQuranLiveMatcher | AnywhereRecitationMatcher;
+      if (anywhereMode && searchIndex.data) {
+        // The place is found from the words read; its surah is then loaded (see the effect above).
+        const anywhere = new AnywhereRecitationMatcher(searchIndex.data, (location) => {
+          if (matcherRef.current) doneMatchersRef.current.push(matcherRef.current);
+          matcherRef.current = null;
+          setLocated(location);
+          setSurahInput(String(location.surah));
+          setStartAyahInput(String(location.ayah));
+          setEndAyahInput(String(SURAHS[location.surah - 1]?.ayahs ?? location.ayah));
+        });
+        anywhereRef.current = anywhere;
+        matcher = anywhere;
+      } else {
+        const rangeMatcher = new NativeQuranLiveMatcher(canonicalWords);
+        if (!rangeMatcher.setStartPosition({ verseKey: `${surahId}:${startAyah}` })) {
+          throw new Error("Selected start position is not present in the loaded Quran text");
+        }
+        matcherRef.current = rangeMatcher;
+        matcher = rangeMatcher;
       }
-      matcherRef.current = matcher;
       const controller = new NativeRecitationController(matcher, {
         onState: (state) => handleControllerState(state),
         onMatch: (nextMatch) => {
@@ -487,12 +548,14 @@ export default function NativeRecitationScreen() {
     && rangeHasCoverage
     && canonicalWords.length > 0
     && phase === "setup";
-  if (phase === "preparing" || phase === "listening" || phase === "paused" || phase === "ending") {
+  // Anywhere: the session starts on its own, so the setup card is never shown first.
+  const autoStarting = anywhereMode && phase === "setup" && !errorText;
+  if (autoStarting || phase === "preparing" || phase === "listening" || phase === "paused" || phase === "ending") {
     // The live session takes the whole screen from the moment it is being set up until it has
     // ended; the setup and summary stay in the usual layout.
     return (
       <LiveRecitationScreen
-        phase={phase}
+        phase={phase === "listening" || phase === "paused" || phase === "ending" ? phase : "preparing"}
         match={match}
         page={pageQuery.data}
         pageError={!!pageQuery.error}
@@ -500,6 +563,7 @@ export default function NativeRecitationScreen() {
         rangeKeys={rangeKeys}
         revealedKeys={revealedKeys}
         plainOutside={toSurahEnd}
+        prompt={anywhereMode && !following ? (located ? "جارٍ فتح الموضع…" : "اقرأ من أي موضع…") : undefined}
         errorText={errorText}
         onPause={() => void pauseSession()}
         onResume={() => void resumeSession()}
