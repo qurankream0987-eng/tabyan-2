@@ -205,15 +205,6 @@ export default function MushafTab() {
           </View>
         )}
       />
-      {/* Recite from anywhere: listening starts at once, and the Mushaf opens where the reader is. */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="سمّع من أي موضع"
-        onPress={() => router.push({ pathname: "/student/recitation", params: { anywhere: "1", page: String(lastPage ?? 1) } } as never)}
-        style={({ pressed }) => [styles.recite, { backgroundColor: isDark ? palette.gold : palette.burgundy, opacity: pressed ? 0.85 : 1 }]}
-      >
-        <SvgIcon name="mic" size={26} color={isDark ? palette.night : "#FFFFFF"} />
-      </Pressable>
     </Screen>
   );
 }
@@ -236,8 +227,6 @@ const styles = StyleSheet.create({
   resumeKicker: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right" },
   resumeTitle: { fontFamily: "Amiri_700Bold", fontSize: 18, lineHeight: 27, textAlign: "right" },
   search: { flexDirection: "row-reverse", alignItems: "center", gap: 8, minHeight: 46, borderRadius: 14, borderWidth: 1, paddingHorizontal: 12, marginBottom: 8 },
-  // Bottom left above the floating tab bar, as in the Mushaf reader.
-  recite: { position: "absolute", left: 18, bottom: 112, width: 56, height: 56, borderRadius: 28, alignItems: "center", justifyContent: "center", elevation: 5, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
   searchInput: { flex: 1, minHeight: 44, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 14, textAlign: "right", paddingVertical: 0 },
   rowWrap: { marginBottom: 2 },
   row: { flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 10, paddingVertical: 10, borderRadius: 16 },
