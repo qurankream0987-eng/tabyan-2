@@ -129,6 +129,7 @@ export default function MushafTab() {
       ) : null}
 
       {tab === "surahs" ? (
+        <View style={styles.searchRow}>
         <View style={[styles.search, { backgroundColor: colors.input, borderColor: colors.border }]}>
           <SvgIcon name="search" size={18} color={colors.muted} />
           <TextInput
@@ -142,6 +143,16 @@ export default function MushafTab() {
           {search ? (
             <Pressable accessibilityLabel="مسح البحث" hitSlop={10} onPress={() => setSearch("")}><SvgIcon name="x" size={16} color={colors.muted} /></Pressable>
           ) : null}
+        </View>
+        {/* Recite from anywhere, before opening a surah: the place is found from what is read. */}
+        <SoftPressable
+          accessibilityRole="button"
+          accessibilityLabel="سمّع من أي موضع"
+          onPress={() => router.push({ pathname: "/student/recitation", params: { anywhere: "1", page: String(lastPage ?? 1) } } as never)}
+          style={[styles.recite, { backgroundColor: isDark ? palette.gold : palette.burgundy }]}
+        >
+          <SvgIcon name="mic" size={20} color={isDark ? palette.night : "#FFFFFF"} />
+        </SoftPressable>
         </View>
       ) : null}
     </View>
@@ -226,7 +237,9 @@ const styles = StyleSheet.create({
   resumeIcon: { width: 44, height: 44, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   resumeKicker: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right" },
   resumeTitle: { fontFamily: "Amiri_700Bold", fontSize: 18, lineHeight: 27, textAlign: "right" },
-  search: { flexDirection: "row-reverse", alignItems: "center", gap: 8, minHeight: 46, borderRadius: 14, borderWidth: 1, paddingHorizontal: 12, marginBottom: 8 },
+  searchRow: { flexDirection: "row-reverse", alignItems: "center", gap: 8, marginBottom: 8 },
+  search: { flex: 1, flexDirection: "row-reverse", alignItems: "center", gap: 8, minHeight: 46, borderRadius: 14, borderWidth: 1, paddingHorizontal: 12 },
+  recite: { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   searchInput: { flex: 1, minHeight: 44, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 14, textAlign: "right", paddingVertical: 0 },
   rowWrap: { marginBottom: 2 },
   row: { flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 10, paddingVertical: 10, borderRadius: 16 },
