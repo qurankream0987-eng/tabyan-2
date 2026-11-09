@@ -696,13 +696,19 @@ export const adminRouter = createRouter({
       .orderBy(levels.orderIndex, levels.id)),
 
   placementList: adminProcedure.query(async () => {
+    // The wait is counted from when the recording was sent, not from when the account was made.
+    const submittedAt = sql<Date | string | null>`(select max(${placementAttempts.submittedAt}) from ${placementAttempts}
+      where ${placementAttempts.studentId} = ${students.userId} and ${placementAttempts.status} = 'submitted')`;
     const rows = await db.select({
-      userId: students.userId, videoUrl: students.placementTestVideoUrl, createdAt: students.createdAt,
-      pathType: students.placementPathType,
+      userId: students.userId, videoUrl: students.placementTestVideoUrl, accountCreatedAt: students.createdAt,
+      submittedAt, pathType: students.placementPathType,
       name: users.fullName, schoolStage: students.schoolStage, schoolGrade: students.schoolGrade,
     }).from(students).innerJoin(users, eq(students.userId, users.id))
       .where(and(eq(students.placementTestStatus, "pending"), sql`${students.placementTestVideoUrl} IS NOT NULL`));
-    return rows.map((r) => ({ ...r, hoursAgo: hoursSince(r.createdAt) }));
+    return rows.map(({ accountCreatedAt, submittedAt: sent, ...r }) => {
+      const createdAt = sent ? new Date(sent) : accountCreatedAt;
+      return { ...r, createdAt, hoursAgo: hoursSince(createdAt) };
+    });
   }),
 
   placementReview: adminProcedure
