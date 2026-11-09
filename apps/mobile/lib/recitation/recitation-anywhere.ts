@@ -23,7 +23,7 @@ const LEAD = 0.1;
  * places (or none). The longest run of recent words that points to one place wins.
  */
 export function locateRecitation(index: QuranSearchIndex, heard: string, open: boolean): RecitationLocation | null {
-  const tokens = queryTokens(heard);
+  const tokens = withoutOpenings(queryTokens(heard));
   for (let count = Math.min(tokens.length, MAX_WORDS); count >= MIN_WORDS; count -= 1) {
     const query = tokens.slice(-count).join(" ");
     const results = searchQuran(index, query, { limit: 3, openLast: open, minScore: MIN_SCORE - LEAD });
@@ -34,6 +34,29 @@ export function locateRecitation(index: QuranSearchIndex, heard: string, open: b
     return { verseKey: best.verseKey, surah, ayah, position: best.startPosition, page: best.page };
   }
   return null;
+}
+
+/**
+ * The isti'adha and the basmala said before reading are not where the reader is: «من الشيطان
+ * الرجيم» alone would place him in An-Nahl 98, «بسم الله الرحمن الرحيم» at any surah's start.
+ */
+function withoutOpenings(tokens: string[]) {
+  const out: string[] = [];
+  for (let i = 0; i < tokens.length; i += 1) {
+    if (tokens[i] === "اعوذ") {
+      // «أعوذ بالله [السميع العليم] من الشيطان الرجيم», or as much of it as was said so far.
+      const end = tokens.indexOf("الرجيم", i);
+      if (end !== -1 && end - i <= 8) { i = end; continue; }
+      if (end === -1 && tokens.length - i <= 8) break;
+    }
+    if (tokens[i] === "بسم" && tokens[i + 1] === "الله") {
+      const said = ["بسم", "الله", "الرحمن", "الرحيم"].findIndex((word, k) => tokens[i + k] !== word);
+      i += (said === -1 ? 4 : said) - 1;
+      continue;
+    }
+    out.push(tokens[i]);
+  }
+  return out;
 }
 
 type FeedArgs = [text: string, itemId: string, isFinal: boolean, wordConfidences?: number[]];

@@ -24,6 +24,10 @@ describe("reciting from anywhere", () => {
     // Words said in many places wait for more.
     expect(locateRecitation(index, "إن الله غفور رحيم", false)).toBeNull();
     expect(locateRecitation(index, "بسم الله", false)).toBeNull();
+    // The isti'adha and basmala are not the place («من الشيطان الرجيم» is also An-Nahl 98).
+    expect(locateRecitation(index, "أعوذ بالله من الشيطان الرجيم", false)).toBeNull();
+    expect(locateRecitation(index, "أعوذ بالله من الشيطان الرجيم فقلت استغفروا ربكم إنه كان غفارا", false)).toMatchObject({ verseKey: "71:10", position: 1 });
+    expect(locateRecitation(index, "بسم الله الرحمن الرحيم تبارك الذي بيده الملك", false)).toMatchObject({ verseKey: "67:1", position: 1 });
     // Talk is not a place.
     expect(locateRecitation(index, "طيب يلا نبدأ دلوقتي", false)).toBeNull();
   });

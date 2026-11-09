@@ -129,7 +129,6 @@ export default function MushafTab() {
       ) : null}
 
       {tab === "surahs" ? (
-        <View style={styles.searchRow}>
         <View style={[styles.search, { backgroundColor: colors.input, borderColor: colors.border }]}>
           <SvgIcon name="search" size={18} color={colors.muted} />
           <TextInput
@@ -143,7 +142,6 @@ export default function MushafTab() {
           {search ? (
             <Pressable accessibilityLabel="مسح البحث" hitSlop={10} onPress={() => setSearch("")}><SvgIcon name="x" size={16} color={colors.muted} /></Pressable>
           ) : null}
-        </View>
         </View>
       ) : null}
     </View>
@@ -202,22 +200,20 @@ export default function MushafTab() {
                 <Pressable accessibilityLabel={`إزالة العلامة من صفحة ${item.page}`} hitSlop={8} onPress={() => void removeBookmark(item.page)} style={styles.remove}>
                   <SvgIcon name="x" size={16} color={colors.muted} />
                 </Pressable>
-              ) : tab === "surahs" ? (
-                // Recite this surah from its first ayah, without opening it first.
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`سمّع سورة ${item.title}`}
-                  hitSlop={6}
-                  onPress={() => router.push({ pathname: "/student/recitation", params: { surah: String(item.n), ayah: "1", toEnd: "1", autostart: "1" } } as never)}
-                  style={({ pressed }) => [styles.recite, { backgroundColor: isDark ? `${palette.gold}26` : `${palette.burgundy}14`, opacity: pressed ? 0.7 : 1 }]}
-                >
-                  <SvgIcon name="mic" size={18} color={accent} />
-                </Pressable>
               ) : <SvgIcon name="arrow-left" size={14} color={colors.muted} />}
             </SoftPressable>
           </View>
         )}
       />
+      {/* Recite from anywhere: listening starts at once, and the Mushaf opens where the reader is. */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="سمّع من أي موضع"
+        onPress={() => router.push({ pathname: "/student/recitation", params: { anywhere: "1", page: String(lastPage ?? 1) } } as never)}
+        style={({ pressed }) => [styles.recite, { backgroundColor: isDark ? palette.gold : palette.burgundy, opacity: pressed ? 0.85 : 1 }]}
+      >
+        <SvgIcon name="mic" size={26} color={isDark ? palette.night : "#FFFFFF"} />
+      </Pressable>
     </Screen>
   );
 }
@@ -239,9 +235,9 @@ const styles = StyleSheet.create({
   resumeIcon: { width: 44, height: 44, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   resumeKicker: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 11, textAlign: "right" },
   resumeTitle: { fontFamily: "Amiri_700Bold", fontSize: 18, lineHeight: 27, textAlign: "right" },
-  searchRow: { flexDirection: "row-reverse", alignItems: "center", gap: 8, marginBottom: 8 },
-  search: { flex: 1, flexDirection: "row-reverse", alignItems: "center", gap: 8, minHeight: 46, borderRadius: 14, borderWidth: 1, paddingHorizontal: 12 },
-  recite: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
+  search: { flexDirection: "row-reverse", alignItems: "center", gap: 8, minHeight: 46, borderRadius: 14, borderWidth: 1, paddingHorizontal: 12, marginBottom: 8 },
+  // Bottom left above the floating tab bar, as in the Mushaf reader.
+  recite: { position: "absolute", left: 18, bottom: 112, width: 56, height: 56, borderRadius: 28, alignItems: "center", justifyContent: "center", elevation: 5, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
   searchInput: { flex: 1, minHeight: 44, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 14, textAlign: "right", paddingVertical: 0 },
   rowWrap: { marginBottom: 2 },
   row: { flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 10, paddingVertical: 10, borderRadius: 16 },
