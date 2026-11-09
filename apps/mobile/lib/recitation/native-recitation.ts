@@ -18,6 +18,7 @@ export type {
   NativeMatcherDiagnostics,
   NativeRecitationCallbacks,
   NativeRecitationMatch,
+  NativeRecitationMistake,
   NativeRecitationState,
   NativeRecitationSummary,
   NativeWordFeedback,

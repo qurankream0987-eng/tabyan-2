@@ -69,6 +69,19 @@ export interface NativeRecitationSummary {
   peekedWords: number;
 }
 
+/** One word the reader was stopped on, for the session summary. */
+export interface NativeRecitationMistake {
+  key: string;
+  verseKey: string;
+  position: number;
+  /** The word as printed in the Mushaf. */
+  text: string;
+  /** What the recognizer heard instead (normalized), or null when the word was left out. */
+  heard: string | null;
+  /** Read right afterwards, shown by a hint and then read, or never corrected. */
+  outcome: "corrected" | "hinted" | "uncorrected";
+}
+
 export type NativeRecitationState =
   | "idle"
   | "connecting"
@@ -222,6 +235,28 @@ export class NativeQuranLiveMatcher {
     // Every stop counts as a mistake, the ones corrected after it too.
     summary.confirmedMistakes = this.engine.mistakeRecords().filter((record) => record.status !== "dismissed").length;
     return summary;
+  }
+
+  /** Every word the reader was stopped on, in reading order; call after finish(). */
+  mistakes(): NativeRecitationMistake[] {
+    const list: (NativeRecitationMistake & { index: number })[] = [];
+    for (const record of this.engine.mistakeRecords()) {
+      if (record.status === "dismissed") continue;
+      const key = `${record.verseKey}:${record.position}`;
+      const index = this.indexByKey.get(key);
+      if (index === undefined) continue;
+      const event = this.engine.mistakeAt(index);
+      list.push({
+        index,
+        key,
+        verseKey: record.verseKey,
+        position: record.position,
+        text: this.matcher.wordAt(index)?.displayText ?? "",
+        heard: record.kind === "WRONG_WORD" ? event?.heard ?? null : null,
+        outcome: this.engine.stateAt(index) === "PEEKED" ? "hinted" : record.status === "corrected" ? "corrected" : "uncorrected",
+      });
+    }
+    return list.sort((a, b) => a.index - b.index).map(({ index: _index, ...mistake }) => mistake);
   }
 
   /** Words the engine flagged, for a submitted assignment; call after finish(). */

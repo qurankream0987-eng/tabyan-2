@@ -37,6 +37,11 @@ function parseVerseKey(verseKey: string): AyahRef {
   return { surah, ayah };
 }
 
+/** `?verse=S:A` from an ayah search on the index: the ayah is selected once its page opens. */
+function requestedVerse(params: { verse?: string }) {
+  return typeof params.verse === "string" && /^\d{1,3}:\d{1,3}$/.test(params.verse) ? params.verse : null;
+}
+
 /** `?page=N` or `?surah=N` from the index; null when absent or out of range. */
 function requestedPage(params: { page?: string; surah?: string }) {
   const page = Number(params.page);
@@ -94,7 +99,7 @@ function PagerPage({
 
 export default function MushafReaderScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ page?: string; surah?: string }>();
+  const params = useLocalSearchParams<{ page?: string; surah?: string; verse?: string }>();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<number>>(null);
@@ -146,6 +151,11 @@ export default function MushafReaderScreen() {
   useEffect(() => {
     if (page !== null) void mushafStorage.setLastPage(page);
   }, [page]);
+
+  const linkedVerse = requestedVerse(params);
+  useEffect(() => {
+    if (linkedVerse) setSelectedVerse(linkedVerse);
+  }, [linkedVerse]);
 
   // A link to another page while the reader is already open (e.g. from the index tab).
   useEffect(() => {

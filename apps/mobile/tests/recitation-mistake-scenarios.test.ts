@@ -116,6 +116,27 @@ describe("recitation mistakes", () => {
     }
   });
 
+  it("the summary lists each mistake: the Mushaf word, what was said instead, and how it ended", () => {
+    const words = range(2, 11, 16);
+    const said = (...phrases: string[]) => {
+      const matcher = new NativeQuranLiveMatcher(words);
+      phrases.forEach((phrase, item) => matcher.feed(phrase, `p${item}`, true));
+      matcher.finish();
+      return matcher.mistakes();
+    };
+    const head = ayah(2, 12).split(" ").slice(0, -1).join(" ");
+    const corrected = said(ayah(2, 11), `${head} يعلمون`, "يشعرون");
+    expect(corrected).toHaveLength(1);
+    expect(corrected[0]).toMatchObject({ verseKey: "2:12", position: 7, heard: "يعلمون", outcome: "corrected" });
+    expect(normalizeQuranText(corrected[0].text)).toBe("يشعرون");
+    expect(said(ayah(2, 11), `${head} يعلمون`)[0].outcome).toBe("uncorrected");
+    // A word left out has nothing heard in its place.
+    const third = ayah(2, 13).split(" ");
+    const missing = said(ayah(2, 11), ayah(2, 12), [third[0], ...third.slice(2, 6)].join(" "));
+    expect(missing[0]).toMatchObject({ verseKey: "2:13", position: 2, heard: null, outcome: "uncorrected" });
+    expect(said(ayah(2, 11), ayah(2, 12))).toEqual([]);
+  });
+
   it("one common word misheard does not carry the reader forward past unread words", () => {
     // An-Nisa 81: "وَٱللَّهُ يَكْتُبُ" heard as "الله" alone, which also fits "عَلَى ٱللَّهِ" eight words on.
     const words = range(4, 80, 83);

@@ -14,6 +14,7 @@ import {
   NativeQuranLiveMatcher,
   NativeRecitationController,
   type NativeRecitationMatch,
+  type NativeRecitationMistake,
   type NativeRecitationState,
   type NativeRecitationSummary,
 } from "../../lib/recitation/native-recitation";
@@ -75,6 +76,14 @@ export default function NativeRecitationScreen() {
   const [match, setMatch] = useState<NativeRecitationMatch | null>(null);
   const [endedDuration, setEndedDuration] = useState<number | null>(null);
   const [summary, setSummary] = useState<NativeRecitationSummary | null>(null);
+  const [mistakes, setMistakes] = useState<NativeRecitationMistake[]>([]);
+  /** Ends the local count and keeps the words the reader was stopped on for the summary. */
+  const finishLocal = useCallback(() => {
+    const finished = matcherRef.current?.finish() ?? null;
+    setSummary(finished);
+    setMistakes(matcherRef.current?.mistakes() ?? []);
+    return finished;
+  }, []);
   const [soundsEnabled, setSoundsEnabled] = useState(true);
   const [hideMode, setHideMode] = useState<MushafHideMode>("progressive_reveal");
   // Educational session: the teacher's assignment fixes the range and display mode.
@@ -202,7 +211,7 @@ export default function NativeRecitationScreen() {
     if (state === "error") {
       // endSession reports its own outcome and must not race an automatic cancel.
       if (finishingRef.current) return;
-      setSummary(matcherRef.current?.finish() ?? null);
+      finishLocal();
       setPhase("error");
       setErrorText("انقطع الاتصال أو تعذر استخدام الميكروفون. لم تُسجّل نتيجة أو إكمال.");
       if (controllerStartingRef.current) return;
@@ -238,6 +247,7 @@ export default function NativeRecitationScreen() {
     setMatch(null);
     setEndedDuration(null);
     setSummary(null);
+    setMistakes([]);
     matcherRef.current = null;
     setPhase("preparing");
     let sessionId: string | null = null;
@@ -378,8 +388,7 @@ export default function NativeRecitationScreen() {
       if (drained && result.completionState === "user_ended" && mountedRef.current) await controller?.completeSuccessfully();
       if (mountedRef.current) {
         setEndedDuration(result.durationSeconds);
-        const finished = matcherRef.current?.finish() ?? null;
-        setSummary(finished);
+        const finished = finishLocal();
         setPhase(result.completionState === "user_ended" ? "user-ended" : "error");
         if (assignment && finished && result.completionState === "user_ended") {
           pendingSubmitRef.current = {
@@ -618,7 +627,7 @@ export default function NativeRecitationScreen() {
         <Card style={styles.finishedCard}>
           <Badge label="انتهت الجلسة" tone="success" style={styles.badgeEnd} />
           <Text style={[styles.cardTitle, { color: colors.text }]}>ملخص الجلسة</Text>
-          <SessionSummary summary={summary} durationSeconds={endedDuration ?? 0} colors={colors} />
+          <SessionSummary summary={summary} mistakes={mistakes} durationSeconds={endedDuration ?? 0} colors={colors} />
           {assignment ? (
             <>
               <Text style={[styles.bodyText, { color: submitState === "failed" ? colors.danger : colors.text }]}>
@@ -657,7 +666,7 @@ export default function NativeRecitationScreen() {
           {summary && summary.wordsRecited > 0 ? (
             <>
               <Text style={[styles.cardTitle, { color: colors.text }]}>ما سُمع قبل التوقف</Text>
-              <SessionSummary summary={summary} colors={colors} />
+              <SessionSummary summary={summary} mistakes={mistakes} colors={colors} />
             </>
           ) : null}
           {sessionIdRef.current ? (
@@ -680,6 +689,7 @@ export default function NativeRecitationScreen() {
     setMatch(null);
     setEndedDuration(null);
     setSummary(null);
+    setMistakes([]);
     matcherRef.current = null;
   }
 }
@@ -780,10 +790,12 @@ function AssignmentList({
 /** Local session summary computed on the device by the shared state engine. */
 function SessionSummary({
   summary,
+  mistakes,
   durationSeconds,
   colors,
 }: {
   summary: NativeRecitationSummary | null;
+  mistakes: NativeRecitationMistake[];
   durationSeconds?: number;
   colors: ReturnType<typeof useTheme>["colors"];
 }) {
@@ -804,6 +816,38 @@ function SessionSummary({
           <Text style={[styles.summaryValue, { color: row.color }]}>{row.value}</Text>
         </View>
       ))}
+      {mistakes.length ? <MistakeList mistakes={mistakes} colors={colors} /> : null}
+    </View>
+  );
+}
+
+const OUTCOME: Record<NativeRecitationMistake["outcome"], string> = {
+  corrected: "صحّحتها",
+  hinted: "بالتلميح",
+  uncorrected: "لم تُصحَّح",
+};
+
+/** The words the reader was stopped on: the Mushaf word, where it is, what was said instead, and how it ended. */
+function MistakeList({ mistakes, colors }: { mistakes: NativeRecitationMistake[]; colors: ReturnType<typeof useTheme>["colors"] }) {
+  const tone = (outcome: NativeRecitationMistake["outcome"]) =>
+    outcome === "corrected" ? colors.success : outcome === "hinted" ? MUSHAF_COLORS.peeked : colors.danger;
+  return (
+    <View style={styles.mistakes}>
+      <Text style={[styles.mistakesTitle, { color: colors.text }]}>الكلمات الخطأ</Text>
+      {mistakes.map((mistake) => {
+        const [surah, ayah] = mistake.verseKey.split(":").map(Number);
+        return (
+          <View key={mistake.key} style={[styles.mistakeRow, { borderColor: colors.border, backgroundColor: colors.input }]}>
+            <View style={styles.mistakeHead}>
+              <Text style={[styles.mistakeWord, { color: tone(mistake.outcome) }]}>{mistake.text}</Text>
+              <Text style={[styles.mistakeOutcome, { color: tone(mistake.outcome), borderColor: tone(mistake.outcome) }]}>{OUTCOME[mistake.outcome]}</Text>
+            </View>
+            <Text style={[styles.mistakeDetail, { color: colors.muted }]}>
+              {`سورة ${SURAHS[surah - 1]?.name ?? surah} · الآية ${ayah} · ${mistake.heard ? `قلت: «${mistake.heard}»` : "لم تُقرأ"}`}
+            </Text>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -831,6 +875,13 @@ const styles = StyleSheet.create({
   historyLinkText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 12, lineHeight: 18 },
   assignmentTitle: { flex: 1, fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, lineHeight: 22, textAlign: "right" },
   summaryList: { gap: 2 },
+  mistakes: { gap: 8, marginTop: 14 },
+  mistakesTitle: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, lineHeight: 22, textAlign: "right" },
+  mistakeRow: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, gap: 2 },
+  mistakeHead: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  mistakeWord: { fontFamily: "Amiri_700Bold", fontSize: 20, lineHeight: 34, textAlign: "right" },
+  mistakeOutcome: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 11, lineHeight: 18, borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, overflow: "hidden" },
+  mistakeDetail: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 20, textAlign: "right" },
   summaryRow: { minHeight: 36, flexDirection: "row-reverse", alignItems: "center", gap: 12, borderBottomWidth: StyleSheet.hairlineWidth },
   summaryLabel: { flex: 1, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 13, lineHeight: 22, textAlign: "right" },
   summaryValue: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 14, lineHeight: 22, textAlign: "left" },

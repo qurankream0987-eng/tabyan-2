@@ -1,15 +1,18 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { searchQuran } from "@workspace/tabyan-domain/quran-search";
 import { useFocusEffect, useRouter } from "expo-router";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SURAHS, type SurahMeta } from "@workspace/tabyan-domain/quran-surahs";
 import { normalizeDigits } from "@workspace/tabyan-domain/input-normalization";
 import { EmptyState, PageHero, Screen, SoftPressable, SvgIcon, cardBorder, type SvgIconName } from "../../../components/ui";
 import { JUZ_LIST, type JuzMeta, surahStartingBy } from "../../../lib/mushaf/juz";
+import { loadSearchIndex } from "../../../lib/mushaf/mushaf-assets";
 import { mushafStorage } from "../../../lib/storage";
 import { palette, useTheme } from "../../../lib/theme";
 
 type Tab = "surahs" | "juz" | "bookmarks";
-type Row = { key: string; n: number; title: string; detail: string; page: number };
+type Row = { key: string; n: number; title: string; detail: string; page: number; verse?: string; heading?: boolean };
 const TABS: [Tab, string][] = [["surahs", "السور"], ["juz", "الأجزاء"], ["bookmarks", "العلامات"]];
 const FEATURES: { icon: SvgIconName; label: string; href: string | null }[] = [
   { icon: "quran", label: "القرآن الكريم", href: null },
@@ -39,8 +42,28 @@ export default function MushafTab() {
   }, []));
 
   // navigate reuses the reader already on the stack instead of stacking a new one per tap.
-  const openPage = (page: number) => router.navigate(`/student/mushaf?page=${page}` as never);
+  const openPage = (page: number, verse?: string) => router.navigate(`/student/mushaf?page=${page}${verse ? `&verse=${verse}` : ""}` as never);
   const removeBookmark = async (page: number) => setBookmarks(await mushafStorage.toggleBookmark(page));
+
+  // Words of an ayah, not a surah name or number: searched in the text of the Quran too.
+  const ayahQuery = useDeferredValue(normalizeDigits(search).trim());
+  const searchesText = tab === "surahs" && ayahQuery.length >= 2 && !/^\d+$/.test(ayahQuery);
+  const searchIndex = useQuery({ queryKey: ["quran-search-index"], queryFn: loadSearchIndex, enabled: searchesText, staleTime: Infinity, retry: 1 });
+  const ayahRows = useMemo<Row[]>(() => {
+    if (!searchesText || !searchIndex.data) return [];
+    const text = new Map(searchIndex.data.rows.map((row) => [row[0], row[2]]));
+    return searchQuran(searchIndex.data, ayahQuery, { limit: 40, openLast: true }).map((result) => {
+      const [surah, ayah] = result.verseKey.split(":").map(Number);
+      return {
+        key: `a${result.verseKey}:${result.startPosition}`,
+        n: ayah,
+        title: text.get(result.verseKey) ?? result.verseKey,
+        detail: `سورة ${SURAHS[surah - 1]?.name ?? surah} · الآية ${ayah} · صفحة ${result.page}`,
+        page: result.page,
+        verse: result.verseKey,
+      };
+    });
+  }, [ayahQuery, searchIndex.data, searchesText]);
 
   const rows = useMemo<Row[]>(() => {
     if (tab === "juz") return JUZ_LIST.map((juz: JuzMeta) => ({ key: `j${juz.n}`, n: juz.n, title: juz.name, detail: `صفحة ${juz.startPage}`, page: juz.startPage }));
@@ -48,8 +71,10 @@ export default function MushafTab() {
     const query = normalizeDigits(search).trim();
     const number = Number(query);
     const matches = (surah: SurahMeta) => !query || surah.name.includes(query) || surah.name.replace(/^ال/, "").includes(query.replace(/^ال/, "")) || (Number.isInteger(number) && surah.n === number);
-    return SURAHS.filter(matches).map((surah) => ({ key: `s${surah.n}`, n: surah.n, title: surah.name, detail: `${surah.ayahs} آية · صفحة ${surah.startPage} · الجزء ${surah.juz}`, page: surah.startPage }));
-  }, [tab, search, bookmarks]);
+    const surahs = SURAHS.filter(matches).map((surah) => ({ key: `s${surah.n}`, n: surah.n, title: surah.name, detail: `${surah.ayahs} آية · صفحة ${surah.startPage} · الجزء ${surah.juz}`, page: surah.startPage }));
+    if (!ayahRows.length) return surahs;
+    return [...surahs, { key: "ayat", n: 0, title: `في نص الآيات (${ayahRows.length})`, detail: "", page: 0, heading: true }, ...ayahRows];
+  }, [tab, search, bookmarks, ayahRows]);
 
   const header = (
     <View>
@@ -104,7 +129,7 @@ export default function MushafTab() {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="ابحث عن سورة بالاسم أو الرقم…"
+            placeholder="ابحث عن سورة أو بكلمات من الآية…"
             placeholderTextColor={colors.muted}
             returnKeyType="search"
             style={[styles.searchInput, { color: colors.text }]}
@@ -119,7 +144,9 @@ export default function MushafTab() {
 
   const empty = tab === "bookmarks"
     ? <EmptyState title="لا علامات بعد" description="أضف علامة من داخل القارئ لتظهر هنا" />
-    : <EmptyState title="لا توجد نتائج" description="جرّب اسمًا آخر للسورة أو رقمها" />;
+    : searchesText && searchIndex.isLoading
+      ? <EmptyState title="جارٍ البحث في الآيات…" description="يُحمَّل فهرس البحث مرة واحدة" />
+      : <EmptyState title="لا توجد نتائج" description="جرّب اسم سورة أو رقمها أو كلمات من الآية" />;
 
   // Screen (scroll off) gives the tab header and glow; the list scrolls itself.
   return (
@@ -137,7 +164,22 @@ export default function MushafTab() {
         windowSize={7}
         // Clears the floating tab bar, like Screen's tab padding.
         contentContainerStyle={[styles.content, { paddingBottom: 120 }]}
-        renderItem={({ item }) => (
+        renderItem={({ item }) => item.heading ? (
+          <Text style={[styles.sectionHeading, { color: colors.muted }]}>{item.title}</Text>
+        ) : item.verse ? (
+          <View style={styles.rowWrap}>
+            <SoftPressable accessibilityRole="button" accessibilityLabel={`${item.detail}: ${item.title}`} onPress={() => openPage(item.page, item.verse)} style={styles.row}>
+              <View style={[styles.rowNumber, { backgroundColor: isDark ? `${palette.gold}1A` : `${palette.burgundy}14` }]}>
+                <Text style={[styles.rowNumberText, { color: accent }]}>{item.n}</Text>
+              </View>
+              <View style={styles.rowBody}>
+                <Text numberOfLines={2} style={[styles.ayahText, { color: colors.text }]}>{item.title}</Text>
+                <Text numberOfLines={1} style={[styles.rowDetail, { color: colors.muted }]}>{item.detail}</Text>
+              </View>
+              <SvgIcon name="arrow-left" size={14} color={colors.muted} />
+            </SoftPressable>
+          </View>
+        ) : (
           <View style={styles.rowWrap}>
             <SoftPressable accessibilityRole="button" accessibilityLabel={`${item.title}، ${item.detail}`} onPress={() => openPage(item.page)} style={[styles.row, tab === "bookmarks" ? [styles.bookmarkRow, { backgroundColor: colors.card, borderColor: cardBorder(isDark) }] : null]}>
               <View style={[styles.rowNumber, { backgroundColor: tab === "bookmarks" ? `${palette.gold}26` : isDark ? `${palette.gold}1A` : `${palette.burgundy}14` }]}>
@@ -188,6 +230,8 @@ const styles = StyleSheet.create({
   rowNumberText: { fontFamily: "IBMPlexSansArabic_600SemiBold", fontSize: 15 },
   rowBody: { flex: 1, minWidth: 0 },
   rowTitle: { fontFamily: "Amiri_700Bold", fontSize: 19, lineHeight: 28, textAlign: "right" },
+  ayahText: { fontFamily: "Amiri_400Regular", fontSize: 17, lineHeight: 30, textAlign: "right" },
+  sectionHeading: { fontFamily: "IBMPlexSansArabic_700Bold", fontSize: 13, textAlign: "right", marginTop: 14, marginBottom: 4, paddingHorizontal: 10 },
   rowDetail: { fontFamily: "IBMPlexSansArabic_400Regular", fontSize: 12, lineHeight: 18, textAlign: "right" },
   remove: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
 });
