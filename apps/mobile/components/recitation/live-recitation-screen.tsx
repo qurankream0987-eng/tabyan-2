@@ -118,7 +118,7 @@ export function LiveRecitationScreen({
             <Text style={styles.clock}>{live ? formatDuration(elapsed) : ""}</Text>
           </View>
           <Text style={[styles.statusText, stopped && live ? { color: MUSHAF_COLORS.mistake } : null]} numberOfLines={1}>
-            {stopped && live ? "توقّف: صحّح الكلمة الحمراء" : status}
+            {stopped && live ? "صحّح الكلمة الحمراء" : status}
           </Text>
         </View>
         <BarButton label={listening || !live ? "إيقاف" : "استئناف"} icon={listening || !live ? "pause" : "play"} onPress={listening ? onPause : onResume} disabled={!live || (listening ? pauseBusy : resumeBusy)} />
