@@ -41,6 +41,8 @@ import {
 } from "../../media/placementPlaybackHttp";
 import { FfprobeUnavailableError, probeVideoFileDetails, validateMp4Structure, validateWebmStructure } from "../../media/videoStructure";
 import { isSupportedVideoUpload } from "../../media/videoUploadPolicy";
+import { scheduleVideoNormalization } from "../../media/videoNormalization";
+import { logger } from "../../lib/logger";
 
 const router: IRouter = Router();
 type DirectDiagnosticSession = {
@@ -469,6 +471,20 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
  * (stub نصي، MP4 بلا ftyp/moov أو بصندوق يتجاوز حجم الملف، WebM بلا
  * Segment/Cluster) دون حد أدنى للحجم ودون إعادة ترميز.
  */
+function normalizeUploadedVideo(objectPath: string) {
+  scheduleVideoNormalization(objectPath, {
+    download: async (path) => {
+      const response = await objectStorageService.downloadObject(objectStorageService.objectEntityFileHandle(path), 0);
+      return { body: response.body as never };
+    },
+    replace: async (path, filePath, contentType) => {
+      const replaced = await objectStorageService.replaceObjectEntityContent(path, filePath, contentType);
+      servableObjectCache.delete(path);
+      return replaced;
+    },
+  }, logger);
+}
+
 async function hasValidVideoStructure(
   objectFile: Awaited<ReturnType<ObjectStorageService["getObjectEntityFile"]>>,
 ): Promise<{ valid: boolean; durationSeconds: number | null } | null> {
@@ -681,6 +697,8 @@ router.post("/storage/uploads/finalize", async (req: Request, res: Response) => 
         videoProof,
       } : {}),
     });
+    // After the reply: an HEVC, WebM or heavy upload is converted to play everywhere.
+    if (videoPurpose) normalizeUploadedVideo(normalized);
   } catch (error) {
     req.log.error({ err: error }, "Error finalizing upload ACL");
     res.status(500).json({ error: "تعذر تأكيد اكتمال الرفع" });

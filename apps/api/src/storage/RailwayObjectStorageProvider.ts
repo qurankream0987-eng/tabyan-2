@@ -9,7 +9,11 @@ import {
   type HeadObjectCommandOutput,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { createHash } from "node:crypto";
+import { createReadStream } from "node:fs";
+import { stat } from "node:fs/promises";
 import { PassThrough, Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import type {
   ObjectStorageCustomMetadata,
   ObjectStorageInventoryEntry,
@@ -179,6 +183,35 @@ export class RailwayObjectStorageProvider implements ObjectStorageProvider {
       });
 
     return output;
+  }
+
+  async replaceObjectContent(
+    object: ObjectStorageObjectRef,
+    filePath: string,
+    contentType: string,
+    backupPrefix: string,
+  ): Promise<void> {
+    const { key } = this.fileFor(object);
+    const bucket = this.config.bucket;
+    const current = await this.client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+    await this.client.send(new CopyObjectCommand({
+      Bucket: bucket,
+      Key: `${backupPrefix.replace(/^\/+|\/+$/g, "")}/${key}`,
+      CopySource: `${encodeURIComponent(bucket)}/${encodeCopyKey(key)}`,
+      MetadataDirective: "COPY",
+    }));
+    const hash = createHash("md5");
+    await pipeline(createReadStream(filePath), hash);
+    const { size } = await stat(filePath);
+    await this.client.send(new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: createReadStream(filePath),
+      ContentLength: size,
+      ContentType: contentType,
+      Metadata: { ...current.Metadata, [MD5_METADATA_KEY]: hash.digest("base64") },
+      ...(current.CacheControl ? { CacheControl: current.CacheControl } : {}),
+    }));
   }
 
   async updateObjectMetadata(

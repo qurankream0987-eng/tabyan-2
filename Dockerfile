@@ -2,6 +2,12 @@
 # (/) and the staff preview (/tabyan-staff-preview/) on the same origin.
 FROM node:24.20.0-bookworm-slim
 
+# ffmpeg converts uploaded videos that do not play everywhere (iPhone HEVC, WebM,
+# heavy 1080p) to H.264/AAC 720p; see apps/api/src/media/videoNormalization.ts.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ffmpeg \
+ && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 ENV CI=true \
     ONNXRUNTIME_NODE_INSTALL=skip

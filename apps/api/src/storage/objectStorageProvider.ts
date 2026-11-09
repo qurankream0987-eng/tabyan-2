@@ -58,4 +58,14 @@ export interface ObjectStorageProvider {
   deleteObject(object: ObjectStorageObjectRef): Promise<void>;
   findPublicObject(filePath: string): Promise<ObjectStorageObjectRef | null>;
   listPrivateObjects(prefix: string): Promise<ObjectStorageInventoryEntry[]>;
+  /**
+   * Replaces an object's bytes with a local file, keeping its metadata (owner, ACL). The
+   * previous bytes are copied under `backupPrefix` first. Optional: not every host has it.
+   */
+  replaceObjectContent?(
+    object: ObjectStorageObjectRef,
+    filePath: string,
+    contentType: string,
+    backupPrefix: string,
+  ): Promise<void>;
 }

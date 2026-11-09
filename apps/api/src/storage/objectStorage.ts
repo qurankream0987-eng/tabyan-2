@@ -152,6 +152,17 @@ export class ObjectStorageService {
     return (await this.getObjectEntityWithMetadata(objectPath)).metadata;
   }
 
+  /**
+   * Puts a local file in place of a private object's bytes, keeping its owner and ACL; the
+   * old bytes are kept under `backups/`. False when the storage host cannot do it.
+   */
+  async replaceObjectEntityContent(objectPath: string, filePath: string, contentType: string): Promise<boolean> {
+    if (!this.provider.replaceObjectContent) return false;
+    const file = await this.getObjectEntityFile(objectPath);
+    await this.provider.replaceObjectContent(file, filePath, contentType, "backups/original-videos");
+    return true;
+  }
+
   async getObjectEntityFile(
     objectPath: string,
   ): Promise<ObjectStorageObjectRef> {
