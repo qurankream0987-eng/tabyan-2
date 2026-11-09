@@ -14,7 +14,10 @@ export default function StudentLayout() {
   if (!guestReadable && (!token || role !== "student")) return <Redirect href="/(auth)/login" />;
   return (
     <View style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false, animation: "slide_from_left" }} />
+      <Stack screenOptions={{ headerShown: false, animation: "slide_from_left" }}>
+        {/* Reciting from anywhere opens as a popup over the screen the reader was on. */}
+        <Stack.Screen name="recitation" options={{ presentation: "transparentModal", animation: "fade" }} />
+      </Stack>
       {/* Reciting is one tap away on every student screen. */}
       {token && role === "student" ? <ReciteAnywhereButton /> : null}
     </View>

@@ -24,6 +24,7 @@ import { MUSHAF_COLORS, type MushafHideMode } from "../../components/mushaf/mush
 import { trpc } from "../../lib/trpc";
 import { StudentScreen } from "../../components/student/student-screen";
 import { LiveRecitationScreen } from "../../components/recitation/live-recitation-screen";
+import { RecitationLocatePopup } from "../../components/recitation/locate-popup";
 
 type AssignmentRow = inferRouterOutputs<AppRouter>["recitationAssignments"]["mine"][number];
 type SubmitState = "idle" | "sending" | "sent" | "failed";
@@ -112,6 +113,9 @@ export default function NativeRecitationScreen() {
   /** Matchers of places the reader moved away from, kept for the summary. */
   const doneMatchersRef = useRef<NativeQuranLiveMatcher[]>([]);
   const [located, setLocated] = useState<RecitationLocation | null>(null);
+  /** While the place is looked for: the words heard, and the places they fit when several. */
+  const [heard, setHeard] = useState("");
+  const [candidates, setCandidates] = useState<RecitationLocation[]>([]);
   const searchIndex = useQuery({ queryKey: ["quran-search-index"], queryFn: loadSearchIndex, enabled: anywhereMode, staleTime: Infinity, retry: 1 });
   const sessionIdRef = useRef<string | null>(null);
   const finishingRef = useRef(false);
@@ -297,6 +301,8 @@ export default function NativeRecitationScreen() {
     anywhereRef.current = null;
     doneMatchersRef.current = [];
     setLocated(null);
+    setHeard("");
+    setCandidates([]);
     setPhase("preparing");
     let sessionId: string | null = null;
     try {
@@ -333,6 +339,9 @@ export default function NativeRecitationScreen() {
           setSurahInput(String(location.surah));
           setStartAyahInput(String(location.ayah));
           setEndAyahInput(String(SURAHS[location.surah - 1]?.ayahs ?? location.ayah));
+        }, {
+          onHeard: (text) => { if (mountedRef.current) setHeard(text); },
+          onCandidates: (places) => { if (mountedRef.current) setCandidates(places); },
         });
         anywhereRef.current = anywhere;
         matcher = anywhere;
@@ -551,6 +560,24 @@ export default function NativeRecitationScreen() {
     && rangeHasCoverage
     && canonicalWords.length > 0
     && phase === "setup";
+  // Anywhere, until the place is open: a popup over the screen the reader came from.
+  const locating = anywhereMode && !following && (phase === "setup" ? !errorText : phase === "preparing" || phase === "listening" || phase === "paused" || phase === "ending");
+  if (locating) {
+    const ayahTexts = searchIndex.data?.rows;
+    return (
+      <RecitationLocatePopup
+        preparing={phase !== "listening"}
+        opening={located}
+        heard={heard}
+        candidates={candidates}
+        ayahText={(verseKey) => ayahTexts?.find((row) => row[0] === verseKey)?.[2] ?? ""}
+        onChoose={(place) => anywhereRef.current?.choose(place)}
+        // Closing the popup ends the session unrecorded and returns to the screen underneath.
+        onCancel={() => { void (sessionIdRef.current ? cancelSession() : Promise.resolve()).finally(() => router.back()); }}
+      />
+    );
+  }
+
   // Anywhere: the session starts on its own, so the setup card is never shown first.
   const autoStarting = autoStart && !autoStartedRef.current && phase === "setup" && !errorText
     && status.data?.liveTrackingEnabled !== false && !wordsQuery.error;

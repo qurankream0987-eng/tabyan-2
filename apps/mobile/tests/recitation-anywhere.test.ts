@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { buildSearchIndex, type SearchRow } from "@workspace/tabyan-domain/quran-search";
 import { NativeQuranLiveMatcher, type CanonicalQuranWord } from "../lib/recitation/native-recitation-matcher";
 import { normalizeQuranText } from "../lib/recitation/quran-normalizer";
-import { AnywhereRecitationMatcher, locateRecitation, type RecitationLocation } from "../lib/recitation/recitation-anywhere";
+import { AnywhereRecitationMatcher, findRecitationPlace, locateRecitation, type RecitationLocation } from "../lib/recitation/recitation-anywhere";
 
 const WORDS = join(__dirname, "../../web/public/mushaf/v1/quran-words");
 const index = buildSearchIndex((JSON.parse(readFileSync(join(WORDS, "search-index.json"), "utf8")) as { rows: SearchRow[] }).rows);
@@ -49,6 +49,41 @@ describe("reciting from anywhere", () => {
     expect(next.reading).toMatchObject({ verseKey: "72:1", position: 13 });
     expect(next.wordFeedback.size).toBeGreaterThan(0);
     expect([...next.wordFeedback.values()].every((feedback) => feedback === "correct")).toBe(true);
+  });
+
+  it("words read alike in several places are offered to choose from once the reader pauses", () => {
+    const search = findRecitationPlace(index, "الحمد لله رب العالمين", false);
+    expect(search?.kind).toBe("several");
+    const keys = search?.kind === "several" ? search.candidates.map((c) => c.verseKey) : [];
+    expect(keys).toContain("1:2");
+    expect(keys.length).toBeGreaterThan(1);
+    expect(keys.length).toBeLessThanOrEqual(6);
+
+    const located: RecitationLocation[] = [];
+    const offered: RecitationLocation[][] = [];
+    const heard: string[] = [];
+    const anywhere = new AnywhereRecitationMatcher(index, (location) => located.push(location), {
+      onCandidates: (candidates) => offered.push(candidates),
+      onHeard: (text) => heard.push(text),
+    });
+    // Still reading: nothing offered yet.
+    anywhere.feed("الحمد لله رب العالمين", "a", false);
+    expect(offered).toEqual([]);
+    expect(heard.at(-1)).toBe("الحمد لله رب العالمين");
+    // A pause on words said in several places offers them.
+    anywhere.feed("الحمد لله رب العالمين", "a", true);
+    expect(offered.at(-1)?.map((c) => c.verseKey)).toContain("1:2");
+    // Choosing one goes there, and the offer is withdrawn.
+    anywhere.choose(offered.at(-1)!.find((c) => c.verseKey === "1:2")!);
+    expect(located.map((l) => l.verseKey)).toEqual(["1:2"]);
+    expect(offered.at(-1)).toEqual([]);
+
+    // Reading on instead tells the places apart without a choice.
+    const other: RecitationLocation[] = [];
+    const reading = new AnywhereRecitationMatcher(index, (location) => other.push(location));
+    reading.feed("الحمد لله رب العالمين", "a", true);
+    reading.feed("الرحمن الرحيم مالك يوم الدين", "b", true);
+    expect(other.map((l) => l.verseKey)).toEqual(["1:2"]);
   });
 
   it("reading somewhere else for a while moves the reader there", () => {

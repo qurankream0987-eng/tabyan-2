@@ -18,22 +18,60 @@ const MIN_SCORE = 0.8;
 /** The best place must beat the next one by this much, or the words are said in several places. */
 const LEAD = 0.1;
 
+/** Places offered to choose from when the words are said in several. */
+const MAX_CANDIDATES = 6;
+
+export type PlaceSearch =
+  | { kind: "found"; location: RecitationLocation }
+  /** The words are read alike in these places (best first). */
+  | { kind: "several"; candidates: RecitationLocation[] };
+
 /**
- * The one place in the Quran these heard words are read from, or null while they fit several
- * places (or none). The longest run of recent words that points to one place wins.
+ * Where in the Quran these heard words are read: one place, several alike, or null (too few
+ * words, or not recitation). The longest run of recent words that points somewhere wins.
  */
-export function locateRecitation(index: QuranSearchIndex, heard: string, open: boolean): RecitationLocation | null {
-  const tokens = withoutOpenings(queryTokens(heard));
-  for (let count = Math.min(tokens.length, MAX_WORDS); count >= MIN_WORDS; count -= 1) {
-    const query = tokens.slice(-count).join(" ");
-    const results = searchQuran(index, query, { limit: 3, openLast: open, minScore: MIN_SCORE - LEAD });
+export function findRecitationPlace(index: QuranSearchIndex, heard: string, open: boolean): PlaceSearch | null {
+  const tokens = withoutOpenings(heardTokens(heard));
+  // From the first word heard (where the reader began), then from the latest ones (words before
+  // them may be talk or noise). Longer runs first: they tell places apart.
+  const windows: string[][] = [];
+  for (let count = Math.min(tokens.length, MAX_WORDS); count >= MIN_WORDS; count -= 1) windows.push(tokens.slice(0, count));
+  for (let count = Math.min(tokens.length, MAX_WORDS); count >= MIN_WORDS; count -= 1) if (count < tokens.length) windows.push(tokens.slice(-count));
+  for (const window of windows) {
+    const query = window.join(" ");
+    const results = searchQuran(index, query, { limit: 12, openLast: open, minScore: MIN_SCORE - LEAD });
     const [best, next] = results;
     if (!best || best.score < MIN_SCORE) continue;
-    if (next && next.score > best.score - LEAD) return null;
-    const [surah, ayah] = best.verseKey.split(":").map(Number);
-    return { verseKey: best.verseKey, surah, ayah, position: best.startPosition, page: best.page };
+    if (!next || next.score <= best.score - LEAD) return { kind: "found", location: place(best) };
+    const seen = new Set<string>();
+    const candidates = results
+      .filter((result) => result.score > best.score - LEAD && !seen.has(result.verseKey) && seen.add(result.verseKey))
+      .slice(0, MAX_CANDIDATES)
+      .map(place);
+    return { kind: "several", candidates };
   }
   return null;
+}
+
+/** The one place these heard words are read from, or null while they fit several (or none). */
+export function locateRecitation(index: QuranSearchIndex, heard: string, open: boolean): RecitationLocation | null {
+  const search = findRecitationPlace(index, heard, open);
+  return search?.kind === "found" ? search.location : null;
+}
+
+function place(result: { verseKey: string; startPosition: number; page: number }): RecitationLocation {
+  const [surah, ayah] = result.verseKey.split(":").map(Number);
+  return { verseKey: result.verseKey, surah, ayah, position: result.startPosition, page: result.page };
+}
+
+/** Heard words without the recognizer's stray letters («أ», «ا», a lone «ال») from breath and noise. */
+function heardTokens(text: string) {
+  return queryTokens(text).filter((token) => token.length >= 2 && token !== "ال");
+}
+
+/** The words heard, cleaned of stray letters, as shown while the place is looked for. */
+export function heardWords(text: string) {
+  return heardTokens(text).join(" ");
 }
 
 /**
@@ -84,7 +122,19 @@ export class AnywhereRecitationMatcher {
   constructor(
     private readonly index: QuranSearchIndex,
     private readonly onLocated: (location: RecitationLocation) => void,
+    private readonly events: {
+      /** The words heard while the place is looked for, to show them as they come. */
+      onHeard?: (text: string) => void;
+      /** The reader paused on words read alike in several places: offer them; [] withdraws them. */
+      onCandidates?: (candidates: RecitationLocation[]) => void;
+    } = {},
   ) {}
+
+  /** The reader picked one of the places offered. */
+  choose(location: RecitationLocation) {
+    if (this.matcher || this.pending) return;
+    this.found(location);
+  }
 
   /** Takes the matcher for the place last located (its start already set) and replays what led there. */
   attach(matcher: NativeQuranLiveMatcher): NativeRecitationMatch {
@@ -130,8 +180,11 @@ export class AnywhereRecitationMatcher {
     if (this.pending) return this.lastResult;
     // A partial may already name the place; its words reach the matcher once final.
     const heard = isFinal ? this.recent.join(" ") : [...this.recent, text].join(" ");
-    const location = locateRecitation(this.index, heard, !isFinal);
-    if (location) this.found(location);
+    this.events.onHeard?.(heardWords(heard));
+    const search = findRecitationPlace(this.index, heard, !isFinal);
+    if (search?.kind === "found") this.found(search.location);
+    // Only a pause offers a choice: words still coming may tell the places apart.
+    else if (search?.kind === "several" && isFinal) this.events.onCandidates?.(search.candidates);
     return this.lastResult;
   }
 
@@ -141,6 +194,7 @@ export class AnywhereRecitationMatcher {
     this.lastResult = emptyMatch();
     this.pending = true;
     this.lost = 0;
+    this.events.onCandidates?.([]);
     this.onLocated(location);
   }
 }
