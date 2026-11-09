@@ -357,7 +357,7 @@ function SurahBanner({ name, number, width, rowH }: { name: string; number?: num
       <SurahBannerArt width={width} height={bandH} />
       <View style={[styles.titleBox, box]}>
         {calligraphy ? (
-          <Text allowFontScaling={false} accessibilityLabel={`سورة ${name}`} style={[styles.surahGlyph, { fontSize: glyphSize, lineHeight: box.height, transform: [{ scaleX: SURAH_TITLE_STRETCH }] }]} numberOfLines={1}>
+          <Text allowFontScaling={false} accessibilityLabel={`سورة ${name}`} style={[styles.surahGlyph, { fontSize: glyphSize, lineHeight: box.height, ...(SURAH_TITLE_STRETCH !== 1 ? { transform: [{ scaleX: SURAH_TITLE_STRETCH }] } : {}) }]} numberOfLines={1}>
             {surahNameGlyph(number)}
           </Text>
         ) : (

@@ -96,7 +96,7 @@ export default function SurahHeaderFrame({ surahName, rowH, surahNumber, width =
       <SurahHeaderOrnament aspect={aspect} />
       <div className="tby-surah-cartouche">
         <div ref={bodyRef} className="tby-surah-cartouche-body">
-          <span ref={titleRef} className="tby-surah-title" aria-label={calligraphy ? `سورة ${surahName}` : undefined} style={{ fontFamily: calligraphy ? `"${SURAH_NAME_FONT_FAMILY}", serif` : undefined, fontSize: fit?.fontSize ?? maxTitle * 0.6, fontWeight: 400, lineHeight: 1, visibility: fit || failed ? "visible" : "hidden", top: fit?.dy ?? 0, left: fit?.dx ?? 0, maxWidth: "none", transform: calligraphy ? `scaleX(${SURAH_TITLE_STRETCH})` : undefined }}>
+          <span ref={titleRef} className="tby-surah-title" aria-label={calligraphy ? `سورة ${surahName}` : undefined} style={{ fontFamily: calligraphy ? `"${SURAH_NAME_FONT_FAMILY}", serif` : undefined, fontSize: fit?.fontSize ?? maxTitle * 0.6, fontWeight: 400, lineHeight: 1, visibility: fit || failed ? "visible" : "hidden", top: fit?.dy ?? 0, left: fit?.dx ?? 0, maxWidth: "none", transform: calligraphy && SURAH_TITLE_STRETCH !== 1 ? `scaleX(${SURAH_TITLE_STRETCH})` : undefined }}>
             {text}
           </span>
         </div>
