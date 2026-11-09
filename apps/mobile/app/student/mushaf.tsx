@@ -261,7 +261,7 @@ export default function MushafReaderScreen() {
               }}
               style={({ pressed }) => [styles.reciteFab, { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 }]}
             >
-              <Icon name="mic" size={22} color="#FFFFFF" />
+              <Icon name="mic" size={26} color="#FFFFFF" />
             </Pressable>
           ) : null}
         {selected ? (
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   },
   audioText: { flex: 1, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 12, textAlign: "right" },
   // In the page-number row, under the last line, so it never covers the text.
-  reciteFab: { alignSelf: "flex-start", width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", marginLeft: 16, marginBottom: 6, elevation: 4, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
+  reciteFab: { alignSelf: "flex-start", width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", marginLeft: 16, marginBottom: 2, elevation: 4, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
   toolbar: { flexDirection: "row-reverse", borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 6 },
   toolbarButton: { flex: 1, alignItems: "center", gap: 2, paddingVertical: 4 },
   toolbarLabel: { fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 11, lineHeight: 16, alignSelf: "stretch", textAlign: "center" },

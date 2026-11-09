@@ -65,7 +65,9 @@ export default function NativeRecitationScreen() {
   const router = useRouter();
   // Opened from the Mushaf toolbar: the page's first ayah, ten ayahs at most, with the range
   // open to change. Opened on a chosen ayah (toEnd): that ayah to the surah's end, no range to pick.
-  const params = useLocalSearchParams<{ surah?: string; ayah?: string; toEnd?: string; anywhere?: string; page?: string }>();
+  const params = useLocalSearchParams<{ surah?: string; ayah?: string; toEnd?: string; anywhere?: string; page?: string; autostart?: string }>();
+  // Opened from a surah's microphone in the Mushaf index: listening starts at once.
+  const autoStart = params.autostart === "1" || params.anywhere === "1";
   // Opened from the Mushaf's microphone: the reader starts anywhere, and the place is found by what is read.
   const anywhereMode = params.anywhere === "1";
   const anywherePage = Math.min(604, Math.max(1, Number(params.page) || 1));
@@ -216,11 +218,12 @@ export default function NativeRecitationScreen() {
     setMatch(result);
   }, [anywhereMode, located, following, canonicalWords]);
 
-  // The microphone in the Mushaf starts listening at once.
+  // A microphone in the Mushaf starts listening at once.
   const autoStartedRef = useRef(false);
   useEffect(() => {
-    if (!anywhereMode || autoStartedRef.current || phase !== "setup") return;
-    if (!status.data?.liveTrackingEnabled || !searchIndex.data || !token) return;
+    if (!autoStart || autoStartedRef.current || phase !== "setup") return;
+    if (!status.data?.liveTrackingEnabled || !token) return;
+    if (anywhereMode ? !searchIndex.data : !rangeHasCoverage) return;
     autoStartedRef.current = true;
     void beginSession();
   });
@@ -549,7 +552,8 @@ export default function NativeRecitationScreen() {
     && canonicalWords.length > 0
     && phase === "setup";
   // Anywhere: the session starts on its own, so the setup card is never shown first.
-  const autoStarting = anywhereMode && phase === "setup" && !errorText;
+  const autoStarting = autoStart && !autoStartedRef.current && phase === "setup" && !errorText
+    && status.data?.liveTrackingEnabled !== false && !wordsQuery.error;
   if (autoStarting || phase === "preparing" || phase === "listening" || phase === "paused" || phase === "ending") {
     // The live session takes the whole screen from the moment it is being set up until it has
     // ended; the setup and summary stay in the usual layout.

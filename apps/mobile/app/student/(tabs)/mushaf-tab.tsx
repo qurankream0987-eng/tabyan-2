@@ -144,15 +144,6 @@ export default function MushafTab() {
             <Pressable accessibilityLabel="مسح البحث" hitSlop={10} onPress={() => setSearch("")}><SvgIcon name="x" size={16} color={colors.muted} /></Pressable>
           ) : null}
         </View>
-        {/* Recite from anywhere, before opening a surah: the place is found from what is read. */}
-        <SoftPressable
-          accessibilityRole="button"
-          accessibilityLabel="سمّع من أي موضع"
-          onPress={() => router.push({ pathname: "/student/recitation", params: { anywhere: "1", page: String(lastPage ?? 1) } } as never)}
-          style={[styles.recite, { backgroundColor: isDark ? palette.gold : palette.burgundy }]}
-        >
-          <SvgIcon name="mic" size={20} color={isDark ? palette.night : "#FFFFFF"} />
-        </SoftPressable>
         </View>
       ) : null}
     </View>
@@ -211,6 +202,17 @@ export default function MushafTab() {
                 <Pressable accessibilityLabel={`إزالة العلامة من صفحة ${item.page}`} hitSlop={8} onPress={() => void removeBookmark(item.page)} style={styles.remove}>
                   <SvgIcon name="x" size={16} color={colors.muted} />
                 </Pressable>
+              ) : tab === "surahs" ? (
+                // Recite this surah from its first ayah, without opening it first.
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`سمّع سورة ${item.title}`}
+                  hitSlop={6}
+                  onPress={() => router.push({ pathname: "/student/recitation", params: { surah: String(item.n), ayah: "1", toEnd: "1", autostart: "1" } } as never)}
+                  style={({ pressed }) => [styles.recite, { backgroundColor: isDark ? `${palette.gold}26` : `${palette.burgundy}14`, opacity: pressed ? 0.7 : 1 }]}
+                >
+                  <SvgIcon name="mic" size={18} color={accent} />
+                </Pressable>
               ) : <SvgIcon name="arrow-left" size={14} color={colors.muted} />}
             </SoftPressable>
           </View>
@@ -239,7 +241,7 @@ const styles = StyleSheet.create({
   resumeTitle: { fontFamily: "Amiri_700Bold", fontSize: 18, lineHeight: 27, textAlign: "right" },
   searchRow: { flexDirection: "row-reverse", alignItems: "center", gap: 8, marginBottom: 8 },
   search: { flex: 1, flexDirection: "row-reverse", alignItems: "center", gap: 8, minHeight: 46, borderRadius: 14, borderWidth: 1, paddingHorizontal: 12 },
-  recite: { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  recite: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
   searchInput: { flex: 1, minHeight: 44, fontFamily: "IBMPlexSansArabic_500Medium", fontSize: 14, textAlign: "right", paddingVertical: 0 },
   rowWrap: { marginBottom: 2 },
   row: { flexDirection: "row-reverse", alignItems: "center", gap: 12, paddingHorizontal: 10, paddingVertical: 10, borderRadius: 16 },
