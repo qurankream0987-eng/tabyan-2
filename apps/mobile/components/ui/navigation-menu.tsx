@@ -14,7 +14,7 @@ type MenuItem = {
   label: string;
   icon: string;
   exact?: boolean;
-  section?: "main" | "secondary" | "access";
+  section?: "main" | "secondary";
 };
 
 function MenuIcon({ name, size, color }: { name: string; size: number; color: string }) {
@@ -37,8 +37,6 @@ export const MENUS: Record<Role, MenuItem[]> = {
     { href: "/student/notifications", label: "الإشعارات", icon: "bell", section: "secondary" },
     { href: "/support", label: "فريق دعم تبيان", icon: "help", section: "secondary" },
     { href: "/privacy", label: "سياسة الخصوصية", icon: "shield", section: "secondary" },
-    { href: "/teacher-register", label: "التسجيل كمعلم", icon: "clipboard", section: "access" },
-    { href: "/login?role=admin", label: "بوابة الإشراف", icon: "shield", section: "access" },
   ],
   teacher: [
     { href: "/teacher", label: "لوحة التحكم", icon: "home", exact: true, section: "main" },
@@ -49,7 +47,6 @@ export const MENUS: Record<Role, MenuItem[]> = {
     { href: "/teacher/evaluations", label: "تقييماتي", icon: "chart", section: "main" },
     { href: "/teacher/broadcast", label: "الإشعارات الجماعية", icon: "bell", section: "main" },
     { href: "/teacher/settings", label: "الإعدادات", icon: "settings", section: "main" },
-    { href: "/login?role=admin", label: "بوابة الإشراف", icon: "shield", section: "access" },
   ],
   admin: [
     { href: "/admin", label: "الرئيسية", icon: "home", exact: true },
