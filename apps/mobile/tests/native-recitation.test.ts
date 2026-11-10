@@ -132,7 +132,7 @@ function pcmBase64(samples: number[]) {
 function makeRig(
   permission: boolean | Promise<boolean> = true,
   createRecorder?: () => FakeRecorder,
-  timing: Pick<NativeRecitationRuntime, "keepaliveIntervalMs" | "gatewaySilenceTimeoutMs" | "conditionAudio"> = {},
+  timing: Pick<NativeRecitationRuntime, "keepaliveIntervalMs" | "gatewaySilenceTimeoutMs" | "conditionAudio" | "reconnectDelaysMs" | "maxReconnects" | "readyTimeoutMs"> = {},
 ) {
   const sockets: FakeSocket[] = [];
   const recorders: FakeRecorder[] = [];
@@ -477,8 +477,14 @@ test("pre-ready audio buffer is bounded and keeps the most recent audio", async 
   await rig.controller.dispose();
 });
 
-test("keepalive pings continue while paused, and a silent gateway fails the session", async () => {
-  const rig = makeRig(true, undefined, { keepaliveIntervalMs: 10, gatewaySilenceTimeoutMs: 45 });
+test("keepalive pings continue while paused, and a silent gateway reconnects then fails closed", async () => {
+  const rig = makeRig(true, undefined, {
+    keepaliveIntervalMs: 10,
+    gatewaySilenceTimeoutMs: 45,
+    reconnectDelaysMs: [15],
+    maxReconnects: 1,
+    readyTimeoutMs: 20,
+  });
   const socket = await openSession(rig);
   rig.controller.pause();
   await new Promise<void>((resolve) => setTimeout(resolve, 25));
@@ -487,20 +493,59 @@ test("keepalive pings continue while paused, and a silent gateway fails the sess
   socket.receive({ t: "pong" });
   await new Promise<void>((resolve) => setTimeout(resolve, 30));
   assert.equal(rig.states.at(-1), "paused");
-  await new Promise<void>((resolve) => setTimeout(resolve, 60));
+  await new Promise<void>((resolve) => setTimeout(resolve, 50));
+  assert.equal(rig.states.at(-1), "reconnecting");
+  assert.equal(rig.recorders[0]?.stopped, false);
+  await new Promise<void>((resolve) => setTimeout(resolve, 80));
   assert.equal(rig.states.at(-1), "error");
   assert.equal(rig.recorders[0]?.stopped, true);
 });
 
-test("WebSocket disconnect during recording stops capture and does not emit a fake match", async () => {
-  const rig = makeRig();
+test("WebSocket disconnect during recording keeps the microphone and resumes the same session", async () => {
+  const rig = makeRig(true, undefined, { reconnectDelaysMs: [10], maxReconnects: 2, conditionAudio: false });
   const socket = await openSession(rig);
 
   socket.disconnect();
 
-  assert.equal(rig.recorders[0]?.stopped, true);
+  assert.equal(rig.recorders[0]?.stopped, false);
   assert.equal(rig.matches.length, 0);
+  assert.equal(rig.states.at(-1), "reconnecting");
+  rig.recorders[0]?.callback?.({ buffer: monoBuffer([0.25]) });
+
+  await new Promise<void>((resolve) => setTimeout(resolve, 20));
+  const next = rig.sockets[1];
+  assert.ok(next);
+  next.open();
+  next.receive({ t: "authenticated" });
+  next.receive({ t: "ready", audioSampleRateHz: 24_000 });
+  await new Promise<void>((resolve) => setTimeout(resolve, 10));
+
+  assert.equal(rig.states.at(-1), "recording");
+  assert.equal(rig.recorders[0]?.stopped, false);
+  assert.equal(rig.recorders.length, 1);
+  const sent = next.sent.map((item) => JSON.parse(item));
+  assert.equal(sent.find((item) => item.t === "auth")?.sessionId, "session-1");
+  assert.equal(sent.some((item) => item.t === "audio"), true);
+  await rig.controller.dispose();
+});
+
+test("a provider stream error reconnects, and a refusal does not", async () => {
+  const rig = makeRig(true, undefined, { reconnectDelaysMs: [5], maxReconnects: 1, readyTimeoutMs: 15 });
+  const socket = await openSession(rig);
+  socket.receive({ t: "error", code: "PROVIDER_CLOSED", message: "انقطع اتصال خدمة التفريغ الحي" });
+  assert.equal(rig.states.at(-1), "reconnecting");
+  assert.equal(rig.recorders[0]?.stopped, false);
+
+  await new Promise<void>((resolve) => setTimeout(resolve, 40));
   assert.equal(rig.states.at(-1), "error");
+  assert.equal(rig.recorders[0]?.stopped, true);
+
+  const refused = makeRig(true, undefined, { reconnectDelaysMs: [5], maxReconnects: 2 });
+  const refusedSocket = await openSession(refused);
+  refusedSocket.receive({ t: "error", code: "UNAUTHORIZED", message: "رمز الجلسة غير صالح" });
+  assert.equal(refused.states.at(-1), "error");
+  assert.equal(refused.sockets.length, 1);
+  assert.equal(refused.recorders[0]?.stopped, true);
 });
 
 test("paused capture is stopped and the controller cannot silently reconnect", async () => {

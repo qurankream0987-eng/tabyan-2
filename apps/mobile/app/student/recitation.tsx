@@ -45,7 +45,7 @@ function assignmentRange(assignment: { surahId: number; startAyah: number; endAy
     : `سورة ${name} — الآيات ${assignment.startAyah}–${assignment.endAyah}`;
 }
 
-type ScreenPhase = "setup" | "preparing" | "listening" | "paused" | "ending" | "user-ended" | "cancelled" | "error";
+type ScreenPhase = "setup" | "preparing" | "listening" | "reconnecting" | "paused" | "ending" | "user-ended" | "cancelled" | "error";
 
 /** The last ayah of a surah on or before a Mushaf page. */
 function ayahsThroughPage(surah: number, page: number) {
@@ -288,13 +288,14 @@ export default function NativeRecitationScreen() {
     if (!mountedRef.current) return;
     if (state === "connecting") setPhase("preparing");
     if (state === "recording") setPhase("listening");
+    if (state === "reconnecting") setPhase("reconnecting");
     if (state === "paused") setPhase("paused");
     if (state === "error") {
       // endSession reports its own outcome and must not race an automatic cancel.
       if (finishingRef.current) return;
       finishLocal();
       setPhase("error");
-      setErrorText("انقطع الاتصال أو تعذر استخدام الميكروفون. لم تُسجّل نتيجة أو إكمال.");
+      setErrorText("انقطع اتصال التسميع. ما سُمع يبقى هنا، ولم تُسجَّل الجلسة كإكمال.");
       if (controllerStartingRef.current) return;
       const sessionId = sessionIdRef.current;
       if (sessionId) {
@@ -595,12 +596,13 @@ export default function NativeRecitationScreen() {
     && canonicalWords.length > 0
     && phase === "setup";
   // Anywhere, until the place is open: a popup over the screen the reader came from.
-  const locating = anywhereMode && !following && (phase === "setup" ? !errorText : phase === "preparing" || phase === "listening" || phase === "paused" || phase === "ending");
+  const locating = anywhereMode && !following && (phase === "setup" ? !errorText : phase === "preparing" || phase === "listening" || phase === "reconnecting" || phase === "paused" || phase === "ending");
   if (locating) {
     const ayahTexts = searchIndex.data?.rows;
     return (
       <RecitationLocatePopup
-        preparing={phase !== "listening"}
+        preparing={phase !== "listening" && phase !== "reconnecting"}
+        reconnecting={phase === "reconnecting"}
         opening={located}
         heard={heard}
         candidates={candidates}
@@ -615,12 +617,12 @@ export default function NativeRecitationScreen() {
   // Anywhere: the session starts on its own, so the setup card is never shown first.
   const autoStarting = autoStart && !autoStartedRef.current && phase === "setup" && !errorText
     && status.data?.liveTrackingEnabled !== false && !wordsQuery.error;
-  if (autoStarting || phase === "preparing" || phase === "listening" || phase === "paused" || phase === "ending") {
+  if (autoStarting || phase === "preparing" || phase === "listening" || phase === "reconnecting" || phase === "paused" || phase === "ending") {
     // The live session takes the whole screen from the moment it is being set up until it has
     // ended; the setup and summary stay in the usual layout.
     return (
       <LiveRecitationScreen
-        phase={phase === "listening" || phase === "paused" || phase === "ending" ? phase : "preparing"}
+        phase={phase === "listening" || phase === "reconnecting" || phase === "paused" || phase === "ending" ? phase : "preparing"}
         match={match}
         page={pageQuery.data}
         pageError={!!pageQuery.error}
@@ -798,18 +800,19 @@ export default function NativeRecitationScreen() {
               <SessionSummary summary={summary} mistakes={mistakes} colors={colors} />
             </>
           ) : null}
+          <Button label="جلسة جديدة" icon="refresh" onPress={() => resetScreen()} />
           {sessionIdRef.current ? (
             <Button label="إعادة محاولة إغلاق الجلسة" variant="secondary" icon="refresh" onPress={() => void retrySessionCleanup()} />
-          ) : (
-            <Button label="إعداد جلسة جديدة" variant="secondary" icon="refresh" onPress={() => resetScreen()} />
-          )}
+          ) : null}
         </Card>
       ) : null}
     </StudentScreen>
   );
 
   function resetScreen() {
-    if (sessionIdRef.current !== null) return;
+    const abandoned = sessionIdRef.current;
+    sessionIdRef.current = null;
+    if (abandoned) void cancelServerSession(abandoned).catch(() => undefined);
     setSubmitState("idle");
     pendingSubmitRef.current = null;
     finishingRef.current = false;
@@ -820,6 +823,15 @@ export default function NativeRecitationScreen() {
     setSummary(null);
     setMistakes([]);
     matcherRef.current = null;
+    anywhereRef.current = null;
+    setLocated(null);
+    setHeard("");
+    setCandidates([]);
+    const previous = controllerRef.current;
+    controllerRef.current = null;
+    if (previous) void previous.dispose();
+    // Anywhere starts itself once per visit; a new session from this screen has to be allowed to.
+    autoStartedRef.current = false;
   }
 }
 

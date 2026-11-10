@@ -87,6 +87,7 @@ export type NativeRecitationState =
   | "idle"
   | "connecting"
   | "recording"
+  | "reconnecting"
   | "paused"
   | "stopped"
   | "error";

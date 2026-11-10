@@ -15,7 +15,7 @@ const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
 const toArabicDigits = (value: number) => String(value).replace(/\d/g, (digit) => ARABIC_DIGITS[Number(digit)]);
 const PAGE_LINES = 15;
 
-export type LiveRecitationPhase = "preparing" | "listening" | "paused" | "ending";
+export type LiveRecitationPhase = "preparing" | "listening" | "reconnecting" | "paused" | "ending";
 
 /**
  * The live session is the Mushaf page itself, edge to edge and one page at a time: the
@@ -67,7 +67,8 @@ export function LiveRecitationScreen({
   const insets = useSafeAreaInsets();
   const [size, setSize] = useState({ width: 0, height: 0 });
   const listening = phase === "listening";
-  const live = phase === "listening" || phase === "paused";
+  const reconnecting = phase === "reconnecting";
+  const live = listening || phase === "paused" || reconnecting;
   const elapsed = useElapsedSeconds(listening);
   const counts = feedbackCounts(match);
   // Edge to edge on a phone; on a wide screen the paper stays no squatter than 1.3× the print.
@@ -88,6 +89,7 @@ export function LiveRecitationScreen({
   // A mistake on the page is where the reader is stopped: nothing counts until it is read right.
   const stopped = counts.mistakes > 0;
   const status = phase === "preparing" ? "تجهيز الميكروفون…"
+    : phase === "reconnecting" ? "انقطع الاتصال — جارٍ إعادة المحاولة…"
     : phase === "ending" ? "جارٍ إنهاء الجلسة…"
     : phase === "paused" ? "متوقف مؤقتاً"
     : prompt ?? "يستمع";
@@ -117,14 +119,14 @@ export function LiveRecitationScreen({
       <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 8) + 6 }]}>
         <View style={styles.statusBox}>
           <View style={styles.statusRow}>
-            {live ? <View style={[styles.liveDot, { backgroundColor: listening ? palette.maroon : MUSHAF_COLORS.muted }]} /> : <ActivityIndicator size="small" color={palette.maroon} />}
+            {live && !reconnecting ? <View style={[styles.liveDot, { backgroundColor: listening ? palette.maroon : MUSHAF_COLORS.muted }]} /> : <ActivityIndicator size="small" color={palette.maroon} />}
             <Text style={styles.clock}>{live ? formatDuration(elapsed) : ""}</Text>
           </View>
           <Text style={[styles.statusText, stopped && live ? { color: MUSHAF_COLORS.mistake } : null]} numberOfLines={1}>
             {stopped && live ? "صحّح الكلمة الحمراء" : status}
           </Text>
         </View>
-        <BarButton label={listening || !live ? "إيقاف" : "استئناف"} icon={listening || !live ? "pause" : "play"} onPress={listening ? onPause : onResume} disabled={!live || (listening ? pauseBusy : resumeBusy)} />
+        <BarButton label={listening || !live || reconnecting ? "إيقاف" : "استئناف"} icon={listening || !live || reconnecting ? "pause" : "play"} onPress={listening ? onPause : onResume} disabled={!live || reconnecting || (listening ? pauseBusy : resumeBusy)} />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="إنهاء الجلسة"

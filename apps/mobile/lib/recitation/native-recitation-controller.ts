@@ -54,6 +54,10 @@ export interface NativeRecitationRuntime {
   finalTimeoutMs?: number;
   keepaliveIntervalMs?: number;
   gatewaySilenceTimeoutMs?: number;
+  /** Delays before each automatic reconnect after a live socket drop. Empty disables it. */
+  reconnectDelaysMs?: readonly number[];
+  /** Reconnects per session, across drops. Defaults to 3. */
+  maxReconnects?: number;
   /** Band-limit and raise quiet microphone audio before streaming (default on). */
   conditionAudio?: boolean;
 }
@@ -65,6 +69,9 @@ export interface NativeMatcherLike {
 const SOCKET_OPEN = 1;
 /** Audio captured before the provider is ready is kept up to this long. */
 const MAX_PENDING_AUDIO_SECONDS = 10;
+/** Same recovery the web session uses: a broken stream can be opened again; auth and policy errors cannot. */
+const RETRYABLE_GATEWAY_ERRORS = new Set(["PROVIDER_STREAM_ERROR", "PROVIDER_CLOSED", "SESSION_IDLE"]);
+const DEFAULT_RECONNECT_DELAYS_MS = [800, 2_500];
 
 function resampleMono(channels: Float32Array[], sourceRate: number, targetRate: number) {
   const sourceLength = channels[0]?.length ?? 0;
@@ -146,6 +153,14 @@ export class NativeRecitationControllerCore {
   private eventIds = new Set<string>();
   private finalizedSuccessfully = false;
   private cancelled = false;
+  private credentials: { token: string; sessionId: string } | null = null;
+  /** The first stream succeeded, so a later drop is a transport blip rather than a failed start. */
+  private acceptReconnect = false;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Attempts used on the current drop. Reset when a reconnect reaches streaming again. */
+  private reconnectBurst = 0;
+  /** Attempts used across the whole session. */
+  private reconnectsUsed = 0;
   private readonly feedback = new NativeRecitationFeedback((cue) => this.runtime.playCue?.(cue));
 
   constructor(
@@ -168,6 +183,7 @@ export class NativeRecitationControllerCore {
     if (this.runtime.isWeb) throw new Error("Live recitation requires a Native device");
     if (!token || !sessionId) throw new Error("Session authorization is required");
     this.closed = false;
+    this.credentials = { token, sessionId };
     this.callbacks.onState?.("connecting");
 
     try {
@@ -175,32 +191,104 @@ export class NativeRecitationControllerCore {
         throw new Error("Microphone permission was not granted");
       }
       if (this.closed) throw new Error("Recitation session was stopped");
-      const ready = new Promise<void>((resolve, reject) => {
-        this.readyResolve = resolve;
-        this.readyReject = reject;
-        this.readyTimer = setTimeout(() => this.fail(new Error("Live provider readiness timed out")), this.runtime.readyTimeoutMs ?? 15_000);
-        const socket = this.runtime.createSocket(this.runtime.getWebSocketUrl());
-        this.socket = socket;
-        socket.onopen = () => {
-          if (!this.closed) socket.send(JSON.stringify({ t: "auth", token, sessionId }));
-        };
-        socket.onmessage = (event) => this.handleMessage(String(event.data));
-        socket.onerror = () => this.fail(new Error("Live recitation connection failed"));
-        socket.onclose = () => {
-          if (!this.closed) this.fail(new Error("Live recitation connection closed"));
-        };
-      });
       // Capture starts with the connection so the first words, spoken while
       // the provider is still connecting, are buffered instead of lost.
       const recording = this.startRecorder();
       void recording.catch(() => {});
-      await Promise.all([ready, recording]);
+      await Promise.all([this.connectSocket(), recording]);
       if (this.closed) throw new Error("Recitation session was stopped");
       this.beginStreaming();
     } catch (error) {
       if (!this.closed) this.fail(safeError(error));
       throw safeError(error);
     }
+  }
+
+  /** Opens one gateway socket and resolves when the provider is ready to take audio. */
+  private connectSocket() {
+    const credentials = this.credentials;
+    if (!credentials) return Promise.reject(new Error("Session authorization is required"));
+    this.detachLiveSocket();
+    return new Promise<void>((resolve, reject) => {
+      this.readyResolve = resolve;
+      this.readyReject = reject;
+      this.readyTimer = setTimeout(() => {
+        this.rejectReady(new Error("Live provider readiness timed out"));
+      }, this.runtime.readyTimeoutMs ?? 15_000);
+      const socket = this.runtime.createSocket(this.runtime.getWebSocketUrl());
+      this.socket = socket;
+      const drop = (error: Error) => {
+        if (this.closed || this.socket !== socket) return;
+        this.socket = null;
+        this.detachSocket(socket);
+        if (this.readyReject) {
+          this.rejectReady(error);
+          return;
+        }
+        this.loseConnection(error);
+      };
+      socket.onopen = () => {
+        if (!this.closed && this.socket === socket) {
+          socket.send(JSON.stringify({ t: "auth", token: credentials.token, sessionId: credentials.sessionId }));
+        }
+      };
+      socket.onmessage = (event) => {
+        if (this.socket === socket) this.handleMessage(String(event.data));
+      };
+      socket.onerror = () => drop(new Error("Live recitation connection failed"));
+      socket.onclose = () => drop(new Error("Live recitation connection closed"));
+    });
+  }
+
+  private rejectReady(error: Error) {
+    const reject = this.readyReject;
+    this.readyResolve = null;
+    this.readyReject = null;
+    if (this.readyTimer) clearTimeout(this.readyTimer);
+    this.readyTimer = null;
+    reject?.(error);
+  }
+
+  /**
+   * The live socket died after streaming had started. Keep the microphone and
+   * the matcher, buffer what is said meanwhile, and open the same session again.
+   * A start that never became ready, or a refusal from the server, still fails closed.
+   */
+  private loseConnection(error: Error) {
+    if (this.closed || this.stopping) {
+      if (!this.closed) this.fail(error);
+      return;
+    }
+    // onerror and onclose of one socket, or a drop while the next socket is dialing.
+    if (this.reconnectTimer || this.readyReject) return;
+    const delays = this.runtime.reconnectDelaysMs ?? DEFAULT_RECONNECT_DELAYS_MS;
+    const maxReconnects = this.runtime.maxReconnects ?? 3;
+    if (!this.acceptReconnect || this.reconnectsUsed >= maxReconnects || this.reconnectBurst >= delays.length) {
+      this.fail(error);
+      return;
+    }
+    this.streaming = false;
+    this.clearStreamTimers();
+    this.detachLiveSocket();
+    const delay = delays[this.reconnectBurst] ?? delays[delays.length - 1] ?? 0;
+    this.reconnectBurst += 1;
+    this.reconnectsUsed += 1;
+    this.callbacks.onState?.("reconnecting", "انقطع الاتصال — جارٍ إعادة المحاولة…");
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      void this.connectSocket()
+        .then(() => {
+          if (this.closed || this.stopping) {
+            this.detachLiveSocket();
+            return;
+          }
+          this.reconnectBurst = 0;
+          this.beginStreaming();
+        })
+        .catch((cause) => {
+          if (!this.closed && !this.stopping) this.loseConnection(safeError(cause));
+        });
+    }, delay);
   }
 
   private handleMessage(raw: string) {
@@ -262,7 +350,22 @@ export class NativeRecitationControllerCore {
       this.finalResolve?.();
       return;
     }
-    if (message.t === "error") this.fail(new Error("Live transcription provider failed"));
+    if (message.t === "error") {
+      const code = typeof message.code === "string" ? message.code : "";
+      const retryable = RETRYABLE_GATEWAY_ERRORS.has(code);
+      const error = new Error(typeof message.message === "string" && message.message
+        ? message.message
+        : "Live transcription provider failed");
+      // A refusal (auth, replaced session, disabled feature) must not be retried.
+      if (!retryable) this.acceptReconnect = false;
+      if (this.readyReject) {
+        this.rejectReady(error);
+        this.detachLiveSocket();
+        return;
+      }
+      if (retryable) this.loseConnection(error);
+      else this.fail(error);
+    }
   }
 
   private async startRecorder() {
@@ -315,18 +418,21 @@ export class NativeRecitationControllerCore {
         audio: pcm16leBase64(samples),
         timing: { audioChunkCreatedAt: Date.now(), audioChunkSentAt: Date.now() },
       }));
-    } catch (error) { this.fail(safeError(error)); }
+    } catch (error) { this.loseConnection(safeError(error)); }
   }
 
   /** Provider ready and microphone running: flush buffered audio, then stream live. */
   private beginStreaming() {
+    this.acceptReconnect = true;
     const pending = this.pendingAudio;
     this.pendingAudio = [];
     this.pendingAudioSeconds = 0;
     for (const chunk of pending) {
-      if (this.closed) return;
+      // A send failure schedules a reconnect; don't keep streaming on the dead socket.
+      if (this.closed || this.reconnectTimer) return;
       this.sendAudio(resampleMono([chunk.samples], chunk.sampleRate, this.targetSampleRate));
     }
+    if (this.closed || this.reconnectTimer) return;
     this.streaming = true;
     this.lastGatewayMessageAt = Date.now();
     // Keepalive also runs while paused, so a thinking pause never idles out.
@@ -334,12 +440,12 @@ export class NativeRecitationControllerCore {
       if (this.closed) return;
       const silenceMs = this.runtime.gatewaySilenceTimeoutMs ?? RECITATION_GATEWAY_SILENCE_TIMEOUT_MS;
       if (Date.now() - this.lastGatewayMessageAt > silenceMs) {
-        this.fail(new Error("Live recitation connection stopped responding"));
+        this.loseConnection(new Error("Live recitation connection stopped responding"));
         return;
       }
       try {
         this.socket?.send(JSON.stringify({ t: "ping" }));
-      } catch (error) { this.fail(safeError(error)); }
+      } catch (error) { this.loseConnection(safeError(error)); }
     }, this.runtime.keepaliveIntervalMs ?? RECITATION_KEEPALIVE_INTERVAL_MS);
     // Bound uninterrupted provider buffers without creating an automatic retry.
     this.commitTimer = setInterval(() => {
@@ -347,9 +453,9 @@ export class NativeRecitationControllerCore {
       try {
         this.socket?.send(JSON.stringify({ t: "commit" }));
         this.audioSinceCommit = false;
-      } catch (error) { this.fail(safeError(error)); }
+      } catch (error) { this.loseConnection(safeError(error)); }
     }, 5_000);
-    this.callbacks.onState?.("recording");
+    this.callbacks.onState?.(this.paused ? "paused" : "recording");
     this.feedback.ready();
   }
 
@@ -494,9 +600,11 @@ export class NativeRecitationControllerCore {
     if (this.readyTimer) clearTimeout(this.readyTimer);
     if (this.commitTimer) clearInterval(this.commitTimer);
     if (this.keepaliveTimer) clearInterval(this.keepaliveTimer);
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.readyTimer = null;
     this.commitTimer = null;
     this.keepaliveTimer = null;
+    this.reconnectTimer = null;
     this.streaming = false;
     this.pendingAudio = [];
     this.pendingAudioSeconds = 0;
@@ -534,6 +642,27 @@ export class NativeRecitationControllerCore {
       this.recorder = null;
     }
     this.paused = false;
+  }
+
+  private clearStreamTimers() {
+    if (this.commitTimer) clearInterval(this.commitTimer);
+    if (this.keepaliveTimer) clearInterval(this.keepaliveTimer);
+    this.commitTimer = null;
+    this.keepaliveTimer = null;
+  }
+
+  /** Drops the current gateway socket without stopping the microphone. */
+  private detachLiveSocket() {
+    const socket = this.socket;
+    this.socket = null;
+    this.detachSocket(socket);
+    try { socket?.close(); } catch { /* Already disconnected. */ }
+    if (this.readyTimer) clearTimeout(this.readyTimer);
+    this.readyTimer = null;
+    const reject = this.readyReject;
+    this.readyResolve = null;
+    this.readyReject = null;
+    reject?.(new Error("Recitation connection replaced"));
   }
 
   private detachSocket(socket: NativeSocket | null) {

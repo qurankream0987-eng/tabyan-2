@@ -168,6 +168,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api", router);
 app.use("/api/trpc", createExpressMiddleware({ router: appRouter, createContext }));
 
+// The phone loads Mushaf pages, word data and fonts from the API origin. A
+// deployed API serves them with the built site; local Vite has the files and
+// the API process does not, so development serves the repo copy directly.
+if (process.env.NODE_ENV === "development") {
+  const mushafDir = path.resolve(process.cwd(), "../web/public/mushaf");
+  if (existsSync(mushafDir)) {
+    app.use("/mushaf", express.static(mushafDir, { index: false, fallthrough: true }));
+  } else {
+    logger.warn({ mushafDir }, "Mushaf assets not found; recitation cannot load the Quran text");
+  }
+}
+
 // In a single-service deployment the API also serves the built web apps, so
 // the site, its API and cookies share one origin. Unset in local development,
 // where Vite serves the web app and proxies /api here.

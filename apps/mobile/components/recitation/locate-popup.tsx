@@ -13,6 +13,7 @@ import type { RecitationLocation } from "../../lib/recitation/recitation-anywher
  */
 export function RecitationLocatePopup({
   preparing,
+  reconnecting = false,
   opening,
   heard,
   candidates,
@@ -21,6 +22,8 @@ export function RecitationLocatePopup({
   onCancel,
 }: {
   preparing: boolean;
+  /** The live socket dropped and the same session is being opened again. */
+  reconnecting?: boolean;
   /** The place is found and its page is being opened. */
   opening: RecitationLocation | null;
   heard: string;
@@ -42,7 +45,9 @@ export function RecitationLocatePopup({
   const title = opening
     ? `سورة ${SURAHS[opening.surah - 1]?.name ?? ""} · الآية ${opening.ayah}`
     : candidates.length ? "الآية في أكثر من موضع" : "اقرأ من أي موضع";
-  const subtitle = preparing
+  const subtitle = reconnecting
+    ? "انقطع الاتصال — جارٍ إعادة المحاولة…"
+    : preparing
     ? "جارٍ تجهيز الميكروفون…"
     : opening ? "جارٍ فتح الصفحة…"
     : candidates.length ? "اختر الموضع الذي تقرأ منه، أو تابع القراءة ليتضح" : "ابدأ بالآية التي تريد أن تسمّع منها، وسنفتح لك موضعها";
