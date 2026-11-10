@@ -3,7 +3,7 @@ import { availableParallelism } from "node:os";
 import path from "node:path";
 import type { InferenceSession } from "onnxruntime-node";
 import { logger } from "../../lib/logger";
-import { CtcDecoder, Lexicon, type CtcWord } from "./ctcDecoder";
+import { CtcDecoder, Lexicon, preferredWordSet, type CtcWord } from "./ctcDecoder";
 import { QURAN_LEXICON } from "./quranLexicon";
 
 /** FastConformer subsamples 10 ms features by 8: one output frame per 80 ms. */
@@ -21,7 +21,7 @@ export interface TilawiModelOptions {
 
 export interface Transcriber {
   /** 16 kHz mono float PCM -> words with frame positions inside that clip. */
-  transcribe(audio: Float32Array): Promise<CtcWord[]>;
+  transcribe(audio: Float32Array, preferred?: readonly string[]): Promise<CtcWord[]>;
 }
 
 /**
@@ -65,7 +65,7 @@ export class TilawiModel implements Transcriber {
     return new TilawiModel(session, new CtcDecoder(vocab), maxConcurrent, lexicon, options.freeWordPenalty);
   }
 
-  async transcribe(audio: Float32Array): Promise<CtcWord[]> {
+  async transcribe(audio: Float32Array, preferred?: readonly string[]): Promise<CtcWord[]> {
     await this.acquire();
     try {
       const ort = await import("onnxruntime-node");
@@ -77,8 +77,13 @@ export class TilawiModel implements Transcriber {
       const logprobs = outputs[this.session.outputNames[0]];
       const [, timeSteps, vocabSize] = logprobs.dims.map(Number);
       const data = logprobs.data as Float32Array;
+      const preferredSet = preferred?.length ? preferredWordSet(preferred) : undefined;
       return this.lexicon
-        ? this.decoder.decodeConstrained(data, timeSteps, vocabSize, { lexicon: this.lexicon, freeWordPenalty: this.freeWordPenalty })
+        ? this.decoder.decodeConstrained(data, timeSteps, vocabSize, {
+          lexicon: this.lexicon,
+          freeWordPenalty: this.freeWordPenalty,
+          preferred: preferredSet && preferredSet.size ? preferredSet : undefined,
+        })
         : this.decoder.decode(data, timeSteps, vocabSize);
     } finally {
       this.release();

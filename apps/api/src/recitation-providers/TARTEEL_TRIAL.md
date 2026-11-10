@@ -34,13 +34,14 @@ per-commit inference wall/CPU time without logging audio or transcript text.
 
 ## Optional development gateway path
 
-The WebSocket gateway can select this adapter only when all of these are true:
+The WebSocket gateway selects this adapter when both of these are set:
 
-- `NODE_ENV=development`
 - `TABYAN_AI_ASR_PROVIDER=tarteel`
 - `TABYAN_AI_TARTEEL_TRIAL_ENABLED=true`
 
+`NODE_ENV` must be `development` or `production`. Other environments still reject it.
+
 The existing live-transcription feature flags and student-session authorization
-still apply. Production always rejects Tarteel selection, regardless of these
-flags. The default provider selection and OpenAI path are unchanged. There is no
+still apply. Production accepts Tarteel only when both flags above are set, so
+Tilawi stays one variable away (`TABYAN_AI_ASR_PROVIDER=tilawi`). There is no
 automatic fallback if the local model fails or its queue is full.

@@ -1008,8 +1008,13 @@ export const adminRouter = createRouter({
         reviewedAt: new Date(),
       }).where(eq(fatwaAnswers.id, input.answerId));
       if (input.action !== "reject") {
+        const [question] = await db.select({ studentId: fatwaQuestions.studentId })
+          .from(fatwaQuestions)
+          .where(eq(fatwaQuestions.id, answer.questionId))
+          .limit(1);
+        if (!question) throw new TRPCError({ code: "NOT_FOUND", message: "السؤال غير موجود" });
         await db.update(fatwaQuestions).set({ status: "published" }).where(eq(fatwaQuestions.id, answer.questionId));
-        await notify(answer.questionId, "تم نشر إجابة سؤالك ✅", undefined, "fatwa");
+        await notify(question.studentId, "تم نشر إجابة سؤالك ✅", undefined, "fatwa");
       } else {
         await db.update(fatwaQuestions).set({ status: "answered" }).where(eq(fatwaQuestions.id, answer.questionId));
       }

@@ -99,6 +99,8 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
   /** Background noise level of this session's audio (RMS per chunk). */
   private noiseFloor = 0.001;
   private readonly stabilizer = new WordStabilizer();
+  /** Folded later by the decoder. Empty: open search, no bias toward a place. */
+  private preferred: string[] = [];
 
   private decoding = false;
   private flushRequested = false;
@@ -116,6 +118,18 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
     private readonly events: SpeechRecognitionProviderEvents,
     private readonly loadModel: () => Promise<Transcriber> = sharedTilawiModel,
   ) {}
+
+  /** The next words at the reader's place. The following decode prefers them. */
+  noteExpected(words: readonly string[]) {
+    const next: string[] = [];
+    for (const word of words) {
+      if (next.length >= 12) break;
+      if (typeof word !== "string") continue;
+      const text = word.trim();
+      if (text && text.length <= 40) next.push(text);
+    }
+    this.preferred = next;
+  }
 
   connect() {
     if (this.model || this.closed || this.connecting) return;
@@ -247,7 +261,7 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
     try {
       const startedAt = performance.now();
       const words = window.length >= MIN_DECODE_SECONDS * MODEL_SAMPLE_RATE_HZ
-        ? await model.transcribe(padded(raised(window)))
+        ? await model.transcribe(padded(raised(window)), this.preferred)
         : [];
       if (this.decodeMs.length < 4096) {
         this.decodeMs.push(performance.now() - startedAt);

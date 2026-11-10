@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { selectSpeechRecognitionProvider } from "./providerSelection";
 
-test("Tarteel is opt-in for development only", () => {
+test("Tarteel is opt-in for development and production", () => {
   assert.equal(selectSpeechRecognitionProvider({
     provider: "tarteel",
     nodeEnv: "development",
@@ -17,6 +17,11 @@ test("Tarteel is opt-in for development only", () => {
     provider: "tarteel",
     nodeEnv: "production",
     tarteelTrialEnabled: "true",
+  }), "tarteel");
+  assert.equal(selectSpeechRecognitionProvider({
+    provider: "tarteel",
+    nodeEnv: "production",
+    tarteelTrialEnabled: undefined,
   }), null);
   assert.equal(selectSpeechRecognitionProvider({
     provider: "tarteel",

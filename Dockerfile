@@ -5,8 +5,13 @@ FROM node:24.20.0-bookworm-slim
 # ffmpeg converts uploaded videos that do not play everywhere (iPhone HEVC, WebM,
 # heavy 1080p) to H.264/AAC 720p; see apps/api/src/media/videoNormalization.ts.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ffmpeg \
- && rm -rf /var/lib/apt/lists/*
+ && apt-get install -y --no-install-recommends ffmpeg python3 python3-venv libgomp1 \
+ && python3 -m venv /opt/tarteel \
+ && /opt/tarteel/bin/pip install --no-cache-dir "faster-whisper==1.2.1" \
+ && /opt/tarteel/bin/python -c "from huggingface_hub import snapshot_download, hf_hub_download; import shutil; snapshot_download(repo_id='kaylazima/quranic-model', revision='9fee6e6bca1099abef1c280e79be43a8f74d78b9', allow_patterns=['whisper-quran-ct2/*'], local_dir='/opt/tarteel/model'); shutil.copy(hf_hub_download('openai/whisper-base', 'tokenizer.json'), '/opt/tarteel/model/whisper-quran-ct2/tokenizer.json')" \
+ && test -s /opt/tarteel/model/whisper-quran-ct2/model.bin \
+ && test -s /opt/tarteel/model/whisper-quran-ct2/tokenizer.json \
+ && rm -rf /var/lib/apt/lists/* /root/.cache
 
 WORKDIR /app
 ENV CI=true \
@@ -39,7 +44,9 @@ RUN PORT=5173 BASE_PATH=/ npm run build --workspace @workspace/tabyan \
 ENV NODE_ENV=production \
     TABYAN_WEB_DIST=/app/apps/web/dist/public \
     TABYAN_STAFF_PREVIEW_DIST=/app/apps/staff-preview/dist/public \
-    TABYAN_TILAWI_MODEL_DIR=/app/apps/api/models/tilawi
+    TABYAN_TILAWI_MODEL_DIR=/app/apps/api/models/tilawi \
+    TABYAN_TARTEEL_PYTHON=/opt/tarteel/bin/python \
+    TABYAN_TARTEEL_MODEL_PATH=/opt/tarteel/model/whisper-quran-ct2
 
 WORKDIR /app/apps/api
 CMD ["node", "--enable-source-maps", "dist/index.mjs"]

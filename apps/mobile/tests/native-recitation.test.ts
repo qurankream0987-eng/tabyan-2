@@ -318,6 +318,20 @@ test("Native hint on the word a reader is stopped on lets him go on once he read
   assert.equal(summary.correctedWords, 0);
 });
 
+test("Hinting a whole ayah does not freeze recitation when the reader continues", () => {
+  const matcher = new NativeQuranLiveMatcher(fatihaWords);
+  matcher.peek(1);
+  matcher.peek(2);
+  matcher.peek(3);
+  assert.equal(matcher.peek(3)?.wordFeedback.get("1:2:4"), "peeked");
+  const continued = matcher.feed("رب العالمين الرحمن الرحيم مالك يوم الدين", "item-1", true);
+  assert.equal(continued.reading?.verseKey, "1:4");
+  assert.equal(continued.wordFeedback.get("1:2:1"), "peeked");
+  assert.equal(continued.wordFeedback.get("1:2:3"), "peeked");
+  assert.equal(continued.wordFeedback.get("1:4:1"), "correct");
+  assert.equal(matcher.finish().confirmedMistakes, 0);
+});
+
 test("Native hint reveals the words after the reading pointer as peeked, not correct", () => {
   const matcher = new NativeQuranLiveMatcher(fatihaWords);
   matcher.feed("الحمد لله", "item-1", true);

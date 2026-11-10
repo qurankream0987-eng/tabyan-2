@@ -45,6 +45,7 @@ type ClientMessage =
   | { t: "audio"; audio: string; timing?: { audioChunkCreatedAt: number; audioChunkSentAt: number } }
   | { t: "commit"; final?: boolean; commitId?: string }
   | { t: "ping" }
+  | { t: "expect"; words?: unknown }
   | { t: "close" };
 
 type AuthenticatedUser = { id: string };
@@ -552,7 +553,10 @@ export function attachRecitationRealtime(server: Server) {
     };
 
     const connectTarteel = () => {
-      if (process.env.NODE_ENV !== "development" || process.env.TABYAN_AI_TARTEEL_TRIAL_ENABLED !== "true") {
+      const nodeEnv = process.env.NODE_ENV;
+      const trialOn = process.env.TABYAN_AI_TARTEEL_TRIAL_ENABLED === "true";
+      const allowed = trialOn && (nodeEnv === "development" || nodeEnv === "production");
+      if (!allowed) {
         clientError(ws, "PROVIDER_UNAVAILABLE", "مسار Tarteel التجريبي غير متاح في هذا النشر");
         closeGatewaySocket("tarteel_trial_not_enabled");
         return;
@@ -733,6 +737,15 @@ export function attachRecitationRealtime(server: Server) {
         // Client keepalive: a paused or silent reciter is idle, not gone.
         lastActivityAt = Date.now();
         send(ws, { t: "pong" });
+        return;
+      }
+
+      if (message.t === "expect") {
+        // The words ahead of a known place. Empty, or a provider without this, stays an open search.
+        const words = Array.isArray(message.words)
+          ? message.words.filter((word): word is string => typeof word === "string").slice(0, 12)
+          : [];
+        provider?.noteExpected?.(words);
         return;
       }
 

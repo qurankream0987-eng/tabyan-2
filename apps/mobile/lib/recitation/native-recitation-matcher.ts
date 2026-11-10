@@ -150,6 +150,21 @@ export class NativeQuranLiveMatcher {
     return true;
   }
 
+  /**
+   * The next words at the place being followed, for the recognizer to prefer.
+   * Starts at a word the reader was stopped on, otherwise at the next word.
+   */
+  expectedWords(count = 12): string[] {
+    const start = this.engine.strictHoldAt ?? this.matcher.committedIndex();
+    const words: string[] = [];
+    for (let index = start; words.length < count; index += 1) {
+      const text = this.matcher.wordAt(index)?.normalizedText;
+      if (!text) break;
+      words.push(text);
+    }
+    return words;
+  }
+
   feed(text: string, itemId: string, isFinal: boolean, wordConfidences?: number[]): NativeRecitationMatch {
     const eventKey = `${itemId}:${isFinal}:${text}`;
     if (eventKey === this.lastEvent && this.lastResult) {

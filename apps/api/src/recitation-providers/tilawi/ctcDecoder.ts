@@ -93,6 +93,40 @@ export interface ConstrainedDecodeOptions {
    * saying it; above it the nearest Quran spelling wins.
    */
   freeWordPenalty?: number;
+  /**
+   * Folded spellings of the words expected next, while the reader is being
+   * followed. A Quran word that is not one of them, and not a prefix of one,
+   * pays `offPathPenalty`. Absent means open search: anywhere, or tracking lost.
+   */
+  preferred?: ReadonlySet<string>;
+  /**
+   * Cost of a finished spelling that leaves every expected word. Below the
+   * acoustic gap of a clearly different word, so a real mistake is still heard.
+   */
+  offPathPenalty?: number;
+}
+
+/** The spelling the lexicon and the preferred set share. */
+export function foldWord(text: string): string {
+  let folded = "";
+  for (const letter of text) folded += foldLetter(letter);
+  return folded.replace(/ة/g, "ه");
+}
+
+/** Expected words, folded, for `ConstrainedDecodeOptions.preferred`. */
+export function preferredWordSet(words: readonly string[]): Set<string> {
+  const set = new Set<string>();
+  for (const word of words) {
+    const folded = foldWord(word);
+    if (folded) set.add(folded);
+  }
+  return set;
+}
+
+function onPreferredPath(text: string, preferred: ReadonlySet<string>): boolean {
+  if (preferred.has(text)) return true;
+  for (const word of preferred) if (word.startsWith(text)) return true;
+  return false;
 }
 
 interface Hypothesis {
@@ -106,6 +140,8 @@ interface Hypothesis {
   /** Trie node of the word being spelled; null once the word has left the lexicon. */
   node: TrieNode | null;
   penalty: number;
+  /** Cost of the word being spelled when it is not an expected word. Replaced, not accumulated. */
+  pathCost: number;
 }
 
 const NEG_INF = -Infinity;
@@ -194,8 +230,10 @@ export class CtcDecoder {
     const topK = options.topK ?? 12;
     const pieceMargin = options.pieceMargin ?? 10;
     const penalty = options.freeWordPenalty ?? 5;
+    const preferred = options.preferred ?? null;
+    const offPathPenalty = options.offPathPenalty ?? 3;
     const blankId = this.blankId;
-    let beam: Hypothesis[] = [{ key: "", last: -1, blank: 0, nonBlank: NEG_INF, words: [], node: null, penalty: 0 }];
+    let beam: Hypothesis[] = [{ key: "", last: -1, blank: 0, nonBlank: NEG_INF, words: [], node: null, penalty: 0, pathCost: 0 }];
     const candidates: number[] = [];
 
     for (let t = 0; t < timeSteps; t++) {
@@ -245,7 +283,7 @@ export class CtcDecoder {
           // The same piece again only extends the prefix after a blank.
           const from = id === hypothesis.last ? hypothesis.blank : total;
           if (from === NEG_INF) continue;
-          merge(this.extend(hypothesis, id, t, from + logProb, logProb, lexicon, penalty));
+          merge(this.extend(hypothesis, id, t, from + logProb, logProb, lexicon, penalty, preferred, offPathPenalty));
         }
       }
 
@@ -263,7 +301,7 @@ export class CtcDecoder {
 
   private extend(
     hypothesis: Hypothesis, id: number, t: number, logProb: number, pieceLogProb: number,
-    lexicon: Lexicon, penalty: number,
+    lexicon: Lexicon, penalty: number, preferred: ReadonlySet<string> | null, offPathPenalty: number,
   ): Hypothesis {
     const key = `${hypothesis.key},${id}`;
     const raw = this.pieces[id]?.replace(MARKS, "") ?? "";
@@ -275,6 +313,7 @@ export class CtcDecoder {
     const current = words[words.length - 1];
     let node = hypothesis.node;
     let extraPenalty = 0;
+    let pathCost = hypothesis.pathCost;
     if (raw.startsWith(WORD_START) || !current) {
       // A new word: the one before it must be a whole Quran word.
       if (current && node && !node.terminal) extraPenalty += penalty;
@@ -292,12 +331,21 @@ export class CtcDecoder {
         probabilitySum: current.probabilitySum + probability, tokens: current.tokens + 1,
       };
     }
-    return { key, last: id, blank: NEG_INF, nonBlank: logProb, words, node, penalty: hypothesis.penalty + extraPenalty };
+    if (preferred) {
+      const text = foldWord(words[words.length - 1]?.text ?? "");
+      // A prefix of an expected word is still that word being spoken. Anything else pays once,
+      // and the cost drops again if the word grows back onto an expected spelling.
+      pathCost = text && !onPreferredPath(text, preferred) ? offPathPenalty : 0;
+    }
+    return {
+      key, last: id, blank: NEG_INF, nonBlank: logProb, words, node,
+      penalty: hypothesis.penalty + extraPenalty, pathCost,
+    };
   }
 }
 
 function score(hypothesis: Hypothesis): number {
-  return logAdd(hypothesis.blank, hypothesis.nonBlank) - hypothesis.penalty;
+  return logAdd(hypothesis.blank, hypothesis.nonBlank) - hypothesis.penalty - hypothesis.pathCost;
 }
 
 function argmax(values: Float32Array, offset: number, length: number): number {

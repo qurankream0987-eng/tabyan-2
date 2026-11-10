@@ -64,6 +64,8 @@ export interface NativeRecitationRuntime {
 
 export interface NativeMatcherLike {
   feed(text: string, itemId: string, isFinal: boolean, wordConfidences?: number[]): ReturnType<NativeQuranLiveMatcher["feed"]>;
+  /** Words ahead of a known place. Omitted by matchers that do not follow one. */
+  expectedWords?(count?: number): string[];
 }
 
 const SOCKET_OPEN = 1;
@@ -162,6 +164,8 @@ export class NativeRecitationControllerCore {
   /** Attempts used across the whole session. */
   private reconnectsUsed = 0;
   private readonly feedback = new NativeRecitationFeedback((cue) => this.runtime.playCue?.(cue));
+  /** Last expected-word list sent, so a steady place is not repeated on every partial. */
+  private lastExpected = "";
 
   constructor(
     private readonly matcher: NativeMatcherLike,
@@ -291,6 +295,20 @@ export class NativeRecitationControllerCore {
     }, delay);
   }
 
+  /**
+   * Tells Tilawi which words come next, so a near miss stays the expected word.
+   * Recovery, and a search that has not found a place, send nothing and stay open.
+   */
+  private publishExpected(mode?: "tracking" | "recovery") {
+    const words = mode === "recovery" ? [] : this.matcher.expectedWords?.(12);
+    if (!words) return;
+    const key = words.join("\n");
+    if (key === this.lastExpected) return;
+    if (this.socket?.readyState !== SOCKET_OPEN) return;
+    this.lastExpected = key;
+    this.socket.send(JSON.stringify({ t: "expect", words }));
+  }
+
   private handleMessage(raw: string) {
     let message: Record<string, unknown>;
     try {
@@ -314,6 +332,8 @@ export class NativeRecitationControllerCore {
       this.readyResolve?.();
       this.readyResolve = null;
       this.readyReject = null;
+      this.lastExpected = "";
+      this.publishExpected();
       return;
     }
     if (message.t === "transcript") {
@@ -343,7 +363,9 @@ export class NativeRecitationControllerCore {
         && message.wordConfidences.every((value: unknown) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1)
         ? message.wordConfidences as number[]
         : undefined;
-      this.callbacks.onMatch?.(this.matcher.feed(text, itemId, isFinal, wordConfidences));
+      const match = this.matcher.feed(text, itemId, isFinal, wordConfidences);
+      this.callbacks.onMatch?.(match);
+      this.publishExpected(match.diagnostics.mode);
       return;
     }
     if (message.t === "finalized" && this.stopping && message.commitId === this.finalCommitId) {

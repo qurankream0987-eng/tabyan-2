@@ -26,8 +26,10 @@ class TimelineModel implements Transcriber {
   heardUntilSeconds = 0;
   constructor(private readonly timeline: Array<{ text: string; start: number; end: number }>) {}
 
-  async transcribe(audio: Float32Array): Promise<CtcWord[]> {
+  preferred: readonly string[] | undefined;
+  async transcribe(audio: Float32Array, preferred?: readonly string[]): Promise<CtcWord[]> {
     this.calls += 1;
+    this.preferred = preferred;
     const end = this.heardUntilSeconds;
     const start = end - audio.length / MODEL_SAMPLE_RATE_HZ;
     return this.timeline
@@ -159,6 +161,19 @@ test("a pause commit does not settle a word whose first letter is all that is he
   assert.deepEqual(first.pending.map((w) => w.text), ["و"]);
   const next = stabilizer.update([word("وعلى", 1.0, 1.5), word("أبصارهم", 1.6, 2.4)], 2.6, "flush");
   assert.deepEqual(next.settled.map((w) => w.text), ["وعلى"]);
+});
+
+test("expected words are handed to the next decode and an empty list clears them", async () => {
+  const model = new TimelineModel(TIMELINE);
+  const h = harness(model);
+  h.provider.connect();
+  await settle();
+  h.provider.noteExpected(["بسم", "الله", "الرحمن"]);
+  await h.feed(5);
+  assert.deepEqual(model.preferred, ["بسم", "الله", "الرحمن"]);
+  h.provider.noteExpected([]);
+  await h.feed(5);
+  assert.deepEqual(model.preferred, []);
 });
 
 test("silence is not decoded", async () => {

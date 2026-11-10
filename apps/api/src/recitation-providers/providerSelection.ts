@@ -9,13 +9,18 @@ export interface ProviderSelectionEnvironment {
   nabrOneShotTest?: string | undefined;
 }
 
-/** Tarteel is selectable only in development and remains explicitly opt-in. */
+/**
+ * Tarteel stays opt-in. The trial flag may be set in production so the APK
+ * can try the Whisper model; Tilawi remains selectable by changing the provider.
+ */
 export function selectSpeechRecognitionProvider(
   environment: ProviderSelectionEnvironment,
 ): SpeechRecognitionProvider["name"] | null {
   const { provider, nodeEnv, tarteelTrialEnabled } = environment;
   if (provider === "tarteel") {
-    return nodeEnv === "development" && tarteelTrialEnabled === "true" ? "tarteel" : null;
+    const trial = tarteelTrialEnabled === "true";
+    const allowedEnv = nodeEnv === "development" || nodeEnv === "production";
+    return trial && allowedEnv ? "tarteel" : null;
   }
   if (provider === "nabr") {
     return nodeEnv === "development"

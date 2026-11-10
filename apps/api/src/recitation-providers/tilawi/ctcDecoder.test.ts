@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { CtcDecoder, Lexicon } from "./ctcDecoder";
+import { CtcDecoder, Lexicon, preferredWordSet } from "./ctcDecoder";
 import { sharedLexicon } from "./tilawiModel";
 
 // pieces: 0 blank, 1 ▁ب, 2 ي, 3 ف, 4 ت, 5 ▁ك, 6 ▁عندك, 7 ▁ذ, 8 لك, 9 ا, 10 ▁نهاية, 11 ▁ج
@@ -73,6 +73,32 @@ test("a word that stops short before the next word costs the penalty, so the who
   const logprobs = frames([{ 7: 0.95 }, { 0: 0.9 }, { 8: 0.5, 11: 0.5 }, { 9: 0.6, 0: 0.3 }]);
   const words = decoder.decodeConstrained(logprobs, 4, V, { lexicon });
   assert.deepEqual(words.map((w) => w.text), ["ذلك"]);
+});
+
+test("an expected word wins a near miss, and a clearly different word is still heard", () => {
+  const decoder = new CtcDecoder(VOCAB);
+  const near = new Lexicon(["بيت", "كيت"]);
+  const preferred = preferredWordSet(["بيت"]);
+  // "ك" is a little more likely than "ب"; both "كيت" and "بيت" are Quran words here.
+  const close = frames([{ 0: 0.9 }, { 5: 0.55, 1: 0.42 }, { 2: 0.9 }, { 4: 0.9 }, { 0: 0.9 }]);
+  assert.deepEqual(decoder.decodeConstrained(close, 5, V, { lexicon: near }).map((w) => w.text), ["كيت"]);
+  assert.deepEqual(
+    decoder.decodeConstrained(close, 5, V, { lexicon: near, preferred }).map((w) => w.text),
+    ["بيت"],
+  );
+  // The other word is unmistakable: the penalty must not hide a real mistake.
+  const sure = frames([{ 0: 0.9 }, { 5: 0.99, 1: 0.01 }, { 2: 0.95 }, { 4: 0.95 }, { 0: 0.9 }]);
+  assert.deepEqual(
+    decoder.decodeConstrained(sure, 5, V, { lexicon: near, preferred }).map((w) => w.text),
+    ["كيت"],
+  );
+});
+
+test("a prefix of the expected word is not pushed off the path", () => {
+  const decoder = new CtcDecoder(VOCAB);
+  const logprobs = frames([{ 7: 0.95 }, { 0: 0.9 }, { 9: 0.9 }]);
+  const words = decoder.decodeConstrained(logprobs, 3, V, { lexicon, preferred: preferredWordSet(["ذلك"]) });
+  assert.deepEqual(words.map((w) => w.text), ["ذا"]);
 });
 
 test("the shared lexicon holds the Quran's words as the recognizer spells them", () => {

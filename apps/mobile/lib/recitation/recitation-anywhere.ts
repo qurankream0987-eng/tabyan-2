@@ -144,6 +144,11 @@ export class AnywhereRecitationMatcher {
     this.found(location);
   }
 
+  /** Words ahead of a found place. None while the place is still being searched, so the search stays open. */
+  expectedWords(count = 12): string[] {
+    return this.matcher?.expectedWords(count) ?? [];
+  }
+
   /** Takes the matcher for the place last located (its start already set) and replays what led there. */
   attach(matcher: NativeQuranLiveMatcher): NativeRecitationMatch {
     this.matcher = matcher;

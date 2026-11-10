@@ -64,4 +64,9 @@ export interface SpeechRecognitionProvider {
   isOpen(): boolean;
   /** Provider-side timing for the session log. */
   stats?(): Record<string, number | string>;
+  /**
+   * Words expected next, while a known place is being followed. Empty clears
+   * the bias (searching the Quran, or tracking lost). Tilawi only.
+   */
+  noteExpected?(words: readonly string[]): void;
 }

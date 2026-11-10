@@ -283,6 +283,7 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
   const stateRef = useRef(state);
   stateRef.current = state;
   const wsRef = useRef<WebSocket | null>(null);
+  const lastExpectedRef = useRef("");
   const socketTraceIdRef = useRef<string | null>(null);
   const socketCloseRequestedByRef = useRef<string | null>(null);
   const socketLastMessageAtRef = useRef<number | null>(null);
@@ -871,6 +872,7 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
         traceAi("WS_CONNECT_ATTEMPT", { url: gatewayUrl() });
         const ws = new WebSocket(gatewayUrl());
         wsRef.current = ws;
+        lastExpectedRef.current = "";
         logSocketLifecycle("CLIENT_SOCKET_CONNECT_ATTEMPT", ws);
         const token = localStorage.getItem("tabyan_token") ?? "";
         let timeout: number | null = null;
@@ -1391,9 +1393,20 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
   /** يُقرأ داخل معالج الأحداث المتزامن دون انتظار إعادة رسم. */
   const isAudioReliable = useCallback(() => audioReliableRef.current, []);
 
+  /** Words expected next, so Tilawi prefers them. Empty keeps the search open. */
+  const noteExpected = useCallback((words: readonly string[]) => {
+    const next = words.filter((word) => word.length > 0 && word.length <= 40).slice(0, 12);
+    const key = next.join("\n");
+    if (key === lastExpectedRef.current) return;
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    lastExpectedRef.current = key;
+    ws.send(JSON.stringify({ t: "expect", words: next }));
+  }, []);
+
   return {
     state, failure, audioQuality, partial, finalTranscript, error, metrics, diagnostics, latestTranscriptEvent,
     start, stop, pause, resume, cancel, subscribe, subscribeQrcObservations,
-    isAudioReliable, injectAudioFile, markPipelineMilestone,
+    isAudioReliable, noteExpected, injectAudioFile, markPipelineMilestone,
   };
 }

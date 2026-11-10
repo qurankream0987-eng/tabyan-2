@@ -1028,6 +1028,16 @@ export default function MushafReader({ page, accountId, onClose, onNavigate, boo
       reveals: match.diagnostics.committedRevealCount,
       noMatches: match.diagnostics.matcherNoMatchCount,
     };
+    const expected: string[] = [];
+    if (match.mode !== "recovery") {
+      const start = engine?.strictHoldAt ?? matcher.committedIndex();
+      for (let index = start; expected.length < 12; index += 1) {
+        const text = matcher.wordAt(index)?.normalizedText;
+        if (!text) break;
+        expected.push(text);
+      }
+    }
+    live.noteExpected(expected);
     if (isTarteelTrial) {
       const committedIndex = matcher.committedIndex();
       const committedWord = committedIndex > 0 ? matcher.wordAt(committedIndex - 1) : null;

@@ -490,19 +490,15 @@ export class RecitationStateEngine {
   }
 
   /**
-   * Strict: the mistake stops the reader at once (no waiting for words after it), and the
-   * matcher is taken back to it until the word is read right.
+   * Strict: a real mistake stops the reader at once, and the matcher is taken back to it
+   * until that word is read right. A word only shown by a hint is not a new stop: revealing
+   * the rest of an ayah must not freeze the reading that follows it.
    */
   private holdOn(index: number, changed: Set<number>) {
     const record = this.errors.get(index);
-    const peeked = this.states.get(index) === "PEEKED";
-    if (record && record.event.status !== "corrected" && record.event.status !== "dismissed") {
-      record.event.status = "confirmed";
-      if (!peeked) this.setState(index, "CONFIRMED_ERROR", changed);
-    } else if (!peeked) {
-      return;
-    }
-    // A hinted word read wrong still holds; it is released when read right.
+    if (!record || record.event.status === "corrected" || record.event.status === "dismissed") return;
+    record.event.status = "confirmed";
+    if (this.states.get(index) !== "PEEKED") this.setState(index, "CONFIRMED_ERROR", changed);
     if (this.holdAt === null) this.holdAt = index;
   }
 
