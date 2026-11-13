@@ -10,6 +10,13 @@ import {
   type QrcStructuredObservation,
   type RecitationProviderName,
 } from "@workspace/tabyan-domain";
+import {
+  AdpcmEncoder,
+  encodeMulaw,
+  isRecitationAudioCodec,
+  RECITATION_AUDIO_CODECS,
+  type RecitationAudioCodec,
+} from "@workspace/tabyan-domain/recitation-audio-codec";
 import type { TranscriptEvent } from "./types";
 import { RollingSamples, UtteranceSegmenter } from "./latencyTelemetry";
 import { AudioQualityMonitor, frameStats, type AudioQualitySnapshot } from "./audioQuality";
@@ -131,7 +138,7 @@ type GatewayMessage =
   | { t: "authenticated" }
   | { t: "pong" }
   | { t: "finalized"; commitId?: string }
-  | { t: "ready"; providerConnectionMs: number; provider?: RealtimeProviderName; audioSampleRateHz?: number }
+  | { t: "ready"; providerConnectionMs: number; provider?: RealtimeProviderName; audioSampleRateHz?: number; audioCodec?: string }
   | { t: "qrc-observation"; observation: QrcStructuredObservation }
   | {
       t: "transcript";
@@ -331,6 +338,9 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
   const providerLatenciesRef = useRef(new RollingSamples());
   const firstSpeechPartialLatenciesRef = useRef(new RollingSamples());
   const requestedAudioSampleRateRef = useRef(24_000);
+  /** Compact codec the gateway agreed to for this socket; without one, audio goes as base64 PCM. */
+  const audioCodecRef = useRef<RecitationAudioCodec | null>(null);
+  const adpcmRef = useRef(new AdpcmEncoder());
   const transportLatenciesRef = useRef(new RollingSamples());
   const backendProviderLatenciesRef = useRef(new RollingSamples());
   const lastProviderLatencyRef = useRef<number | null>(null);
@@ -439,11 +449,19 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
     stats.lastWsSendAt = now;
 
     const audioChunkCreatedAt = Date.now();
-    const payload = JSON.stringify({
-      t: "audio",
-      audio: toBase64(buffer),
-      timing: { audioChunkCreatedAt, audioChunkSentAt: Date.now() },
-    });
+    const codec = audioCodecRef.current;
+    let payload: string | Uint8Array;
+    if (codec) {
+      // A binary frame of four or eight bits a sample, against 21 for base64 PCM.
+      const samples = Float32Array.from(new Int16Array(buffer), (sample) => sample / 0x8000);
+      payload = codec === "adpcm" ? adpcmRef.current.encode(samples) : encodeMulaw(samples);
+    } else {
+      payload = JSON.stringify({
+        t: "audio",
+        audio: toBase64(buffer),
+        timing: { audioChunkCreatedAt, audioChunkSentAt: Date.now() },
+      });
+    }
     const isFirstAudioChunk = stats.audioChunkCount === 1;
     ws.send(payload);
     socketLastAudioAtRef.current = Date.now();
@@ -934,6 +952,7 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
               t: "auth",
               token,
               sessionId,
+              audioCodecs: RECITATION_AUDIO_CODECS,
               ...(diagnosticClientId ? { diagnosticClientId } : {}),
             }));
             logSocketLifecycle("CLIENT_AUTH_MESSAGE_SENT", ws, {
@@ -1006,6 +1025,8 @@ export function useOpenAiRealtimeTranscription(options: RealtimeTranscriptionOpt
             clearStartTimeout();
             traceAi("ASR_PROVIDER_READY", { provider: message.provider ?? "unknown" });
             requestedAudioSampleRateRef.current = message.audioSampleRateHz ?? 24_000;
+            audioCodecRef.current = isRecitationAudioCodec(message.audioCodec) ? message.audioCodec : null;
+            adpcmRef.current = new AdpcmEncoder();
             diagnosticRef.current.providerConnected = true;
             diagnosticRef.current.asrProvider = message.provider ?? null;
             diagnosticRef.current.providerConnectionMs = Number.isFinite(message.providerConnectionMs)

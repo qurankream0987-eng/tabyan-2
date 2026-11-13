@@ -176,6 +176,15 @@ function isSubsequence(short: string, long: string) {
 }
 
 /**
+ * Whether `heard` is `expected` with its last vowel drawn out into a letter: a recognizer
+ * writes the kasra of «رب» or the pronoun of «به», «له» as «ربي», «بهي», «لهو». A vowel
+ * written inside the word is another word («قال» for «قل»).
+ */
+function isLengthened(heard: string, expected: string) {
+  return heard.length === expected.length + 1 && heard.startsWith(expected) && (heard.endsWith("ي") || heard.endsWith("و"));
+}
+
+/**
  * Fast recitation reaches the recognizer with letters dropped ("الصاة"), a word
  * cut short ("ينفق"), or letters doubled ("وييقيميمون"). A word heard as its own
  * letters with some missing or repeated is the expected word misheard, not another word.
@@ -229,12 +238,19 @@ function tokenCost(heard: string, expected: string, cache: Map<string, number>, 
 const DAGGER_ALEF = /\u0670/g;
 /** A waw carrying a dagger alef («الصلوٰة») is read as an alef, and written so by the recognizer. */
 const WAW_DAGGER_ALEF = /\u0648\u0670/g;
+/** A hamza written on the line («يسـٔلونك», «فسـٔل») is spelled with an alef by the recognizer. */
+const HAMZA_ON_LINE = /\u0640\u0654/g;
+/** Words whose everyday spelling adds a letter the Mushaf leaves out. */
+const SPECIAL_SPELLINGS: Record<string, string> = { "بسم": "باسم", "ليكة": "الايكة" };
 /**
  * The word as the recognizer spells it when the Mushaf's spelling differs: the dagger
- * alef of «ذٰلك» dropped, «الصلوٰة» as «الصلاة», «ءأنذرتهم» with one alef.
+ * alef of «ذٰلك» dropped, «الصلوٰة» as «الصلاة», «ءأنذرتهم» with one alef, «يسـٔلونك» as
+ * «يسألونك», «بسم» as «باسم», «لـٔيكة» as «الأيكة».
  */
 function alternateSpelling(word: CanonicalQuranWord): string | null {
-  const alternate = normalizeQuranText(word.displayText.replace(WAW_DAGGER_ALEF, "ا").replace(DAGGER_ALEF, "")).replace(DOUBLE_ALEF, "ا");
+  const special = SPECIAL_SPELLINGS[word.normalizedText];
+  if (special) return special;
+  const alternate = normalizeQuranText(word.displayText.replace(WAW_DAGGER_ALEF, "ا").replace(DAGGER_ALEF, "").replace(HAMZA_ON_LINE, "\u0623")).replace(DOUBLE_ALEF, "ا");
   return alternate !== word.normalizedText ? alternate : null;
 }
 
@@ -342,10 +358,24 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
     let cost = tokenCost(heard, expected, this.costCache, openPrefix);
     if (alternate && cost > 0) cost = Math.min(cost, tokenCost(heard, alternate, this.costCache, openPrefix));
     // Close in spelling but another word of the Quran with a letter changed: read wrong, not
-    // misheard. Letters only dropped (a word cut short, «الله» for «والله») stay a mishearing.
+    // misheard. Letters only dropped (a word cut short, «الله» for «والله») or the last vowel
+    // drawn out («ربي» for «رب») stay a mishearing.
+    const sameWord = (word: string) => isSubsequence(heard, word) || isLengthened(heard, word);
     if (cost > 0 && cost < 1 && !openPrefix && this.isAnyQuranWord?.(heard)
-      && !isSubsequence(heard, expected) && (!alternate || !isSubsequence(heard, alternate))) return 1;
+      && !sameWord(expected) && (!alternate || !sameWord(alternate))) return 1;
     return cost;
+  }
+
+  /**
+   * Whether two heard tokens are the word at `index` written apart: the Mushaf joins the
+   * vocative to its noun («يأيها», «يأهل», «يقوم») and a recognizer writes «يا أيها».
+   */
+  private isSplitWord(firstHeard: string, secondHeard: string, index: number) {
+    // «لا انفضوا» for «لانفضوا»: the two alefs that meet at the seam are one in the word.
+    const squeeze = (word: string) => word.replace(/ا+/g, "ا");
+    const joined = squeeze(`${firstHeard}${secondHeard}`);
+    const alternate = this.alternates[index];
+    return joined === squeeze(this.words[index].normalizedText) || (!!alternate && joined === squeeze(alternate));
   }
 
   private pairCost(heard: string, first: number, second: number) {
@@ -516,7 +546,8 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
     const h = heard.length;
     const cols = width + 1;
     const cost = new Float64Array((h + 1) * cols);
-    // 0 = diag, 1 = heard extra (up), 2 = expected skipped (left), 3 = start, 4 = one heard token for two words
+    // 0 = diag, 1 = heard extra (up), 2 = expected skipped (left), 3 = start, 4 = one heard token for two words,
+    // 5 = two heard tokens for one word
     const move = new Uint8Array((h + 1) * cols);
     const startOf = new Int32Array((h + 1) * cols);
     for (let j = 0; j <= width; j += 1) {
@@ -543,6 +574,11 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
         if (j >= 2) {
           const joined = this.pairCost(heard[i - 1], first + j - 2, first + j - 1);
           if (joined < 1 && cost[up + j - 2] + 2 * joined < best) { best = cost[up + j - 2] + 2 * joined; bestMove = 4; bestStart = startOf[up + j - 2]; }
+        }
+        if (i >= 2 && this.isSplitWord(heard[i - 2], heard[i - 1], first + j - 1) && cost[up - cols + j - 1] < best) {
+          best = cost[up - cols + j - 1];
+          bestMove = 5;
+          bestStart = startOf[up - cols + j - 1];
         }
         cost[row + j] = best;
         move[row + j] = bestMove;
@@ -589,6 +625,13 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
         }
         i -= 1;
         j -= 2;
+      } else if (m === 5) {
+        const index = first + j - 1;
+        const confidence = confidences ? Math.min(confidences[i - 1], confidences[i - 2]) : undefined;
+        ops.push({ kind: "match", index, cost: 0, ...(confidence === undefined ? {} : { confidence }) });
+        heardConsumedAt.set(index, i);
+        i -= 2;
+        j -= 1;
       } else if (m === 1) {
         const confidence = confidences?.[i - 1];
         ops.push({ kind: "extra", heard: heard[i - 1], afterIndex: first + j - 1, ...(confidence === undefined ? {} : { confidence }) });
@@ -717,8 +760,9 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
   private vocabulary = new Set<string>();
   private vocabularySize = 0;
 
-  /** Whether a heard token is a word of the loaded Mushaf pages. */
+  /** Whether a heard token is a word of the Quran: of the whole of it when known, else of the loaded pages. */
   private isQuranWord(token: string) {
+    if (this.isAnyQuranWord?.(token)) return true;
     if (this.vocabularySize !== this.words.length) {
       for (let index = this.vocabularySize; index < this.words.length; index += 1) {
         this.vocabulary.add(this.words[index].normalizedText);
@@ -816,7 +860,40 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
     return state;
   }
 
+  /**
+   * A recognizer that ends an item at every word sends «يا» alone and «أيها» after it, where
+   * the Mushaf has one word. The first half waits for the next item, to be placed with it.
+   */
   feed(event: LiveTranscriptInput): LiveMatch<W> {
+    const raw = event.isFinal ? event.text.trim().split(/\s+/).filter(Boolean) : [];
+    const lastTokens = raw.length ? tokens(raw[raw.length - 1]) : [];
+    if (lastTokens.length !== 1 || !this.isSplitHead(lastTokens[0], raw.length)) return this.feedEvent(event);
+    const confidences = event.wordConfidences?.length === raw.length ? event.wordConfidences : undefined;
+    const match = this.feedEvent({ ...event, text: raw.slice(0, -1).join(" "), wordConfidences: confidences?.slice(0, -1) });
+    const known = confidences && this.carryConfidences.length === this.carry.length;
+    this.carry = [...this.carry, lastTokens[0]];
+    this.carryConfidences = known ? [...this.carryConfidences, confidences[confidences.length - 1]] : [];
+    return match;
+  }
+
+  /** Whether `token`, ending a phrase of `count` words, is the start of a word ahead and not a word itself. */
+  private isSplitHead(token: string, count: number) {
+    if (token.length < 2) return false;
+    const squeeze = (word: string) => word.replace(/ا+/g, "ا");
+    const end = Math.min(this.words.length, this.committed + count + 2);
+    let head = false;
+    for (let index = this.committed; index < end; index += 1) {
+      for (const word of [this.words[index].normalizedText, this.alternates[index]]) {
+        if (!word) continue;
+        if (word === token) return false;
+        const whole = squeeze(word);
+        if (whole.length >= token.length + 2 && whole.startsWith(token)) head = true;
+      }
+    }
+    return head;
+  }
+
+  private feedEvent(event: LiveTranscriptInput): LiveMatch<W> {
     const startedAt = clockNow();
     this.stats.matcherUpdateCount += 1;
     const eventKey = `${event.itemId}:${event.isFinal}:${event.text}`;

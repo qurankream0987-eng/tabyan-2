@@ -13,6 +13,7 @@
     "./quran-normalizer": "./src/quran-normalizer.ts",
     "./quran-live-matcher": "./src/quran-live-matcher.ts",
     "./recitation-state-engine": "./src/recitation-state-engine.ts",
+    "./recitation-audio-codec": "./src/recitation-audio-codec.ts",
     "./quran-surahs": "./src/quran-surahs.ts",
     "./quran-surah-names": "./src/quran-surah-names.ts",
     "./surah-banner": "./src/surah-banner.ts",

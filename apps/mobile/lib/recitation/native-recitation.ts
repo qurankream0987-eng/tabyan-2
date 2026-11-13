@@ -6,6 +6,7 @@ import {
   NativeRecitationControllerCore,
   type NativeAudioRecorder,
   type NativeMatcherLike,
+  type NativeRecitationRuntime,
   type NativeSocket,
 } from "./native-recitation-controller";
 import {
@@ -36,7 +37,8 @@ function recitationWebSocketUrl() {
 }
 
 export class NativeRecitationController extends NativeRecitationControllerCore {
-  constructor(matcher: NativeMatcherLike, callbacks: NativeRecitationCallbacks = {}) {
+  /** `runtime` replaces parts of the device runtime (the evaluation screen reads audio from files). */
+  constructor(matcher: NativeMatcherLike, callbacks: NativeRecitationCallbacks = {}, runtime: Partial<NativeRecitationRuntime> = {}) {
     const cues = new NativeRecitationCuePlayer();
     super(matcher, callbacks, {
       isWeb: Platform.OS === "web",
@@ -47,6 +49,7 @@ export class NativeRecitationController extends NativeRecitationControllerCore {
       createRecorder: () => new AudioRecorder() as unknown as NativeAudioRecorder,
       playCue: (cue) => cues.play(cue),
       disposeAudio: () => cues.dispose(),
+      ...runtime,
     });
   }
 }

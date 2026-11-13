@@ -5,8 +5,11 @@ import type { CtcWord } from "./ctcDecoder";
 import { FRAME_SECONDS, sharedTilawiModel, type Transcriber } from "./tilawiModel";
 import { WordStabilizer, type RecognizedWord } from "./wordStabilizer";
 
-/** Sample rate the gateway announces to clients for this provider. */
-export const TILAWI_INPUT_SAMPLE_RATE_HZ = 24_000;
+/**
+ * Sample rate the gateway announces to clients for this provider: the model's own rate.
+ * Anything above it is resampled away here, so sending it only costs the reciter's uplink.
+ */
+export const TILAWI_INPUT_SAMPLE_RATE_HZ = MODEL_SAMPLE_RATE_HZ;
 
 /** A tuning value from the environment, or its default when unset or not a positive number. */
 function seconds(name: string, fallback: number) {
@@ -19,8 +22,12 @@ function seconds(name: string, fallback: number) {
  * and the pointer at most a quarter second behind the audio before decoding.
  */
 const HOP_SECONDS = seconds("TABYAN_TILAWI_HOP_SECONDS", 0.25);
-/** Already-settled audio re-decoded in front of new audio, for acoustic context. */
-const CONTEXT_SECONDS = seconds("TABYAN_TILAWI_CONTEXT_SECONDS", 0.8);
+/**
+ * Already-settled audio re-decoded in front of new audio, for acoustic context. The model
+ * reads a word reliably only with a couple of words before it: on 287 whole ayahs, two
+ * seconds against 0.8 took a third off the correct readings stopped by a misheard word.
+ */
+const CONTEXT_SECONDS = seconds("TABYAN_TILAWI_CONTEXT_SECONDS", 2);
 /**
  * Silence appended after the newest audio. The model holds back the last
  * pieces of a word until it hears what follows; a silent tail lets it close
@@ -55,6 +62,21 @@ const VOICE_MARGIN_FRAMES = 2;
 /** Quiet audio is raised towards this level before decoding, by at most MAX_INPUT_GAIN. */
 const TARGET_INPUT_RMS = 0.05;
 const MAX_INPUT_GAIN = 12;
+/**
+ * The confidence a client takes a different word as a mistake from. A word the model spelled
+ * with less (pieces it wavered between) is still surely not the expected word when the audio
+ * fits it this many nats better than any expected word; it is then sent at that confidence.
+ * Measured on planted wrong words: 8 nats recovers most of those a plain confidence gate lets pass.
+ */
+const SURE_CONFIDENCE = 0.86;
+const MIN_HEARD_CONFIDENCE = 0.6;
+const SURE_MARGIN = seconds("TABYAN_TILAWI_SURE_MARGIN", 8);
+
+/** The confidence sent for a word: its own, raised when the audio rules the expected words out. */
+function sentConfidence(word: RecognizedWord) {
+  const sure = word.margin !== undefined && word.margin >= SURE_MARGIN && word.confidence >= MIN_HEARD_CONFIDENCE;
+  return sure ? Math.max(word.confidence, SURE_CONFIDENCE) : word.confidence;
+}
 
 /** A copy of quiet audio raised towards TARGET_INPUT_RMS; loud audio is passed as it is. */
 function raised(window: Float32Array): Float32Array {
@@ -117,6 +139,8 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
   constructor(
     private readonly events: SpeechRecognitionProviderEvents,
     private readonly loadModel: () => Promise<Transcriber> = sharedTilawiModel,
+    /** Rate of the PCM16 this session receives. */
+    private readonly inputSampleRateHz: number = TILAWI_INPUT_SAMPLE_RATE_HZ,
   ) {}
 
   /** The next words at the reader's place. The following decode prefers them. */
@@ -156,7 +180,7 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
       return;
     }
     this.events.onAudioForwarded?.(chunk.length);
-    const samples = pcm16ToModelInput(chunk, TILAWI_INPUT_SAMPLE_RATE_HZ);
+    const samples = pcm16ToModelInput(chunk, this.inputSampleRateHz);
     const level = rms(samples);
     this.noiseFloor = level < this.noiseFloor
       ? this.noiseFloor * NOISE_FALL + level * (1 - NOISE_FALL)
@@ -278,9 +302,11 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
           startSeconds: offsetSeconds + word.startFrame * FRAME_SECONDS,
           endSeconds: offsetSeconds + word.endFrame * FRAME_SECONDS,
           confidence: word.confidence,
+          margin: word.margin,
         })),
         end / MODEL_SAMPLE_RATE_HZ,
         settle,
+        this.preferred,
       );
       this.emit(settled, pending);
     } catch (error) {
@@ -325,9 +351,10 @@ export class TilawiStreamingProvider implements SpeechRecognitionProvider {
       textIsDelta: false,
       startMs: words.length ? Math.round(words[0].startSeconds * 1000) : undefined,
       endMs: words.length ? Math.round(words[words.length - 1].endSeconds * 1000) : undefined,
-      confidence: words.length ? Math.min(...words.map((word) => word.confidence)) : undefined,
+      confidence: words.length ? Math.min(...words.map(sentConfidence)) : undefined,
       // The model's confidence in each word, so a word it barely heard is never a mistake.
-      wordConfidences: words.map((word) => Math.round(word.confidence * 1000) / 1000),
+      wordConfidences: words.map((word) => Math.round(sentConfidence(word) * 1000) / 1000),
+      wordMargins: words.map((word) => (word.margin === undefined ? null : Math.round(word.margin * 100) / 100)),
       // Settled words may confirm a mistake; the client still needs the reciter to read
       // on correctly past it first. A revisable tail never does.
       confirmationEligible: isFinal,

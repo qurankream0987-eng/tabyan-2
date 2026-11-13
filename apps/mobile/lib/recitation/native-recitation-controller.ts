@@ -6,6 +6,13 @@ import {
   RECITATION_GATEWAY_SILENCE_TIMEOUT_MS,
   RECITATION_KEEPALIVE_INTERVAL_MS,
 } from "@workspace/tabyan-domain";
+import {
+  AdpcmEncoder,
+  encodeMulaw,
+  isRecitationAudioCodec,
+  RECITATION_AUDIO_CODECS,
+  type RecitationAudioCodec,
+} from "@workspace/tabyan-domain/recitation-audio-codec";
 import type {
   NativeQuranLiveMatcher,
   NativeRecitationCallbacks,
@@ -15,7 +22,7 @@ import { NativeRecitationFeedback, type NativeRecitationCue } from "./native-rec
 
 export interface NativeSocket {
   readyState: number;
-  send(data: string): void;
+  send(data: string | ArrayBuffer): void;
   close(): void;
   onopen: (() => void) | null;
   onmessage: ((event: { data: unknown }) => void) | null;
@@ -70,10 +77,12 @@ export interface NativeMatcherLike {
 
 const SOCKET_OPEN = 1;
 /** Audio captured before the provider is ready is kept up to this long. */
-const MAX_PENDING_AUDIO_SECONDS = 10;
+const MAX_PENDING_AUDIO_SECONDS = 20;
 /** Same recovery the web session uses: a broken stream can be opened again; auth and policy errors cannot. */
 const RETRYABLE_GATEWAY_ERRORS = new Set(["PROVIDER_STREAM_ERROR", "PROVIDER_CLOSED", "SESSION_IDLE"]);
-const DEFAULT_RECONNECT_DELAYS_MS = [800, 2_500];
+/** A weak mobile network drops often and comes back within seconds: three tries a drop, eight drops a session. */
+const DEFAULT_RECONNECT_DELAYS_MS = [600, 1_500, 4_000];
+const DEFAULT_MAX_RECONNECTS = 8;
 
 function resampleMono(channels: Float32Array[], sourceRate: number, targetRate: number) {
   const sourceLength = channels[0]?.length ?? 0;
@@ -133,6 +142,9 @@ export class NativeRecitationControllerCore {
   private recorderStarted = false;
   private paused = false;
   private targetSampleRate = 24_000;
+  /** Compact codec the gateway agreed to for this socket; without one, audio goes as base64 PCM. */
+  private audioCodec: RecitationAudioCodec | null = null;
+  private adpcm = new AdpcmEncoder();
   private readyResolve: (() => void) | null = null;
   private readyReject: ((error: Error) => void) | null = null;
   private readyTimer: ReturnType<typeof setTimeout> | null = null;
@@ -233,7 +245,9 @@ export class NativeRecitationControllerCore {
       };
       socket.onopen = () => {
         if (!this.closed && this.socket === socket) {
-          socket.send(JSON.stringify({ t: "auth", token: credentials.token, sessionId: credentials.sessionId }));
+          socket.send(JSON.stringify({
+            t: "auth", token: credentials.token, sessionId: credentials.sessionId, audioCodecs: RECITATION_AUDIO_CODECS,
+          }));
         }
       };
       socket.onmessage = (event) => {
@@ -266,7 +280,7 @@ export class NativeRecitationControllerCore {
     // onerror and onclose of one socket, or a drop while the next socket is dialing.
     if (this.reconnectTimer || this.readyReject) return;
     const delays = this.runtime.reconnectDelaysMs ?? DEFAULT_RECONNECT_DELAYS_MS;
-    const maxReconnects = this.runtime.maxReconnects ?? 3;
+    const maxReconnects = this.runtime.maxReconnects ?? DEFAULT_MAX_RECONNECTS;
     if (!this.acceptReconnect || this.reconnectsUsed >= maxReconnects || this.reconnectBurst >= delays.length) {
       this.fail(error);
       return;
@@ -329,6 +343,9 @@ export class NativeRecitationControllerCore {
       if (typeof rate === "number" && Number.isFinite(rate) && rate >= 8_000 && rate <= 48_000) {
         this.targetSampleRate = rate;
       }
+      // Agreed per socket: a gateway that names no codec takes base64 PCM.
+      this.audioCodec = isRecitationAudioCodec(message.audioCodec) ? message.audioCodec : null;
+      this.adpcm = new AdpcmEncoder();
       this.readyResolve?.();
       this.readyResolve = null;
       this.readyReject = null;
@@ -435,6 +452,12 @@ export class NativeRecitationControllerCore {
     if (!samples.length || !this.socket || this.socket.readyState !== SOCKET_OPEN) return;
     this.audioSinceCommit = true;
     try {
+      if (this.audioCodec) {
+        // A binary frame of four or eight bits a sample, against 21 for base64 PCM.
+        const frame = this.audioCodec === "adpcm" ? this.adpcm.encode(samples) : encodeMulaw(samples);
+        this.socket.send(frame.buffer.slice(frame.byteOffset, frame.byteOffset + frame.byteLength) as ArrayBuffer);
+        return;
+      }
       this.socket.send(JSON.stringify({
         t: "audio",
         audio: pcm16leBase64(samples),

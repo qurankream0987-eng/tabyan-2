@@ -98,6 +98,8 @@ export interface NativeRecitationCallbacks {
 }
 
 const CONFIDENCE_THRESHOLD = 0.68;
+/** See RecitationEngineOptions.substitutionConfidence. */
+const SUBSTITUTION_CONFIDENCE = 0.86;
 
 export function confirmedWordKey(word: Pick<CanonicalQuranWord, "verseKey" | "position">) {
   return `${word.verseKey}:${word.position}`;
@@ -123,7 +125,7 @@ export class NativeQuranLiveMatcher {
   private lastEvent = "";
   private lastResult: NativeRecitationMatch | null = null;
 
-  constructor(private readonly words: CanonicalQuranWord[]) {
+  constructor(private readonly words: CanonicalQuranWord[], options: { substitutionConfidence?: number } = {}) {
     this.matcher = new QuranLiveMatcher(words, {
       generalPositionFollowing: true,
       ignoreOptionalBasmala: true,
@@ -131,7 +133,11 @@ export class NativeQuranLiveMatcher {
       commitPartials: false,
       isQuranWord: isQuranVocabularyWord,
     });
-    this.engine = new RecitationStateEngine({ strict: true, wordAt: (index) => this.matcher.wordAt(index) });
+    this.engine = new RecitationStateEngine({
+      strict: true,
+      wordAt: (index) => this.matcher.wordAt(index),
+      substitutionConfidence: options.substitutionConfidence ?? SUBSTITUTION_CONFIDENCE,
+    });
     this.indexWords();
   }
 

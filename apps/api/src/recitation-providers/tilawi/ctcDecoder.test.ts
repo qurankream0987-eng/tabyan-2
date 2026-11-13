@@ -110,3 +110,26 @@ test("the shared lexicon holds the Quran's words as the recognizer spells them",
   assert.equal(quran.isWord("شوفيش"), false);
   assert.equal(quran.isWord("رتبععتم"), false);
 });
+
+test("a word off the expected path is scored against the expected word over the same audio", () => {
+  const decoder = new CtcDecoder(VOCAB);
+  const near = new Lexicon(["بيت", "كيت"]);
+  const preferred = preferredWordSet(["بيت"]);
+  const margin = (steps: Array<Record<number, number>>) => {
+    const logprobs = frames(steps);
+    const words = decoder.decodeConstrained(logprobs, steps.length, V, { lexicon: near });
+    assert.deepEqual(words.map((w) => w.text), ["كيت"]);
+    decoder.scoreAgainstExpected(logprobs, steps.length, V, words, preferred);
+    return words[0].margin ?? NaN;
+  };
+  // The model wavered between the two first letters: the expected word fits almost as well.
+  const doubt = margin([{ 0: 0.9 }, { 5: 0.55, 1: 0.42 }, { 2: 0.9 }, { 4: 0.9 }, { 0: 0.9 }]);
+  // The other letter is unmistakable: the reciter said another word.
+  const sure = margin([{ 0: 0.9 }, { 5: 0.99, 1: 0.01 }, { 2: 0.95 }, { 4: 0.95 }, { 0: 0.9 }]);
+  assert.ok(doubt > 0 && doubt < 1, `doubt ${doubt}`);
+  assert.ok(sure > 4, `sure ${sure}`);
+  // An expected word carries no margin.
+  const expected = decoder.decodeConstrained(frames([{ 1: 0.9 }, { 2: 0.9 }, { 4: 0.9 }]), 3, V, { lexicon: near, preferred });
+  decoder.scoreAgainstExpected(frames([{ 1: 0.9 }, { 2: 0.9 }, { 4: 0.9 }]), 3, V, expected, preferred);
+  assert.equal(expected[0].margin, undefined);
+});

@@ -240,6 +240,49 @@ describe("recitation mistakes", () => {
     expect(wrongWord.reading?.verseKey).toBe("2:170");
   });
 
+  it("a drawn-out vowel written as a letter is the same word, even when that spelling is a Quran word", () => {
+    // «باسم الله» and «رب» heard as «ربي»: both spellings are words of the Quran elsewhere.
+    const fatiha = range(1, 1, 3);
+    const { summary } = recite(fatiha, ["باسم الله الرحمن الرحيم", "الحمد لله ربي العالمين", ayah(1, 3)]);
+    expect(summary.confirmedMistakes).toBe(0);
+    expect(summary.wordsRecited).toBe(summary.totalWords);
+    // A vowel written inside the word is another word: «قال هو الله أحد» for «قل هو الله أحد».
+    const wrong = recite(range(112, 1, 1), ["قال هو الله أحد"]);
+    expect(wrong.flagged.get("112:1:1")).toBe("mistake");
+    // A hamza the Mushaf writes on the line: «فاسأل» for «فسـٔل», «الأيكة» for «لـٔيكة».
+    expect(recite(range(23, 113, 113), ["قالوا لبثنا يوما أو بعض يوم فاسأل العادين"]).summary.confirmedMistakes).toBe(0);
+    expect(recite(range(38, 13, 13), ["وثمود وقوم لوط وأصحاب الأيكة أولئك الأحزاب"]).summary.confirmedMistakes).toBe(0);
+  });
+
+  it("a wrong last word is a mistake even when it is a word of another page", () => {
+    // «شك» is in the Quran but not in this ayah's pages; said for «ريب» with nothing read after it.
+    for (const phrases of [["ذلك الكتاب لا شك"], ["ذلك", "الكتاب", "لا", "شك"]]) {
+      const { summary, flagged } = recite(range(2, 2, 5), phrases);
+      expect(summary.confirmedMistakes).toBe(1);
+      expect(flagged.get("2:2:4")).toBe("mistake");
+    }
+  });
+
+  it("a word the Mushaf joins and a recognizer writes apart is one word read right", () => {
+    // «يا أيها» for «يأيها» (Al-Baqarah 21), «يا قوم» (Al-Mu'minun 23), «لا انفضوا» for «لانفضوا» (Aal Imran 159).
+    for (const [surah, verse, heard] of [
+      [2, 21, "يا أيها الناس اعبدوا ربكم الذي خلقكم والذين من قبلكم لعلكم تتقون"],
+      [23, 23, "ولقد أرسلنا نوحا إلى قومه فقال يا قوم اعبدوا الله ما لكم من إله غيره أفلا تتقون"],
+      [3, 159, "فبما رحمة من الله لنت لهم ولو كنت فظا غليظ القلب لا انفضوا من حولك"],
+    ] as const) {
+      const { summary } = recite(range(surah, verse, verse), [heard]);
+      expect(summary.confirmedMistakes).toBe(0);
+    }
+  });
+
+  it("a joined word whose halves arrive as separate phrases is still one word read right", () => {
+    // A recognizer that ends a phrase at every word: «يا» then «أبانا» (Yusuf 11), «يا» then «أيها».
+    expect(recite(range(12, 11, 11), ["قالوا", "يا", "أبانا", "ما", "لك", "لا", "تأمنا", "على", "يوسف", "وإنا", "له", "لناصحون"]).summary.confirmedMistakes).toBe(0);
+    const { summary } = recite(range(2, 21, 21), ["يا", "أيها", "الناس", "اعبدوا", "ربكم", "الذي", "خلقكم", "والذين", "من", "قبلكم", "لعلكم", "تتقون"]);
+    expect(summary.confirmedMistakes).toBe(0);
+    expect(summary.wordsRecited).toBe(summary.totalWords);
+  });
+
   it("a word misheard by a letter or two, or a short word the recognizer drops, never stops a correct reading", () => {
     // Misheard endings and dropped short words, phrases split mid-ayah: live recognition noise.
     let seed = 7;

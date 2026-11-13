@@ -17,6 +17,10 @@ export interface TilawiModelOptions {
   decoder?: "lexicon" | "greedy";
   /** See ConstrainedDecodeOptions.freeWordPenalty (TABYAN_TILAWI_FREE_WORD_PENALTY). */
   freeWordPenalty?: number;
+  /** See ConstrainedDecodeOptions.offPathPenalty (TABYAN_TILAWI_OFF_PATH_PENALTY). */
+  offPathPenalty?: number;
+  /** Hypotheses the beam keeps per frame (TABYAN_TILAWI_BEAM). */
+  beam?: number;
 }
 
 export interface Transcriber {
@@ -40,6 +44,8 @@ export class TilawiModel implements Transcriber {
     private readonly maxConcurrent: number,
     private readonly lexicon: Lexicon | null,
     private readonly freeWordPenalty: number | undefined,
+    private readonly offPathPenalty: number | undefined,
+    private readonly beam: number | undefined,
   ) {}
 
   static async load(modelDir: string, options: TilawiModelOptions = {}): Promise<TilawiModel> {
@@ -61,8 +67,10 @@ export class TilawiModel implements Transcriber {
       maxConcurrent,
       decoder: lexicon ? "lexicon" : "greedy",
       freeWordPenalty: options.freeWordPenalty ?? null,
+      offPathPenalty: options.offPathPenalty ?? null,
+      beam: options.beam ?? null,
     }, "Tilawi model loaded");
-    return new TilawiModel(session, new CtcDecoder(vocab), maxConcurrent, lexicon, options.freeWordPenalty);
+    return new TilawiModel(session, new CtcDecoder(vocab), maxConcurrent, lexicon, options.freeWordPenalty, options.offPathPenalty, options.beam);
   }
 
   async transcribe(audio: Float32Array, preferred?: readonly string[]): Promise<CtcWord[]> {
@@ -78,13 +86,17 @@ export class TilawiModel implements Transcriber {
       const [, timeSteps, vocabSize] = logprobs.dims.map(Number);
       const data = logprobs.data as Float32Array;
       const preferredSet = preferred?.length ? preferredWordSet(preferred) : undefined;
-      return this.lexicon
+      const words = this.lexicon
         ? this.decoder.decodeConstrained(data, timeSteps, vocabSize, {
           lexicon: this.lexicon,
           freeWordPenalty: this.freeWordPenalty,
+          offPathPenalty: this.offPathPenalty,
+          beam: this.beam,
           preferred: preferredSet && preferredSet.size ? preferredSet : undefined,
         })
         : this.decoder.decode(data, timeSteps, vocabSize);
+      if (preferredSet?.size) this.decoder.scoreAgainstExpected(data, timeSteps, vocabSize, words, preferredSet);
+      return words;
     } finally {
       this.release();
     }
@@ -126,11 +138,16 @@ export function sharedLexicon(): Lexicon {
 }
 
 /** Decoder settings from the environment, for tuning without a rebuild. */
-export function decoderOptionsFromEnv(): Pick<TilawiModelOptions, "decoder" | "freeWordPenalty"> {
-  const penalty = Number(process.env.TABYAN_TILAWI_FREE_WORD_PENALTY);
+export function decoderOptionsFromEnv(): Pick<TilawiModelOptions, "decoder" | "freeWordPenalty" | "offPathPenalty" | "beam"> {
+  const positive = (name: string) => {
+    const value = Number(process.env[name]);
+    return Number.isFinite(value) && value > 0 ? value : undefined;
+  };
   return {
     decoder: process.env.TABYAN_TILAWI_DECODER === "greedy" ? "greedy" : "lexicon",
-    freeWordPenalty: Number.isFinite(penalty) && penalty > 0 ? penalty : undefined,
+    freeWordPenalty: positive("TABYAN_TILAWI_FREE_WORD_PENALTY"),
+    offPathPenalty: positive("TABYAN_TILAWI_OFF_PATH_PENALTY"),
+    beam: positive("TABYAN_TILAWI_BEAM"),
   };
 }
 

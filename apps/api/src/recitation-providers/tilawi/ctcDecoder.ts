@@ -6,6 +6,13 @@ export interface CtcWord {
   endFrame: number;
   /** Mean probability of the word's tokens at the frames where they were emitted, 0..1. */
   confidence: number;
+  /**
+   * Set for a word that is not one of the expected words: the log-likelihood of the audio
+   * under this word less that under the best-fitting expected word, over the same frames.
+   * Large when the reciter clearly said something else; near zero or negative when the
+   * expected word fits about as well and the difference is the recognizer's doubt.
+   */
+  margin?: number;
 }
 
 /** SentencePiece marks the first piece of every word with U+2581. */
@@ -145,6 +152,9 @@ interface Hypothesis {
 }
 
 const NEG_INF = -Infinity;
+/** Frames around a word within which an expected word is fitted in its place. */
+const MARGIN_FRAMES = 3;
+const MAX_MARGIN = 99;
 
 function logAdd(a: number, b: number): number {
   if (a === NEG_INF) return b;
@@ -168,6 +178,9 @@ function finishWords(words: WordInProgress[]): CtcWord[] {
 export class CtcDecoder {
   private readonly pieces: string[];
   readonly blankId: number;
+  /** Pieces by the first folded letter they spell: those that start a word, and those inside one. */
+  private readonly startPieces = new Map<string, { id: number; text: string }[]>();
+  private readonly innerPieces = new Map<string, { id: number; text: string }[]>();
 
   constructor(vocab: Record<string, string>) {
     const ids = Object.keys(vocab).map(Number);
@@ -175,6 +188,74 @@ export class CtcDecoder {
     for (const id of ids) this.pieces[id] = vocab[String(id)];
     const blank = ids.find((id) => vocab[String(id)] === "<blank>");
     this.blankId = blank ?? Math.max(...ids);
+    for (const id of ids) {
+      const raw = this.pieces[id]?.replace(MARKS, "") ?? "";
+      const text = foldWord(raw.replace(WORD_START, ""));
+      if (!text || raw === "<unk>" || id === this.blankId) continue;
+      const index = raw.startsWith(WORD_START) ? this.startPieces : this.innerPieces;
+      const list = index.get(text[0]);
+      if (list) list.push({ id, text });
+      else index.set(text[0], [{ id, text }]);
+    }
+  }
+
+  /**
+   * Log-probability of the best CTC path that spells `word` (folded) as one word over frames
+   * [from, to), by any split into the model pieces. -Infinity when no split fits the frames.
+   */
+  wordScore(logprobs: Float32Array, vocabSize: number, from: number, to: number, word: string): number {
+    const length = word.length;
+    if (!length || to <= from) return NEG_INF;
+    let score = new Float64Array(length + 1).fill(NEG_INF);
+    let last = new Int32Array(length + 1).fill(-1);
+    score[0] = 0;
+    for (let t = from; t < to; t++) {
+      const offset = t * vocabSize;
+      const blank = logprobs[offset + this.blankId];
+      const next = new Float64Array(length + 1).fill(NEG_INF);
+      const nextLast = new Int32Array(length + 1).fill(-1);
+      for (let position = 0; position <= length; position++) {
+        const here = score[position];
+        if (here === NEG_INF) continue;
+        // Stay: a blank, or the last piece held for another frame.
+        const held = last[position] >= 0 ? Math.max(blank, logprobs[offset + last[position]]) : blank;
+        if (here + held > next[position]) {
+          next[position] = here + held;
+          nextLast[position] = last[position];
+        }
+        if (position === length) continue;
+        for (const piece of (position === 0 ? this.startPieces : this.innerPieces).get(word[position]) ?? []) {
+          if (!word.startsWith(piece.text, position)) continue;
+          const end = position + piece.text.length;
+          const value = here + logprobs[offset + piece.id];
+          if (value > next[end]) {
+            next[end] = value;
+            nextLast[end] = piece.id;
+          }
+        }
+      }
+      score = next;
+      last = nextLast;
+    }
+    return score[length];
+  }
+
+  /**
+   * Sets `margin` on every word that is not an expected one: its fit to the audio against
+   * the best-fitting expected word, over the frames of the word and a little around them.
+   */
+  scoreAgainstExpected(logprobs: Float32Array, timeSteps: number, vocabSize: number, words: CtcWord[], preferred: ReadonlySet<string>) {
+    for (const [index, word] of words.entries()) {
+      const heard = foldWord(word.text);
+      if (!heard || preferred.has(heard)) continue;
+      // Up to the neighbouring words: the expected word may be longer than what was heard.
+      const from = Math.max(index > 0 ? words[index - 1].endFrame : 0, word.startFrame - MARGIN_FRAMES);
+      const to = Math.min(index + 1 < words.length ? words[index + 1].startFrame : timeSteps, word.endFrame + MARGIN_FRAMES);
+      const own = this.wordScore(logprobs, vocabSize, from, to, heard);
+      let best = NEG_INF;
+      for (const expected of preferred) best = Math.max(best, this.wordScore(logprobs, vocabSize, from, to, expected));
+      word.margin = own === NEG_INF ? 0 : best === NEG_INF ? MAX_MARGIN : Math.min(MAX_MARGIN, own - best);
+    }
   }
 
   /** `logprobs` is [timeSteps x vocabSize] log-softmax output. */

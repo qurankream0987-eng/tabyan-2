@@ -16,6 +16,11 @@ export interface CanonicalTranscriptEvent {
   confirmationEligible?: boolean;
   /** The recognizer's confidence (0..1) in each whitespace-separated word of `text`. */
   wordConfidences?: number[];
+  /**
+   * For each word that is not one of the expected words: how much better the audio fits it
+   * than the best-fitting expected word, in nats (null for an expected word). Diagnostic.
+   */
+  wordMargins?: (number | null)[];
 }
 
 export type AudioAcceptanceEvidence =

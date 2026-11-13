@@ -59,6 +59,11 @@ export interface RecitationEngineOptions {
   jumpWords?: number;
   wordAt: (index: number) => (WordRef & { ayah: number; surah: number; normalizedText?: string }) | null;
   now?: () => number;
+  /**
+   * The recognizer's confidence from which a different word is a mistake; below it the word is
+   * taken as the expected one, barely heard. Defaults to the high-confidence tier.
+   */
+  substitutionConfidence?: number;
 }
 
 export interface EngineUpdate {
@@ -403,7 +408,7 @@ export class RecitationStateEngine {
       } else if (op.kind === "substitution") {
         // A different word is a mistake only when the recognizer is sure of what it heard;
         // a word it barely made out (fast speech, a breath, noise) is taken as the expected one.
-        if (op.confidence !== undefined && confidenceTier(op.confidence) !== "HIGH") this.resolveMatch(op.index, changed);
+        if (op.confidence !== undefined && op.confidence < (this.options.substitutionConfidence ?? HIGH_CONFIDENCE)) this.resolveMatch(op.index, changed);
         else {
           this.openError(op.index, "WRONG_WORD", tier, changed, op.heard);
           if (this.strict) this.holdOn(op.index, changed);

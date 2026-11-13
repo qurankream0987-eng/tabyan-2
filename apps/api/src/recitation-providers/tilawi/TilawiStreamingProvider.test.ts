@@ -163,6 +163,37 @@ test("a pause commit does not settle a word whose first letter is all that is he
   assert.deepEqual(next.settled.map((w) => w.text), ["وعلى"]);
 });
 
+test("a word that is not the expected one is kept back until a second decode still says it", () => {
+  const stabilizer = new WordStabilizer();
+  const expected = ["فكذبنا", "بها"];
+  const first = stabilizer.update([word("فقلنا", 0.2, 0.9), word("بها", 1.0, 1.4)], 2.2, "agreed", expected);
+  assert.deepEqual(first.settled.map((item) => item.text), []);
+  assert.deepEqual(first.pending.map((item) => item.text), ["فقلنا", "بها"]);
+
+  const corrected = stabilizer.update([word("فكذبنا", 0.2, 0.9), word("بها", 1.0, 1.4)], 2.4, "agreed", expected);
+  assert.deepEqual(corrected.settled.map((item) => item.text), ["فكذبنا", "بها"]);
+});
+
+test("a mistake that the next decode repeats is settled, so the reader can be stopped on it", () => {
+  const stabilizer = new WordStabilizer();
+  const expected = ["فكذبنا"];
+  const first = stabilizer.update([word("فقلنا", 0.2, 0.9)], 2.2, "agreed", expected);
+  assert.deepEqual(first.settled.map((item) => item.text), []);
+  const repeated = stabilizer.update([word("فقلنا", 0.2, 0.9)], 2.4, "agreed", expected);
+  assert.deepEqual(repeated.settled.map((item) => item.text), ["فقلنا"]);
+});
+
+test("the start of a long expected word is not settled as a word of its own", () => {
+  // The model shows the first letters of a drawn-out word as a short word for a few decodes.
+  const stabilizer = new WordStabilizer();
+  const expected = ["خلقك", "فسواك"];
+  assert.deepEqual(stabilizer.update([word("خلق", 0.8, 0.9)], 1.2, "agreed", expected).settled, []);
+  // Two decodes agree and the word is clear of the edge, but little audio has followed it yet.
+  assert.deepEqual(stabilizer.update([word("خلق", 0.8, 0.9)], 1.6, "agreed", expected).settled, []);
+  const whole = stabilizer.update([word("خلقك", 0.8, 1.7), word("فس", 1.8, 2.0)], 2.2, "agreed", expected);
+  assert.deepEqual(whole.settled.map((item) => item.text), ["خلقك"]);
+});
+
 test("expected words are handed to the next decode and an empty list clears them", async () => {
   const model = new TimelineModel(TIMELINE);
   const h = harness(model);

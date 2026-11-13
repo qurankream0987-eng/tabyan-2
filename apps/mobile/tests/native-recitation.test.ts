@@ -14,6 +14,7 @@ import {
   type NativeRecitationState,
 } from "../lib/recitation/native-recitation-matcher";
 import { normalizeQuranText } from "../lib/recitation/quran-normalizer";
+import { decodeAdpcm } from "@workspace/tabyan-domain/recitation-audio-codec";
 
 const canonicalWords = ["بسم", "الله", "الرحمن", "الرحيم"].map((displayText, index) => ({
   surah: 1,
@@ -27,6 +28,8 @@ const canonicalWords = ["بسم", "الله", "الرحمن", "الرحيم"].ma
 class FakeSocket implements NativeSocket {
   readyState = 0;
   sent: string[] = [];
+  /** Binary frames: audio in the codec the gateway agreed to. */
+  binary: ArrayBuffer[] = [];
   onopen: (() => void) | null = null;
   onmessage: ((event: { data: unknown }) => void) | null = null;
   onerror: (() => void) | null = null;
@@ -34,7 +37,11 @@ class FakeSocket implements NativeSocket {
 
   constructor(readonly url: string) {}
 
-  send(data: string) {
+  send(data: string | ArrayBuffer) {
+    if (typeof data !== "string") {
+      this.binary.push(data);
+      return;
+    }
     this.sent.push(data);
     const message = JSON.parse(data);
     if (message.t === "commit" && message.final) {
@@ -370,7 +377,7 @@ test("controller authenticates before recording and ignores malformed or empty t
   const rig = makeRig();
   const socket = await openSession(rig);
   const auth = JSON.parse(socket.sent[0]) as { t: string; token: string; sessionId: string };
-  assert.deepEqual(auth, { t: "auth", token: "user-session-token", sessionId: "session-1" });
+  assert.deepEqual(auth, { t: "auth", token: "user-session-token", sessionId: "session-1", audioCodecs: ["mulaw", "adpcm"] });
   assert.equal(rig.recorders[0]?.started, true);
 
   socket.receive("{not json");
@@ -385,6 +392,31 @@ test("controller authenticates before recording and ignores malformed or empty t
   assert.equal(rig.recorders[0]?.stopped, true);
   assert.ok(socket.sent.some((item) => JSON.parse(item).t === "close"));
   assert.equal(rig.states.at(-1), "stopped");
+});
+
+test("audio goes as compact binary frames once the gateway agrees to a codec", async () => {
+  const rig = makeRig();
+  const starting = rig.controller.start("user-session-token", "session-1");
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  const socket = rig.sockets[0];
+  assert.ok(socket);
+  socket.open();
+  socket.receive({ t: "authenticated" });
+  socket.receive({ t: "ready", audioSampleRateHz: 16_000, audioCodec: "adpcm" });
+  await starting;
+
+  // A 100 ms tone at the recorder's 24 kHz: 1600 samples at the gateway's 16 kHz, four bits each.
+  const tone = Array.from({ length: 2_400 }, (_, index) => 0.4 * Math.sin((2 * Math.PI * 300 * index) / 24_000));
+  rig.recorders[0]?.callback?.({ buffer: monoBuffer(tone) });
+  assert.equal(socket.sent.some((item) => JSON.parse(item).t === "audio"), false);
+  assert.equal(socket.binary.length, 1);
+  assert.equal(socket.binary[0].byteLength, 3 + 800);
+  const heard = decodeAdpcm(new Uint8Array(socket.binary[0]));
+  assert.equal(heard.length, 1_600);
+  // The decoded frame is the tone that went in, not noise: its level is the tone's.
+  const level = Math.sqrt(heard.reduce((sum, sample) => sum + (sample / 0x8000) ** 2, 0) / heard.length);
+  assert.ok(Math.abs(level - 0.4 / Math.SQRT2) < 0.03, `level ${level}`);
+  await rig.controller.dispose();
 });
 
 test("microphone denial fails closed before socket or recorder creation", async () => {
@@ -478,15 +510,15 @@ test("pre-ready audio buffer is bounded and keeps the most recent audio", async 
   const socket = rig.sockets[0];
   assert.ok(socket);
   socket.open();
-  // Twelve one-second chunks exceed the ten-second bound.
-  for (let second = 0; second < 12; second += 1) {
+  // Twenty-two one-second chunks exceed the twenty-second bound.
+  for (let second = 0; second < 22; second += 1) {
     rig.recorders[0]?.callback?.({ buffer: monoBuffer(new Array(24_000).fill(second / 100)) });
   }
   socket.receive({ t: "ready", audioSampleRateHz: 24_000 });
   await starting;
 
   const audio = socket.sent.map((item) => JSON.parse(item)).filter((item) => item.t === "audio");
-  assert.equal(audio.length, 10);
+  assert.equal(audio.length, 20);
   assert.equal(audio[0].audio, pcmBase64(new Array(24_000).fill(0.02)));
   await rig.controller.dispose();
 });

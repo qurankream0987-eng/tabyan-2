@@ -10,7 +10,8 @@ import { OpenAiRealtimeProvider } from "../recitation-providers/OpenAiRealtimePr
 import { SpeechmaticsStreamingProvider } from "../recitation-providers/SpeechmaticsStreamingProvider";
 import { TarteelWhisperProvider } from "../recitation-providers/TarteelWhisperProvider";
 import { tarteelTranscriber } from "../recitation-providers/TarteelWhisperWorker";
-import { TilawiStreamingProvider } from "../recitation-providers/tilawi/TilawiStreamingProvider";
+import { TILAWI_INPUT_SAMPLE_RATE_HZ, TilawiStreamingProvider } from "../recitation-providers/tilawi/TilawiStreamingProvider";
+import { decodeAdpcm, decodeMulaw, isRecitationAudioCodec, RECITATION_AUDIO_CODECS, type RecitationAudioCodec } from "@workspace/tabyan-domain/recitation-audio-codec";
 import { sharedTilawiModel } from "../recitation-providers/tilawi/tilawiModel";
 import { NabrQrcSpeechProvider } from "../recitation-providers/NabrQrcSpeechProvider";
 import { NabrQrcOneShotTestGate } from "../recitation-providers/nabr-qrc-one-shot-test";
@@ -41,7 +42,7 @@ import type {
 } from "../recitation-providers/types";
 
 type ClientMessage =
-  | { t: "auth"; token: string; sessionId: string; diagnosticClientId?: string }
+  | { t: "auth"; token: string; sessionId: string; diagnosticClientId?: string; audioCodecs?: unknown }
   | { t: "audio"; audio: string; timing?: { audioChunkCreatedAt: number; audioChunkSentAt: number } }
   | { t: "commit"; final?: boolean; commitId?: string }
   | { t: "ping" }
@@ -51,6 +52,23 @@ type ClientMessage =
 type AuthenticatedUser = { id: string };
 
 const MAX_BASE64_AUDIO_CHARS = 32 * 1024;
+
+/** PCM16 rate a provider is fed, which the client is told to send in the ready message. */
+function providerInputSampleRateHz(name: string) {
+  return name === "nvidia" ? NVIDIA_ARABIC_SAMPLE_RATE_HZ : name === "tilawi" ? TILAWI_INPUT_SAMPLE_RATE_HZ : 24_000;
+}
+
+/**
+ * The compact codec this connection's audio arrives in: the first the gateway prefers among
+ * those the client offered. TABYAN_RECITATION_AUDIO_CODEC names another preference, or "off".
+ */
+function chooseAudioCodec(offered: unknown): RecitationAudioCodec | null {
+  const configured = process.env.TABYAN_RECITATION_AUDIO_CODEC?.trim();
+  if (configured === "off" || !Array.isArray(offered)) return null;
+  const codecs = offered.filter(isRecitationAudioCodec);
+  if (isRecitationAudioCodec(configured) && codecs.includes(configured)) return configured;
+  return RECITATION_AUDIO_CODECS.find((codec) => codecs.includes(codec)) ?? null;
+}
 type ProviderName = SpeechRecognitionProvider["name"];
 const nabrQrcOneShotTestGate = new NabrQrcOneShotTestGate();
 
@@ -141,6 +159,7 @@ export function attachRecitationRealtime(server: Server) {
     let provider: SpeechRecognitionProvider | null = null;
     let closed = false;
     let authenticating = false;
+    let audioCodec: RecitationAudioCodec | null = null;
     const serverConnectionId = crypto.randomUUID();
     let clientDiagnosticId: string | null = null;
     let localSocketCloseCause: string | null = null;
@@ -384,7 +403,9 @@ export function attachRecitationRealtime(server: Server) {
             t: "ready",
             providerConnectionMs: Math.max(0, Math.round(performance.now() - providerConnectStartedAt)),
             provider: name,
-            audioSampleRateHz: name === "nvidia" ? NVIDIA_ARABIC_SAMPLE_RATE_HZ : 24_000,
+            audioSampleRateHz: providerInputSampleRateHz(name),
+            // Audio then comes as binary frames in this codec; a client that offered none keeps sending base64 PCM.
+            ...(audioCodec ? { audioCodec } : {}),
           });
         },
         onTranscript: (event: CanonicalTranscriptEvent) => {
@@ -612,13 +633,21 @@ export function attachRecitationRealtime(server: Server) {
       provider.connect();
     };
 
-    ws.on("message", (raw) => {
+    ws.on("message", (raw, isBinary) => {
       lastClientMessageAt = Date.now();
       let message: ClientMessage;
       try {
+        if (isBinary) {
+          // One frame of compact audio. Decoded to the PCM16 every provider and the recorder take.
+          if (!audioCodec) throw new Error("No audio codec was agreed");
+          const frame = Array.isArray(raw) ? Buffer.concat(raw) : Buffer.isBuffer(raw) ? raw : Buffer.from(raw);
+          const samples = audioCodec === "adpcm" ? decodeAdpcm(frame) : decodeMulaw(frame);
+          message = { t: "audio", audio: Buffer.from(samples.buffer, samples.byteOffset, samples.byteLength).toString("base64") };
+        } else {
         const parsed: unknown = JSON.parse(String(raw));
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Invalid message");
         message = parsed as ClientMessage;
+        }
       } catch {
         clientError(ws, "BAD_MESSAGE", "رسالة اتصال غير صالحة");
         return;
@@ -626,6 +655,7 @@ export function attachRecitationRealtime(server: Server) {
 
       if (message.t === "auth") {
         clientDiagnosticId = safeDiagnosticClientId(message.diagnosticClientId);
+        audioCodec = chooseAudioCodec(message.audioCodecs);
         logSocketLifecycle("API_AUTH_MESSAGE_RECEIVED", {
           clientDiagnosticIdProvided: clientDiagnosticId !== null,
           sessionIdProvided: typeof message.sessionId === "string" && message.sessionId.length > 0,
@@ -715,7 +745,7 @@ export function attachRecitationRealtime(server: Server) {
              }
              if (session.assignmentId) {
                // Same rate the client is told to send in the ready message.
-               recorder = new RecitationAudioRecorder(session.id, selected === "nvidia" ? NVIDIA_ARABIC_SAMPLE_RATE_HZ : 24_000);
+               recorder = new RecitationAudioRecorder(session.id, providerInputSampleRateHz(selected));
              }
               if (selected === "nvidia") connectNvidia();
              else if (selected === "speechmatics") connectSpeechmatics();
