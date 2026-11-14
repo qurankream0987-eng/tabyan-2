@@ -284,6 +284,8 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
   private provisionalIndex = -1;
   private stability = 0;
   private lastEvent = "";
+  /** Words of the basmala heard so far in items of their own (see basmalaPrefixLength). */
+  private basmalaHeard = 0;
   private mode: "tracking" | "recovery" = "tracking";
   private mismatchCount = 0;
   private readonly options: Required<Omit<QuranLiveMatcherOptions, "isQuranWord">>;
@@ -423,6 +425,7 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
     this.provisionalIndex = -1;
     this.stability = 0;
     this.lastEvent = "";
+    this.basmalaHeard = 0;
     this.mode = "tracking";
     this.mismatchCount = 0;
     this.unmatchedFinal = [];
@@ -496,13 +499,18 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
     return false;
   }
 
+  /**
+   * How many leading words of `heard` go on the basmala before a surah, from where the
+   * previous items left it: a recognizer that sends one word per item says it over four items.
+   */
   private basmalaPrefixLength(heard: string[]) {
     if (!this.optionalBasmalaIsAhead()) return 0;
+    const done = this.basmalaHeard;
     let prefixLength = 0;
     while (
       prefixLength < heard.length
-      && prefixLength < BASMALA_TOKENS.length
-      && heard[prefixLength] === BASMALA_TOKENS[prefixLength]
+      && done + prefixLength < BASMALA_TOKENS.length
+      && heard[prefixLength] === BASMALA_TOKENS[done + prefixLength]
     ) {
       prefixLength += 1;
     }
@@ -908,7 +916,11 @@ export class QuranLiveMatcher<W extends CanonicalQuranWord = CanonicalQuranWord>
       item.skip = this.basmalaPrefixLength(all);
     }
     const body = all.slice(item.skip);
-    if (event.isFinal) this.items.delete(event.itemId);
+    if (event.isFinal) {
+      this.items.delete(event.itemId);
+      // An item that was all basmala leaves the rest of it for the next item; any other word ends it.
+      this.basmalaHeard = item.skip > 0 && body.length === 0 ? (this.basmalaHeard + item.skip) % BASMALA_TOKENS.length : 0;
+    }
     // ذيل محدود: ما لم يُطابق خلال MAX_TAIL_TOKENS كلمة لا يُعاد فحصه للأبد.
     // دون التزام جزئي لا يُستهلك رأس الـ item قبل نهايته، فلا يُقص.
     if (this.options.commitPartials && body.length - item.consumed > MAX_TAIL_TOKENS) item.consumed = body.length - MAX_TAIL_TOKENS;

@@ -35,7 +35,7 @@ export default function AdminQiraat() {
       return;
     }
     if (!approve && notes.trim().length < 10) {
-      toast("اكتب ملاحظة رفض من 10 أحرف على الأقل", "error");
+      toast("اكتب سبب الرفض في خانة الملاحظات (10 أحرف على الأقل)، ثم اضغط رفض.", "error");
       return;
     }
     review.mutate({ certId: sel.id, approve, notes: notes || undefined });
@@ -68,7 +68,8 @@ export default function AdminQiraat() {
       )}
       <AdminDrawer open={!!sel} onClose={() => setSel(null)} busy={review.isPending} title="مراجعة شهادة الإجازة" subtitle={sel?.studentName}
         footer={<>
-          <AdminButton variant="danger" disabled={notes.trim().length < 10} loading={review.isPending && review.variables?.approve === false} onClick={() => setConfirming("reject")}>رفض</AdminButton>
+          <AdminButton variant="danger" loading={review.isPending && review.variables?.approve === false}
+            onClick={() => (notes.trim().length < 10 ? toast("اكتب سبب الرفض في خانة الملاحظات (10 أحرف على الأقل)، ثم اضغط رفض.", "error") : setConfirming("reject"))}>رفض</AdminButton>
           <AdminButton icon="check" loading={review.isPending && review.variables?.approve === true} onClick={() => setConfirming("approve")}>اعتماد</AdminButton>
         </>}>
         {sel && (

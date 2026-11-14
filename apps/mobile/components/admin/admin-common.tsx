@@ -113,13 +113,18 @@ export function AdminList({ title, procedure = "kpis", icon = "shield" }: { titl
  * Button guarded by a specific confirmation (item name + impact). The confirm sheet
  * is rendered next to the button, so inside an open sheet it stacks correctly on iOS.
  */
-export function ConfirmButton({ label, onConfirm, danger = false, primary = false, disabled = false, loading = false, title, itemName, impact, confirmLabel, icon }: {
+/**
+ * A button that asks before acting. With `onBlocked`, a button that cannot act yet stays
+ * pressable and says why (through `onBlocked`) instead of looking dead.
+ */
+export function ConfirmButton({ label, onConfirm, danger = false, primary = false, disabled = false, loading = false, title, itemName, impact, confirmLabel, icon, onBlocked }: {
   label: string; onConfirm: () => void; danger?: boolean; primary?: boolean; disabled?: boolean; loading?: boolean;
-  title?: string; itemName?: string; impact?: string; confirmLabel?: string; icon?: string;
+  title?: string; itemName?: string; impact?: string; confirmLabel?: string; icon?: string; onBlocked?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   return <>
-    <Button label={label} icon={icon} variant={danger ? "danger" : primary ? "primary" : "secondary"} disabled={disabled} loading={loading} onPress={() => setOpen(true)} />
+    <Button label={label} icon={icon} variant={danger ? "danger" : primary ? "primary" : "secondary"} disabled={disabled && !onBlocked} loading={loading}
+      onPress={() => (disabled ? onBlocked?.() : setOpen(true))} />
     <ConfirmAction visible={open} title={title ?? `تأكيد «${label}»؟`} itemName={itemName} impact={impact} confirmLabel={confirmLabel ?? label}
       tone={danger ? "danger" : "primary"} loading={loading} onCancel={() => setOpen(false)}
       onConfirm={() => { if (disabled || loading) return; setOpen(false); onConfirm(); }} />

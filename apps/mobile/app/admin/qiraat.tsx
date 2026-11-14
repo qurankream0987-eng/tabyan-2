@@ -23,7 +23,7 @@ export default function Qiraat() {
   const [feedback, setFeedback] = useState("");
   const [openError, setOpenError] = useState("");
   const rows: Certificate[] = Array.isArray(q.data) ? q.data as Certificate[] : ((q.data as { items?: Certificate[] } | undefined)?.items ?? []);
-  const close = () => { setSelected(null); setNote(""); setOpenError(""); };
+  const close = () => { setSelected(null); setNote(""); setOpenError(""); setFeedback(""); };
   const timestamp = (value: Certificate["createdAt"]) => value ? new Date(value).toLocaleString("ar-SA", { dateStyle: "medium", timeStyle: "short" }) : "";
   const openCertificate = async () => {
     const target = selected?.certificateUrl ? resolveLibraryAsset(selected.certificateUrl, token) : "";
@@ -34,7 +34,7 @@ export default function Qiraat() {
   const run = async (approve: boolean) => {
     if (!selected || review.isPending) return;
     if (!approve && note.trim().length < 10) {
-      setFeedback("اكتب ملاحظة رفض من 10 أحرف على الأقل.");
+      setFeedback("اكتب سبب الرفض في خانة الملاحظات (10 أحرف على الأقل)، ثم اضغط رفض.");
       return;
     }
     try {
@@ -56,7 +56,7 @@ export default function Qiraat() {
       <AdminSheet visible={!!selected} title="مراجعة شهادة الإجازة" subtitle={selected?.studentName} onClose={close} busy={review.isPending} dirty={!!note}
         footer={<View style={{ gap: 8 }}>
           <ConfirmButton primary label="اعتماد" icon="check" loading={review.isPending} title="اعتماد شهادة الإجازة؟" itemName={selected?.studentName} impact="ستُعتمد الإجازة وتظهر في ملف الطالب." onConfirm={() => void run(true)} />
-          <ConfirmButton label="رفض" danger disabled={note.trim().length < 10} loading={review.isPending} title="رفض شهادة الإجازة؟" itemName={selected?.studentName} impact="ستُرفض الشهادة ويصل الطالب سبب الرفض المكتوب." onConfirm={() => void run(false)} />
+          <ConfirmButton label="رفض" danger disabled={note.trim().length < 10} onBlocked={() => setFeedback("اكتب سبب الرفض في خانة الملاحظات (10 أحرف على الأقل)، ثم اضغط رفض.")} loading={review.isPending} title="رفض شهادة الإجازة؟" itemName={selected?.studentName} impact="ستُرفض الشهادة ويصل الطالب سبب الرفض المكتوب." onConfirm={() => void run(false)} />
         </View>}>
           <FormError message={feedback} />
           <Text style={[styles.title, { color: colors.primary }]}>مراجعة شهادة الإجازة</Text><Text style={[styles.modalName, { color: colors.text }]}>{selected?.studentName}</Text>

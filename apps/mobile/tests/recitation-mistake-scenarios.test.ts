@@ -263,6 +263,25 @@ describe("recitation mistakes", () => {
     }
   });
 
+  it("reading on past the end of a surah, the basmala and the next surah are followed, word by word too", () => {
+    // The end of Hud, the basmala, then Yusuf 1-2: as one phrase per ayah, and one word per phrase.
+    const words = [...range(11, 123, 123), ...range(12, 1, 2)];
+    const text = [ayah(11, 123), "بسم الله الرحمن الرحيم", ayah(12, 1), ayah(12, 2)];
+    // Word by word as a recognizer sends it: letters only, no waqf marks on their own.
+    for (const phrases of [text, text.join(" ").split(" ").filter((token) => /[ء-ي]/.test(token))]) {
+      const matcher = new NativeQuranLiveMatcher(words);
+      let unmatched = 0;
+      let last = null as ReturnType<NativeQuranLiveMatcher["feed"]> | null;
+      phrases.forEach((phrase, item) => {
+        last = matcher.feed(phrase, `p${item}`, true);
+        if (last.diagnostics.unmatched) unmatched += 1;
+      });
+      expect(unmatched).toBe(0);
+      expect(last?.readingWords).toBe(words.length);
+      expect(matcher.finish().confirmedMistakes).toBe(0);
+    }
+  });
+
   it("a word the Mushaf joins and a recognizer writes apart is one word read right", () => {
     // «يا أيها» for «يأيها» (Al-Baqarah 21), «يا قوم» (Al-Mu'minun 23), «لا انفضوا» for «لانفضوا» (Aal Imran 159).
     for (const [surah, verse, heard] of [

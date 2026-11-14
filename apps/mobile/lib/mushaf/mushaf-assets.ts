@@ -100,14 +100,20 @@ const loadPageWords = memoized(async (page): Promise<MushafCanonicalWord[]> => {
  * The words of a surah range, numbered exactly like the Mushaf page glyphs, so
  * matcher feedback keys (`verseKey:position`) colour the right word on the page.
  */
-export async function loadRangeWords(surah: number, startAyah: number, endAyah: number) {
+/**
+ * The words from `surah:startAyah` through `endSurah:endAyah` in reading order. The end may be
+ * in a later surah (a reader who goes on past the end of one); by default it is in the same one.
+ */
+export async function loadRangeWords(surah: number, startAyah: number, endAyah: number, endSurah = surah) {
   const firstPage = pageOfAyah(surah, startAyah);
-  const lastPage = pageOfAyah(surah, endAyah);
+  const lastPage = Math.max(firstPage, pageOfAyah(endSurah, endAyah));
   const pages = Array.from({ length: lastPage - firstPage + 1 }, (_, index) => firstPage + index);
   const words = (await Promise.all(pages.map(loadPageWords))).flat();
+  const after = (word: { surah: number; ayah: number }, s: number, a: number) => word.surah > s || (word.surah === s && word.ayah >= a);
+  const before = (word: { surah: number; ayah: number }, s: number, a: number) => word.surah < s || (word.surah === s && word.ayah <= a);
   return words
-    .filter((word) => word.surah === surah && word.ayah >= startAyah && word.ayah <= endAyah)
-    .sort((a, b) => a.ayah - b.ayah || a.position - b.position);
+    .filter((word) => after(word, surah, startAyah) && before(word, endSurah, endAyah))
+    .sort((a, b) => a.surah - b.surah || a.ayah - b.ayah || a.position - b.position);
 }
 
 let searchIndex: Promise<QuranSearchIndex> | null = null;

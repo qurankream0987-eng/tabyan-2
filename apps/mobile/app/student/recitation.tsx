@@ -87,6 +87,8 @@ export default function NativeRecitationScreen() {
   const [surahInput, setSurahInput] = useState(String(initialSurah.n));
   const [startAyahInput, setStartAyahInput] = useState(String(initialAyah));
   const [endAyahInput, setEndAyahInput] = useState(String(toSurahEnd ? initialSurah.ayahs : Math.min(initialAyah + 9, initialSurah.ayahs)));
+  // Anywhere: the surah of the end ayah, later than the start's once the reader goes on into the next surah.
+  const [anywhereEndSurah, setAnywhereEndSurah] = useState<number | null>(null);
   const [phase, setPhase] = useState<ScreenPhase>("setup");
   const [errorText, setErrorText] = useState<string | null>(null);
   const [match, setMatch] = useState<NativeRecitationMatch | null>(null);
@@ -173,16 +175,19 @@ export default function NativeRecitationScreen() {
   const surahId = positiveInteger(surahInput);
   const startAyah = positiveInteger(startAyahInput);
   const endAyah = positiveInteger(endAyahInput);
+  const endSurah = anywhereMode && anywhereEndSurah !== null && surahId !== null && anywhereEndSurah > surahId ? anywhereEndSurah : surahId;
   const validRange = surahId !== null
     && surahId <= 114
+    && endSurah !== null
+    && endSurah <= 114
     && startAyah !== null
     && endAyah !== null
-    && endAyah >= startAyah;
+    && (endSurah > surahId || endAyah >= startAyah);
 
   // The same word data as the web Mushaf, so feedback keys match the page glyphs.
   const wordsQuery = useQuery({
-    queryKey: ["mushaf-range-words", surahId, startAyah, endAyah],
-    queryFn: () => loadRangeWords(surahId!, startAyah!, endAyah!),
+    queryKey: ["mushaf-range-words", surahId, startAyah, endSurah, endAyah],
+    queryFn: () => loadRangeWords(surahId!, startAyah!, endAyah!, endSurah!),
     enabled: validRange && status.data?.enabled === true && !!token && role === "student",
     // Anywhere: the range grows page by page as the reader goes on; the words read stay meanwhile.
     placeholderData: anywhereMode ? keepPreviousData : undefined,
@@ -246,12 +251,18 @@ export default function NativeRecitationScreen() {
     attachedRef.current = { ...attached, count: canonicalWords.length };
   }, [anywhereMode, canonicalWords, wordsQuery.isPlaceholderData]);
   useEffect(() => {
-    if (!anywhereMode || !located || !matcherRef.current || wordsQuery.isPlaceholderData || endAyah === null) return;
-    if (endAyah >= (SURAHS[located.surah - 1]?.ayahs ?? 0)) return;
+    if (!anywhereMode || !located || !matcherRef.current || wordsQuery.isPlaceholderData || endAyah === null || endSurah === null) return;
     if ((match?.readingWords ?? 0) < canonicalWords.length - 30) return;
+    if (endAyah >= (SURAHS[endSurah - 1]?.ayahs ?? 0)) {
+      // The end of the surah is near: the reader may go on into the next one, so its first page follows.
+      if (endSurah >= 114) return;
+      setAnywhereEndSurah(endSurah + 1);
+      setEndAyahInput(String(ayahsThroughPage(endSurah + 1, pageOfAyah(endSurah + 1, 1) + 1)));
+      return;
+    }
     const lastPage = canonicalWords[canonicalWords.length - 1]?.page;
-    if (lastPage) setEndAyahInput(String(ayahsThroughPage(located.surah, lastPage + 2)));
-  }, [anywhereMode, located, endAyah, match?.readingWords, canonicalWords, wordsQuery.isPlaceholderData]);
+    if (lastPage) setEndAyahInput(String(ayahsThroughPage(endSurah, lastPage + 2)));
+  }, [anywhereMode, located, endSurah, endAyah, match?.readingWords, canonicalWords, wordsQuery.isPlaceholderData]);
 
   // A microphone in the Mushaf starts listening at once.
   const autoStartedRef = useRef(false);
@@ -370,6 +381,7 @@ export default function NativeRecitationScreen() {
           if (matcherRef.current) doneMatchersRef.current.push(matcherRef.current);
           matcherRef.current = null;
           setLocated(location);
+          setAnywhereEndSurah(null);
           setSurahInput(String(location.surah));
           setStartAyahInput(String(location.ayah));
           // The place's page and the next: enough to start at once; more follow as he reads.
